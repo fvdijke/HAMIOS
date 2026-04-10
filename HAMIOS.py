@@ -26,6 +26,7 @@ Onderaan de rest van de informatie (DX en Advies)
 ─────────────────────────────────────────────────────────────────────
 Change Log (1.0)
 ─────────────────────────────────────────────────────────────────────
+· 2026-04-10 21:39 CEST — Advies verplaatst naar linker kolom onder de wereldkaart.
 · 2026-04-10 21:36 CEST — Fix DX Spots: s-dict itereerde over keys i.p.v. values;
                veldindices gecorrigeerd (row[1]=freq, row[2]=spotter, row[4]=tijd);
                tijdparsing "HHMMz DD Mon" → "HH:MM"; html.unescape voor comments;
@@ -1099,6 +1100,7 @@ class HAMIOSApp:
         map_col.pack(side=tk.LEFT, fill=tk.Y)
         map_col.pack_propagate(False)
         self._build_map_panel(map_col)
+        self._build_advice_panel(map_col)
 
         # ── Midden: Band Verloop + Schema + HF Betrouwbaarheid ───────────────
         mid = tk.Frame(top_row, bg=BG_ROOT)
@@ -1107,11 +1109,10 @@ class HAMIOSApp:
         self._build_schedule_panel(mid)
         self._build_prop_panel(mid)
 
-        # ── Onderaan: DX Spots + Advies ───────────────────────────────────────
+        # ── Onderaan: DX Spots ────────────────────────────────────────────────
         bottom_row = tk.Frame(body, bg=BG_ROOT)
         bottom_row.pack(fill=tk.X, pady=(6, 0))
         self._build_dx_panel(bottom_row)
-        self._build_advice_panel(bottom_row)
 
     # ── Wereldkaart panel ─────────────────────────────────────────────────────
     def _build_map_panel(self, parent):
