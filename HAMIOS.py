@@ -2358,13 +2358,18 @@ class HAMIOSApp:
 
 # ── Entrypoint ─────────────────────────────────────────────────────────────────
 if __name__ == "__main__":
+    import signal
     import traceback as _tb
 
     root = tk.Tk()
 
+    # Ctrl+C via OS-signaal → netjes afsluiten via event-loop
+    signal.signal(signal.SIGINT, lambda *_: root.after(0, root.destroy))
+
+    # Onderdruk de lelijke tkinter-traceback bij KeyboardInterrupt in callbacks
     def _cb_exception(exc_type, exc_val, exc_tb):
-        if exc_type is KeyboardInterrupt:
-            root.destroy()
+        if issubclass(exc_type, KeyboardInterrupt):
+            root.after(0, root.destroy)
             return
         _tb.print_exception(exc_type, exc_val, exc_tb)
 
