@@ -1052,8 +1052,8 @@ class HAMIOSApp:
             if key == "k_index":
                 alert_row = tk.Frame(self._solar_frame, bg=BG_PANEL)
                 alert_row.pack(fill=tk.X, pady=(0, 2))
-                tk.Label(alert_row, text="  Melding K ≥", font=_font(8), bg=BG_PANEL,
-                         fg=TEXT_DIM).pack(side=tk.LEFT)
+                tk.Label(alert_row, text="Melding K ≥", font=_font(8), bg=BG_PANEL,
+                         fg=TEXT_DIM, anchor='w', width=16).pack(side=tk.LEFT)
                 tk.Spinbox(alert_row, from_=1, to=9, width=2,
                            textvariable=self._k_alert_var,
                            command=self._save_cur_settings,
