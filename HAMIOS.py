@@ -18,20 +18,26 @@ Toon de grijslijn (graylijn) als aparte markering op de kaart; dit is de overgan
 Voeg een groot-cirkel pad toe op de kaart: de gebruiker klikt op een bestemmingslocatie, de kortste route (great circle) wordt als lijn getekend en de afstand + richting (heading) worden getoond.
 Maak de lay-out scrollbaar zodat de app ook op kleinere schermen (bijv. 1080p laptops) volledig bruikbaar is zonder afkapping.
 Maak dat je kan zoomen en pannen in de map.
-De tijdsaanduiding in de band openingschema klopt niet of loopt niet mee met de QTH tijd.
+[DONE] Tijdsas schema toont lokale tijd (CET/CEST); zonberekening gecorrigeerd (zon beweegt westenwaarts).
 Maak ook een selecteerbare overlay voor de IARU regio.
 Verhuis de K index selectie onder de K index display in het Solar / Ionosfeer frame.
 Verander de bijgewerkt tijd naar de QTH tijd.
-Verwijder de * bij de 60m band.
+[DONE] 60m-band zonder *, K-index kleurcodering, melding onder K-index, bijgewerkt-tijd naar QTH-tijd.
 
 -> Refresh en data
-Ik wil ergens mijn lat/lon gegevens kunnen invoeren zodat deze in de ini komen te staan en de QTH locater gezet kan worden. Misschien naast de selectievakjes van de wereldkaart?
+[DONE] Lat/lon invoervelden toegevoegd in de kaart-header naast de checkboxes.
 Haal live DX-spots op van een DX-cluster (bijv. dxwatch.com of cluster.dx.to) en toon de meest recente spots per band in een klein paneel; filter op HF-banden en eigen continent.
-K index alleen een getal. Tussen 3 en vier oranje, vanaf 5 rood. Alle waarden mogen in dit kleurschema op basis van de drempel waarde.
+[DONE] zie hierboven.
 
 ─────────────────────────────────────────────────────────────────────
 Change Log (1.0)
 ─────────────────────────────────────────────────────────────────────
+· 2026-04-10 14:40 CEST — QTH lat/lon invoervelden in kaart-header (Enter/FocusOut
+               past kaart + propagatie direct aan). Bandschema tijdsas toont
+               lokale tijd (CET/CEST); zon-westwaarts bug gecorrigeerd.
+· 2026-04-10 14:36 CEST — 60m-band zonder *, K-index als enkel getal met kleur
+               (0–2 wit, 3–4 oranje, 5+ rood), K-melding-spinbox direct onder
+               K-index geplaatst, bijgewerkt-tijd toont QTH-lokale tijd.
 · 2026-04-10 09:20 CEST — Bandopenings-schema (heatmap 0–24 uur UTC per HF-band).
                X-flare detectie: M1+/X → SWF-waarschuwing in solar panel + tray.
                Auroraal absorptie-ovaal op kaart bij K≥4 (rood/oranje band).
@@ -384,7 +390,7 @@ def _band_cond(sd, band: str, time_of_day: str) -> str:
 _BANDS = [
     ("160m",    1.810, True),
     ("80m",     3.500, True),
-    ("60m*",    5.352, True),   # geregionaliseerde band
+    ("60m",    5.352, True),   # geregionaliseerde band (regionaal, licentie-afhankelijk)
     ("40m",     7.000, True),
     ("30m",    10.100, True),
     ("20m",    14.000, True),
@@ -402,7 +408,7 @@ _BANDS = [
 _BAND_FT8 = {
     "160m":  "1.840",
     "80m":   "3.573",
-    "60m*":  "5.357",
+    "60m":  "5.357",
     "40m":   "7.074",
     "30m":   "10.136",
     "20m":   "14.074",
@@ -420,7 +426,7 @@ _BAND_FT8 = {
 _BAND_MODES = {
     "160m":  "CW / FT8",
     "80m":   "CW / FT8",
-    "60m*":  "USB / FT8",
+    "60m":  "USB / FT8",
     "40m":   "SSB / FT8",
     "30m":   "CW / FT8",
     "20m":   "SSB / FT8",
@@ -437,7 +443,7 @@ _BAND_MODES = {
 
 # N = Novice (NL Basis) toegestaan, F = alleen Full (HAREC) licentie
 _BAND_LICENSE = {
-    "160m": "NF", "80m":  "NF", "60m*": "F",  "40m":  "NF",
+    "160m": "NF", "80m":  "NF", "60m": "F",  "40m":  "NF",
     "30m":  "F",  "20m":  "NF", "17m":  "F",  "15m":  "F",
     "12m":  "F",  "10m":  "NF", "6m":   "F",  "4m":   "F",
     "2m":   "NF", "70cm": "NF", "23cm": "F",
@@ -475,7 +481,7 @@ _HIST_COLS       = ["timestamp"] + _HIST_BAND_COLS + _HIST_SOLAR_COLS
 
 # Kleur per band in de historiekgrafiek
 _BAND_COLORS = {
-    "160m": "#9575CD", "80m":  "#5C6BC0", "60m*": "#42A5F5",
+    "160m": "#9575CD", "80m":  "#5C6BC0", "60m": "#42A5F5",
     "40m":  "#26C6DA", "30m":  "#26A69A", "20m":  "#66BB6A",
     "17m":  "#D4E157", "15m":  "#FFCA28", "12m":  "#FFA726",
     "10m":  "#EF5350", "6m":   "#EC407A",
@@ -870,7 +876,8 @@ class HAMIOSApp:
                         if tx and self._show_tips_var.get() else None)
             widget.bind("<Leave>", lambda *_, t=tt: t.hide())
 
-        self._solar_vars = {}
+        self._solar_vars     = {}
+        self._solar_val_lbls = {}   # key → Label widget (voor kleur-updates)
         for key, label in [
             ("sfi",      "Solar Flux (SFI)"),
             ("ssn",      "Sunspot Nr (SSN)"),
@@ -891,6 +898,19 @@ class HAMIOSApp:
                                bg=BG_PANEL, fg=TEXT_H1, anchor='w', cursor="question_arrow")
             val_lbl.pack(side=tk.LEFT)
             _bind_tip(val_lbl, key)
+            self._solar_val_lbls[key] = val_lbl
+
+            # K-index melding direct onder de K-index rij
+            if key == "k_index":
+                alert_row = tk.Frame(self._solar_frame, bg=BG_PANEL)
+                alert_row.pack(fill=tk.X, pady=(0, 2))
+                tk.Label(alert_row, text="  Melding K ≥", font=_font(8), bg=BG_PANEL,
+                         fg=TEXT_DIM).pack(side=tk.LEFT)
+                tk.Spinbox(alert_row, from_=1, to=9, width=2,
+                           textvariable=self._k_alert_var,
+                           command=self._save_cur_settings,
+                           bg=BG_SURFACE, fg=TEXT_H1, buttonbackground=BG_SURFACE,
+                           relief=tk.FLAT, font=_font(9)).pack(side=tk.LEFT, padx=(4, 0))
 
         tk.Frame(self._solar_frame, bg=BORDER, height=1).pack(fill=tk.X, pady=6)
 
@@ -913,19 +933,6 @@ class HAMIOSApp:
                                bg=BG_PANEL, fg=TEXT_DIM, width=6, anchor='w')
             ngt_lbl.pack(side=tk.LEFT)
             self._band_cond_labels[name] = (day_lbl, ngt_lbl, is_hf)
-
-        tk.Frame(self._solar_frame, bg=BORDER, height=1).pack(fill=tk.X, pady=6)
-
-        # K-index meldingsdrempel
-        alert_row = tk.Frame(self._solar_frame, bg=BG_PANEL)
-        alert_row.pack(fill=tk.X, pady=(0, 4))
-        tk.Label(alert_row, text="Melding K ≥", font=_font(8), bg=BG_PANEL,
-                 fg=TEXT_DIM).pack(side=tk.LEFT)
-        tk.Spinbox(alert_row, from_=1, to=9, width=2,
-                   textvariable=self._k_alert_var,
-                   command=self._save_cur_settings,
-                   bg=BG_SURFACE, fg=TEXT_H1, buttonbackground=BG_SURFACE,
-                   relief=tk.FLAT, font=_font(9)).pack(side=tk.LEFT, padx=(4, 0))
 
         tk.Frame(self._solar_frame, bg=BORDER, height=1).pack(fill=tk.X, pady=6)
         self._updated_var = tk.StringVar(value="")
@@ -964,6 +971,46 @@ class HAMIOSApp:
         _cb("Locator", self._show_locator_var)
         _cb("Maan",    self._show_moon_var)
         _cb("Zon",     self._show_sun_var)
+
+        # QTH lat/lon invoer
+        def _apply_qth(*_):
+            try:
+                lat = float(self._qth_lat_var.get().replace(",", "."))
+                lon = float(self._qth_lon_var.get().replace(",", "."))
+                lat = max(-90.0,  min(90.0,  lat))
+                lon = max(-180.0, min(180.0, lon))
+                self._qth_lat = lat
+                self._qth_lon = lon
+                self._qth_lat_var.set(f"{lat:.2f}")
+                self._qth_lon_var.set(f"{lon:.2f}")
+                self._save_cur_settings()
+                self._draw_map()
+                self._recalc_prop()
+            except ValueError:
+                pass
+
+        self._qth_lat_var = tk.StringVar(value=f"{self._qth_lat:.2f}")
+        self._qth_lon_var = tk.StringVar(value=f"{self._qth_lon:.2f}")
+
+        qth_row = tk.Frame(map_hdr, bg=BG_PANEL)
+        qth_row.pack(side=tk.LEFT, padx=(16, 0))
+        tk.Label(qth_row, text="QTH  Lat:", font=_font(9), bg=BG_PANEL,
+                 fg=TEXT_DIM).pack(side=tk.LEFT)
+        lat_e = tk.Entry(qth_row, textvariable=self._qth_lat_var, width=7,
+                         bg=BG_SURFACE, fg=TEXT_H1, insertbackground=TEXT_H1,
+                         relief=tk.FLAT, font=_font(9))
+        lat_e.pack(side=tk.LEFT, padx=(2, 6))
+        lat_e.bind("<Return>",    _apply_qth)
+        lat_e.bind("<FocusOut>",  _apply_qth)
+
+        tk.Label(qth_row, text="Lon:", font=_font(9), bg=BG_PANEL,
+                 fg=TEXT_DIM).pack(side=tk.LEFT)
+        lon_e = tk.Entry(qth_row, textvariable=self._qth_lon_var, width=8,
+                         bg=BG_SURFACE, fg=TEXT_H1, insertbackground=TEXT_H1,
+                         relief=tk.FLAT, font=_font(9))
+        lon_e.pack(side=tk.LEFT, padx=(2, 0))
+        lon_e.bind("<Return>",   _apply_qth)
+        lon_e.bind("<FocusOut>", _apply_qth)
 
         self._map_canvas = tk.Canvas(outer, height=400, bg="#1B3A5C",
                                      bd=0, highlightthickness=0)
@@ -1489,7 +1536,7 @@ class HAMIOSApp:
 
         hdr = tk.Frame(outer, bg=BG_PANEL)
         hdr.pack(fill=tk.X, padx=10, pady=(4, 2))
-        tk.Label(hdr, text="🕐  Bandopenings-schema (UTC, vandaag)",
+        tk.Label(hdr, text="🕐  Bandopenings-schema (lokale tijd, vandaag)",
                  font=_font(10, "bold"), bg=BG_PANEL, fg=ACCENT).pack(side=tk.LEFT)
 
         self._sched_canvas = tk.Canvas(outer, height=130, bg=BG_PANEL,
@@ -1524,28 +1571,35 @@ class HAMIOSApp:
         cell_w = max(1, (W - PAD_L - PAD_R) // n_hours)
         cell_h = max(1, (H - PAD_T - PAD_B) // n_bands)
 
-        # ── Uur-labels bovenaan ───────────────────────────────────────────
-        for hour in range(0, n_hours, 3):
-            lx = PAD_L + hour * cell_w + cell_w // 2
-            c.create_text(lx, PAD_T - 4, text=f"{hour:02d}",
+        # UTC-offset op basis van DST-instelling (CET=+1, CEST=+2)
+        utc_offset = 2 if self._dst_var.get() else 1
+        now_utc    = datetime.datetime.now(datetime.timezone.utc)
+        now_local_h = (now_utc.hour + utc_offset) % 24
+
+        # Actuele zonpositie eenmalig berekenen
+        sun_lat, sun_lon = _subsolar_point()
+        lat_r     = math.radians(self._qth_lat)
+        sun_lat_r = math.radians(sun_lat)
+
+        # ── Uur-labels bovenaan (lokale tijd) ────────────────────────────
+        for local_h in range(0, n_hours, 3):
+            lx = PAD_L + local_h * cell_w + cell_w // 2
+            c.create_text(lx, PAD_T - 4, text=f"{local_h:02d}",
                           fill=TEXT_DIM, font=("Segoe UI", 7), anchor='s')
 
         # ── Bereken propagatie per uur en per band ────────────────────────
-        now_utc = datetime.datetime.now(datetime.timezone.utc)
         for bi, (bname, _) in enumerate(hf_bands):
             cy = PAD_T + bi * cell_h
             # Bandnaam links
             c.create_text(PAD_L - 3, cy + cell_h // 2, text=bname,
                           fill=TEXT_DIM, font=("Segoe UI", 7), anchor='e')
-            for hour in range(n_hours):
-                # Schat dag/nacht voor dit uur op QTH
-                offset_h = hour - now_utc.hour
-                sun_lat, sun_lon = _subsolar_point()
-                # Zon-lon verschuiven naar het toekomst-uur
-                sun_lon_h = sun_lon + offset_h * 15
+            for local_h in range(n_hours):
+                # Lokale tijd → UTC
+                utc_h    = (local_h - utc_offset) % 24
+                # Zon-lon voor dit UTC-uur: zon beweegt westenwaarts 15°/uur
+                offset_h  = utc_h - now_utc.hour
+                sun_lon_h = sun_lon - offset_h * 15
                 sun_lon_h = ((sun_lon_h + 180) % 360) - 180
-                lat_r     = math.radians(self._qth_lat)
-                sun_lat_r = math.radians(sun_lat)
                 dlon_r    = math.radians(self._qth_lon - sun_lon_h)
                 cos_angle = (math.sin(lat_r) * math.sin(sun_lat_r) +
                              math.cos(lat_r) * math.cos(sun_lat_r) * math.cos(dlon_r))
@@ -1568,13 +1622,12 @@ class HAMIOSApp:
                 else:
                     fill = "#1A1C1F"   # gesloten (bijna zwart)
 
-                cx = PAD_L + hour * cell_w
+                cx = PAD_L + local_h * cell_w
                 c.create_rectangle(cx, cy, cx + cell_w - 1, cy + cell_h - 1,
                                    fill=fill, outline="")
 
-        # Markeer huidig uur
-        cur_h = now_utc.hour
-        lx    = PAD_L + cur_h * cell_w
+        # Markeer huidig lokaal uur
+        lx = PAD_L + now_local_h * cell_w
         c.create_rectangle(lx, PAD_T, lx + cell_w - 1, PAD_T + n_bands * cell_h - 1,
                            outline=ACCENT, width=1)
 
@@ -1859,9 +1912,18 @@ class HAMIOSApp:
         for key, var in self._solar_vars.items():
             var.set(data.get(key, "—"))
 
+        # K-index: alleen getal, kleur op drempelwaarde
         try:
             k = int(data.get("k_index", 0))
-            self._solar_vars["k_index"].set(f"{k}  {'█' * k}{'░' * (9 - k)}")
+            self._solar_vars["k_index"].set(str(k))
+            if k >= 5:
+                k_color = "#EF5350"   # rood
+            elif k >= 3:
+                k_color = "#FFA726"   # oranje
+            else:
+                k_color = TEXT_H1
+            if hasattr(self, "_solar_val_lbls"):
+                self._solar_val_lbls["k_index"].config(fg=k_color)
         except (ValueError, TypeError):
             pass
 
@@ -1869,8 +1931,9 @@ class HAMIOSApp:
             if key.startswith("band_"):
                 var.set(data.get(key, "—"))
 
-        upd = data.get("updated", "")
-        self._updated_var.set(f"Bijgewerkt: {upd}" if upd else "")
+        # Bijgewerkt: toon QTH-lokale tijd
+        local_now = datetime.datetime.now().strftime("%H:%M")
+        self._updated_var.set(f"Bijgewerkt: {local_now}")
 
         # ── X-flare detectie ──────────────────────────────────────────────────
         self._check_xflare(data.get("xray", ""))
