@@ -14,24 +14,21 @@ Dependencies:
 TODO
 ─────────────────────────────────────────────────────────────────────
 -> Layout
-[DONE] Graylijn (amber band langs terminator, ~1000 km breed) als toggleable overlay op kaart.
-[DONE] Groot-cirkel pad: linker muisklik → gele lijn QTH→bestemming + afstand/richting; rechts wist.
-Maak de lay-out scrollbaar zodat de app ook op kleinere schermen (bijv. 1080p laptops) volledig bruikbaar is zonder afkapping.
-Maak dat je kan zoomen en pannen in de map.
-[DONE] Tijdsas schema toont lokale tijd (CET/CEST); zonberekening gecorrigeerd (zon beweegt westenwaarts).
-IARU regio-overlay moet zijn ITU regio's (R1/R2/R3 gekleurde banden + grenslijn, toggleable).
-Verhuis de K index selectie onder de K index display in het Solar / Ionosfeer frame.
-Verander de bijgewerkt tijd naar de QTH tijd.
-[DONE] 60m-band zonder *, K-index kleurcodering, melding onder K-index, bijgewerkt-tijd naar QTH-tijd.
+Maak een herindeling van het scherm. 
+Links de worldmap (vast formaat). Daarnaast, band verloop, band openingschema en HF band betrouwbaarheid. 
+Deze drie onder elkaar en bepaald gelijk de hoogte (en breedte van de worldmap). 
+Naast die drie de solor/ionisfeer tabel. 
+Onderaan de rest van de informatie (DX en Advies)
 
 -> Refresh en data
-[DONE] Lat/lon invoervelden toegevoegd in de kaart-header naast de checkboxes.
-[DONE] Live DX Spots van dxwatch.com: HF-filter, eigen-continent toggle, Canvas-tabel met band/DX/freq/spotter/comment, refresh elke 2 min.
-[DONE] K-index kleurcodering (zie prio 1).
+
 
 ─────────────────────────────────────────────────────────────────────
 Change Log (1.0)
 ─────────────────────────────────────────────────────────────────────
+· 2026-04-10 21:32 CEST — Nieuwe schermindeling: Links Wereldkaart (vast 540px),
+               midden Band Verloop + Schema + HF Betrouwbaarheid, rechts Solar,
+               onderaan DX Spots + Advies.
 · 2026-04-10 21:22 CEST — Continent-polygonen (_CONTINENTS) volledig verwijderd.
                Fallback bij ontbrekende NASA-kaart toont nu alleen oceaan + melding.
 · 2026-04-10 15:16 CEST — Wereldkaart behoudt 2:1 verhouding bij venster-resize.
@@ -931,18 +928,16 @@ class HAMIOSApp:
         tk.Label(hdr, text="Auto:", font=_font(9), bg=BG_PANEL,
                  fg=TEXT_DIM).pack(side=tk.RIGHT, padx=(0, 2))
 
-        # Wereldkaart
-        self._build_map_panel(self.root)
-
-        # Advies-panel (onderaan, vóór body gedefinieerd zodat pack-volgorde klopt)
-        self._build_advice_panel(self.root)
-
-        # Hoofd body — 3 kolommen: Propagatie | Grafieken/Schema/DX | Solar
+        # Hoofd body — 3 kolommen: Kaart | Panelen | Solar  +  onderaan DX + Advies
         body = tk.Frame(self.root, bg=BG_ROOT)
         body.pack(fill=tk.BOTH, expand=True, padx=10, pady=(0, 4))
 
-        # Rechter kolom: solar panel (eerst pack zodat hij niet wordt verdrongen)
-        solar_col = tk.Frame(body, bg=BG_PANEL, width=210)
+        # Bovenste rij: Kaart | Hist/Schema/Prop | Solar
+        top_row = tk.Frame(body, bg=BG_ROOT)
+        top_row.pack(fill=tk.BOTH, expand=True)
+
+        # Solar rechts (eerst pack zodat hij niet wordt verdrongen)
+        solar_col = tk.Frame(top_row, bg=BG_PANEL, width=210)
         solar_col.pack(side=tk.RIGHT, fill=tk.Y, padx=(10, 0))
         solar_col.pack_propagate(False)
 
@@ -1060,24 +1055,29 @@ class HAMIOSApp:
                                     wraplength=200, justify='left')
         self._xflare_lbl.pack(anchor='w', pady=(4, 0))
 
-        # ── Middelste kolom: grafieken + schema + DX spots ────────────────────
-        mid = tk.Frame(body, bg=BG_ROOT)
-        mid.pack(side=tk.RIGHT, fill=tk.BOTH, expand=True, padx=(10, 0))
+        # ── Kaart links (vast formaat 540px breed → canvas 270px hoog via 2:1) ──
+        map_col = tk.Frame(top_row, bg=BG_ROOT, width=540)
+        map_col.pack(side=tk.LEFT, fill=tk.Y)
+        map_col.pack_propagate(False)
+        self._build_map_panel(map_col)
 
+        # ── Midden: Band Verloop + Schema + HF Betrouwbaarheid ───────────────
+        mid = tk.Frame(top_row, bg=BG_ROOT)
+        mid.pack(side=tk.LEFT, fill=tk.BOTH, expand=True, padx=(10, 0))
         self._build_hist_panel(mid)
         self._build_schedule_panel(mid)
-        self._build_dx_panel(mid)
+        self._build_prop_panel(mid)
 
-        # ── Linker kolom: alleen HF Band Betrouwbaarheid ─────────────────────
-        left = tk.Frame(body, bg=BG_ROOT)
-        left.pack(side=tk.LEFT, fill=tk.BOTH)
-
-        self._build_prop_panel(left)
+        # ── Onderaan: DX Spots + Advies ───────────────────────────────────────
+        bottom_row = tk.Frame(body, bg=BG_ROOT)
+        bottom_row.pack(fill=tk.X, pady=(6, 0))
+        self._build_dx_panel(bottom_row)
+        self._build_advice_panel(bottom_row)
 
     # ── Wereldkaart panel ─────────────────────────────────────────────────────
     def _build_map_panel(self, parent):
         outer = tk.Frame(parent, bg=BG_PANEL)
-        outer.pack(fill=tk.X, padx=10, pady=(6, 0))
+        outer.pack(fill=tk.BOTH, expand=True, pady=(0, 0))
         tk.Frame(outer, bg=ACCENT, height=2).pack(fill=tk.X)
 
         map_hdr = tk.Frame(outer, bg=BG_PANEL)
@@ -1368,7 +1368,7 @@ class HAMIOSApp:
     # ── HF Propagatie panel ───────────────────────────────────────────────────
     def _build_prop_panel(self, parent):
         outer = tk.Frame(parent, bg=BG_PANEL)
-        outer.pack(fill=tk.BOTH, expand=True)
+        outer.pack(fill=tk.X, pady=(6, 0))
 
         tk.Frame(outer, bg=ACCENT, height=2).pack(fill=tk.X)
         tk.Label(outer, text="📶  HF Band Betrouwbaarheid",
@@ -1952,7 +1952,7 @@ class HAMIOSApp:
     # ── Advies panel ─────────────────────────────────────────────────────────
     def _build_advice_panel(self, parent):
         outer = tk.Frame(parent, bg=BG_PANEL)
-        outer.pack(side=tk.BOTTOM, fill=tk.X, padx=10, pady=(0, 8))
+        outer.pack(fill=tk.X, pady=(6, 0))
         tk.Frame(outer, bg=ACCENT, height=2).pack(fill=tk.X)
         tk.Label(outer, text="💡  Advies",
                  font=_font(10, "bold"), bg=BG_PANEL, fg=ACCENT,
