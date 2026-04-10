@@ -32,6 +32,8 @@ Verander de bijgewerkt tijd naar de QTH tijd.
 ─────────────────────────────────────────────────────────────────────
 Change Log (1.0)
 ─────────────────────────────────────────────────────────────────────
+· 2026-04-10 15:16 CEST — Wereldkaart behoudt 2:1 verhouding bij venster-resize.
+               3-koloms layout: Propagatie | Grafieken+Schema+DX | Solar.
 · 2026-04-10 14:54 CEST — Live DX Spots panel: dxwatch.com JSON-feed, HF-filter,
                eigen-continent toggle (lat/lon → continent), Canvas-tabel
                (UTC/Band/DX/MHz/Spotter/Comment), refresh elke 2 min + countdown.
@@ -1204,7 +1206,7 @@ class HAMIOSApp:
                                      bd=0, highlightthickness=0)
         self._map_canvas.pack(fill=tk.X)
         self._map_photo = None
-        self._map_canvas.bind("<Configure>",  lambda *_: self._draw_map())
+        self._map_canvas.bind("<Configure>",  self._on_map_resize)
         self._map_canvas.bind("<Button-1>",   self._on_map_click)
         self._map_canvas.bind("<Button-3>",   self._on_map_clear)
 
@@ -1213,6 +1215,13 @@ class HAMIOSApp:
         tk.Label(outer, textvariable=self._gc_info_var,
                  font=_font(9), bg=BG_PANEL, fg=ACCENT,
                  anchor='w').pack(fill=tk.X, padx=10, pady=(0, 4))
+
+    def _on_map_resize(self, event):
+        """Handhaaf 2:1 verhouding (equirectangulair) bij breedte-wijziging."""
+        new_h = max(100, event.width // 2)
+        if self._map_canvas.winfo_height() != new_h:
+            self._map_canvas.config(height=new_h)
+        self._draw_map()
 
     def _redraw_map(self):
         """Cache ongeldig maken en kaart opnieuw tekenen (na download)."""
