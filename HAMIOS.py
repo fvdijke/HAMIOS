@@ -26,6 +26,10 @@ Onderaan de rest van de informatie (DX en Advies)
 ─────────────────────────────────────────────────────────────────────
 Change Log (1.0)
 ─────────────────────────────────────────────────────────────────────
+· 2026-04-10 21:36 CEST — Fix DX Spots: s-dict itereerde over keys i.p.v. values;
+               veldindices gecorrigeerd (row[1]=freq, row[2]=spotter, row[4]=tijd);
+               tijdparsing "HHMMz DD Mon" → "HH:MM"; html.unescape voor comments;
+               _callsign_continent() toegevoegd voor sp_cont.
 · 2026-04-10 21:32 CEST — Nieuwe schermindeling: Links Wereldkaart (vast 540px),
                midden Band Verloop + Schema + HF Betrouwbaarheid, rechts Solar,
                onderaan DX Spots + Advies.
@@ -595,42 +599,77 @@ def _qth_continent(lat: float, lon: float) -> str:
     return "OC"
 
 
+def _callsign_continent(cs: str) -> str:
+    """Bepaal continent o.b.v. callsign prefix (2-teken lookup)."""
+    cs = cs.upper().split("/")[0]
+    p2 = cs[:2]
+    _EU = {"OE","OH","OK","OM","ON","OZ","PA","PB","PC","PD","PE","PF","PG","PH",
+           "SM","SP","SQ","SV","SX","HA","HB","LX","LY","LZ","LA","EA","EB","EC",
+           "ER","ES","EU","EV","EW","UA","UB","UC","UD","UE","UF","UG","UR","US",
+           "UT","UU","UV","UW","UX","UY","UZ","RA","RB","RC","RD","RE","RF","RG",
+           "RH","RI","RJ","RK","RL","RM","RN","RO","RP","RQ","RR","RS","RT","RU",
+           "RV","RW","RX","RY","RZ","DL","DK","DA","DB","DC","DD","DE","DF","DG",
+           "DH","DI","DJ","DM","DN","DO","DP","DQ","DR","YL","YO","YT","YU","Z3",
+           "ZA","TF","T7","T9","TA","TB","TC","TK","S5","HV","IS","IT","IU","3A",
+           "EK","CS","CT","CU","F","G","I","M"}
+    _NA = {"VE","VY","KH","KL","XE","XF","XG","YN","HH","HI","HP","HR","HT","HQ",
+           "TI","V3","VP9"}
+    _SA = {"CE","CP","CX","HC","HJ","HK","LU","LV","LW","PY","PP","PQ","PR","PS",
+           "PT","PU","PV","PW","PX","YV","YW","ZP","ZY","ZZ"}
+    _AS = {"JA","JD","HL","DS","DT","VU","VT","BY","BA","BD","BG","BH","BI","BJ",
+           "UN","UO","UP","UQ","4J","4K","4L","AP","9N","9V","HS","XW","XZ","7Z",
+           "HZ","A4","A6","A7","A9","OD","YI","YK","4X","4Z","EP","EQ"}
+    _OC = {"VK","ZL","ZM","ZK","YB","YC","YD","YE","YF","YG","YH","DU","DV","DW",
+           "DX","DY","DZ","V6","V7","T8"}
+    if p2 in _EU or cs[0] in "FGIM": return "EU"
+    if p2 in _NA or cs[0] in "KNW":  return "NA"
+    if p2 in _SA:                     return "SA"
+    if p2 in _AS or cs[0] == "J":    return "AS"
+    if p2 in _OC:                     return "OC"
+    return ""
+
+
 def _fetch_dx_spots() -> list:
     """Haal DX spots op van dxwatch.com (JSON-feed).
 
-    Spot-velden: [time_utc, dx_call, freq_khz, spotter, comment,
-                  dx_cont, sp_cont, dx_cqz, sp_cqz, ...]
+    API-formaat s = {id: [dx_call, freq_khz, spotter, comment,
+                           "HHMMz DD Mon", ?, ?, flag], ...}
     Geeft alleen HF-spots terug als lijst van dicts.
     """
     try:
+        import html as _html
         req = urllib.request.Request(
             DX_CLUSTER_URL, headers={"User-Agent": "HAMIOS/1.0"})
         with urllib.request.urlopen(req, timeout=10) as r:
             raw = json.loads(r.read().decode("utf-8", errors="replace"))
+        s_data = raw.get("s", {})
+        rows = list(s_data.values()) if isinstance(s_data, dict) else list(s_data)
         spots = []
-        for row in raw.get("s", []):
-            if len(row) < 4:
+        for row in rows:
+            if len(row) < 2:
                 continue
             try:
-                freq_khz = float(row[2])
+                freq_khz = float(row[1])
             except (ValueError, TypeError):
                 continue
             band = _freq_khz_to_band(freq_khz)
             if not band:
                 continue
-            time_str = str(row[0]).strip()
-            if len(time_str) == 4 and time_str.isdigit():
-                time_str = time_str[:2] + ":" + time_str[2:]
+            # Tijd: "1928z 10 Apr" → "19:28"
+            time_raw = str(row[4]).strip() if len(row) > 4 else ""
+            digits   = time_raw[:4]
+            time_str = f"{digits[:2]}:{digits[2:]}" if len(digits) == 4 and digits.isdigit() else "—"
+            spotter  = str(row[2]).strip().upper() if len(row) > 2 else ""
             spots.append({
-                "time":     time_str[:5],
-                "dx":       str(row[1]).strip().upper(),
+                "time":     time_str,
+                "dx":       str(row[0]).strip().upper(),
                 "freq_mhz": f"{freq_khz / 1000:.3f}",
                 "band":     band,
-                "spotter":  str(row[3]).strip().upper(),
-                "comment":  str(row[4]).strip() if len(row) > 4 else "",
-                "dx_cont":  str(row[5]).strip().upper() if len(row) > 5 else "",
-                "sp_cont":  str(row[6]).strip().upper() if len(row) > 6 else "",
+                "spotter":  spotter,
+                "comment":  _html.unescape(str(row[3]).strip()) if len(row) > 3 else "",
+                "sp_cont":  _callsign_continent(spotter),
             })
+        spots.reverse()   # nieuwste eerst (hoogste ID = recentst)
         return spots
     except Exception:
         return []
