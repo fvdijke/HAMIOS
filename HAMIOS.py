@@ -898,7 +898,7 @@ class HAMIOSApp:
                 lbl_d.config(fg=color     if active else TEXT_DIM)
                 lbl_n.config(fg=TEXT_BODY if active else TEXT_DIM,
                              font=_font(8, "bold") if active else _font(8))
-        self._center_window(980, 1100)
+        self._center_window(1400, 900)
         self._tick_clock()
         self._start_tray()
         self.root.protocol("WM_DELETE_WINDOW", self._on_close)
@@ -995,20 +995,11 @@ class HAMIOSApp:
         # Advies-panel (onderaan, vóór body gedefinieerd zodat pack-volgorde klopt)
         self._build_advice_panel(self.root)
 
-        # Hoofd body
+        # Hoofd body — 3 kolommen: Propagatie | Grafieken/Schema/DX | Solar
         body = tk.Frame(self.root, bg=BG_ROOT)
         body.pack(fill=tk.BOTH, expand=True, padx=10, pady=(0, 4))
 
-        # Linker kolom: propagatie panel (scrollable)
-        left = tk.Frame(body, bg=BG_ROOT)
-        left.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
-
-        self._build_prop_panel(left)
-        self._build_hist_panel(left)
-        self._build_schedule_panel(left)
-        self._build_dx_panel(left)
-
-        # Rechter kolom: solar panel
+        # Rechter kolom: solar panel (eerst pack zodat hij niet wordt verdrongen)
         solar_col = tk.Frame(body, bg=BG_PANEL, width=210)
         solar_col.pack(side=tk.RIGHT, fill=tk.Y, padx=(10, 0))
         solar_col.pack_propagate(False)
@@ -1126,6 +1117,20 @@ class HAMIOSApp:
                                     font=_font(8, "bold"), bg=BG_PANEL, fg="#FF7043",
                                     wraplength=200, justify='left')
         self._xflare_lbl.pack(anchor='w', pady=(4, 0))
+
+        # ── Middelste kolom: grafieken + schema + DX spots ────────────────────
+        mid = tk.Frame(body, bg=BG_ROOT)
+        mid.pack(side=tk.RIGHT, fill=tk.BOTH, expand=True, padx=(10, 0))
+
+        self._build_hist_panel(mid)
+        self._build_schedule_panel(mid)
+        self._build_dx_panel(mid)
+
+        # ── Linker kolom: alleen HF Band Betrouwbaarheid ─────────────────────
+        left = tk.Frame(body, bg=BG_ROOT)
+        left.pack(side=tk.LEFT, fill=tk.BOTH)
+
+        self._build_prop_panel(left)
 
     # ── Wereldkaart panel ─────────────────────────────────────────────────────
     def _build_map_panel(self, parent):
