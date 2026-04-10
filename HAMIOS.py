@@ -14,11 +14,7 @@ Dependencies:
 TODO
 ─────────────────────────────────────────────────────────────────────
 -> Layout
-Maak een herindeling van het scherm. 
-Links de worldmap (vast formaat). Daarnaast, band verloop, band openingschema en HF band betrouwbaarheid. 
-Deze drie onder elkaar en bepaald gelijk de hoogte (en breedte van de worldmap). 
-Naast die drie de solor/ionisfeer tabel. 
-Onderaan de rest van de informatie (DX en Advies)
+
 
 -> Refresh en data
 
@@ -26,6 +22,8 @@ Onderaan de rest van de informatie (DX en Advies)
 ─────────────────────────────────────────────────────────────────────
 Change Log (1.0)
 ─────────────────────────────────────────────────────────────────────
+· 2026-04-10 21:45 CEST — Wereldkaart vergroot over 2 kolommen; bandopenings-schema
+               verplaatst tussen kaart en advies (linker sub-kolom).
 · 2026-04-10 21:39 CEST — Advies verplaatst naar linker kolom onder de wereldkaart.
 · 2026-04-10 21:36 CEST — Fix DX Spots: s-dict itereerde over keys i.p.v. values;
                veldindices gecorrigeerd (row[1]=freq, row[2]=spotter, row[4]=tijd);
@@ -1095,19 +1093,27 @@ class HAMIOSApp:
                                     wraplength=200, justify='left')
         self._xflare_lbl.pack(anchor='w', pady=(4, 0))
 
-        # ── Kaart links (vast formaat 540px breed → canvas 270px hoog via 2:1) ──
-        map_col = tk.Frame(top_row, bg=BG_ROOT, width=540)
-        map_col.pack(side=tk.LEFT, fill=tk.Y)
-        map_col.pack_propagate(False)
-        self._build_map_panel(map_col)
-        self._build_advice_panel(map_col)
+        # ── Gecombineerde linker+midden zone (kaart overspant beide kolommen) ──
+        combined = tk.Frame(top_row, bg=BG_ROOT)
+        combined.pack(side=tk.LEFT, fill=tk.BOTH, expand=True, padx=(0, 10))
 
-        # ── Midden: Band Verloop + Schema + HF Betrouwbaarheid ───────────────
-        mid = tk.Frame(top_row, bg=BG_ROOT)
-        mid.pack(side=tk.LEFT, fill=tk.BOTH, expand=True, padx=(10, 0))
-        self._build_hist_panel(mid)
-        self._build_schedule_panel(mid)
-        self._build_prop_panel(mid)
+        # Kaart bovenaan, volledige breedte van combined
+        self._build_map_panel(combined)
+
+        # Sub-rij onder de kaart: Schema+Advies links  |  Band Verloop+Prop rechts
+        sub_row = tk.Frame(combined, bg=BG_ROOT)
+        sub_row.pack(fill=tk.BOTH, expand=True, pady=(6, 0))
+
+        left_sub = tk.Frame(sub_row, bg=BG_ROOT, width=540)
+        left_sub.pack(side=tk.LEFT, fill=tk.Y)
+        left_sub.pack_propagate(False)
+        self._build_schedule_panel(left_sub)
+        self._build_advice_panel(left_sub)
+
+        right_sub = tk.Frame(sub_row, bg=BG_ROOT)
+        right_sub.pack(side=tk.LEFT, fill=tk.BOTH, expand=True, padx=(10, 0))
+        self._build_hist_panel(right_sub)
+        self._build_prop_panel(right_sub)
 
         # ── Onderaan: DX Spots ────────────────────────────────────────────────
         bottom_row = tk.Frame(body, bg=BG_ROOT)
