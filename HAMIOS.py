@@ -22,6 +22,7 @@ TODO
 ─────────────────────────────────────────────────────────────────────
 Change Log (1.0)
 ─────────────────────────────────────────────────────────────────────
+· 2026-04-10 21:46 CEST — DX Spots boven Advies geplaatst (linker sub-kolom).
 · 2026-04-10 21:45 CEST — Wereldkaart vergroot over 2 kolommen; bandopenings-schema
                verplaatst tussen kaart en advies (linker sub-kolom).
 · 2026-04-10 21:39 CEST — Advies verplaatst naar linker kolom onder de wereldkaart.
@@ -1108,17 +1109,13 @@ class HAMIOSApp:
         left_sub.pack(side=tk.LEFT, fill=tk.Y)
         left_sub.pack_propagate(False)
         self._build_schedule_panel(left_sub)
+        self._build_dx_panel(left_sub)
         self._build_advice_panel(left_sub)
 
         right_sub = tk.Frame(sub_row, bg=BG_ROOT)
         right_sub.pack(side=tk.LEFT, fill=tk.BOTH, expand=True, padx=(10, 0))
         self._build_hist_panel(right_sub)
         self._build_prop_panel(right_sub)
-
-        # ── Onderaan: DX Spots ────────────────────────────────────────────────
-        bottom_row = tk.Frame(body, bg=BG_ROOT)
-        bottom_row.pack(fill=tk.X, pady=(6, 0))
-        self._build_dx_panel(bottom_row)
 
     # ── Wereldkaart panel ─────────────────────────────────────────────────────
     def _build_map_panel(self, parent):
