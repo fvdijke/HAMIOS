@@ -14,24 +14,31 @@ Dependencies:
 TODO
 ─────────────────────────────────────────────────────────────────────
 -> Layout
-Toon de grijslijn (graylijn) als aparte markering op de kaart; dit is de overgangszone tussen dag en nacht (~1000 km breed) die de beste DX-propagatie geeft — teken deze als een gekleurde band over de terminator. Moet ook selecteerbaar zijn. Dus aan of uit.
-Voeg een groot-cirkel pad toe op de kaart: de gebruiker klikt op een bestemmingslocatie, de kortste route (great circle) wordt als lijn getekend en de afstand + richting (heading) worden getoond.
+[DONE] Graylijn (amber band langs terminator, ~1000 km breed) als toggleable overlay op kaart.
+[DONE] Groot-cirkel pad: linker muisklik → gele lijn QTH→bestemming + afstand/richting; rechts wist.
 Maak de lay-out scrollbaar zodat de app ook op kleinere schermen (bijv. 1080p laptops) volledig bruikbaar is zonder afkapping.
 Maak dat je kan zoomen en pannen in de map.
 [DONE] Tijdsas schema toont lokale tijd (CET/CEST); zonberekening gecorrigeerd (zon beweegt westenwaarts).
-Maak ook een selecteerbare overlay voor de IARU regio.
+IARU regio-overlay moet zijn ITU regio's (R1/R2/R3 gekleurde banden + grenslijn, toggleable).
 Verhuis de K index selectie onder de K index display in het Solar / Ionosfeer frame.
 Verander de bijgewerkt tijd naar de QTH tijd.
 [DONE] 60m-band zonder *, K-index kleurcodering, melding onder K-index, bijgewerkt-tijd naar QTH-tijd.
 
 -> Refresh en data
 [DONE] Lat/lon invoervelden toegevoegd in de kaart-header naast de checkboxes.
-Haal live DX-spots op van een DX-cluster (bijv. dxwatch.com of cluster.dx.to) en toon de meest recente spots per band in een klein paneel; filter op HF-banden en eigen continent.
-[DONE] zie hierboven.
+[DONE] Live DX Spots van dxwatch.com: HF-filter, eigen-continent toggle, Canvas-tabel met band/DX/freq/spotter/comment, refresh elke 2 min.
+[DONE] K-index kleurcodering (zie prio 1).
 
 ─────────────────────────────────────────────────────────────────────
 Change Log (1.0)
 ─────────────────────────────────────────────────────────────────────
+· 2026-04-10 14:54 CEST — Live DX Spots panel: dxwatch.com JSON-feed, HF-filter,
+               eigen-continent toggle (lat/lon → continent), Canvas-tabel
+               (UTC/Band/DX/MHz/Spotter/Comment), refresh elke 2 min + countdown.
+· 2026-04-10 14:46 CEST — Graylijn (amber terminator-band) als toggleable overlay.
+               IARU regio-overlay R1/R2/R3 (gekleurde banden + grenslijn).
+               Groot-cirkel pad: klik op kaart → gele lijn + afstand/richting;
+               rechter muisklik wist het pad.
 · 2026-04-10 14:40 CEST — QTH lat/lon invoervelden in kaart-header (Enter/FocusOut
                past kaart + propagatie direct aan). Bandschema tijdsas toont
                lokale tijd (CET/CEST); zon-westwaarts bug gecorrigeerd.
@@ -91,6 +98,7 @@ Change Log (1.0)
 
 import configparser
 import csv
+import json
 import math
 import os
 import sys
@@ -298,6 +306,73 @@ def _night_mask(sun_lat: float, sun_lon: float, W: int, H: int) -> "Image":
     return img
 
 
+def _graylijn_mask(sun_lat: float, sun_lon: float, W: int, H: int) -> "Image":
+    """Goudgele band langs de terminator (graylijn, ~9° breed = ±~1000 km)."""
+    HALF  = 0.155          # cos-eenheden breedte halve band (~9°)
+    GR, GG, GB = 255, 200, 60   # amber/goud
+
+    slr     = math.radians(sun_lat)
+    slon    = math.radians(sun_lon)
+    sin_sun = math.sin(slr)
+    cos_sun = math.cos(slr)
+    cos_dlon = [math.cos(math.radians(x * 360 / W - 180) - slon)
+                for x in range(W)]
+
+    img = Image.new("RGBA", (W, H), (0, 0, 0, 0))
+    px  = img.load()
+    for y in range(H):
+        lat_r     = math.radians(90 - y * 180 / H)
+        k         = sin_sun * math.sin(lat_r)
+        cos_lat_k = cos_sun * math.cos(lat_r)
+        for x in range(W):
+            ca = abs(k + cos_lat_k * cos_dlon[x])
+            if ca < HALF:
+                alpha = int(110 * (1 - ca / HALF))
+                px[x, y] = (GR, GG, GB, alpha)
+    return img
+
+
+def _great_circle_pts(lat1, lon1, lat2, lon2, n=180):
+    """Geef lijst van (lat, lon) langs de groot-cirkel van punt 1 naar punt 2."""
+    lat1r, lon1r = math.radians(lat1), math.radians(lon1)
+    lat2r, lon2r = math.radians(lat2), math.radians(lon2)
+    d = math.acos(max(-1.0, min(1.0,
+        math.sin(lat1r)*math.sin(lat2r) +
+        math.cos(lat1r)*math.cos(lat2r)*math.cos(lon2r - lon1r))))
+    if d < 1e-9:
+        return [(lat1, lon1)]
+    pts = []
+    for i in range(n + 1):
+        f = i / n
+        A = math.sin((1 - f) * d) / math.sin(d)
+        B = math.sin(f * d)       / math.sin(d)
+        x = A*math.cos(lat1r)*math.cos(lon1r) + B*math.cos(lat2r)*math.cos(lon2r)
+        y = A*math.cos(lat1r)*math.sin(lon1r) + B*math.cos(lat2r)*math.sin(lon2r)
+        z = A*math.sin(lat1r)                  + B*math.sin(lat2r)
+        pts.append((math.degrees(math.atan2(z, math.sqrt(x*x + y*y))),
+                    math.degrees(math.atan2(y, x))))
+    return pts
+
+
+def _haversine_km(lat1, lon1, lat2, lon2) -> float:
+    R = 6371.0
+    dlat = math.radians(lat2 - lat1)
+    dlon = math.radians(lon2 - lon1)
+    a = (math.sin(dlat / 2)**2 +
+         math.cos(math.radians(lat1)) * math.cos(math.radians(lat2)) *
+         math.sin(dlon / 2)**2)
+    return 2 * R * math.asin(math.sqrt(a))
+
+
+def _bearing_deg(lat1, lon1, lat2, lon2) -> float:
+    lat1r, lat2r = math.radians(lat1), math.radians(lat2)
+    dlon = math.radians(lon2 - lon1)
+    x = math.sin(dlon) * math.cos(lat2r)
+    y = (math.cos(lat1r) * math.sin(lat2r) -
+         math.sin(lat1r) * math.cos(lat2r) * math.cos(dlon))
+    return (math.degrees(math.atan2(x, y)) + 360) % 360
+
+
 # ── Font helper ────────────────────────────────────────────────────────────────
 def _font(size=10, weight="normal"):
     return tkfont.Font(family="Segoe UI", size=size, weight=weight)
@@ -319,6 +394,8 @@ def _load_settings() -> dict:
         "show_sun":      cfg.getboolean("Map",   "show_sun",       fallback=True),
         "show_moon":     cfg.getboolean("Map",   "show_moon",      fallback=True),
         "show_locator":  cfg.getboolean("Map",   "show_locator",   fallback=False),
+        "show_graylijn": cfg.getboolean("Map",   "show_graylijn",  fallback=True),
+        "show_iaru":     cfg.getboolean("Map",   "show_iaru",      fallback=False),
         "hist_range":    cfg.get       ("Graph", "hist_range",     fallback="Uren"),
         "hist_sel":      set(hist_sel_raw.split(",")) - {""} if hist_sel_raw else set(),
         "k_alert":       cfg.getint   ("Alerts","k_alert",        fallback=4),
@@ -330,6 +407,8 @@ def _save_settings(lat: float, lon: float, refresh: str,
                    dst: bool = True, show_tips: bool = True,
                    show_sun: bool = True, show_moon: bool = True,
                    show_locator: bool = False,
+                   show_graylijn: bool = True,
+                   show_iaru: bool = False,
                    hist_range: str = "Uren",
                    hist_sel: set = None,
                    k_alert: int = 4) -> None:
@@ -339,7 +418,9 @@ def _save_settings(lat: float, lon: float, refresh: str,
                     "antenna": antenna, "dst": str(dst),
                     "show_tips": str(show_tips)}
     cfg["Map"]   = {"show_sun": str(show_sun), "show_moon": str(show_moon),
-                    "show_locator": str(show_locator)}
+                    "show_locator": str(show_locator),
+                    "show_graylijn": str(show_graylijn),
+                    "show_iaru": str(show_iaru)}
     cfg["Graph"]  = {"hist_range": hist_range,
                      "selected_bands": ",".join(sorted(hist_sel)) if hist_sel else ""}
     cfg["Alerts"] = {"k_alert": str(k_alert)}
@@ -534,6 +615,88 @@ def _calc_propagation(sfi: float, ssn: float, k_index: float,
     return band_pct, round(muf, 1), round(luf, 1)
 
 
+# ── DX Cluster ────────────────────────────────────────────────────────────────
+DX_CLUSTER_URL    = "https://dxwatch.com/dxsd1/s.php?s=0&r=30&cdxc=0"
+DX_REFRESH_SECS   = 120   # elke 2 minuten
+
+# HF-band grenzen in kHz voor spot-filtering
+_BAND_RANGES_KHZ = [
+    ("160m",  1800,  2000),
+    ("80m",   3500,  4000),
+    ("60m",   5351,  5367),
+    ("40m",   7000,  7300),
+    ("30m",  10100, 10150),
+    ("20m",  14000, 14350),
+    ("17m",  18068, 18168),
+    ("15m",  21000, 21450),
+    ("12m",  24890, 24990),
+    ("10m",  28000, 29700),
+    ("6m",   50000, 54000),
+]
+
+def _freq_khz_to_band(freq_khz: float) -> str:
+    for name, lo, hi in _BAND_RANGES_KHZ:
+        if lo <= freq_khz <= hi:
+            return name
+    return ""
+
+
+def _qth_continent(lat: float, lon: float) -> str:
+    """Bepaal continent op basis van lat/lon (eenvoudige bounding-box methode)."""
+    if lat > 34 and -30 <= lon <= 50:
+        return "EU"
+    if lat > 10 and -170 <= lon <= -30:
+        return "NA"
+    if lat <= 10 and -82 <= lon <= -34:
+        return "SA"
+    if -38 <= lat <= 38 and -20 <= lon <= 55:
+        return "AF"
+    if lat >= -12 and 25 <= lon <= 180:
+        return "AS"
+    return "OC"
+
+
+def _fetch_dx_spots() -> list:
+    """Haal DX spots op van dxwatch.com (JSON-feed).
+
+    Spot-velden: [time_utc, dx_call, freq_khz, spotter, comment,
+                  dx_cont, sp_cont, dx_cqz, sp_cqz, ...]
+    Geeft alleen HF-spots terug als lijst van dicts.
+    """
+    try:
+        req = urllib.request.Request(
+            DX_CLUSTER_URL, headers={"User-Agent": "HAMIOS/1.0"})
+        with urllib.request.urlopen(req, timeout=10) as r:
+            raw = json.loads(r.read().decode("utf-8", errors="replace"))
+        spots = []
+        for row in raw.get("s", []):
+            if len(row) < 4:
+                continue
+            try:
+                freq_khz = float(row[2])
+            except (ValueError, TypeError):
+                continue
+            band = _freq_khz_to_band(freq_khz)
+            if not band:
+                continue
+            time_str = str(row[0]).strip()
+            if len(time_str) == 4 and time_str.isdigit():
+                time_str = time_str[:2] + ":" + time_str[2:]
+            spots.append({
+                "time":     time_str[:5],
+                "dx":       str(row[1]).strip().upper(),
+                "freq_mhz": f"{freq_khz / 1000:.3f}",
+                "band":     band,
+                "spotter":  str(row[3]).strip().upper(),
+                "comment":  str(row[4]).strip() if len(row) > 4 else "",
+                "dx_cont":  str(row[5]).strip().upper() if len(row) > 5 else "",
+                "sp_cont":  str(row[6]).strip().upper() if len(row) > 6 else "",
+            })
+        return spots
+    except Exception:
+        return []
+
+
 # ── Kaart downloaden ──────────────────────────────────────────────────────────
 def _fetch_basemap(callback=None) -> None:
     """Download NASA equirectangulaire kaart naar MAP_FILE (achtergrond-thread)."""
@@ -710,6 +873,9 @@ class HAMIOSApp:
         self._show_sun_var      = tk.BooleanVar(value=s["show_sun"])
         self._show_moon_var     = tk.BooleanVar(value=s["show_moon"])
         self._show_locator_var  = tk.BooleanVar(value=s["show_locator"])
+        self._show_graylijn_var = tk.BooleanVar(value=s["show_graylijn"])
+        self._show_iaru_var     = tk.BooleanVar(value=s["show_iaru"])
+        self._gc_dest: tuple | None = None   # (lat, lon) groot-cirkel bestemming
         self._dst_var           = tk.BooleanVar(value=s["dst"])
         self._next_refresh_at: datetime.datetime | None = None
         self._k_alert_var       = tk.IntVar(value=s["k_alert"])
@@ -718,6 +884,10 @@ class HAMIOSApp:
         self._tray_icon             = None
         self._last_xflare: str      = ""   # voor dedup van X-flare tray-notificatie
         self._xflare_var            = tk.StringVar(value="")
+        self._dx_all_spots: list    = []   # ruwe spots van dxwatch
+        self._dx_after_id           = None
+        self._dx_next_at: datetime.datetime | None = None
+        self._dx_own_cont_var       = tk.BooleanVar(value=True)
 
         self._build_ui()
         # Herstel legenda-selectie visueel na opbouw UI
@@ -733,6 +903,7 @@ class HAMIOSApp:
         self._start_tray()
         self.root.protocol("WM_DELETE_WINDOW", self._on_close)
         threading.Thread(target=self._refresh_solar, daemon=True).start()
+        threading.Thread(target=self._refresh_dx, daemon=True).start()
         threading.Thread(
             target=_fetch_basemap,
             kwargs={"callback": lambda: self.root.after(0, self._redraw_map)},
@@ -757,6 +928,15 @@ class HAMIOSApp:
                 self._countdown_var.set("↻ …")
         else:
             self._countdown_var.set("")
+
+        # Countdown DX refresh
+        if hasattr(self, "_dx_countdown_var") and self._dx_next_at:
+            rem = (self._dx_next_at - utc).total_seconds()
+            if rem > 0:
+                m2, s2 = divmod(int(rem), 60)
+                self._dx_countdown_var.set(f"↻ {m2}:{s2:02d}")
+            else:
+                self._dx_countdown_var.set("↻ …")
 
         self._clock_after_id = self.root.after(1000, self._tick_clock)
 
@@ -826,6 +1006,7 @@ class HAMIOSApp:
         self._build_prop_panel(left)
         self._build_hist_panel(left)
         self._build_schedule_panel(left)
+        self._build_dx_panel(left)
 
         # Rechter kolom: solar panel
         solar_col = tk.Frame(body, bg=BG_PANEL, width=210)
@@ -968,9 +1149,11 @@ class HAMIOSApp:
                            activebackground=BG_PANEL, activeforeground=TEXT_BODY,
                            font=_font(9)).pack(side=tk.RIGHT, padx=(0, 8))
 
-        _cb("Locator", self._show_locator_var)
-        _cb("Maan",    self._show_moon_var)
-        _cb("Zon",     self._show_sun_var)
+        _cb("Locator",  self._show_locator_var)
+        _cb("IARU",     self._show_iaru_var)
+        _cb("Graylijn", self._show_graylijn_var)
+        _cb("Maan",     self._show_moon_var)
+        _cb("Zon",      self._show_sun_var)
 
         # QTH lat/lon invoer
         def _apply_qth(*_):
@@ -1016,11 +1199,39 @@ class HAMIOSApp:
                                      bd=0, highlightthickness=0)
         self._map_canvas.pack(fill=tk.X)
         self._map_photo = None
-        self._map_canvas.bind("<Configure>", lambda *_: self._draw_map())
+        self._map_canvas.bind("<Configure>",  lambda *_: self._draw_map())
+        self._map_canvas.bind("<Button-1>",   self._on_map_click)
+        self._map_canvas.bind("<Button-3>",   self._on_map_clear)
+
+        # Info-label voor groot-cirkel (rechtsonder in canvas)
+        self._gc_info_var = tk.StringVar(value="")
+        tk.Label(outer, textvariable=self._gc_info_var,
+                 font=_font(9), bg=BG_PANEL, fg=ACCENT,
+                 anchor='w').pack(fill=tk.X, padx=10, pady=(0, 4))
 
     def _redraw_map(self):
         """Cache ongeldig maken en kaart opnieuw tekenen (na download)."""
         self._map_base_size = None
+        self._draw_map()
+
+    def _on_map_click(self, event):
+        """Linker muisklik: stel groot-cirkel bestemming in."""
+        W = self._map_canvas.winfo_width()  or 960
+        H = self._map_canvas.winfo_height() or 400
+        lon = event.x / W * 360 - 180
+        lat = 90 - event.y / H * 180
+        self._gc_dest = (lat, lon)
+        dist = _haversine_km(self._qth_lat, self._qth_lon, lat, lon)
+        hdg  = _bearing_deg(self._qth_lat, self._qth_lon, lat, lon)
+        self._gc_info_var.set(
+            f"→  {lat:+.1f}°, {lon:+.1f}°  |  Afstand: {dist:,.0f} km  "
+            f"|  Richting: {hdg:.0f}°  (klik rechts om te wissen)")
+        self._draw_map()
+
+    def _on_map_clear(self, *_):
+        """Rechter muisklik: verwijder groot-cirkel."""
+        self._gc_dest = None
+        self._gc_info_var.set("")
         self._draw_map()
 
     def _draw_map(self):
@@ -1098,6 +1309,34 @@ class HAMIOSApp:
             draw.ellipse([(mx - 5, my - 5), (mx + 5, my + 5)],
                          fill=MAP_MOON, outline=(150, 150, 150), width=1)
 
+        # ── Graylijn ─────────────────────────────────────────────────────────
+        if self._show_graylijn_var.get():
+            gray = _graylijn_mask(sun_lat, sun_lon, W, H)
+            img  = Image.alpha_composite(img.convert("RGBA"), gray).convert("RGB")
+            draw = ImageDraw.Draw(img)
+
+        # ── IARU regio-overlay ───────────────────────────────────────────────
+        if self._show_iaru_var.get():
+            iaru_img = Image.new("RGBA", (W, H), (0, 0, 0, 0))
+            id_ = ImageDraw.Draw(iaru_img)
+            # Grenzen (vereenvoudigd): R2 < -30° < R1 < +75° < R3
+            x_r1_west = int((180 - 30) / 360 * W)   # lon = -30°
+            x_r1_east = int((180 + 75) / 360 * W)   # lon = +75°
+            # Gekleurde verticale banden, zeer licht transparant
+            id_.rectangle([(0, 0), (x_r1_west, H)],          fill=(255, 100,  60, 28))  # R2 oranje
+            id_.rectangle([(x_r1_west, 0), (x_r1_east, H)],  fill=( 80, 140, 255, 28))  # R1 blauw
+            id_.rectangle([(x_r1_east, 0), (W, H)],           fill=( 60, 200, 100, 28))  # R3 groen
+            # Grenslijnen
+            for gx, clr in ((x_r1_west, (255,150,80,180)), (x_r1_east, (100,200,120,180))):
+                id_.line([(gx, 0), (gx, H)], fill=clr, width=1)
+            # Labels
+            for txt, lx in (("R2", x_r1_west // 2),
+                             ("R1", (x_r1_west + x_r1_east) // 2),
+                             ("R3", (x_r1_east + W) // 2)):
+                id_.text((lx - 6, 4), txt, fill=(220, 220, 220, 180))
+            img  = Image.alpha_composite(img.convert("RGBA"), iaru_img).convert("RGB")
+            draw = ImageDraw.Draw(img)
+
         # ── Maidenhead locatorraster ─────────────────────────────────────────
         if self._show_locator_var.get():
             LOC_GRID = (100, 160, 220, 180)   # lichtblauw, semi-transparant
@@ -1144,6 +1383,28 @@ class HAMIOSApp:
                 ad.rectangle([(0, y_top), (W, y_bot)],
                               fill=(220, 80, 20, alpha))
             img = Image.alpha_composite(img.convert("RGBA"), aurora_img).convert("RGB")
+            draw = ImageDraw.Draw(img)
+
+        # ── Groot-cirkel pad ─────────────────────────────────────────────────
+        if self._gc_dest:
+            dlat, dlon = self._gc_dest
+            pts = _great_circle_pts(self._qth_lat, self._qth_lon, dlat, dlon)
+            gc_img = Image.new("RGBA", (W, H), (0, 0, 0, 0))
+            gd     = ImageDraw.Draw(gc_img)
+            xy     = [_ll_to_xy(la, lo, W, H) for la, lo in pts]
+            # Splits op anti-meridian (|Δx| > W/2) om wraparound te vermijden
+            seg_start = 0
+            for i in range(1, len(xy)):
+                if abs(xy[i][0] - xy[i-1][0]) > W // 2:
+                    if i - seg_start > 1:
+                        gd.line(xy[seg_start:i], fill=(255, 220, 50, 220), width=2)
+                    seg_start = i
+            if len(xy) - seg_start > 1:
+                gd.line(xy[seg_start:], fill=(255, 220, 50, 220), width=2)
+            # Bestemmingsmarkering
+            dx, dy = _ll_to_xy(dlat, dlon, W, H)
+            gd.ellipse([(dx-5, dy-5), (dx+5, dy+5)], fill=(255, 220, 50, 220))
+            img  = Image.alpha_composite(img.convert("RGBA"), gc_img).convert("RGB")
             draw = ImageDraw.Draw(img)
 
         # ── QTH marker (alleen kruisje) ───────────────────────────────────────
@@ -1631,6 +1892,115 @@ class HAMIOSApp:
         c.create_rectangle(lx, PAD_T, lx + cell_w - 1, PAD_T + n_bands * cell_h - 1,
                            outline=ACCENT, width=1)
 
+    # ── DX Spots panel ───────────────────────────────────────────────────────
+    def _build_dx_panel(self, parent):
+        outer = tk.Frame(parent, bg=BG_PANEL)
+        outer.pack(fill=tk.X, pady=(6, 0))
+        tk.Frame(outer, bg=ACCENT, height=2).pack(fill=tk.X)
+
+        hdr = tk.Frame(outer, bg=BG_PANEL)
+        hdr.pack(fill=tk.X, padx=10, pady=(4, 2))
+        tk.Label(hdr, text="📡  Live DX Spots (HF)",
+                 font=_font(10, "bold"), bg=BG_PANEL, fg=ACCENT).pack(side=tk.LEFT)
+        tk.Checkbutton(hdr, text="Eigen continent", variable=self._dx_own_cont_var,
+                       command=self._filter_dx_spots,
+                       bg=BG_PANEL, fg=TEXT_DIM, selectcolor=BG_SURFACE,
+                       activebackground=BG_PANEL, activeforeground=TEXT_BODY,
+                       font=_font(9)).pack(side=tk.RIGHT, padx=(0, 4))
+
+        status_row = tk.Frame(outer, bg=BG_PANEL)
+        status_row.pack(fill=tk.X, padx=10)
+        self._dx_status_var    = tk.StringVar(value="Laden…")
+        self._dx_countdown_var = tk.StringVar(value="")
+        tk.Label(status_row, textvariable=self._dx_status_var,
+                 font=_font(8), bg=BG_PANEL, fg=TEXT_DIM).pack(side=tk.LEFT)
+        tk.Label(status_row, textvariable=self._dx_countdown_var,
+                 font=_font(8), bg=BG_PANEL, fg=ACCENT).pack(side=tk.RIGHT)
+
+        self._dx_canvas = tk.Canvas(outer, height=196, bg=BG_PANEL,
+                                    bd=0, highlightthickness=0)
+        self._dx_canvas.pack(fill=tk.X, padx=10, pady=(2, 6))
+        self._dx_canvas.bind("<Configure>", lambda *_: self._draw_dx_panel())
+
+    def _filter_dx_spots(self):
+        spots = self._dx_all_spots
+        if self._dx_own_cont_var.get():
+            my = _qth_continent(self._qth_lat, self._qth_lon)
+            spots = [s for s in spots if s.get("sp_cont") == my]
+        self._dx_filtered = spots
+        self._draw_dx_panel()
+        n     = len(spots)
+        filt  = " · eigen continent" if self._dx_own_cont_var.get() else ""
+        total = len(self._dx_all_spots)
+        self._dx_status_var.set(
+            f"{n} van {total} spots  (HF{filt})" if total else "Geen spots beschikbaar")
+
+    def _draw_dx_panel(self):
+        if not hasattr(self, "_dx_canvas"):
+            return
+        c = self._dx_canvas
+        c.delete("all")
+        W = c.winfo_width() or 700
+        H = c.winfo_height() or 196
+
+        spots = getattr(self, "_dx_filtered", [])
+        ROW_H = 16
+        C_UTC  = 38;  C_BAND = 38;  C_DX = 84
+        C_FREQ = 68;  C_SPOT = 74
+        C_CMT  = max(40, W - C_UTC - C_BAND - C_DX - C_FREQ - C_SPOT - 12)
+
+        # Kolomkoppen
+        for txt, x in [("UTC",     4),
+                       ("Band",    4 + C_UTC),
+                       ("DX",      4 + C_UTC + C_BAND),
+                       ("MHz",     4 + C_UTC + C_BAND + C_DX),
+                       ("Spotter", 4 + C_UTC + C_BAND + C_DX + C_FREQ),
+                       ("Comment", 4 + C_UTC + C_BAND + C_DX + C_FREQ + C_SPOT)]:
+            c.create_text(x, 2, text=txt, fill=ACCENT,
+                          font=("Consolas", 8, "bold"), anchor='nw')
+        c.create_line(0, ROW_H + 2, W, ROW_H + 2, fill=BORDER)
+
+        if not spots:
+            c.create_text(W // 2, H // 2,
+                          text="Geen HF-spots beschikbaar",
+                          fill=TEXT_DIM, font=("Segoe UI", 9), anchor='center')
+            return
+
+        max_rows = (H - ROW_H - 4) // ROW_H
+        for i, s in enumerate(spots[:max_rows]):
+            y = ROW_H + 4 + i * ROW_H
+            if i % 2 == 0:
+                c.create_rectangle(0, y - 1, W, y + ROW_H - 1,
+                                   fill=BG_SURFACE, outline="")
+            band  = s["band"]
+            color = _BAND_COLORS.get(band, TEXT_DIM)
+            x = 4
+            c.create_text(x, y, text=s["time"],         fill=TEXT_DIM,  font=("Consolas", 8), anchor='nw'); x += C_UTC
+            c.create_text(x, y, text=band,              fill=color,     font=("Consolas", 8, "bold"), anchor='nw'); x += C_BAND
+            c.create_text(x, y, text=s["dx"][:11],      fill=TEXT_H1,   font=("Consolas", 8), anchor='nw'); x += C_DX
+            c.create_text(x, y, text=s["freq_mhz"],     fill=TEXT_BODY, font=("Consolas", 8), anchor='nw'); x += C_FREQ
+            c.create_text(x, y, text=s["spotter"][:10], fill=TEXT_DIM,  font=("Consolas", 8), anchor='nw'); x += C_SPOT
+            max_ch = max(4, C_CMT // 6)
+            c.create_text(x, y, text=s.get("comment", "")[:max_ch],
+                          fill=TEXT_DIM, font=("Consolas", 8), anchor='nw')
+
+    def _refresh_dx(self):
+        spots = _fetch_dx_spots()
+        self.root.after(0, lambda: self._on_dx_spots(spots))
+
+    def _on_dx_spots(self, spots: list):
+        self._dx_all_spots = spots
+        self._filter_dx_spots()
+        self._schedule_dx()
+
+    def _schedule_dx(self):
+        self._dx_next_at  = (datetime.datetime.now(datetime.timezone.utc)
+                             + datetime.timedelta(seconds=DX_REFRESH_SECS))
+        self._dx_after_id = self.root.after(
+            DX_REFRESH_SECS * 1000,
+            lambda: threading.Thread(target=self._refresh_dx, daemon=True).start()
+        )
+
     # ── Advies panel ─────────────────────────────────────────────────────────
     def _build_advice_panel(self, parent):
         outer = tk.Frame(parent, bg=BG_PANEL)
@@ -1805,6 +2175,8 @@ class HAMIOSApp:
                        self._show_sun_var.get(),
                        self._show_moon_var.get(),
                        self._show_locator_var.get(),
+                       self._show_graylijn_var.get(),
+                       self._show_iaru_var.get(),
                        self._hist_range_var.get(),
                        self._hist_sel,
                        self._k_alert_var.get())
