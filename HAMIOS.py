@@ -2358,6 +2358,20 @@ class HAMIOSApp:
 
 # ── Entrypoint ─────────────────────────────────────────────────────────────────
 if __name__ == "__main__":
+    import traceback as _tb
+
     root = tk.Tk()
+
+    def _cb_exception(exc_type, exc_val, exc_tb):
+        if exc_type is KeyboardInterrupt:
+            root.destroy()
+            return
+        _tb.print_exception(exc_type, exc_val, exc_tb)
+
+    root.report_callback_exception = _cb_exception
+
     app = HAMIOSApp(root)
-    root.mainloop()
+    try:
+        root.mainloop()
+    except KeyboardInterrupt:
+        pass
