@@ -59,6 +59,13 @@ Change Log (1.0)
 · 2026-04-10 14:40 CEST — QTH lat/lon invoervelden in kaart-header (Enter/FocusOut
                past kaart + propagatie direct aan). Bandschema tijdsas toont
                lokale tijd (CET/CEST); zon-westwaarts bug gecorrigeerd.
+· 2026-04-12 10:28 CEST — ITU grenzen volledig herschreven op basis van officieel
+               ITU Radio Regulations Appendix 2: Lijn A loopt N-pool/55E →
+               Oeral → Kaukasus (Krasnodar) → Turkije/Syrië → langs 35E naar 30N
+               → boog Rode Zee/Golf van Aden → 11N/55E → langs 11N naar 59E →
+               Z-pool langs 59E. Arabie (Saudi, Oman, VAE, Jemen) correct in R1;
+               Iran, Pakistan, India correct in R3. Opstartvenster gebruikt
+               root.update() voor nauwkeurige venstermeting.
 · 2026-04-10 14:36 CEST — 60m-band zonder *, K-index als enkel getal met kleur
                (0–2 wit, 3–4 oranje, 5+ rood), K-melding-spinbox direct onder
                K-index geplaatst, bijgewerkt-tijd toont QTH-lokale tijd.
@@ -175,16 +182,24 @@ _ITU_B = [
     (90, -10), (72, -10), (40, -50), (30, -20), (0, -20), (-90, -20),
 ]
 
-# Lijn A: oostgrens R1 / westgrens R3
-# N-pool/55E -> Rusland -> Kaukasus -> Turkije -> Sirie/Irak ->
-# Kuwait -> Golf van Oman -> Arabische Zee -> Somalische kust -> 0/40E -> Z-pool
+# Lijn A: oostgrens R1 / westgrens R3  (ITU Radio Regulations Appendix 2)
+# N-pool/55E → langs 55E naar 60N → Oeral-regio →
+# Krasnodar (45N,39E) → Turkse Zwarte Zeekust (41N,40E) →
+# Turkije/Syrische grens → langs ±35E naar 30N →
+# boog door Rode Zee/Golf van Aden → 11N/55E →
+# langs 11N-breedtegraad naar 59E → Z-pool langs 59E
 _ITU_A = [
-    (90, 55), (60, 55), (52, 55), (47, 43),
-    (43, 41), (39, 37), (37, 37), (35, 38),
-    (33, 39), (31, 38), (29, 48), (26, 56),
-    (24, 57), (22, 59), (20, 58), (17, 54),
-    (13, 46), (8, 43), (2, 41), (0, 40),
-    (-90, 40),
+    (90, 55), (60, 55),       # N-pool → 60N langs 55E
+    (55, 55), (50, 52),       # Rusland/Oeral zuidwaarts
+    (47, 43), (45, 39),       # Krasnodar
+    (41, 40),                  # Turkse Zwarte Zeekust
+    (39, 38), (37, 37),       # Turkije/Syrische grens
+    (36, 36),                  # Syrië
+    (33, 35), (30, 35),       # Libanon/Jordanië → 30N langs 35E
+    (25, 37), (20, 43),       # Rode Zee boog oost
+    (15, 51), (11, 55),       # Golf van Aden → 11N/55E (Arabische Zee)
+    (11, 59),                  # Langs breedtegraad 11N naar 59E
+    (-90, 59),                 # Z-pool langs 59E
 ]
 
 # Lijn C: Pacific grens R2 / R3
@@ -1365,19 +1380,26 @@ class HAMIOSApp:
                 (-90,-20),(-90,-120),(60,-120),(60,-170)
             ]), fill=(255,140,60,AF))
 
-            # R1: Lijn-B → Lijn-A (Midden-Oosten detail) → gesloten via polen
+            # R1: Lijn-B → Z-pool → Lijn-A omgekeerd → N-pool
             id_.polygon(_px([
-                (90,-10),(72,-10),(40,-50),(30,-20),(0,-20),(-90,-20),(-90,40),
-                (0,40),(2,41),(8,43),(13,46),(17,54),(20,58),(22,59),(24,57),
-                (26,56),(29,48),(31,38),(33,39),(35,38),(37,37),(39,37),(43,41),
-                (47,43),(52,55),(60,55),(90,55)
+                (90,-10),(72,-10),(40,-50),(30,-20),(0,-20),(-90,-20),
+                (-90,59),                                  # Z-pool: 20W → 59E
+                (11,59),(11,55),                           # omlaag 11N-parallel
+                (15,51),(20,43),(25,37),                   # Golf van Aden/Rode Zee
+                (30,35),(33,35),(36,36),(37,37),(39,38),   # Syrië/Turkije
+                (41,40),(45,39),(47,43),(50,52),(55,55),   # Kaukasus/Oeral
+                (60,55),(90,55)                            # N-pool
             ]), fill=(80,140,255,AF))
 
             # R3 oost (Azië-Pacific): Lijn-A → 180°E
             id_.polygon(_px([
-                (90,55),(60,55),(52,55),(47,43),(43,41),(39,37),(37,37),(35,38),
-                (33,39),(31,38),(29,48),(26,56),(24,57),(22,59),(20,58),(17,54),
-                (13,46),(8,43),(2,41),(0,40),(-90,40),(-90,180),(90,180)
+                (90,55),(60,55),(55,55),(50,52),(47,43),   # N-pool → Oeral
+                (45,39),(41,40),                           # Kaukasus
+                (39,38),(37,37),(36,36),                   # Syrië/Turkije
+                (33,35),(30,35),                           # langs 35E
+                (25,37),(20,43),(15,51),(11,55),           # Rode Zee/Golf van Aden
+                (11,59),                                   # langs 11N
+                (-90,59),(-90,180),(90,180)                # Z-pool → 180E sluiting
             ]), fill=(60,200,100,AF))
 
             # ── Grenslijnen ───────────────────────────────────────────────
@@ -2408,15 +2430,18 @@ class HAMIOSApp:
 
     # ── Venster centreren ─────────────────────────────────────────────────────
     def _center_window(self, min_w: int, min_h: int):
-        self.root.update_idletasks()
+        # update() ipv update_idletasks() zodat canvas-widgets ook correct gemeten worden
+        self.root.update()
         scr_w = self.root.winfo_screenwidth()
         scr_h = self.root.winfo_screenheight()
         # Gebruik de door tkinter berekende benodigde grootte als die groter is
-        w = max(min_w, self.root.winfo_reqwidth())
-        h = max(min_h, self.root.winfo_reqheight())
-        # Niet groter dan het scherm (laat 40px taskbalk-marge vrij)
-        w = min(w, scr_w - 40)
-        h = min(h, scr_h - 40)
+        req_w = self.root.winfo_reqwidth()
+        req_h = self.root.winfo_reqheight()
+        w = max(min_w, req_w if req_w > 100 else min_w)
+        h = max(min_h, req_h if req_h > 100 else min_h)
+        # Niet groter dan het scherm (laat 60px taskbalk-marge vrij)
+        w = min(w, scr_w - 60)
+        h = min(h, scr_h - 60)
         x = max(0, (scr_w - w) // 2)
         y = max(0, (scr_h - h) // 2)
         self.root.geometry(f"{w}x{h}+{x}+{y}")
