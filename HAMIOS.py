@@ -14,7 +14,10 @@ Dependencies:
 TODO
 ─────────────────────────────────────────────────────────────────────
 -> Layout
-
+iaru moet itu regio's worden. 
+Regio 1 (Europa, Afrika, Midden-Oosten, GOS, Mongolië), Regio 2 (Amerika) en Regio 3 (Azië-Pacific, minus gebieden in R1/R2). 
+Maak een gedetailleerde poly lijn om deze grens aan te geven. 
+Maak het ook selecteerbaar.
 
 -> Refresh en data
 
@@ -22,6 +25,10 @@ TODO
 ─────────────────────────────────────────────────────────────────────
 Change Log (1.0)
 ─────────────────────────────────────────────────────────────────────
+· 2026-04-12 10:10 CEST — ITU regio-overlay: checkbox hernoemd naar "ITU";
+               correcte R1/R2/R3 grenzen per ITU RR Art.5 (N-pool→10°W→72°N→
+               50°W/40°N→20°W/Z-pool en N-pool→40°E→60°E/23.5°N→Z-pool);
+               gevulde polygonen + gedetailleerde grenslijnen + R2/R3 Pacific-grens.
 · 2026-04-10 21:46 CEST — DX Spots boven Advies geplaatst (linker sub-kolom).
 · 2026-04-10 21:45 CEST — Wereldkaart vergroot over 2 kolommen; bandopenings-schema
                verplaatst tussen kaart en advies (linker sub-kolom).
@@ -1140,7 +1147,7 @@ class HAMIOSApp:
                            font=_font(9)).pack(side=tk.RIGHT, padx=(0, 8))
 
         _cb("Locator",  self._show_locator_var)
-        _cb("IARU",     self._show_iaru_var)
+        _cb("ITU",      self._show_iaru_var)
         _cb("Graylijn", self._show_graylijn_var)
         _cb("Maan",     self._show_moon_var)
         _cb("Zon",      self._show_sun_var)
@@ -1306,26 +1313,60 @@ class HAMIOSApp:
             img  = Image.alpha_composite(img.convert("RGBA"), gray).convert("RGB")
             draw = ImageDraw.Draw(img)
 
-        # ── IARU regio-overlay ───────────────────────────────────────────────
+        # ── ITU regio-overlay (R1/R2/R3 polygonen + grenslijnen) ────────────
         if self._show_iaru_var.get():
-            iaru_img = Image.new("RGBA", (W, H), (0, 0, 0, 0))
-            id_ = ImageDraw.Draw(iaru_img)
-            # Grenzen (vereenvoudigd): R2 < -30° < R1 < +75° < R3
-            x_r1_west = int((180 - 30) / 360 * W)   # lon = -30°
-            x_r1_east = int((180 + 75) / 360 * W)   # lon = +75°
-            # Gekleurde verticale banden, zeer licht transparant
-            id_.rectangle([(0, 0), (x_r1_west, H)],          fill=(255, 100,  60, 28))  # R2 oranje
-            id_.rectangle([(x_r1_west, 0), (x_r1_east, H)],  fill=( 80, 140, 255, 28))  # R1 blauw
-            id_.rectangle([(x_r1_east, 0), (W, H)],           fill=( 60, 200, 100, 28))  # R3 groen
-            # Grenslijnen
-            for gx, clr in ((x_r1_west, (255,150,80,180)), (x_r1_east, (100,200,120,180))):
-                id_.line([(gx, 0), (gx, H)], fill=clr, width=1)
-            # Labels
-            for txt, lx in (("R2", x_r1_west // 2),
-                             ("R1", (x_r1_west + x_r1_east) // 2),
-                             ("R3", (x_r1_east + W) // 2)):
-                id_.text((lx - 6, 4), txt, fill=(220, 220, 220, 180))
-            img  = Image.alpha_composite(img.convert("RGBA"), iaru_img).convert("RGB")
+            itu_img = Image.new("RGBA", (W, H), (0, 0, 0, 0))
+            id_     = ImageDraw.Draw(itu_img)
+            AF, AL  = 30, 200   # alpha vulling / grenslijn
+
+            def _px(pts):
+                return [_ll_to_xy(la, lo, W, H) for la, lo in pts]
+
+            # ── Grenslijn-polylijnen (officiële ITU RR Art.5 grenzen) ─────
+            # Westgrens R1 / Oostgrens R2:
+            #   N-pool (10°W) → 72°N/10°W → 40°N/50°W → 20°N/20°W → Z-pool (20°W)
+            r1w = [(90,-10),(72,-10),(40,-50),(20,-20),(0,-20),(-90,-20)]
+            # Oostgrens R1 / Westgrens R3:
+            #   N-pool (40°E) → 40°N/40°E → 23.5°N/60°E → equator/60°E → Z-pool (60°E)
+            r1e = [(90,40),(40,40),(23.5,60),(0,60),(-90,60)]
+            # R2/R3 Pacific-grens: 160°W N→Z
+            r2r3 = [(90,-160),(-90,-160)]
+
+            # ── Gevulde polygonen ─────────────────────────────────────────
+            # R3 Pacific west (links op kaart: 180°W → 160°W)
+            id_.polygon(_px([(90,-180),(90,-160),(-90,-160),(-90,-180)]),
+                        fill=(60,200,100,AF))
+            # R2: 160°W → R1/R2-grens → 180°W
+            id_.polygon(_px([(90,-160),(90,-10),(72,-10),(40,-50),
+                              (20,-20),(0,-20),(-90,-20),(-90,-160)]),
+                        fill=(255,140,60,AF))
+            # R1: R1/R2-grens → R1/R3-grens (gesloten via Zuid- en Noordpool)
+            id_.polygon(_px([(90,-10),(72,-10),(40,-50),(20,-20),
+                              (0,-20),(-90,-20),(-90,60),
+                              (0,60),(23.5,60),(40,40),(90,40)]),
+                        fill=(80,140,255,AF))
+            # R3 oost: R1/R3-grens → 180°E
+            id_.polygon(_px([(90,40),(40,40),(23.5,60),(0,60),
+                              (-90,60),(-90,180),(90,180)]),
+                        fill=(60,200,100,AF))
+
+            # ── Grenslijnen ───────────────────────────────────────────────
+            for pts, clr, w in [
+                (r1w,  (255,170, 80,AL), 2),
+                (r1e,  (100,220,130,AL), 2),
+                (r2r3, (180,230,160,AL), 1),
+            ]:
+                px = _px(pts)
+                for i in range(len(px) - 1):
+                    id_.line([px[i], px[i+1]], fill=clr, width=w)
+
+            # ── Labels ────────────────────────────────────────────────────
+            for txt, la, lo in [("R2",30,-100),("R1",30,15),("R3",30,115)]:
+                x_l, y_l = _ll_to_xy(la, lo, W, H)
+                if 0 <= x_l < W and 0 <= y_l < H:
+                    id_.text((x_l - 8, y_l - 5), txt, fill=(220,220,220,200))
+
+            img  = Image.alpha_composite(img.convert("RGBA"), itu_img).convert("RGB")
             draw = ImageDraw.Draw(img)
 
         # ── Maidenhead locatorraster ─────────────────────────────────────────
