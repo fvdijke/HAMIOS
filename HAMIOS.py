@@ -59,6 +59,9 @@ Change Log (1.0)
 · 2026-04-10 14:40 CEST — QTH lat/lon invoervelden in kaart-header (Enter/FocusOut
                past kaart + propagatie direct aan). Bandschema tijdsas toont
                lokale tijd (CET/CEST); zon-westwaarts bug gecorrigeerd.
+· 2026-04-12 10:59 CEST — ITU overlay: regio-kleuren aangepast aan referentie
+               (R1=geel, R2=roze, R3=groen) en vulling-alpha verhoogd van 28
+               naar 55 (22% dekking) zodat regio's duidelijk zichtbaar zijn.
 · 2026-04-12 10:28 CEST — ITU Lijn-A gecorrigeerd: grens loopt nu via Irak/Iran grens
                (46-48E) → Perzische Golf → Golf van Oman (60E) → Arabische Zee
                → 11N/55E → 59E → Z-pool. Arabisch Schiereiland (Saudi, Oman,
@@ -1376,55 +1379,59 @@ class HAMIOSApp:
         if self._show_iaru_var.get():
             itu_img = Image.new("RGBA", (W, H), (0, 0, 0, 0))
             id_     = ImageDraw.Draw(itu_img)
-            AF, AL  = 28, 210   # alpha vulling / grenslijn
+            AF, AL  = 55, 220   # alpha vulling / grenslijn  (55≈22% dekking)
+            # Kleuren conform referentieplaatje: R1=geel, R2=roze, R3=groen
+            C_R1 = (210, 190,  70, AF)
+            C_R2 = (210,  80,  80, AF)
+            C_R3 = ( 60, 170,  80, AF)
 
             def _px(pts):
                 return [_ll_to_xy(la, lo, W, H) for la, lo in pts]
 
             # ── Gevulde regio-polygonen ───────────────────────────────────
-            # R3 Pacific west (kaartrand -180 tot Lijn-C -120W/170W)
+            # R3 Pacific west (kaartrand -180 tot Lijn-C)
             id_.polygon(_px([
                 (90,-180),(90,-170),(60,-170),(60,-120),(-90,-120),(-90,-180)
-            ]), fill=(60,200,100,AF))
+            ]), fill=C_R3)
 
-            # R2 Amerika: Lijn-C oost → Lijn-B oost → kaartrand
+            # R2 Amerika: Lijn-C → Lijn-B → Z-pool
             id_.polygon(_px([
                 (90,-170),(90,-10),(72,-10),(40,-50),(30,-20),(0,-20),
                 (-90,-20),(-90,-120),(60,-120),(60,-170)
-            ]), fill=(255,140,60,AF))
+            ]), fill=C_R2)
 
             # R1: Lijn-B → Z-pool → Lijn-A omgekeerd → N-pool
             id_.polygon(_px([
                 (90,-10),(72,-10),(40,-50),(30,-20),(0,-20),(-90,-20),
-                (-90,59),                                       # Z-pool oost naar 59E
-                (11,59),(11,55),                                # langs 11N westwaarts
-                (13,57),(15,58),(18,60),                        # Arabische Zee
-                (21,60),(23,59),(25,57),                        # Oman/VAE
-                (27,53),(29,49),                                # Perzische Golf
-                (30,48),(31,47),(33,47),(35,46),                # Irak/Iran grens
-                (37,44),(38,42),(39,40),                        # Oost-Turkije
-                (41,40),(45,39),(47,43),(50,52),(55,55),        # Kaukasus/Oeral
-                (60,55),(90,55)                                 # N-pool
-            ]), fill=(80,140,255,AF))
+                (-90,59),
+                (11,59),(11,55),
+                (13,57),(15,58),(18,60),
+                (21,60),(23,59),(25,57),
+                (27,53),(29,49),
+                (30,48),(31,47),(33,47),(35,46),
+                (37,44),(38,42),(39,40),
+                (41,40),(45,39),(47,43),(50,52),(55,55),
+                (60,55),(90,55)
+            ]), fill=C_R1)
 
             # R3 oost (Azië-Pacific): Lijn-A → 180°E
             id_.polygon(_px([
-                (90,55),(60,55),(55,55),(50,52),(47,43),        # N-pool → Oeral
-                (45,39),(41,40),                                # Kaukasus
-                (39,40),(38,42),(37,44),                        # Oost-Turkije
-                (35,46),(33,47),(31,47),(30,48),                # Irak/Iran grens
-                (29,49),(27,53),(25,57),                        # Perzische Golf
-                (23,59),(21,60),(18,60),                        # Oman
-                (15,58),(13,57),(11,55),                        # Arabische Zee
-                (11,59),                                        # langs 11N
-                (-90,59),(-90,180),(90,180)                     # Z-pool → 180E sluiting
-            ]), fill=(60,200,100,AF))
+                (90,55),(60,55),(55,55),(50,52),(47,43),
+                (45,39),(41,40),
+                (39,40),(38,42),(37,44),
+                (35,46),(33,47),(31,47),(30,48),
+                (29,49),(27,53),(25,57),
+                (23,59),(21,60),(18,60),
+                (15,58),(13,57),(11,55),
+                (11,59),
+                (-90,59),(-90,180),(90,180)
+            ]), fill=C_R3)
 
             # ── Grenslijnen ───────────────────────────────────────────────
             for pts, clr, w in [
-                (_ITU_B, (255,170, 80,AL), 2),   # R1/R2
-                (_ITU_A, (100,220,130,AL), 2),   # R1/R3 (Midden-Oosten detail)
-                (_ITU_C, (180,230,160,AL), 1),   # R2/R3 Pacific
+                (_ITU_B, (255, 200,  80, AL), 2),   # R1/R2
+                (_ITU_A, ( 80, 220, 100, AL), 2),   # R1/R3
+                (_ITU_C, (160, 220, 160, AL), 1),   # R2/R3 Pacific
             ]:
                 px = _px(pts)
                 for j in range(len(px) - 1):
