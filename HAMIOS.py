@@ -59,7 +59,13 @@ Change Log (1.0)
 · 2026-04-10 14:40 CEST — QTH lat/lon invoervelden in kaart-header (Enter/FocusOut
                past kaart + propagatie direct aan). Bandschema tijdsas toont
                lokale tijd (CET/CEST); zon-westwaarts bug gecorrigeerd.
-· 2026-04-12 10:28 CEST — ITU grenzen volledig herschreven op basis van officieel
+· 2026-04-12 10:28 CEST — ITU Lijn-A gecorrigeerd: grens loopt nu via Irak/Iran grens
+               (46-48E) → Perzische Golf → Golf van Oman (60E) → Arabische Zee
+               → 11N/55E → 59E → Z-pool. Arabisch Schiereiland (Saudi, Oman,
+               VAE, Jemen, Koeweit, Irak) correct in R1; Iran/Pakistan in R3.
+               Eerdere fout: lijn liep door de Rode Zee waardoor Saudi-Arabië
+               foutief in R3 viel.
+· 2026-04-12 10:28 CEST — (vervangen) ITU grenzen volledig herschreven op basis van officieel
                ITU Radio Regulations Appendix 2: Lijn A loopt N-pool/55E →
                Oeral → Kaukasus (Krasnodar) → Turkije/Syrië → langs 35E naar 30N
                → boog Rode Zee/Golf van Aden → 11N/55E → langs 11N naar 59E →
@@ -183,23 +189,30 @@ _ITU_B = [
 ]
 
 # Lijn A: oostgrens R1 / westgrens R3  (ITU Radio Regulations Appendix 2)
-# N-pool/55E → langs 55E naar 60N → Oeral-regio →
-# Krasnodar (45N,39E) → Turkse Zwarte Zeekust (41N,40E) →
-# Turkije/Syrische grens → langs ±35E naar 30N →
-# boog door Rode Zee/Golf van Aden → 11N/55E →
-# langs 11N-breedtegraad naar 59E → Z-pool langs 59E
+# N-pool/55E → Oeral → Kaukasus (Krasnodar/Zwarte Zee) →
+# Oost-Turkije → Irak/Iran grens (46-48E) →
+# Perzische Golf kust → Golf van Oman (60E) →
+# Arabische Zee → 11N/55E → langs 11N naar 59E → Z-pool/59E
+#
+# R1 bevat: Europa, Afrika, Arabisch Schiereiland (Saudi, Oman, VAE,
+#           Jemen, Koeweit), Irak, Syrië, Turkije
+# R3 bevat: Iran, Pakistan, India, Azië-Pacific
 _ITU_A = [
-    (90, 55), (60, 55),       # N-pool → 60N langs 55E
-    (55, 55), (50, 52),       # Rusland/Oeral zuidwaarts
-    (47, 43), (45, 39),       # Krasnodar
-    (41, 40),                  # Turkse Zwarte Zeekust
-    (39, 38), (37, 37),       # Turkije/Syrische grens
-    (36, 36),                  # Syrië
-    (33, 35), (30, 35),       # Libanon/Jordanië → 30N langs 35E
-    (25, 37), (20, 43),       # Rode Zee boog oost
-    (15, 51), (11, 55),       # Golf van Aden → 11N/55E (Arabische Zee)
-    (11, 59),                  # Langs breedtegraad 11N naar 59E
-    (-90, 59),                 # Z-pool langs 59E
+    (90, 55), (60, 55),        # N-pool → 60N langs 55E
+    (55, 55), (50, 52),        # Rusland/Oeral
+    (47, 43), (45, 39),        # Kaukasus/Krasnodar
+    (41, 40),                   # Turkse Zwarte Zeekust
+    (39, 40), (38, 42),        # Oost-Turkije oostwaarts
+    (37, 44),                   # Turkije/Irak/Iran driehoek
+    (35, 46), (33, 47),        # Irak/Iran grens
+    (31, 47), (30, 48),        # Zuid-Irak/Koeweit
+    (29, 49), (27, 53),        # Perzische Golf ingang/Qatar
+    (25, 57), (23, 59),        # VAE → Noord-Oman
+    (21, 60),                   # Oost-Oman (Kaap Ras al-Hadd)
+    (18, 60), (15, 58),        # Arabische Zee naar Golf van Aden
+    (13, 57), (11, 55),        # 11N/55E (officieel ITU-punt)
+    (11, 59),                   # Langs breedtegraad 11N → 59E
+    (-90, 59),                  # Z-pool langs 59E
 ]
 
 # Lijn C: Pacific grens R2 / R3
@@ -1383,23 +1396,28 @@ class HAMIOSApp:
             # R1: Lijn-B → Z-pool → Lijn-A omgekeerd → N-pool
             id_.polygon(_px([
                 (90,-10),(72,-10),(40,-50),(30,-20),(0,-20),(-90,-20),
-                (-90,59),                                  # Z-pool: 20W → 59E
-                (11,59),(11,55),                           # omlaag 11N-parallel
-                (15,51),(20,43),(25,37),                   # Golf van Aden/Rode Zee
-                (30,35),(33,35),(36,36),(37,37),(39,38),   # Syrië/Turkije
-                (41,40),(45,39),(47,43),(50,52),(55,55),   # Kaukasus/Oeral
-                (60,55),(90,55)                            # N-pool
+                (-90,59),                                       # Z-pool oost naar 59E
+                (11,59),(11,55),                                # langs 11N westwaarts
+                (13,57),(15,58),(18,60),                        # Arabische Zee
+                (21,60),(23,59),(25,57),                        # Oman/VAE
+                (27,53),(29,49),                                # Perzische Golf
+                (30,48),(31,47),(33,47),(35,46),                # Irak/Iran grens
+                (37,44),(38,42),(39,40),                        # Oost-Turkije
+                (41,40),(45,39),(47,43),(50,52),(55,55),        # Kaukasus/Oeral
+                (60,55),(90,55)                                 # N-pool
             ]), fill=(80,140,255,AF))
 
             # R3 oost (Azië-Pacific): Lijn-A → 180°E
             id_.polygon(_px([
-                (90,55),(60,55),(55,55),(50,52),(47,43),   # N-pool → Oeral
-                (45,39),(41,40),                           # Kaukasus
-                (39,38),(37,37),(36,36),                   # Syrië/Turkije
-                (33,35),(30,35),                           # langs 35E
-                (25,37),(20,43),(15,51),(11,55),           # Rode Zee/Golf van Aden
-                (11,59),                                   # langs 11N
-                (-90,59),(-90,180),(90,180)                # Z-pool → 180E sluiting
+                (90,55),(60,55),(55,55),(50,52),(47,43),        # N-pool → Oeral
+                (45,39),(41,40),                                # Kaukasus
+                (39,40),(38,42),(37,44),                        # Oost-Turkije
+                (35,46),(33,47),(31,47),(30,48),                # Irak/Iran grens
+                (29,49),(27,53),(25,57),                        # Perzische Golf
+                (23,59),(21,60),(18,60),                        # Oman
+                (15,58),(13,57),(11,55),                        # Arabische Zee
+                (11,59),                                        # langs 11N
+                (-90,59),(-90,180),(90,180)                     # Z-pool → 180E sluiting
             ]), fill=(60,200,100,AF))
 
             # ── Grenslijnen ───────────────────────────────────────────────
