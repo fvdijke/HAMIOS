@@ -13,14 +13,17 @@ Dependencies:
 ─────────────────────────────────────────────────────────────────────
 TODO
 ─────────────────────────────────────────────────────────────────────
--> Layout
-iaru moet itu regio's worden. 
-Regio 1 (Europa, Afrika, Midden-Oosten, GOS, Mongolië), Regio 2 (Amerika) en Regio 3 (Azië-Pacific, minus gebieden in R1/R2). 
-Maak een gedetailleerde poly lijn om deze grens aan te geven. 
-Maak het ook selecteerbaar.
-
--> Refresh en data
-
+Maak een versie 2.0, ook in Git en exe.
+Fix de ITA Regio's
+Zet advies helemaal onder over de gehele breedte.
+Zet bandverloop onder bandopenings-schema. 
+Maak DX panel scrollable.
+Selecteerbaar raster met callsign landcodes.
+Zoomen en pannen van de worldmap.
+Melding K, getal moet onder de overige getallen.
+Verbeteren van de tooltips. Wat uitgebreider en betere presentatie.
+Voeg in Solar/Ionosfeer Solarwind toe
+Zet in elk paneel wanneer deze het laatst is bijgewerkt.
 
 ─────────────────────────────────────────────────────────────────────
 Change Log (1.0)
@@ -59,6 +62,11 @@ Change Log (1.0)
 · 2026-04-10 14:40 CEST — QTH lat/lon invoervelden in kaart-header (Enter/FocusOut
                past kaart + propagatie direct aan). Bandschema tijdsas toont
                lokale tijd (CET/CEST); zon-westwaarts bug gecorrigeerd.
+· 2026-04-12 17:11 CEST — ITU: Rusland correct in R1 via aparte Rusland-patch
+               (boven Kazachstaan/Mongolië/China grens ~50-55N). Lijn A
+               gesplitst in zuidelijk deel (Kaukasus→Arabië) en noordelijk
+               deel (_ITU_A_RUS: Oeral→Vladivostok langs Russische zuidgrens).
+               Rusland-patch overtekent R3-Siberisch gebied met R1-geel.
 · 2026-04-12 10:59 CEST — ITU overlay: regio-kleuren aangepast aan referentie
                (R1=geel, R2=roze, R3=groen) en vulling-alpha verhoogd van 28
                naar 55 (22% dekking) zodat regio's duidelijk zichtbaar zijn.
@@ -186,36 +194,42 @@ MAP_QTH    = ( 80, 180, 255)   # eigen positie (helder blauw)
 
 # ── ITU regio-grenzen (lat, lon) ──────────────────────────────────────────────
 # Lijn B: westgrens R1 / oostgrens R2
-# N-pool/10W -> 72N/10W -> 40N/50W -> 30N/20W -> Z-pool/20W
 _ITU_B = [
     (90, -10), (72, -10), (40, -50), (30, -20), (0, -20), (-90, -20),
 ]
 
-# Lijn A: oostgrens R1 / westgrens R3  (ITU Radio Regulations Appendix 2)
-# N-pool/55E → Oeral → Kaukasus (Krasnodar/Zwarte Zee) →
-# Oost-Turkije → Irak/Iran grens (46-48E) →
-# Perzische Golf kust → Golf van Oman (60E) →
-# Arabische Zee → 11N/55E → langs 11N naar 59E → Z-pool/59E
-#
-# R1 bevat: Europa, Afrika, Arabisch Schiereiland (Saudi, Oman, VAE,
-#           Jemen, Koeweit), Irak, Syrië, Turkije
-# R3 bevat: Iran, Pakistan, India, Azië-Pacific
+# Lijn A (zuidelijk deel): Kaukasus → Turkije → Irak/Iran → Perzische Golf →
+# Oman → Arabische Zee → 11N/55E → 11N/59E → Z-pool/59E
+# Dit gedeelte scheidt het Arabisch schiereiland (R1) van Azië (R3)
 _ITU_A = [
-    (90, 55), (60, 55),        # N-pool → 60N langs 55E
-    (55, 55), (50, 52),        # Rusland/Oeral
-    (47, 43), (45, 39),        # Kaukasus/Krasnodar
+    (55, 55),                   # Aansluiting met Rusland-arm bij Oeral
+    (47, 43), (45, 39),         # Kaukasus / Krasnodar
     (41, 40),                   # Turkse Zwarte Zeekust
-    (39, 40), (38, 42),        # Oost-Turkije oostwaarts
+    (39, 40), (38, 42),         # Oost-Turkije
     (37, 44),                   # Turkije/Irak/Iran driehoek
-    (35, 46), (33, 47),        # Irak/Iran grens
-    (31, 47), (30, 48),        # Zuid-Irak/Koeweit
-    (29, 49), (27, 53),        # Perzische Golf ingang/Qatar
-    (25, 57), (23, 59),        # VAE → Noord-Oman
-    (21, 60),                   # Oost-Oman (Kaap Ras al-Hadd)
-    (18, 60), (15, 58),        # Arabische Zee naar Golf van Aden
-    (13, 57), (11, 55),        # 11N/55E (officieel ITU-punt)
-    (11, 59),                   # Langs breedtegraad 11N → 59E
+    (35, 46), (33, 47),         # Irak/Iran grens
+    (31, 47), (30, 48),         # Zuid-Irak/Koeweit
+    (29, 49), (27, 53),         # Perzische Golf / Qatar
+    (25, 57), (23, 59),         # VAE → Noord-Oman
+    (21, 60),                   # Oost-Oman
+    (18, 60), (15, 58),         # Arabische Zee
+    (13, 57), (11, 55),         # 11N/55E
+    (11, 59),                   # langs 11N naar 59E
     (-90, 59),                  # Z-pool langs 59E
+]
+
+# Lijn A (noordelijk deel / Rusland-arm): Oeral → zuidgrens Rusland oost →
+# Kazachstaan/Mongolië/China grens → Russisch Verre Oosten kust
+# Rusland (boven deze lijn) is volledig R1
+_ITU_A_RUS = [
+    (90, 55),                   # N-pool langs 55E
+    (55, 55),                   # 55N/Oeral (knoop met zuidelijk deel)
+    (53, 60), (52, 73),         # Kazachstaan/W-Siberisch grens
+    (51, 82), (52, 87),         # Altai-regio
+    (52, 98), (50, 107),        # Tuva / Mongolisch grens
+    (50, 118), (49, 127),       # Mongolisch / Mandsjoerij grens
+    (47, 130), (46, 134),       # Amoer-rivier (Rusland/China)
+    (43, 131),                  # Vladivostok
 ]
 
 # Lijn C: Pacific grens R2 / R3
@@ -1400,7 +1414,8 @@ class HAMIOSApp:
                 (-90,-20),(-90,-120),(60,-120),(60,-170)
             ]), fill=C_R2)
 
-            # R1: Lijn-B → Z-pool → Lijn-A omgekeerd → N-pool
+            # R1 hoofd: Lijn-B → Z-pool → Lijn-A omgekeerd → Oeral-knoop
+            # (Europa, Afrika, Arabisch schiereiland, Turkije)
             id_.polygon(_px([
                 (90,-10),(72,-10),(40,-50),(30,-20),(0,-20),(-90,-20),
                 (-90,59),
@@ -1410,13 +1425,13 @@ class HAMIOSApp:
                 (27,53),(29,49),
                 (30,48),(31,47),(33,47),(35,46),
                 (37,44),(38,42),(39,40),
-                (41,40),(45,39),(47,43),(50,52),(55,55),
-                (60,55),(90,55)
+                (41,40),(45,39),(47,43),
+                (55,55),(90,55)
             ]), fill=C_R1)
 
-            # R3 oost (Azië-Pacific): Lijn-A → 180°E
+            # R3 oost (Azië-Pacific): Lijn-A zuidelijk → 180°E
             id_.polygon(_px([
-                (90,55),(60,55),(55,55),(50,52),(47,43),
+                (55,55),(47,43),
                 (45,39),(41,40),
                 (39,40),(38,42),(37,44),
                 (35,46),(33,47),(31,47),(30,48),
@@ -1424,14 +1439,27 @@ class HAMIOSApp:
                 (23,59),(21,60),(18,60),
                 (15,58),(13,57),(11,55),
                 (11,59),
-                (-90,59),(-90,180),(90,180)
+                (-90,59),(-90,180),(90,180),(90,55)
             ]), fill=C_R3)
+
+            # R1 Rusland-patch: heel Rusland (boven Kazachstaan/Mongolië/China
+            # grens ~50-55N) is R1 — overtekent R3 oost voor Siberisch gebied
+            id_.polygon(_px([
+                (55, 55),
+                (53, 60),(52, 73),(51, 82),(52, 87),
+                (52, 98),(50,107),(50,118),(49,127),
+                (47,130),(46,134),(43,131),
+                (45,136),(50,141),(55,141),
+                (59,151),(63,163),(67,178),
+                (90,180),(90,55),
+            ]), fill=C_R1)
 
             # ── Grenslijnen ───────────────────────────────────────────────
             for pts, clr, w in [
-                (_ITU_B, (255, 200,  80, AL), 2),   # R1/R2
-                (_ITU_A, ( 80, 220, 100, AL), 2),   # R1/R3
-                (_ITU_C, (160, 220, 160, AL), 1),   # R2/R3 Pacific
+                (_ITU_B,     (255, 200,  80, AL), 2),   # R1/R2
+                (_ITU_A,     ( 80, 220, 100, AL), 2),   # R1/R3 Arabisch deel
+                (_ITU_A_RUS, ( 80, 220, 100, AL), 2),   # R1/R3 Rusland-arm
+                (_ITU_C,     (160, 220, 160, AL), 1),   # R2/R3 Pacific
             ]:
                 px = _px(pts)
                 for j in range(len(px) - 1):
