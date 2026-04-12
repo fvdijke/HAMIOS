@@ -25,6 +25,11 @@ Maak het ook selecteerbaar.
 ─────────────────────────────────────────────────────────────────────
 Change Log (1.0)
 ─────────────────────────────────────────────────────────────────────
+· 2026-04-12 10:19 CEST — ITU regio-overlay: nauwkeurige grenzen per ITU RR Art.5;
+               Lijn-A (R1/R3) met 20 detail-punten door Midden-Oosten (Turkije,
+               Syrië/Irak, Koeweit, Golf van Oman, Arabische Zee, Somalische
+               kust); Lijn-B (R1/R2) grote-cirkel bogen; Lijn-C Pacific met stap
+               60°N/170°W→60°N/120°W. Labels "Regio 1/2/3" i.p.v. "R1/R2/R3".
 · 2026-04-12 10:10 CEST — ITU regio-overlay: checkbox hernoemd naar "ITU";
                correcte R1/R2/R3 grenzen per ITU RR Art.5 (N-pool→10°W→72°N→
                50°W/40°N→20°W/Z-pool en N-pool→40°E→60°E/23.5°N→Z-pool);
@@ -162,6 +167,32 @@ MAP_GRID   = (30,  62,  95)    # graticule
 MAP_SUN    = (255, 215,   0)   # zon
 MAP_MOON   = (200, 200, 200)   # maan
 MAP_QTH    = ( 80, 180, 255)   # eigen positie (helder blauw)
+
+# ── ITU regio-grenzen (lat, lon) ──────────────────────────────────────────────
+# Lijn B: westgrens R1 / oostgrens R2
+# N-pool/10W -> 72N/10W -> 40N/50W -> 30N/20W -> Z-pool/20W
+_ITU_B = [
+    (90, -10), (72, -10), (40, -50), (30, -20), (0, -20), (-90, -20),
+]
+
+# Lijn A: oostgrens R1 / westgrens R3
+# N-pool/55E -> Rusland -> Kaukasus -> Turkije -> Sirie/Irak ->
+# Kuwait -> Golf van Oman -> Arabische Zee -> Somalische kust -> 0/40E -> Z-pool
+_ITU_A = [
+    (90, 55), (60, 55), (52, 55), (47, 43),
+    (43, 41), (39, 37), (37, 37), (35, 38),
+    (33, 39), (31, 38), (29, 48), (26, 56),
+    (24, 57), (22, 59), (20, 58), (17, 54),
+    (13, 46), (8, 43), (2, 41), (0, 40),
+    (-90, 40),
+]
+
+# Lijn C: Pacific grens R2 / R3
+# N-pool/170W -> 60N/170W -> stap oost -> 60N/120W -> Z-pool/120W
+_ITU_C = [
+    (90, -170), (60, -170), (60, -120), (-90, -120),
+]
+
 
 
 
@@ -1313,58 +1344,61 @@ class HAMIOSApp:
             img  = Image.alpha_composite(img.convert("RGBA"), gray).convert("RGB")
             draw = ImageDraw.Draw(img)
 
-        # ── ITU regio-overlay (R1/R2/R3 polygonen + grenslijnen) ────────────
+        # ── ITU regio-overlay (correcte R1/R2/R3 grenzen) ───────────────────
         if self._show_iaru_var.get():
             itu_img = Image.new("RGBA", (W, H), (0, 0, 0, 0))
             id_     = ImageDraw.Draw(itu_img)
-            AF, AL  = 30, 200   # alpha vulling / grenslijn
+            AF, AL  = 28, 210   # alpha vulling / grenslijn
 
             def _px(pts):
                 return [_ll_to_xy(la, lo, W, H) for la, lo in pts]
 
-            # ── Grenslijn-polylijnen (officiële ITU RR Art.5 grenzen) ─────
-            # Westgrens R1 / Oostgrens R2:
-            #   N-pool (10°W) → 72°N/10°W → 40°N/50°W → 20°N/20°W → Z-pool (20°W)
-            r1w = [(90,-10),(72,-10),(40,-50),(20,-20),(0,-20),(-90,-20)]
-            # Oostgrens R1 / Westgrens R3:
-            #   N-pool (40°E) → 40°N/40°E → 23.5°N/60°E → equator/60°E → Z-pool (60°E)
-            r1e = [(90,40),(40,40),(23.5,60),(0,60),(-90,60)]
-            # R2/R3 Pacific-grens: 160°W N→Z
-            r2r3 = [(90,-160),(-90,-160)]
+            # ── Gevulde regio-polygonen ───────────────────────────────────
+            # R3 Pacific west (kaartrand -180 tot Lijn-C -120W/170W)
+            id_.polygon(_px([
+                (90,-180),(90,-170),(60,-170),(60,-120),(-90,-120),(-90,-180)
+            ]), fill=(60,200,100,AF))
 
-            # ── Gevulde polygonen ─────────────────────────────────────────
-            # R3 Pacific west (links op kaart: 180°W → 160°W)
-            id_.polygon(_px([(90,-180),(90,-160),(-90,-160),(-90,-180)]),
-                        fill=(60,200,100,AF))
-            # R2: 160°W → R1/R2-grens → 180°W
-            id_.polygon(_px([(90,-160),(90,-10),(72,-10),(40,-50),
-                              (20,-20),(0,-20),(-90,-20),(-90,-160)]),
-                        fill=(255,140,60,AF))
-            # R1: R1/R2-grens → R1/R3-grens (gesloten via Zuid- en Noordpool)
-            id_.polygon(_px([(90,-10),(72,-10),(40,-50),(20,-20),
-                              (0,-20),(-90,-20),(-90,60),
-                              (0,60),(23.5,60),(40,40),(90,40)]),
-                        fill=(80,140,255,AF))
-            # R3 oost: R1/R3-grens → 180°E
-            id_.polygon(_px([(90,40),(40,40),(23.5,60),(0,60),
-                              (-90,60),(-90,180),(90,180)]),
-                        fill=(60,200,100,AF))
+            # R2 Amerika: Lijn-C oost → Lijn-B oost → kaartrand
+            id_.polygon(_px([
+                (90,-170),(90,-10),(72,-10),(40,-50),(30,-20),(0,-20),
+                (-90,-20),(-90,-120),(60,-120),(60,-170)
+            ]), fill=(255,140,60,AF))
+
+            # R1: Lijn-B → Lijn-A (Midden-Oosten detail) → gesloten via polen
+            id_.polygon(_px([
+                (90,-10),(72,-10),(40,-50),(30,-20),(0,-20),(-90,-20),(-90,40),
+                (0,40),(2,41),(8,43),(13,46),(17,54),(20,58),(22,59),(24,57),
+                (26,56),(29,48),(31,38),(33,39),(35,38),(37,37),(39,37),(43,41),
+                (47,43),(52,55),(60,55),(90,55)
+            ]), fill=(80,140,255,AF))
+
+            # R3 oost (Azië-Pacific): Lijn-A → 180°E
+            id_.polygon(_px([
+                (90,55),(60,55),(52,55),(47,43),(43,41),(39,37),(37,37),(35,38),
+                (33,39),(31,38),(29,48),(26,56),(24,57),(22,59),(20,58),(17,54),
+                (13,46),(8,43),(2,41),(0,40),(-90,40),(-90,180),(90,180)
+            ]), fill=(60,200,100,AF))
 
             # ── Grenslijnen ───────────────────────────────────────────────
             for pts, clr, w in [
-                (r1w,  (255,170, 80,AL), 2),
-                (r1e,  (100,220,130,AL), 2),
-                (r2r3, (180,230,160,AL), 1),
+                (_ITU_B, (255,170, 80,AL), 2),   # R1/R2
+                (_ITU_A, (100,220,130,AL), 2),   # R1/R3 (Midden-Oosten detail)
+                (_ITU_C, (180,230,160,AL), 1),   # R2/R3 Pacific
             ]:
                 px = _px(pts)
-                for i in range(len(px) - 1):
-                    id_.line([px[i], px[i+1]], fill=clr, width=w)
+                for j in range(len(px) - 1):
+                    id_.line([px[j], px[j+1]], fill=clr, width=w)
 
-            # ── Labels ────────────────────────────────────────────────────
-            for txt, la, lo in [("R2",30,-100),("R1",30,15),("R3",30,115)]:
+            # ── Labels (volledige naam) ────────────────────────────────────
+            for txt, la, lo in [
+                ("Regio 2", 35, -100),
+                ("Regio 1", 35,   15),
+                ("Regio 3", 35,  115),
+            ]:
                 x_l, y_l = _ll_to_xy(la, lo, W, H)
                 if 0 <= x_l < W and 0 <= y_l < H:
-                    id_.text((x_l - 8, y_l - 5), txt, fill=(220,220,220,200))
+                    id_.text((x_l - 22, y_l - 5), txt, fill=(230,230,230,210))
 
             img  = Image.alpha_composite(img.convert("RGBA"), itu_img).convert("RGB")
             draw = ImageDraw.Draw(img)
