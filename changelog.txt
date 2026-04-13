@@ -1,0 +1,131 @@
+
+─────────────────────────────────────────────────────────────────────
+Change Log (1.0)
+─────────────────────────────────────────────────────────────────────
+· 2026-04-13 09:08 CEST — Zoomen/pannen wereldkaart: muiswiel zoom 1×–8×
+               (cursor-gecentreerd), click+drag pant, rechts reset zoom/pan.
+               Alle overlays correct op VW×VH virtuele kaart + viewport-crop.
+· 2026-04-13 09:01 CEST — Callsign-prefix laag op wereldkaart: checkbox "CS" toont
+               ~110 DXCC-entiteiten als gele stip + prefix-label. INI-opslag.
+· 2026-04-12 17:33 CEST — Tooltips verbeterd: 350ms vertraging voor tonen,
+               schermrand-detectie, wraplength 380px, 1px rand. Hover-tooltip
+               op Bandopenings-schema (band, uur, kwaliteit, FT8, modi).
+               Hover-tooltip op Band Verloop (tijdstip + band%-waarden).
+· 2026-04-12 17:30 CEST — Alle panelen voorzien van 'bijgewerkt HH:MM' timestamp:
+               Wereldkaart, HF Betrouwbaarheid, Band Verloop, Bandopenings-schema,
+               DX Spots (tijd toegevoegd aan statusregel) en Advies.
+               Solar/Ionosfeer had al een bijgewerkt-label.
+· 2026-04-12 17:20 CEST — Solarwind toegevoegd aan Solar/Ionosfeer paneel:
+               snelheid (km/s) en Bz (nT) opgehaald van NOAA SWPC. Bz negatief
+               kleurt oranje (≤−10 nT) of rood (≤−20 nT). Tooltips voor beide
+               velden toegevoegd.
+· 2026-04-12 10:19 CEST — ITU regio-overlay: nauwkeurige grenzen per ITU RR Art.5;
+               Lijn-A (R1/R3) met 20 detail-punten door Midden-Oosten (Turkije,
+               Syrië/Irak, Koeweit, Golf van Oman, Arabische Zee, Somalische
+               kust); Lijn-B (R1/R2) grote-cirkel bogen; Lijn-C Pacific met stap
+               60°N/170°W→60°N/120°W. Labels "Regio 1/2/3" i.p.v. "R1/R2/R3".
+· 2026-04-12 10:10 CEST — ITU regio-overlay: checkbox hernoemd naar "ITU";
+               correcte R1/R2/R3 grenzen per ITU RR Art.5 (N-pool→10°W→72°N→
+               50°W/40°N→20°W/Z-pool en N-pool→40°E→60°E/23.5°N→Z-pool);
+               gevulde polygonen + gedetailleerde grenslijnen + R2/R3 Pacific-grens.
+· 2026-04-10 21:46 CEST — DX Spots boven Advies geplaatst (linker sub-kolom).
+· 2026-04-10 21:45 CEST — Wereldkaart vergroot over 2 kolommen; bandopenings-schema
+               verplaatst tussen kaart en advies (linker sub-kolom).
+· 2026-04-10 21:39 CEST — Advies verplaatst naar linker kolom onder de wereldkaart.
+· 2026-04-10 21:36 CEST — Fix DX Spots: s-dict itereerde over keys i.p.v. values;
+               veldindices gecorrigeerd (row[1]=freq, row[2]=spotter, row[4]=tijd);
+               tijdparsing "HHMMz DD Mon" → "HH:MM"; html.unescape voor comments;
+               _callsign_continent() toegevoegd voor sp_cont.
+· 2026-04-10 21:32 CEST — Nieuwe schermindeling: Links Wereldkaart (vast 540px),
+               midden Band Verloop + Schema + HF Betrouwbaarheid, rechts Solar,
+               onderaan DX Spots + Advies.
+· 2026-04-10 21:22 CEST — Continent-polygonen (_CONTINENTS) volledig verwijderd.
+               Fallback bij ontbrekende NASA-kaart toont nu alleen oceaan + melding.
+· 2026-04-10 15:16 CEST — Wereldkaart behoudt 2:1 verhouding bij venster-resize.
+               3-koloms layout: Propagatie | Grafieken+Schema+DX | Solar.
+· 2026-04-10 14:54 CEST — Live DX Spots panel: dxwatch.com JSON-feed, HF-filter,
+               eigen-continent toggle (lat/lon → continent), Canvas-tabel
+               (UTC/Band/DX/MHz/Spotter/Comment), refresh elke 2 min + countdown.
+· 2026-04-10 14:46 CEST — Graylijn (amber terminator-band) als toggleable overlay.
+               IARU regio-overlay R1/R2/R3 (gekleurde banden + grenslijn).
+               Groot-cirkel pad: klik op kaart → gele lijn + afstand/richting;
+               rechter muisklik wist het pad.
+· 2026-04-10 14:40 CEST — QTH lat/lon invoervelden in kaart-header (Enter/FocusOut
+               past kaart + propagatie direct aan). Bandschema tijdsas toont
+               lokale tijd (CET/CEST); zon-westwaarts bug gecorrigeerd.
+· 2026-04-12 17:16 CEST — Layout: advies verplaatst naar volle breedte onderin
+               het combined-frame; bandverloop (historiek) verplaatst naar
+               linkerkolom direct onder bandopenings-schema; rechterkolom
+               bevat alleen HF-betrouwbaarheid. DX-panel scrollable gemaakt:
+               scrollbar + muiswiel; alle spots zichtbaar via scrollregion.
+· 2026-04-12 17:11 CEST — ITU: Rusland correct in R1 via aparte Rusland-patch
+               (boven Kazachstaan/Mongolië/China grens ~50-55N). Lijn A
+               gesplitst in zuidelijk deel (Kaukasus→Arabië) en noordelijk
+               deel (_ITU_A_RUS: Oeral→Vladivostok langs Russische zuidgrens).
+               Rusland-patch overtekent R3-Siberisch gebied met R1-geel.
+· 2026-04-12 10:59 CEST — ITU overlay: regio-kleuren aangepast aan referentie
+               (R1=geel, R2=roze, R3=groen) en vulling-alpha verhoogd van 28
+               naar 55 (22% dekking) zodat regio's duidelijk zichtbaar zijn.
+· 2026-04-12 10:28 CEST — ITU Lijn-A gecorrigeerd: grens loopt nu via Irak/Iran grens
+               (46-48E) → Perzische Golf → Golf van Oman (60E) → Arabische Zee
+               → 11N/55E → 59E → Z-pool. Arabisch Schiereiland (Saudi, Oman,
+               VAE, Jemen, Koeweit, Irak) correct in R1; Iran/Pakistan in R3.
+               Eerdere fout: lijn liep door de Rode Zee waardoor Saudi-Arabië
+               foutief in R3 viel.
+· 2026-04-12 10:28 CEST — (vervangen) ITU grenzen volledig herschreven op basis van officieel
+               ITU Radio Regulations Appendix 2: Lijn A loopt N-pool/55E →
+               Oeral → Kaukasus (Krasnodar) → Turkije/Syrië → langs 35E naar 30N
+               → boog Rode Zee/Golf van Aden → 11N/55E → langs 11N naar 59E →
+               Z-pool langs 59E. Arabie (Saudi, Oman, VAE, Jemen) correct in R1;
+               Iran, Pakistan, India correct in R3. Opstartvenster gebruikt
+               root.update() voor nauwkeurige venstermeting.
+· 2026-04-10 14:36 CEST — 60m-band zonder *, K-index als enkel getal met kleur
+               (0–2 wit, 3–4 oranje, 5+ rood), K-melding-spinbox direct onder
+               K-index geplaatst, bijgewerkt-tijd toont QTH-lokale tijd.
+· 2026-04-10 09:20 CEST — Bandopenings-schema (heatmap 0–24 uur UTC per HF-band).
+               X-flare detectie: M1+/X → SWF-waarschuwing in solar panel + tray.
+               Auroraal absorptie-ovaal op kaart bij K≥4 (rood/oranje band).
+               Solar-data geschiedenis: SFI/SSN/K/A opgeslagen in CSV; toggle
+               "Solar" vs "Banden" in historiekgrafiek.
+· 2026-04-10 09:11 CEST — Changelog herschreven: chronologisch opgeschoond,
+               duplicaten verwijderd, laatste aanpassing bovenaan.
+· 2026-04-10 09:10 CEST — Systeem-tray: venster sluiten minimaliseert naar tray.
+               Tray-menu "HAMIOS tonen" / "Afsluiten". Notificaties bij band-opening
+               (≥20%) en K-index drempel-overschrijding (drempel 1–9 instelbaar).
+· 2026-04-10 09:04 CEST — Maidenhead-locatorraster als optionele kaartlaag (checkbox
+               "Locator"): grote velden (20°×10°) met 2-letter QRA-labels (AA–RR).
+· 2026-04-10 09:01 CEST — Alle UI-instellingen opgeslagen in HAMIOS.ini: grafiek-
+               bereik, geselecteerde banden, tooltips aan/uit, locatorraster.
+· 2026-04-10 08:53 CEST — Advies-panel onderaan: actuele tips op basis van beste
+               banden, K-index, SFI/SSN en dag/nacht. Ververst bij elke solar-refresh.
+· 2026-04-10 07:41 CEST — Exe-icon (antenne + radiogolven, 256×256, donker thema).
+               Zon/maan aan/uit via checkboxes in kaart-header, opgeslagen in INI.
+               QTH-markering vereenvoudigd tot kruisje (helder blauw).
+· 2026-04-10 07:41 CEST — HF-propagatie afgestemd op QTH: breedtegraad-correctie
+               op foF2, aurorale absorptie boven 45°. Dag/nacht automatisch bepaald
+               op basis van zonpositie t.o.v. QTH bij elke solar-refresh.
+· 2026-04-10 07:37 CEST — Mode-kolom: FT8 altijd rechts (bijv. "SSB / FT8").
+               N/F licentiekolom naast bandnaam (NL: N = Novice, F = Full/HAREC).
+· 2026-04-09 13:36 CEST — FT8-frequentiekolom toegevoegd aan propagatiepanel
+               (IARU-standaardfrequenties, kolomhoofd, ook in tooltip).
+· 2026-04-09 13:30 CEST — Historiekgrafiek (alle HF-banden, %) met tijdbereik-
+               selectie (Uren/Dagen/Weken/Maanden) en klikbare bandlegenda.
+               Data opgeslagen in CSV (90 dagen bewaard).
+· 2026-04-09 13:00 CEST — Gesloten banden grijs weergegeven (zelfde stijl als
+               LOS/Tropo). Mouse-over tooltips per band en per solar-gegeven.
+· 2026-04-09 12:15 CEST — Wereldkaart (blauw thema, equirectangular, 400 px hoog):
+               dag/nacht terminator met zachte overgang, zon- en maanpositie, QTH-
+               markering. NASA-kaart (2048×1024) automatisch gedownload; polygoon-
+               kaart als fallback. Breedtegraad/lengtegraad labels op raster.
+· 2026-04-09 12:00 CEST — Solar panel toont alle 15 banden (dag én nacht) via
+               MUF/LUF-model; kleurcodes Goed/Fair/Arm/Dicht/LOS.
+· 2026-04-09 11:30 CEST — Alle officiële HAM-banden toegevoegd (160m–23cm, incl.
+               60m* en VHF/UHF) met startfrequenties en aanbevolen modi.
+· 2026-04-09 10:30 CEST — QTH-positie (lat/lon), mode, vermogen en antenne opgeslagen
+               in HAMIOS.ini en hersteld bij start.
+· 2026-04-09 10:00 CEST — Instelbaar ververs-interval (Uit / 30s / 1 min / 5 min /
+               10 min / 30 min / 1 uur); countdown in header. Lokale tijd (CET/CEST)
+               en UTC in header; vinkje Zomertijd opgeslagen in HAMIOS.ini.
+· 2026-04-08 00:00 CEST — Initiële versie: solar/ionosfeer data panel (SFI, SSN,
+               A/K-index, X-ray), HF band betrouwbaarheidspanel (MUF/LUF model,
+               mode/vermogen/antenne correctie, gekleurde balkjes per band).

@@ -1,5 +1,5 @@
 """
-HAMIOS v1.0
+HAMIOS v2.0
 by Frank van Dijke
 
 HAM radio propagation en DX tool met donkere GUI.
@@ -14,126 +14,39 @@ Dependencies:
 TODO
 ─────────────────────────────────────────────────────────────────────
 Maak een versie 2.0, ook in Git en exe.
-Fix de ITA Regio's
-Zet advies helemaal onder over de gehele breedte.
-Zet bandverloop onder bandopenings-schema. 
-Maak DX panel scrollable.
-Selecteerbaar raster met callsign landcodes.
+Zet de panelen in een betere volgorde zodat alles netjes past.
 Zoomen en pannen van de worldmap.
 Melding K, getal moet onder de overige getallen.
 Verbeteren van de tooltips. Wat uitgebreider en betere presentatie.
 Voeg in Solar/Ionosfeer Solarwind toe
-Zet in elk paneel wanneer deze het laatst is bijgewerkt.
 
 ─────────────────────────────────────────────────────────────────────
-Change Log (1.0)
+Change Log (2.0)
 ─────────────────────────────────────────────────────────────────────
-· 2026-04-12 10:19 CEST — ITU regio-overlay: nauwkeurige grenzen per ITU RR Art.5;
-               Lijn-A (R1/R3) met 20 detail-punten door Midden-Oosten (Turkije,
-               Syrië/Irak, Koeweit, Golf van Oman, Arabische Zee, Somalische
-               kust); Lijn-B (R1/R2) grote-cirkel bogen; Lijn-C Pacific met stap
-               60°N/170°W→60°N/120°W. Labels "Regio 1/2/3" i.p.v. "R1/R2/R3".
-· 2026-04-12 10:10 CEST — ITU regio-overlay: checkbox hernoemd naar "ITU";
-               correcte R1/R2/R3 grenzen per ITU RR Art.5 (N-pool→10°W→72°N→
-               50°W/40°N→20°W/Z-pool en N-pool→40°E→60°E/23.5°N→Z-pool);
-               gevulde polygonen + gedetailleerde grenslijnen + R2/R3 Pacific-grens.
-· 2026-04-10 21:46 CEST — DX Spots boven Advies geplaatst (linker sub-kolom).
-· 2026-04-10 21:45 CEST — Wereldkaart vergroot over 2 kolommen; bandopenings-schema
-               verplaatst tussen kaart en advies (linker sub-kolom).
-· 2026-04-10 21:39 CEST — Advies verplaatst naar linker kolom onder de wereldkaart.
-· 2026-04-10 21:36 CEST — Fix DX Spots: s-dict itereerde over keys i.p.v. values;
-               veldindices gecorrigeerd (row[1]=freq, row[2]=spotter, row[4]=tijd);
-               tijdparsing "HHMMz DD Mon" → "HH:MM"; html.unescape voor comments;
-               _callsign_continent() toegevoegd voor sp_cont.
-· 2026-04-10 21:32 CEST — Nieuwe schermindeling: Links Wereldkaart (vast 540px),
-               midden Band Verloop + Schema + HF Betrouwbaarheid, rechts Solar,
-               onderaan DX Spots + Advies.
-· 2026-04-10 21:22 CEST — Continent-polygonen (_CONTINENTS) volledig verwijderd.
-               Fallback bij ontbrekende NASA-kaart toont nu alleen oceaan + melding.
-· 2026-04-10 15:16 CEST — Wereldkaart behoudt 2:1 verhouding bij venster-resize.
-               3-koloms layout: Propagatie | Grafieken+Schema+DX | Solar.
-· 2026-04-10 14:54 CEST — Live DX Spots panel: dxwatch.com JSON-feed, HF-filter,
-               eigen-continent toggle (lat/lon → continent), Canvas-tabel
-               (UTC/Band/DX/MHz/Spotter/Comment), refresh elke 2 min + countdown.
-· 2026-04-10 14:46 CEST — Graylijn (amber terminator-band) als toggleable overlay.
-               IARU regio-overlay R1/R2/R3 (gekleurde banden + grenslijn).
-               Groot-cirkel pad: klik op kaart → gele lijn + afstand/richting;
-               rechter muisklik wist het pad.
-· 2026-04-10 14:40 CEST — QTH lat/lon invoervelden in kaart-header (Enter/FocusOut
-               past kaart + propagatie direct aan). Bandschema tijdsas toont
-               lokale tijd (CET/CEST); zon-westwaarts bug gecorrigeerd.
-· 2026-04-12 17:11 CEST — ITU: Rusland correct in R1 via aparte Rusland-patch
-               (boven Kazachstaan/Mongolië/China grens ~50-55N). Lijn A
-               gesplitst in zuidelijk deel (Kaukasus→Arabië) en noordelijk
-               deel (_ITU_A_RUS: Oeral→Vladivostok langs Russische zuidgrens).
-               Rusland-patch overtekent R3-Siberisch gebied met R1-geel.
-· 2026-04-12 10:59 CEST — ITU overlay: regio-kleuren aangepast aan referentie
-               (R1=geel, R2=roze, R3=groen) en vulling-alpha verhoogd van 28
-               naar 55 (22% dekking) zodat regio's duidelijk zichtbaar zijn.
-· 2026-04-12 10:28 CEST — ITU Lijn-A gecorrigeerd: grens loopt nu via Irak/Iran grens
-               (46-48E) → Perzische Golf → Golf van Oman (60E) → Arabische Zee
-               → 11N/55E → 59E → Z-pool. Arabisch Schiereiland (Saudi, Oman,
-               VAE, Jemen, Koeweit, Irak) correct in R1; Iran/Pakistan in R3.
-               Eerdere fout: lijn liep door de Rode Zee waardoor Saudi-Arabië
-               foutief in R3 viel.
-· 2026-04-12 10:28 CEST — (vervangen) ITU grenzen volledig herschreven op basis van officieel
-               ITU Radio Regulations Appendix 2: Lijn A loopt N-pool/55E →
-               Oeral → Kaukasus (Krasnodar) → Turkije/Syrië → langs 35E naar 30N
-               → boog Rode Zee/Golf van Aden → 11N/55E → langs 11N naar 59E →
-               Z-pool langs 59E. Arabie (Saudi, Oman, VAE, Jemen) correct in R1;
-               Iran, Pakistan, India correct in R3. Opstartvenster gebruikt
-               root.update() voor nauwkeurige venstermeting.
-· 2026-04-10 14:36 CEST — 60m-band zonder *, K-index als enkel getal met kleur
-               (0–2 wit, 3–4 oranje, 5+ rood), K-melding-spinbox direct onder
-               K-index geplaatst, bijgewerkt-tijd toont QTH-lokale tijd.
-· 2026-04-10 09:20 CEST — Bandopenings-schema (heatmap 0–24 uur UTC per HF-band).
-               X-flare detectie: M1+/X → SWF-waarschuwing in solar panel + tray.
-               Auroraal absorptie-ovaal op kaart bij K≥4 (rood/oranje band).
-               Solar-data geschiedenis: SFI/SSN/K/A opgeslagen in CSV; toggle
-               "Solar" vs "Banden" in historiekgrafiek.
-· 2026-04-10 09:11 CEST — Changelog herschreven: chronologisch opgeschoond,
-               duplicaten verwijderd, laatste aanpassing bovenaan.
-· 2026-04-10 09:10 CEST — Systeem-tray: venster sluiten minimaliseert naar tray.
-               Tray-menu "HAMIOS tonen" / "Afsluiten". Notificaties bij band-opening
-               (≥20%) en K-index drempel-overschrijding (drempel 1–9 instelbaar).
-· 2026-04-10 09:04 CEST — Maidenhead-locatorraster als optionele kaartlaag (checkbox
-               "Locator"): grote velden (20°×10°) met 2-letter QRA-labels (AA–RR).
-· 2026-04-10 09:01 CEST — Alle UI-instellingen opgeslagen in HAMIOS.ini: grafiek-
-               bereik, geselecteerde banden, tooltips aan/uit, locatorraster.
-· 2026-04-10 08:53 CEST — Advies-panel onderaan: actuele tips op basis van beste
-               banden, K-index, SFI/SSN en dag/nacht. Ververst bij elke solar-refresh.
-· 2026-04-10 07:41 CEST — Exe-icon (antenne + radiogolven, 256×256, donker thema).
-               Zon/maan aan/uit via checkboxes in kaart-header, opgeslagen in INI.
-               QTH-markering vereenvoudigd tot kruisje (helder blauw).
-· 2026-04-10 07:41 CEST — HF-propagatie afgestemd op QTH: breedtegraad-correctie
-               op foF2, aurorale absorptie boven 45°. Dag/nacht automatisch bepaald
-               op basis van zonpositie t.o.v. QTH bij elke solar-refresh.
-· 2026-04-10 07:37 CEST — Mode-kolom: FT8 altijd rechts (bijv. "SSB / FT8").
-               N/F licentiekolom naast bandnaam (NL: N = Novice, F = Full/HAREC).
-· 2026-04-09 13:36 CEST — FT8-frequentiekolom toegevoegd aan propagatiepanel
-               (IARU-standaardfrequenties, kolomhoofd, ook in tooltip).
-· 2026-04-09 13:30 CEST — Historiekgrafiek (alle HF-banden, %) met tijdbereik-
-               selectie (Uren/Dagen/Weken/Maanden) en klikbare bandlegenda.
-               Data opgeslagen in CSV (90 dagen bewaard).
-· 2026-04-09 13:00 CEST — Gesloten banden grijs weergegeven (zelfde stijl als
-               LOS/Tropo). Mouse-over tooltips per band en per solar-gegeven.
-· 2026-04-09 12:15 CEST — Wereldkaart (blauw thema, equirectangular, 400 px hoog):
-               dag/nacht terminator met zachte overgang, zon- en maanpositie, QTH-
-               markering. NASA-kaart (2048×1024) automatisch gedownload; polygoon-
-               kaart als fallback. Breedtegraad/lengtegraad labels op raster.
-· 2026-04-09 12:00 CEST — Solar panel toont alle 15 banden (dag én nacht) via
-               MUF/LUF-model; kleurcodes Goed/Fair/Arm/Dicht/LOS.
-· 2026-04-09 11:30 CEST — Alle officiële HAM-banden toegevoegd (160m–23cm, incl.
-               60m* en VHF/UHF) met startfrequenties en aanbevolen modi.
-· 2026-04-09 10:30 CEST — QTH-positie (lat/lon), mode, vermogen en antenne opgeslagen
-               in HAMIOS.ini en hersteld bij start.
-· 2026-04-09 10:00 CEST — Instelbaar ververs-interval (Uit / 30s / 1 min / 5 min /
-               10 min / 30 min / 1 uur); countdown in header. Lokale tijd (CET/CEST)
-               en UTC in header; vinkje Zomertijd opgeslagen in HAMIOS.ini.
-· 2026-04-08 00:00 CEST — Initiële versie: solar/ionosfeer data panel (SFI, SSN,
-               A/K-index, X-ray), HF band betrouwbaarheidspanel (MUF/LUF model,
-               mode/vermogen/antenne correctie, gekleurde balkjes per band).
 
+· 2026-04-13 09:08 CEST — Zoomen en pannen van de wereldkaart: muiswiel zoom
+               (1×–8×, cursor-gecentreerd), click+drag pant, rechter muisklik
+               reset zoom/pan (of wist groot-cirkel als zoom=1). Alle overlays
+               (nacht, zon, maan, ITU, locator, aurora, CS, groot-cirkel) worden
+               correct getekend op de virtuele VW×VH kaart en gecropped naar
+               de viewport. Cache invalide bij zoom-wijziging.
+· 2026-04-13 09:01 CEST — Callsign-prefix laag op wereldkaart: checkbox "CS" in
+               kaart-header toont ~110 DXCC-entiteiten als gele stip + prefix-
+               label (PA, G, DL, JA, W, VK enz.). Laag opgeslagen in INI.
+· 2026-04-12 17:33 CEST — Tooltips verbeterd: _Tooltip krijgt 350ms vertraging voor
+               tonen, schermrand-detectie (tooltip klapt om als hij buiten scherm
+               valt), wraplength 380px voor lange tekst, 1px rand voor betere
+               zichtbaarheid. Hover-tooltip op Bandopenings-schema (band, uur,
+               kwaliteit, FT8-freq, modi). Hover-tooltip op Band Verloop
+               (tijdstip + alle band%-waarden gesorteerd op kwaliteit).
+· 2026-04-12 17:30 CEST — Alle panelen voorzien van 'bijgewerkt HH:MM' timestamp:
+               Wereldkaart, HF Betrouwbaarheid, Band Verloop, Bandopenings-schema,
+               DX Spots (tijd toegevoegd aan statusregel) en Advies.
+               Solar/Ionosfeer had al een bijgewerkt-label.
+· 2026-04-12 17:20 CEST — Solarwind toegevoegd aan Solar/Ionosfeer paneel:
+               snelheid (km/s) en Bz (nT) opgehaald van NOAA SWPC. Bz negatief
+               kleurt oranje (≤−10 nT) of rood (≤−20 nT). Tooltips voor beide
+               velden toegevoegd.
 
 """
 
@@ -422,6 +335,7 @@ def _load_settings() -> dict:
         "show_locator":  cfg.getboolean("Map",   "show_locator",   fallback=False),
         "show_graylijn": cfg.getboolean("Map",   "show_graylijn",  fallback=True),
         "show_iaru":     cfg.getboolean("Map",   "show_iaru",      fallback=False),
+        "show_cs":       cfg.getboolean("Map",   "show_cs",        fallback=False),
         "hist_range":    cfg.get       ("Graph", "hist_range",     fallback="Uren"),
         "hist_sel":      set(hist_sel_raw.split(",")) - {""} if hist_sel_raw else set(),
         "k_alert":       cfg.getint   ("Alerts","k_alert",        fallback=4),
@@ -435,6 +349,7 @@ def _save_settings(lat: float, lon: float, refresh: str,
                    show_locator: bool = False,
                    show_graylijn: bool = True,
                    show_iaru: bool = False,
+                   show_cs: bool = False,
                    hist_range: str = "Uren",
                    hist_sel: set = None,
                    k_alert: int = 4) -> None:
@@ -446,7 +361,8 @@ def _save_settings(lat: float, lon: float, refresh: str,
     cfg["Map"]   = {"show_sun": str(show_sun), "show_moon": str(show_moon),
                     "show_locator": str(show_locator),
                     "show_graylijn": str(show_graylijn),
-                    "show_iaru": str(show_iaru)}
+                    "show_iaru": str(show_iaru),
+                    "show_cs": str(show_cs)}
     cfg["Graph"]  = {"hist_range": hist_range,
                      "selected_bands": ",".join(sorted(hist_sel)) if hist_sel else ""}
     cfg["Alerts"] = {"k_alert": str(k_alert)}
@@ -454,7 +370,9 @@ def _save_settings(lat: float, lon: float, refresh: str,
         cfg.write(f)
 
 # ── Solar data ophalen ─────────────────────────────────────────────────────────
-SOLAR_URL = "https://www.hamqsl.com/solarxml.php"
+SOLAR_URL    = "https://www.hamqsl.com/solarxml.php"
+SW_SPEED_URL = "https://services.swpc.noaa.gov/products/summary/solar-wind-speed.json"
+SW_MAG_URL   = "https://services.swpc.noaa.gov/products/summary/solar-wind-mag-field.json"
 
 def _fetch_solar() -> dict:
     try:
@@ -464,7 +382,7 @@ def _fetch_solar() -> dict:
         sd = root.find(".//solardata")
         if sd is None:
             return {}
-        return {
+        data = {
             "sfi":           sd.findtext("solarflux", "—").strip(),
             "ssn":           sd.findtext("sunspots",  "—").strip(),
             "a_index":       sd.findtext("aindex",    "—").strip(),
@@ -481,6 +399,22 @@ def _fetch_solar() -> dict:
             "band_17m_ngt":  _band_cond(sd, "17m-15m",  "night"),
             "band_10m_ngt":  _band_cond(sd, "12m-10m",  "night"),
         }
+        # ── Solarwind (NOAA SWPC) ──────────────────────────────────────────────
+        try:
+            with urllib.request.urlopen(SW_SPEED_URL, timeout=6) as r:
+                sw_speed_data = json.loads(r.read())
+            spd = sw_speed_data.get("WindSpeed")
+            data["sw_speed"] = f"{float(spd):.0f}" if spd is not None else "—"
+        except Exception:
+            data["sw_speed"] = "—"
+        try:
+            with urllib.request.urlopen(SW_MAG_URL, timeout=6) as r:
+                sw_mag_data = json.loads(r.read())
+            bz = sw_mag_data.get("Bz")
+            data["sw_bz"] = f"{float(bz):.1f}" if bz is not None else "—"
+        except Exception:
+            data["sw_bz"] = "—"
+        return data
     except Exception as e:
         return {"error": str(e)}
 
@@ -491,6 +425,67 @@ def _band_cond(sd, band: str, time_of_day: str) -> str:
             return (item.text or "—").strip()
     return "—"
 
+
+# ── Callsign-prefix locaties (DXCC-entiteiten) ───────────────────────────────
+# (prefix, lat, lon)  — approximate centroid of entity
+_CS_PREFIXES: list[tuple[str, float, float]] = [
+    # Europa
+    ("PA",  52.3,   5.3), ("G",   52.0,  -1.5), ("DL",  51.0,  10.0),
+    ("F",   46.0,   2.0), ("I",   42.5,  12.5), ("EA",  40.0,  -4.0),
+    ("SP",  52.0,  20.0), ("OZ",  56.0,  10.0), ("SM",  60.0,  15.0),
+    ("OH",  64.0,  26.0), ("LA",  64.0,  11.0), ("OE",  47.5,  13.5),
+    ("HB9", 47.0,   8.0), ("ON",  50.5,   4.5), ("LX",  49.7,   6.2),
+    ("EI",  53.0,  -8.0), ("HA",  47.0,  19.0), ("OK",  49.8,  15.5),
+    ("OM",  48.7,  19.5), ("S5",  46.1,  14.9), ("9A",  45.0,  16.0),
+    ("YO",  45.5,  24.5), ("LZ",  42.7,  25.5), ("SV",  39.0,  22.0),
+    ("YU",  44.0,  21.0), ("CT",  39.5,  -8.0), ("GI",  54.6,  -6.5),
+    ("GM",  57.0,  -4.0), ("GW",  52.4,  -3.7), ("GJ",  49.2,  -2.1),
+    ("IS0", 40.0,   9.0), ("IT9", 37.6,  14.0), ("5B",  35.0,  33.0),
+    ("TK",  42.0,   9.0), ("3A",  43.7,   7.4), ("HV",  41.9,  12.4),
+    # Oost-Europa / CIS
+    ("UA",  56.0,  38.0), ("UR",  49.0,  32.0), ("EW",  53.5,  28.0),
+    ("ES",  59.0,  25.0), ("YL",  57.0,  25.0), ("LY",  55.5,  24.0),
+    ("ER",  47.0,  29.0), ("4L",  42.0,  44.0), ("EK",  40.2,  44.5),
+    ("4J",  40.4,  47.8), ("UF",  42.0,  43.5),
+    # Midden-Oosten
+    ("TA",  39.0,  35.0), ("4X",  31.5,  35.0), ("OD",  33.9,  35.5),
+    ("YK",  35.0,  38.3), ("JY",  31.0,  36.5), ("A4",  21.0,  57.0),
+    ("A6",  23.5,  54.0), ("A9",  26.0,  50.5), ("9K",  29.3,  47.7),
+    ("HZ",  24.0,  45.0), ("7Z",  24.0,  45.0), ("YI",  33.0,  44.0),
+    # Azië
+    ("UA9", 60.0, 100.0), ("UN",  48.0,  68.0), ("EX",  41.0,  74.0),
+    ("EY",  38.5,  71.0), ("EZ",  40.0,  58.0), ("UK",  41.0,  64.0),
+    ("EP",  32.0,  53.0), ("AP",  30.0,  70.0), ("VU",  22.0,  78.0),
+    ("S2",  23.7,  90.4), ("9N",  28.0,  84.0), ("XV",  16.0, 108.0),
+    ("XU",  12.6, 104.9), ("XW",  18.0, 103.0), ("HS",  15.0, 101.0),
+    ("9M2",  4.0, 109.0), ("9V",   1.4, 103.8), ("YB",  -5.0, 120.0),
+    ("DU",  12.0, 123.0), ("BV",  23.5, 121.0), ("BY",  35.0, 105.0),
+    ("HL",  37.0, 127.5), ("JA",  36.0, 138.0), ("JT",  47.0, 106.0),
+    ("VR",  22.3, 114.2), ("VS6", 22.3, 114.2),
+    # Afrika
+    ("ZS", -29.0,  25.0), ("ZE", -20.0,  30.0), ("9J",  -14.0,  28.0),
+    ("5H",  -6.0,  35.0), ("5Z",   1.0,  38.0), ("ET",   9.0,  38.5),
+    ("ST",  16.0,  32.0), ("SU",  27.0,  30.0), ("CN",  32.0,  -6.0),
+    ("EA8", 28.0, -15.5), ("7X",  28.0,   3.0), ("3V",  33.8,   9.5),
+    ("IG9", 35.6,  12.7), ("TU",   6.0,  -5.0), ("9G",   8.0,  -2.0),
+    ("5N",  10.0,   8.0), ("TZ",  13.0,  -2.0), ("6W",  14.0, -14.0),
+    # Noord-Amerika
+    ("W",   38.0, -97.0), ("VE",  57.0, -96.0), ("XE",  23.0,-102.0),
+    ("KP4", 18.2, -66.4), ("KH6", 20.7,-156.0), ("KL7", 64.0,-153.0),
+    # Midden-Amerika / Caraïben
+    ("TI",  10.0, -84.0), ("HP",   8.5, -80.0), ("YN",  12.8, -85.2),
+    ("HR",  14.8, -86.8), ("TG",  15.5, -90.3), ("V3",  17.2, -88.7),
+    ("HH",  19.0, -72.3), ("HI",  19.0, -70.2), ("6Y",  18.2, -77.5),
+    ("VP9", 32.3, -64.7), ("ZF",  19.3, -81.4),
+    # Zuid-Amerika
+    ("PY", -10.0, -55.0), ("LU", -34.0, -64.0), ("CE", -30.0, -71.0),
+    ("CP", -17.0, -65.0), ("OA", -10.0, -75.0), ("PZ",   4.0, -56.0),
+    ("9Y",  10.5, -61.2), ("8R",   5.0, -59.0), ("HC",  -1.8, -78.2),
+    # Oceanië
+    ("VK",  -25.0, 134.0), ("ZL", -41.0, 174.0), ("KH0",  15.2, 145.7),
+    ("YJ",  -17.7, 168.3), ("T2",  -8.5, 179.2), ("A3",  -21.2,-175.2),
+    ("ZK",  -21.2,-175.2), ("E5",  -21.2,-159.8),
+]
 
 # ── HF/VHF/UHF band definities ────────────────────────────────────────────────
 # (naam, startfrequentie MHz, hf=True voor ionosfeer-propagatiemodel)
@@ -846,21 +841,45 @@ class _Tooltip:
       list → rijen:  (tekst, None)  = titelbalk (bold, volle breedte)
                      None           = scheidingslijn
                      (label, waarde) = uitgelijnde twee-koloms rij
+
+    De tooltip verschijnt na _DELAY_MS ms vertraging en repositioneert zich
+    automatisch als hij buiten het scherm zou vallen.
     """
+    _DELAY_MS  = 350    # ms vertraging voor tonen
+    _WRAP_PX   = 380    # maximale tekstbreedte in string-modus
+
     def __init__(self, widget: tk.Widget):
-        self._widget = widget
+        self._widget  = widget
         self._win: tk.Toplevel | None = None
+        self._after_id = None
+        self._pending: tuple | None = None   # (x, y, content)
 
     def show(self, x: int, y: int, content):
+        # Annuleer eventueel lopende vertraging
+        if self._after_id is not None:
+            try:
+                self._widget.after_cancel(self._after_id)
+            except Exception:
+                pass
+            self._after_id = None
+        self._pending = (x, y, content)
+        self._after_id = self._widget.after(self._DELAY_MS, self._do_show)
+
+    def _do_show(self):
+        self._after_id = None
+        if self._pending is None:
+            return
+        x, y, content = self._pending
+        self._pending = None
+
         if self._win:
             self._win.destroy()
         self._win = tw = tk.Toplevel(self._widget)
         tw.wm_overrideredirect(True)
-        tw.wm_geometry(f"+{x + 14}+{y + 10}")
         tw.configure(bg=BORDER)
 
         outer = tk.Frame(tw, bg=BG_SURFACE, padx=10, pady=8)
-        outer.pack()
+        outer.pack(padx=1, pady=1)   # 1px BORDER zichtbaar rondom
 
         def _f(sz=9, bold=False):
             return tkfont.Font(family="Segoe UI", size=sz,
@@ -871,15 +890,15 @@ class _Tooltip:
                 if item is None:
                     tk.Frame(outer, bg=BORDER, height=1).grid(
                         row=ri, column=0, columnspan=2,
-                        sticky='ew', pady=(3, 3))
+                        sticky='ew', pady=(4, 4))
                 elif item[1] is None:
                     tk.Label(outer, text=item[0], font=_f(9, bold=True),
                              bg=BG_SURFACE, fg=ACCENT).grid(
-                        row=ri, column=0, columnspan=2, sticky='w')
+                        row=ri, column=0, columnspan=2, sticky='w', pady=(0, 2))
                 else:
                     tk.Label(outer, text=item[0], font=_f(9),
                              bg=BG_SURFACE, fg=TEXT_DIM, anchor='w').grid(
-                        row=ri, column=0, sticky='w', padx=(0, 14))
+                        row=ri, column=0, sticky='w', padx=(0, 16))
                     tk.Label(outer, text=item[1], font=_f(9, bold=True),
                              bg=BG_SURFACE, fg=TEXT_H1, anchor='w').grid(
                         row=ri, column=1, sticky='w')
@@ -888,17 +907,41 @@ class _Tooltip:
             for ri, line in enumerate(lines):
                 if line.startswith('─'):
                     tk.Frame(outer, bg=BORDER, height=1).grid(
-                        row=ri, column=0, sticky='ew', pady=(2, 2))
+                        row=ri, column=0, sticky='ew', pady=(3, 3))
                     outer.columnconfigure(0, weight=1)
                 else:
                     is_title = ri == 0
                     tk.Label(outer, text=line, justify='left',
+                             wraplength=self._WRAP_PX,
                              font=_f(9, bold=is_title),
                              bg=BG_SURFACE,
                              fg=ACCENT if is_title else TEXT_BODY,
-                             anchor='w').grid(row=ri, column=0, sticky='w')
+                             anchor='w').grid(row=ri, column=0, sticky='w',
+                                             pady=(0, 1))
+
+        # Positie: eerst plaatsen, dan schermrand checken
+        tw.update_idletasks()
+        tw_w = tw.winfo_reqwidth()
+        tw_h = tw.winfo_reqheight()
+        scr_w = tw.winfo_screenwidth()
+        scr_h = tw.winfo_screenheight()
+        tip_x = x + 16
+        tip_y = y + 12
+        if tip_x + tw_w > scr_w - 8:
+            tip_x = x - tw_w - 8
+        if tip_y + tw_h > scr_h - 40:
+            tip_y = y - tw_h - 8
+        tw.wm_geometry(f"+{max(0, tip_x)}+{max(0, tip_y)}")
 
     def hide(self):
+        # Annuleer vertraagd tonen
+        if self._after_id is not None:
+            try:
+                self._widget.after_cancel(self._after_id)
+            except Exception:
+                pass
+            self._after_id = None
+        self._pending = None
         if self._win:
             self._win.destroy()
             self._win = None
@@ -908,7 +951,7 @@ class _Tooltip:
 class HAMIOSApp:
     def __init__(self, root: tk.Tk):
         self.root = root
-        self.root.title("HAMIOS v1.0")
+        self.root.title("HAMIOS v2.0")
         self.root.configure(bg=BG_ROOT)
         self.root.minsize(800, 500)
 
@@ -936,7 +979,15 @@ class HAMIOSApp:
         self._show_locator_var  = tk.BooleanVar(value=s["show_locator"])
         self._show_graylijn_var = tk.BooleanVar(value=s["show_graylijn"])
         self._show_iaru_var     = tk.BooleanVar(value=s["show_iaru"])
+        self._show_cs_var       = tk.BooleanVar(value=s["show_cs"])
         self._gc_dest: tuple | None = None   # (lat, lon) groot-cirkel bestemming
+        self._map_zoom:       float = 1.0   # zoom-factor (1.0 = volledig)
+        self._map_cx:         float = 0.0   # viewport-middelpunt lon
+        self._map_cy:         float = 0.0   # viewport-middelpunt lat
+        self._map_crop_left:  int   = 0     # crop-offset voor inverse transform
+        self._map_crop_top:   int   = 0
+        self._map_drag_start: tuple | None = None   # (x, y, cx, cy) bij drag-start
+        self._map_drag_moved: bool  = False
         self._dst_var           = tk.BooleanVar(value=s["dst"])
         self._next_refresh_at: datetime.datetime | None = None
         self._k_alert_var       = tk.IntVar(value=s["k_alert"])
@@ -1007,7 +1058,7 @@ class HAMIOSApp:
         hdr = tk.Frame(self.root, bg=BG_PANEL, height=42)
         hdr.pack(fill=tk.X)
         tk.Frame(hdr, bg=ACCENT, width=4).pack(side=tk.LEFT, fill=tk.Y)
-        tk.Label(hdr, text="📡  HAMIOS v1.0",
+        tk.Label(hdr, text="📡  HAMIOS v2.0",
                  font=_font(13, "bold"), bg=BG_PANEL, fg=ACCENT,
                  pady=8).pack(side=tk.LEFT, padx=10)
         # Tijden rechts (UTC + lokaal)
@@ -1095,6 +1146,15 @@ class HAMIOSApp:
                         "Hoogste frequentie die op een bepaald pad weerkaatst\n"
                         "wordt door de F2-laag. Banden boven de MUF zijn dicht.\n"
                         "Berekend via foF2 × oblique factor 3,8."),
+            "sw_speed": ("Solarwindsnelheid (km/s)",
+                         "Snelheid van de solarwind gemeten door DSCOVR/ACE (NOAA).\n"
+                         "< 400: rustig  |  400–600: verhoogd  |  > 600: stormachtig\n"
+                         "Hogere snelheid kan geomagnetische activiteit verhogen."),
+            "sw_bz":    ("Bz — interplanetair magneetveld (nT)",
+                         "Noordwaartse (positief) of zuidwaartse (negatief) component\n"
+                         "van het interplanetair magneetveld (IMF).\n"
+                         "Bz < −10 nT: kans op geomagnetische storm neemt sterk toe.\n"
+                         "Negatieve Bz koppelt aan het aardveld → verhoogde K-index."),
         }
 
         def _bind_tip(widget, key):
@@ -1116,6 +1176,8 @@ class HAMIOSApp:
             ("k_index",  "K-index"),
             ("xray",     "X-ray"),
             ("muf",      "MUF (MHz)"),
+            ("sw_speed", "Solarwind (km/s)"),
+            ("sw_bz",    "Bz (nT)"),
         ]:
             row = tk.Frame(self._solar_frame, bg=BG_PANEL)
             row.pack(fill=tk.X, pady=2)
@@ -1184,7 +1246,7 @@ class HAMIOSApp:
         # Kaart bovenaan, volledige breedte van combined
         self._build_map_panel(combined)
 
-        # Sub-rij onder de kaart: Schema+Advies links  |  Band Verloop+Prop rechts
+        # Sub-rij onder de kaart: Schema+Bandverloop+DX links | Prop rechts
         sub_row = tk.Frame(combined, bg=BG_ROOT)
         sub_row.pack(fill=tk.BOTH, expand=True, pady=(6, 0))
 
@@ -1192,13 +1254,15 @@ class HAMIOSApp:
         left_sub.pack(side=tk.LEFT, fill=tk.Y)
         left_sub.pack_propagate(False)
         self._build_schedule_panel(left_sub)
+        self._build_hist_panel(left_sub)      # Bandverloop onder schema
         self._build_dx_panel(left_sub)
-        self._build_advice_panel(left_sub)
 
         right_sub = tk.Frame(sub_row, bg=BG_ROOT)
         right_sub.pack(side=tk.LEFT, fill=tk.BOTH, expand=True, padx=(10, 0))
-        self._build_hist_panel(right_sub)
         self._build_prop_panel(right_sub)
+
+        # Advies: volledige breedte onderin combined
+        self._build_advice_panel(combined)
 
     # ── Wereldkaart panel ─────────────────────────────────────────────────────
     def _build_map_panel(self, parent):
@@ -1223,6 +1287,7 @@ class HAMIOSApp:
                            font=_font(9)).pack(side=tk.RIGHT, padx=(0, 8))
 
         _cb("Locator",  self._show_locator_var)
+        _cb("CS",       self._show_cs_var)
         _cb("ITU",      self._show_iaru_var)
         _cb("Graylijn", self._show_graylijn_var)
         _cb("Maan",     self._show_moon_var)
@@ -1268,13 +1333,22 @@ class HAMIOSApp:
         lon_e.bind("<Return>",   _apply_qth)
         lon_e.bind("<FocusOut>", _apply_qth)
 
+        self._map_updated_var = tk.StringVar(value="")
+        tk.Label(map_hdr, textvariable=self._map_updated_var,
+                 font=_font(8), bg=BG_PANEL, fg=TEXT_DIM).pack(side=tk.LEFT, padx=(14, 0))
+
         self._map_canvas = tk.Canvas(outer, height=400, bg="#1B3A5C",
                                      bd=0, highlightthickness=0)
         self._map_canvas.pack(fill=tk.X)
         self._map_photo = None
-        self._map_canvas.bind("<Configure>",  self._on_map_resize)
-        self._map_canvas.bind("<Button-1>",   self._on_map_click)
-        self._map_canvas.bind("<Button-3>",   self._on_map_clear)
+        self._map_canvas.bind("<Configure>",      self._on_map_resize)
+        self._map_canvas.bind("<Button-1>",       self._on_map_btn1_press)
+        self._map_canvas.bind("<B1-Motion>",      self._on_map_drag)
+        self._map_canvas.bind("<ButtonRelease-1>", self._on_map_btn1_release)
+        self._map_canvas.bind("<Button-3>",       self._on_map_clear)
+        self._map_canvas.bind("<MouseWheel>",     self._on_map_scroll)   # Windows
+        self._map_canvas.bind("<Button-4>",       self._on_map_scroll)   # Linux
+        self._map_canvas.bind("<Button-5>",       self._on_map_scroll)   # Linux
 
         # Info-label voor groot-cirkel (rechtsonder in canvas)
         self._gc_info_var = tk.StringVar(value="")
@@ -1291,15 +1365,27 @@ class HAMIOSApp:
 
     def _redraw_map(self):
         """Cache ongeldig maken en kaart opnieuw tekenen (na download)."""
+        self._map_zoom = 1.0
+        self._map_cx   = 0.0
+        self._map_cy   = 0.0
         self._map_base_size = None
         self._draw_map()
 
-    def _on_map_click(self, event):
-        """Linker muisklik: stel groot-cirkel bestemming in."""
-        W = self._map_canvas.winfo_width()  or 960
-        H = self._map_canvas.winfo_height() or 400
-        lon = event.x / W * 360 - 180
-        lat = 90 - event.y / H * 180
+    def _viewport_to_latlon(self, vx: int, vy: int) -> tuple[float, float]:
+        """Viewport pixel → (lat, lon) met zoom/pan."""
+        W  = self._map_canvas.winfo_width()  or 960
+        H  = self._map_canvas.winfo_height() or 400
+        VW = int(W * max(1.0, self._map_zoom))
+        VH = int(H * max(1.0, self._map_zoom))
+        wx  = self._map_crop_left + vx
+        wy  = self._map_crop_top  + vy
+        lon = wx / VW * 360 - 180
+        lat = 90 - wy / VH * 180
+        return lat, lon
+
+    def _on_map_click(self, vx: int, vy: int):
+        """Groot-cirkel bestemming instellen na een klik (geen drag)."""
+        lat, lon = self._viewport_to_latlon(vx, vy)
         self._gc_dest = (lat, lon)
         dist = _haversine_km(self._qth_lat, self._qth_lon, lat, lon)
         hdg  = _bearing_deg(self._qth_lat, self._qth_lon, lat, lon)
@@ -1308,16 +1394,96 @@ class HAMIOSApp:
             f"|  Richting: {hdg:.0f}°  (klik rechts om te wissen)")
         self._draw_map()
 
-    def _on_map_clear(self, *_):
-        """Rechter muisklik: verwijder groot-cirkel."""
-        self._gc_dest = None
-        self._gc_info_var.set("")
+    def _on_map_btn1_press(self, event):
+        """Muisknop-1 ingedrukt: start drag."""
+        self._map_drag_start  = (event.x, event.y, self._map_cx, self._map_cy)
+        self._map_drag_moved  = False
+
+    def _on_map_drag(self, event):
+        """Muis bewogen met knop-1: pan de kaart."""
+        if self._map_drag_start is None:
+            return
+        sx, sy, ocx, ocy = self._map_drag_start
+        dx = event.x - sx
+        dy = event.y - sy
+        if abs(dx) > 3 or abs(dy) > 3:
+            self._map_drag_moved = True
+        if not self._map_drag_moved:
+            return
+        W  = self._map_canvas.winfo_width()  or 960
+        H  = self._map_canvas.winfo_height() or 400
+        zoom      = max(1.0, self._map_zoom)
+        d_lon     = -dx / W * (360 / zoom)
+        d_lat     =  dy / H * (180 / zoom)
+        half_lon  = 180 / zoom
+        half_lat  =  90 / zoom
+        self._map_cx = max(-180 + half_lon, min(180 - half_lon, ocx + d_lon))
+        self._map_cy = max(-90  + half_lat, min( 90 - half_lat, ocy + d_lat))
         self._draw_map()
+
+    def _on_map_btn1_release(self, event):
+        """Muisknop-1 losgelaten: klik (geen drag) → groot-cirkel."""
+        if not self._map_drag_moved:
+            self._on_map_click(event.x, event.y)
+        self._map_drag_start = None
+        self._map_drag_moved = False
+
+    def _on_map_scroll(self, event):
+        """Muiswiel: zoom in/uit op cursorpositie."""
+        if event.num == 4 or event.delta > 0:
+            factor = 1.25
+        else:
+            factor = 1 / 1.25
+        W    = self._map_canvas.winfo_width()  or 960
+        H    = self._map_canvas.winfo_height() or 400
+        old_zoom = max(1.0, self._map_zoom)
+        new_zoom = max(1.0, min(8.0, old_zoom * factor))
+        if new_zoom == old_zoom:
+            return
+        # Bepaal lat/lon onder cursor vóór zoom
+        VW_old   = int(W * old_zoom)
+        VH_old   = int(H * old_zoom)
+        wx_old   = self._map_crop_left + event.x
+        wy_old   = self._map_crop_top  + event.y
+        lon_cur  = wx_old / VW_old * 360 - 180
+        lat_cur  = 90 - wy_old / VH_old * 180
+        # Nieuw center zodat cursor dezelfde lat/lon wijst
+        VW_new   = int(W * new_zoom)
+        VH_new   = int(H * new_zoom)
+        new_cl   = (lon_cur + 180) / 360 * VW_new - event.x
+        new_ct   = (90 - lat_cur)  / 180 * VH_new - event.y
+        new_cx   = (new_cl + W / 2) / VW_new * 360 - 180
+        new_cy   = 90 - (new_ct + H / 2) / VH_new * 180
+        half_lon = 180 / new_zoom
+        half_lat =  90 / new_zoom
+        self._map_zoom = new_zoom
+        self._map_cx   = max(-180 + half_lon, min(180 - half_lon, new_cx))
+        self._map_cy   = max(-90  + half_lat, min( 90 - half_lat, new_cy))
+        # Invalideer cache alleen als zoom-niveau de VW×VH dimensies wijzigt
+        self._map_base_size = None
+        self._draw_map()
+
+    def _on_map_clear(self, *_):
+        """Rechter muisklik: reset zoom/pan of verwijder groot-cirkel."""
+        if self._map_zoom > 1.01:
+            self._map_zoom = 1.0
+            self._map_cx   = 0.0
+            self._map_cy   = 0.0
+            self._map_base_size = None
+            self._draw_map()
+        else:
+            self._gc_dest = None
+            self._gc_info_var.set("")
+            self._draw_map()
 
     def _draw_map(self):
         c = self._map_canvas
         W = c.winfo_width()  or 960
         H = c.winfo_height() or 400
+        # Virtuele wereld-afmetingen (groter bij zoom)
+        zoom = max(1.0, self._map_zoom)
+        VW   = int(W * zoom)
+        VH   = int(H * zoom)
 
         if not _PIL_OK:
             c.delete("all")
@@ -1328,12 +1494,12 @@ class HAMIOSApp:
             return
 
         # ── Basiskaart (gecached bij grootte-wijziging) ───────────────────────
-        cache_key = (W, H)
+        cache_key = (VW, VH)
         if getattr(self, "_map_base_size", None) != cache_key:
             if os.path.exists(MAP_FILE):
                 # NASA equirectangulaire kaart (2048×1024 = exact 2:1)
                 src = Image.open(MAP_FILE).convert("RGB").resize(
-                    (W, H), Image.LANCZOS)
+                    (VW, VH), Image.LANCZOS)
                 # NASA-topo: oceaan = blauw dominant, land = groen/bruin/wit
                 src.putdata([
                     MAP_OCEAN if (b > r + 15 and b > g) else MAP_LAND
@@ -1341,7 +1507,7 @@ class HAMIOSApp:
                 ])
             else:
                 # Fallback: oceaan-achtergrond tijdens download
-                src = Image.new("RGB", (W, H), MAP_OCEAN)
+                src = Image.new("RGB", (VW, VH), MAP_OCEAN)
                 ImageDraw.Draw(src).text(
                     (6, 4), "⬇ NASA-kaart wordt gedownload…", fill=MAP_GRID)
 
@@ -1349,12 +1515,12 @@ class HAMIOSApp:
             d   = ImageDraw.Draw(src)
             LBL = (180, 200, 220)   # contrasterende lichtblauwe kleur
             for lat in range(-60, 90, 30):
-                gy = int((90 - lat) / 180 * H)
-                d.line([(0, gy), (W, gy)], fill=MAP_GRID, width=1)
+                gy = int((90 - lat) / 180 * VH)
+                d.line([(0, gy), (VW, gy)], fill=MAP_GRID, width=1)
                 d.text((3, gy + 2), f"{lat:+d}°", fill=LBL)
             for lon in range(-150, 180, 30):
-                gx = int((lon + 180) / 360 * W)
-                d.line([(gx, 0), (gx, H)], fill=MAP_GRID, width=1)
+                gx = int((lon + 180) / 360 * VW)
+                d.line([(gx, 0), (gx, VH)], fill=MAP_GRID, width=1)
                 d.text((gx + 2, 2), f"{lon:+d}°", fill=LBL)
 
             self._map_base_img  = src
@@ -1364,7 +1530,7 @@ class HAMIOSApp:
 
         # ── Nacht overlay ────────────────────────────────────────────────────
         sun_lat, sun_lon = _subsolar_point()
-        night = _night_mask(sun_lat, sun_lon, W, H)
+        night = _night_mask(sun_lat, sun_lon, VW, VH)
         img   = img.convert("RGBA")
         img   = Image.alpha_composite(img, night)
         img   = img.convert("RGB")
@@ -1372,26 +1538,26 @@ class HAMIOSApp:
 
         # ── Zon ──────────────────────────────────────────────────────────────
         if self._show_sun_var.get():
-            sx, sy = _ll_to_xy(sun_lat, sun_lon, W, H)
+            sx, sy = _ll_to_xy(sun_lat, sun_lon, VW, VH)
             draw.ellipse([(sx - 7, sy - 7), (sx + 7, sy + 7)],
                          fill=MAP_SUN, outline=(200, 160, 0), width=1)
 
         # ── Maan ─────────────────────────────────────────────────────────────
         if self._show_moon_var.get():
             moon_lat, moon_lon = _submoon_point()
-            mx, my = _ll_to_xy(moon_lat, moon_lon, W, H)
+            mx, my = _ll_to_xy(moon_lat, moon_lon, VW, VH)
             draw.ellipse([(mx - 5, my - 5), (mx + 5, my + 5)],
                          fill=MAP_MOON, outline=(150, 150, 150), width=1)
 
         # ── Graylijn ─────────────────────────────────────────────────────────
         if self._show_graylijn_var.get():
-            gray = _graylijn_mask(sun_lat, sun_lon, W, H)
+            gray = _graylijn_mask(sun_lat, sun_lon, VW, VH)
             img  = Image.alpha_composite(img.convert("RGBA"), gray).convert("RGB")
             draw = ImageDraw.Draw(img)
 
         # ── ITU regio-overlay (correcte R1/R2/R3 grenzen) ───────────────────
         if self._show_iaru_var.get():
-            itu_img = Image.new("RGBA", (W, H), (0, 0, 0, 0))
+            itu_img = Image.new("RGBA", (VW, VH), (0, 0, 0, 0))
             id_     = ImageDraw.Draw(itu_img)
             AF, AL  = 55, 220   # alpha vulling / grenslijn  (55≈22% dekking)
             # Kleuren conform referentieplaatje: R1=geel, R2=roze, R3=groen
@@ -1400,7 +1566,7 @@ class HAMIOSApp:
             C_R3 = ( 60, 170,  80, AF)
 
             def _px(pts):
-                return [_ll_to_xy(la, lo, W, H) for la, lo in pts]
+                return [_ll_to_xy(la, lo, VW, VH) for la, lo in pts]
 
             # ── Gevulde regio-polygonen ───────────────────────────────────
             # R3 Pacific west (kaartrand -180 tot Lijn-C)
@@ -1471,8 +1637,8 @@ class HAMIOSApp:
                 ("Regio 1", 35,   15),
                 ("Regio 3", 35,  115),
             ]:
-                x_l, y_l = _ll_to_xy(la, lo, W, H)
-                if 0 <= x_l < W and 0 <= y_l < H:
+                x_l, y_l = _ll_to_xy(la, lo, VW, VH)
+                if 0 <= x_l < VW and 0 <= y_l < VH:
                     id_.text((x_l - 22, y_l - 5), txt, fill=(230,230,230,210))
 
             img  = Image.alpha_composite(img.convert("RGBA"), itu_img).convert("RGB")
@@ -1482,22 +1648,22 @@ class HAMIOSApp:
         if self._show_locator_var.get():
             LOC_GRID = (100, 160, 220, 180)   # lichtblauw, semi-transparant
             LOC_LBL  = (160, 210, 255, 200)
-            loc_img  = Image.new("RGBA", (W, H), (0, 0, 0, 0))
+            loc_img  = Image.new("RGBA", (VW, VH), (0, 0, 0, 0))
             ld       = ImageDraw.Draw(loc_img)
             # Grote velden: 20° breed × 10° hoog
             for fi in range(19):          # 18 velden in lon-richting
-                gx = int(fi * 20 / 360 * W)
-                ld.line([(gx, 0), (gx, H)], fill=LOC_GRID, width=1)
+                gx = int(fi * 20 / 360 * VW)
+                ld.line([(gx, 0), (gx, VH)], fill=LOC_GRID, width=1)
             for fi in range(19):          # 18 velden in lat-richting
-                gy = int(fi * 10 / 180 * H)
-                ld.line([(0, gy), (W, gy)], fill=LOC_GRID, width=1)
+                gy = int(fi * 10 / 180 * VH)
+                ld.line([(0, gy), (VW, gy)], fill=LOC_GRID, width=1)
             # Labels (2-letter locator) in het midden van elk groot veld
             for lon_i in range(18):
                 for lat_i in range(18):
                     lon_c = -180 + lon_i * 20 + 10
                     lat_c =  -90 + lat_i * 10 +  5
                     lbl   = chr(ord('A') + lon_i) + chr(ord('A') + lat_i)
-                    cx_l, cy_l = _ll_to_xy(lat_c, lon_c, W, H)
+                    cx_l, cy_l = _ll_to_xy(lat_c, lon_c, VW, VH)
                     ld.text((cx_l - 8, cy_l - 5), lbl, fill=LOC_LBL)
             img = Image.alpha_composite(img.convert("RGBA"), loc_img).convert("RGB")
             draw = ImageDraw.Draw(img)
@@ -1510,18 +1676,18 @@ class HAMIOSApp:
         if k_val >= 4:
             # Equatorwaartse grens van het auroraal ovaal ≈ 75 − K×2.5 graden
             aurora_lat = max(50.0, 75.0 - k_val * 2.5)
-            aurora_img = Image.new("RGBA", (W, H), (0, 0, 0, 0))
+            aurora_img = Image.new("RGBA", (VW, VH), (0, 0, 0, 0))
             ad = ImageDraw.Draw(aurora_img)
             # Trek een horizontale band als proxy voor het ovaal (beide hemisferen)
             thickness = max(4, int(k_val * 1.5))
             alpha = min(200, int(80 + k_val * 15))
             for sign in (1, -1):
                 lat_c = sign * aurora_lat
-                _, y_c = _ll_to_xy(lat_c, 0, W, H)
+                _, y_c = _ll_to_xy(lat_c, 0, VW, VH)
                 y_top = max(0, y_c - thickness)
-                y_bot = min(H, y_c + thickness)
+                y_bot = min(VH, y_c + thickness)
                 # Rood/oranje ovaal
-                ad.rectangle([(0, y_top), (W, y_bot)],
+                ad.rectangle([(0, y_top), (VW, y_bot)],
                               fill=(220, 80, 20, alpha))
             img = Image.alpha_composite(img.convert("RGBA"), aurora_img).convert("RGB")
             draw = ImageDraw.Draw(img)
@@ -1530,33 +1696,62 @@ class HAMIOSApp:
         if self._gc_dest:
             dlat, dlon = self._gc_dest
             pts = _great_circle_pts(self._qth_lat, self._qth_lon, dlat, dlon)
-            gc_img = Image.new("RGBA", (W, H), (0, 0, 0, 0))
+            gc_img = Image.new("RGBA", (VW, VH), (0, 0, 0, 0))
             gd     = ImageDraw.Draw(gc_img)
-            xy     = [_ll_to_xy(la, lo, W, H) for la, lo in pts]
-            # Splits op anti-meridian (|Δx| > W/2) om wraparound te vermijden
+            xy     = [_ll_to_xy(la, lo, VW, VH) for la, lo in pts]
+            # Splits op anti-meridian (|Δx| > VW/2) om wraparound te vermijden
             seg_start = 0
             for i in range(1, len(xy)):
-                if abs(xy[i][0] - xy[i-1][0]) > W // 2:
+                if abs(xy[i][0] - xy[i-1][0]) > VW // 2:
                     if i - seg_start > 1:
                         gd.line(xy[seg_start:i], fill=(255, 220, 50, 220), width=2)
                     seg_start = i
             if len(xy) - seg_start > 1:
                 gd.line(xy[seg_start:], fill=(255, 220, 50, 220), width=2)
             # Bestemmingsmarkering
-            dx, dy = _ll_to_xy(dlat, dlon, W, H)
+            dx, dy = _ll_to_xy(dlat, dlon, VW, VH)
             gd.ellipse([(dx-5, dy-5), (dx+5, dy+5)], fill=(255, 220, 50, 220))
             img  = Image.alpha_composite(img.convert("RGBA"), gc_img).convert("RGB")
             draw = ImageDraw.Draw(img)
 
+        # ── Callsign-prefix labels ────────────────────────────────────────────
+        if self._show_cs_var.get() and _PIL_OK:
+            CS_DOT  = (255, 230, 120, 230)   # geel, opaque
+            CS_TXT  = (255, 230, 120, 210)
+            cs_img  = Image.new("RGBA", (VW, VH), (0, 0, 0, 0))
+            cd      = ImageDraw.Draw(cs_img)
+            for prefix, lat, lon in _CS_PREFIXES:
+                px, py = _ll_to_xy(lat, lon, VW, VH)
+                # Klein stipje op de positie
+                cd.ellipse([(px - 2, py - 2), (px + 2, py + 2)], fill=CS_DOT)
+                # Prefix-tekst net rechts/boven het stipje
+                cd.text((px + 4, py - 6), prefix, fill=CS_TXT)
+            img  = Image.alpha_composite(img.convert("RGBA"), cs_img).convert("RGB")
+            draw = ImageDraw.Draw(img)
+
         # ── QTH marker (alleen kruisje) ───────────────────────────────────────
-        qx, qy = _ll_to_xy(self._qth_lat, self._qth_lon, W, H)
+        qx, qy = _ll_to_xy(self._qth_lat, self._qth_lon, VW, VH)
         draw.line([(qx - 10, qy), (qx + 10, qy)], fill=MAP_QTH, width=2)
         draw.line([(qx, qy - 10), (qx, qy + 10)], fill=MAP_QTH, width=2)
+
+        # ── Crop naar viewport (bij zoom > 1) ────────────────────────────────
+        if zoom > 1.0:
+            world_cx = int((self._map_cx + 180) / 360 * VW)
+            world_cy = int((90 - self._map_cy) / 180 * VH)
+            crop_l   = max(0, min(VW - W, world_cx - W // 2))
+            crop_t   = max(0, min(VH - H, world_cy - H // 2))
+            img      = img.crop((crop_l, crop_t, crop_l + W, crop_t + H))
+        else:
+            crop_l, crop_t = 0, 0
+        self._map_crop_left = crop_l
+        self._map_crop_top  = crop_t
 
         # ── Tonen ────────────────────────────────────────────────────────────
         self._map_photo = ImageTk.PhotoImage(img)
         c.delete("all")
         c.create_image(0, 0, anchor='nw', image=self._map_photo)
+        if hasattr(self, "_map_updated_var"):
+            self._map_updated_var.set(datetime.datetime.now().strftime("%H:%M"))
 
     # ── HF Propagatie panel ───────────────────────────────────────────────────
     def _build_prop_panel(self, parent):
@@ -1564,9 +1759,13 @@ class HAMIOSApp:
         outer.pack(fill=tk.X, pady=(6, 0))
 
         tk.Frame(outer, bg=ACCENT, height=2).pack(fill=tk.X)
-        tk.Label(outer, text="📶  HF Band Betrouwbaarheid",
-                 font=_font(10, "bold"), bg=BG_PANEL, fg=ACCENT,
-                 pady=6).pack(anchor='w', padx=10)
+        prop_hdr = tk.Frame(outer, bg=BG_PANEL)
+        prop_hdr.pack(fill=tk.X, padx=10, pady=(6, 0))
+        tk.Label(prop_hdr, text="📶  HF Band Betrouwbaarheid",
+                 font=_font(10, "bold"), bg=BG_PANEL, fg=ACCENT).pack(side=tk.LEFT)
+        self._prop_updated_var = tk.StringVar(value="")
+        tk.Label(prop_hdr, textvariable=self._prop_updated_var,
+                 font=_font(8), bg=BG_PANEL, fg=TEXT_DIM).pack(side=tk.RIGHT)
 
         ctrl = tk.Frame(outer, bg=BG_PANEL)
         ctrl.pack(fill=tk.X, padx=10, pady=(0, 4))
@@ -1780,10 +1979,18 @@ class HAMIOSApp:
                            activebackground=BG_PANEL, activeforeground=TEXT_H1,
                            font=_font(9)).pack(side=tk.RIGHT, padx=(0, 6))
 
+        self._hist_updated_var = tk.StringVar(value="")
+        tk.Label(hdr, textvariable=self._hist_updated_var,
+                 font=_font(8), bg=BG_PANEL, fg=TEXT_DIM).pack(side=tk.RIGHT, padx=(0, 10))
+
         self._hist_canvas = tk.Canvas(outer, height=140, bg=BG_PANEL,
                                       bd=0, highlightthickness=0)
         self._hist_canvas.pack(fill=tk.X, padx=10, pady=(0, 6))
         self._hist_canvas.bind("<Configure>", lambda *_: self._draw_hist_graph())
+        self._hist_tooltip = _Tooltip(self._hist_canvas)
+        self._hist_layout: dict = {}
+        self._hist_canvas.bind("<Motion>", self._on_hist_motion)
+        self._hist_canvas.bind("<Leave>",  lambda *_: self._hist_tooltip.hide())
 
         # Klikbare legenda (alleen in band-modus zichtbaar)
         self._leg_frame = tk.Frame(outer, bg=BG_PANEL)
@@ -1904,6 +2111,7 @@ class HAMIOSApp:
             c.create_text(W // 2, PAD_T + gh // 2,
                           text="Nog geen historische data beschikbaar",
                           fill=TEXT_DIM, font=("Segoe UI", 9), anchor='center')
+            self._hist_layout = {}
             return
 
         t0 = t_min.timestamp()
@@ -1930,6 +2138,14 @@ class HAMIOSApp:
                               pts[j + 1][0], pts[j + 1][1],
                               fill=color, width=1)
 
+        # Layout opslaan voor hover-tooltip
+        self._hist_layout = {
+            "mode": "Banden", "t0": t0, "dt": dt,
+            "pad_l": PAD_L, "gw": gw, "data": data,
+        }
+        if hasattr(self, "_hist_updated_var"):
+            self._hist_updated_var.set(datetime.datetime.now().strftime("%H:%M"))
+
     # ── Bandopenings-schema (heatmap) ─────────────────────────────────────────
     def _build_schedule_panel(self, parent):
         outer = tk.Frame(parent, bg=BG_PANEL)
@@ -1940,11 +2156,18 @@ class HAMIOSApp:
         hdr.pack(fill=tk.X, padx=10, pady=(4, 2))
         tk.Label(hdr, text="🕐  Bandopenings-schema (lokale tijd, vandaag)",
                  font=_font(10, "bold"), bg=BG_PANEL, fg=ACCENT).pack(side=tk.LEFT)
+        self._sched_updated_var = tk.StringVar(value="")
+        tk.Label(hdr, textvariable=self._sched_updated_var,
+                 font=_font(8), bg=BG_PANEL, fg=TEXT_DIM).pack(side=tk.RIGHT)
 
         self._sched_canvas = tk.Canvas(outer, height=130, bg=BG_PANEL,
                                        bd=0, highlightthickness=0)
         self._sched_canvas.pack(fill=tk.X, padx=10, pady=(0, 6))
         self._sched_canvas.bind("<Configure>", lambda *_: self._draw_schedule())
+        self._sched_tooltip = _Tooltip(self._sched_canvas)
+        self._sched_layout: dict = {}   # grid-layout voor hover
+        self._sched_canvas.bind("<Motion>", self._on_sched_motion)
+        self._sched_canvas.bind("<Leave>",  lambda *_: self._sched_tooltip.hide())
 
     def _draw_schedule(self):
         if not hasattr(self, "_sched_canvas"):
@@ -1990,6 +2213,9 @@ class HAMIOSApp:
                           fill=TEXT_DIM, font=("Segoe UI", 7), anchor='s')
 
         # ── Bereken propagatie per uur en per band ────────────────────────
+        # grid_data[bi][h] = pct  (voor hover-tooltip)
+        grid_data: list[list[int]] = [[0] * n_hours for _ in range(n_bands)]
+
         for bi, (bname, _) in enumerate(hf_bands):
             cy = PAD_T + bi * cell_h
             # Bandnaam links
@@ -2012,7 +2238,8 @@ class HAMIOSApp:
                                              snr_bonus_db=float(snr_db),
                                              daytime=is_day_h)
                 pct_map = {n: p for n, _, p in bp}
-                pct = pct_map.get(bname, 0)
+                pct = max(0, pct_map.get(bname, 0))
+                grid_data[bi][local_h] = pct
 
                 # Kleur op basis van kwaliteit
                 if pct >= 60:
@@ -2032,6 +2259,81 @@ class HAMIOSApp:
         lx = PAD_L + now_local_h * cell_w
         c.create_rectangle(lx, PAD_T, lx + cell_w - 1, PAD_T + n_bands * cell_h - 1,
                            outline=ACCENT, width=1)
+
+        # Sla grid-layout op voor hover-tooltip
+        self._sched_layout = {
+            "pad_l": PAD_L, "pad_t": PAD_T,
+            "cell_w": cell_w, "cell_h": cell_h,
+            "n_bands": n_bands, "n_hours": n_hours,
+            "band_names": [b for b, _ in hf_bands],
+            "grid": grid_data,
+            "utc_offset": utc_offset,
+        }
+        if hasattr(self, "_sched_updated_var"):
+            self._sched_updated_var.set(datetime.datetime.now().strftime("%H:%M"))
+
+    def _on_hist_motion(self, event: tk.Event):
+        if not self._show_tips_var.get() or not self._hist_layout:
+            self._hist_tooltip.hide()
+            return
+        lay = self._hist_layout
+        data = lay.get("data", [])
+        if len(data) < 2:
+            self._hist_tooltip.hide()
+            return
+        # Bereken dichtstbijzijnde datapunt op basis van X-positie
+        x_frac   = (event.x - lay["pad_l"]) / max(1.0, lay["gw"])
+        target_t = lay["t0"] + x_frac * lay["dt"]
+        ts, bp, _ = min(data, key=lambda d: abs(d[0].timestamp() - target_t))
+        local_ts = ts.astimezone().strftime("%d %b %H:%M")
+        tip = [(f"Band Verloop  —  {local_ts}", None), None]
+        # HF-banden gesorteerd op openingspercentage
+        hf = [(n, max(0, bp.get(n, 0))) for n, _, hf in _BANDS if hf]
+        hf.sort(key=lambda x: -x[1])
+        for bname, pct in hf:
+            if self._hist_sel and bname not in self._hist_sel:
+                continue
+            tip.append((f"{bname}:", f"{pct}%"))
+        if len(tip) <= 2:
+            self._hist_tooltip.hide()
+            return
+        rx = self._hist_canvas.winfo_rootx() + event.x
+        ry = self._hist_canvas.winfo_rooty() + event.y
+        self._hist_tooltip.show(rx, ry, tip)
+
+    def _on_sched_motion(self, event: tk.Event):
+        if not self._show_tips_var.get() or not self._sched_layout:
+            self._sched_tooltip.hide()
+            return
+        lay = self._sched_layout
+        col = (event.x - lay["pad_l"]) // lay["cell_w"]
+        row = (event.y - lay["pad_t"]) // lay["cell_h"]
+        if col < 0 or col >= lay["n_hours"] or row < 0 or row >= lay["n_bands"]:
+            self._sched_tooltip.hide()
+            return
+        pct       = lay["grid"][row][col]
+        bname     = lay["band_names"][row]
+        local_h   = col
+        local_str = f"{local_h:02d}:00–{(local_h + 1) % 24:02d}:00"
+        if pct >= 60:
+            kwal = "Goed"
+        elif pct >= 30:
+            kwal = "Fair"
+        elif pct >= 1:
+            kwal = "Zwak"
+        else:
+            kwal = "Gesloten"
+        tip = [
+            (f"{bname}  —  {local_str} (lokaal)", None),
+            None,
+            ("Kwaliteit:",      kwal),
+            ("Betrouwbaarheid:", f"{pct}%"),
+            ("FT8:",             _BAND_FT8.get(bname, "—") + " MHz"),
+            ("Modi:",            _BAND_MODES.get(bname, "—")),
+        ]
+        rx = self._sched_canvas.winfo_rootx() + event.x
+        ry = self._sched_canvas.winfo_rooty() + event.y
+        self._sched_tooltip.show(rx, ry, tip)
 
     # ── DX Spots panel ───────────────────────────────────────────────────────
     def _build_dx_panel(self, parent):
@@ -2058,10 +2360,20 @@ class HAMIOSApp:
         tk.Label(status_row, textvariable=self._dx_countdown_var,
                  font=_font(8), bg=BG_PANEL, fg=ACCENT).pack(side=tk.RIGHT)
 
-        self._dx_canvas = tk.Canvas(outer, height=196, bg=BG_PANEL,
+        dx_wrap = tk.Frame(outer, bg=BG_PANEL)
+        dx_wrap.pack(fill=tk.X, padx=10, pady=(2, 6))
+        self._dx_canvas = tk.Canvas(dx_wrap, height=200, bg=BG_PANEL,
                                     bd=0, highlightthickness=0)
-        self._dx_canvas.pack(fill=tk.X, padx=10, pady=(2, 6))
+        dx_sb = tk.Scrollbar(dx_wrap, orient=tk.VERTICAL,
+                             command=self._dx_canvas.yview,
+                             bg=BG_SURFACE, troughcolor=BG_ROOT, width=8)
+        self._dx_canvas.configure(yscrollcommand=dx_sb.set)
+        dx_sb.pack(side=tk.RIGHT, fill=tk.Y)
+        self._dx_canvas.pack(side=tk.LEFT, fill=tk.X, expand=True)
         self._dx_canvas.bind("<Configure>", lambda *_: self._draw_dx_panel())
+        self._dx_canvas.bind("<MouseWheel>",
+            lambda e: self._dx_canvas.yview_scroll(
+                -1 if e.delta > 0 else 1, "units"))
 
     def _filter_dx_spots(self):
         spots = self._dx_all_spots
@@ -2073,8 +2385,9 @@ class HAMIOSApp:
         n     = len(spots)
         filt  = " · eigen continent" if self._dx_own_cont_var.get() else ""
         total = len(self._dx_all_spots)
+        ts    = datetime.datetime.now().strftime("%H:%M")
         self._dx_status_var.set(
-            f"{n} van {total} spots  (HF{filt})" if total else "Geen spots beschikbaar")
+            f"{n} van {total} spots  (HF{filt})  ·  {ts}" if total else f"Geen spots beschikbaar  ·  {ts}")
 
     def _draw_dx_panel(self):
         if not hasattr(self, "_dx_canvas"):
@@ -2105,10 +2418,11 @@ class HAMIOSApp:
             c.create_text(W // 2, H // 2,
                           text="Geen HF-spots beschikbaar",
                           fill=TEXT_DIM, font=("Segoe UI", 9), anchor='center')
+            c.configure(scrollregion=(0, 0, W, H))
             return
 
-        max_rows = (H - ROW_H - 4) // ROW_H
-        for i, s in enumerate(spots[:max_rows]):
+        max_ch = max(4, C_CMT // 6)
+        for i, s in enumerate(spots):
             y = ROW_H + 4 + i * ROW_H
             if i % 2 == 0:
                 c.create_rectangle(0, y - 1, W, y + ROW_H - 1,
@@ -2121,9 +2435,10 @@ class HAMIOSApp:
             c.create_text(x, y, text=s["dx"][:11],      fill=TEXT_H1,   font=("Consolas", 8), anchor='nw'); x += C_DX
             c.create_text(x, y, text=s["freq_mhz"],     fill=TEXT_BODY, font=("Consolas", 8), anchor='nw'); x += C_FREQ
             c.create_text(x, y, text=s["spotter"][:10], fill=TEXT_DIM,  font=("Consolas", 8), anchor='nw'); x += C_SPOT
-            max_ch = max(4, C_CMT // 6)
             c.create_text(x, y, text=s.get("comment", "")[:max_ch],
                           fill=TEXT_DIM, font=("Consolas", 8), anchor='nw')
+        total_h = ROW_H + 4 + len(spots) * ROW_H
+        c.configure(scrollregion=(0, 0, W, total_h))
 
     def _refresh_dx(self):
         spots = _fetch_dx_spots()
@@ -2147,9 +2462,13 @@ class HAMIOSApp:
         outer = tk.Frame(parent, bg=BG_PANEL)
         outer.pack(fill=tk.X, pady=(6, 0))
         tk.Frame(outer, bg=ACCENT, height=2).pack(fill=tk.X)
-        tk.Label(outer, text="💡  Advies",
-                 font=_font(10, "bold"), bg=BG_PANEL, fg=ACCENT,
-                 pady=4).pack(anchor='w', padx=10)
+        adv_hdr = tk.Frame(outer, bg=BG_PANEL)
+        adv_hdr.pack(fill=tk.X, padx=10, pady=(4, 0))
+        tk.Label(adv_hdr, text="💡  Advies",
+                 font=_font(10, "bold"), bg=BG_PANEL, fg=ACCENT).pack(side=tk.LEFT)
+        self._advice_updated_var = tk.StringVar(value="")
+        tk.Label(adv_hdr, textvariable=self._advice_updated_var,
+                 font=_font(8), bg=BG_PANEL, fg=TEXT_DIM).pack(side=tk.RIGHT)
         self._advice_frame = tk.Frame(outer, bg=BG_PANEL)
         self._advice_frame.pack(fill=tk.X, padx=10, pady=(0, 8))
 
@@ -2232,6 +2551,8 @@ class HAMIOSApp:
             tk.Label(cell, text=f"{icon}  {tekst}", font=_font(9),
                      bg=BG_SURFACE, fg=kleur,
                      anchor='w', wraplength=420, justify='left').pack(fill=tk.X)
+        if hasattr(self, "_advice_updated_var"):
+            self._advice_updated_var.set(datetime.datetime.now().strftime("%H:%M"))
 
     def _update_band_cond_panel(self, band_pct_day, band_pct_ngt):
         def _cond(pct):
@@ -2303,6 +2624,8 @@ class HAMIOSApp:
         self._draw_schedule()
         self._update_advice()
         self._check_alerts(bp, k_index)
+        if hasattr(self, "_prop_updated_var"):
+            self._prop_updated_var.set(datetime.datetime.now().strftime("%H:%M"))
 
     # ── Instellingen opslaan ──────────────────────────────────────────────────
     def _save_cur_settings(self):
@@ -2318,6 +2641,7 @@ class HAMIOSApp:
                        self._show_locator_var.get(),
                        self._show_graylijn_var.get(),
                        self._show_iaru_var.get(),
+                       self._show_cs_var.get(),
                        self._hist_range_var.get(),
                        self._hist_sel,
                        self._k_alert_var.get())
@@ -2338,7 +2662,7 @@ class HAMIOSApp:
             pystray.Menu.SEPARATOR,
             pystray.MenuItem("Afsluiten", self._tray_quit),
         )
-        self._tray_icon = pystray.Icon("HAMIOS", tray_img, "HAMIOS v1.0", menu)
+        self._tray_icon = pystray.Icon("HAMIOS", tray_img, "HAMIOS v2.0", menu)
         threading.Thread(target=self._tray_icon.run, daemon=True).start()
 
     def _tray_show(self, icon=None, item=None):
@@ -2443,6 +2767,21 @@ class HAMIOSApp:
         for key, var in self._solar_vars.items():
             if key.startswith("band_"):
                 var.set(data.get(key, "—"))
+
+        # Bz-kleur: negatief = geoeffectief (oranje/rood)
+        try:
+            bz_str = data.get("sw_bz", "—")
+            bz_val = float(bz_str)
+            if bz_val <= -20:
+                bz_color = "#EF5350"   # rood — sterke zuidwaartse component
+            elif bz_val <= -10:
+                bz_color = "#FFA726"   # oranje — geoeffectief
+            else:
+                bz_color = TEXT_H1
+            if hasattr(self, "_solar_val_lbls") and "sw_bz" in self._solar_val_lbls:
+                self._solar_val_lbls["sw_bz"].config(fg=bz_color)
+        except (ValueError, TypeError):
+            pass
 
         # Bijgewerkt: toon QTH-lokale tijd
         local_now = datetime.datetime.now().strftime("%H:%M")
