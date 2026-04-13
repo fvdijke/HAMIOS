@@ -2,6 +2,9 @@
 ─────────────────────────────────────────────────────────────────────
 Change Log (1.0)
 ─────────────────────────────────────────────────────────────────────
+· 2026-04-13 13:29 CEST — Bandopenings-schema vult nu resterende hoogte van de
+               rechterkolom (fill=BOTH, expand=True); canvas heeft geen vaste
+               hoogte meer en loopt door tot aan het advies-paneel.
 · 2026-04-13 09:55 CEST — Wereldkaart 2:1 ratio hersteld: kaart verplaatst naar linker
                kolom (480px breed → 240px hoog, exact 2:1). Kunstmatige 240px-cap
                verwijderd; _on_map_resize gebruikt weer pure width//2.

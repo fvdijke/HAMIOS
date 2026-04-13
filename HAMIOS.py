@@ -2147,7 +2147,7 @@ class HAMIOSApp:
     # ── Bandopenings-schema (heatmap) ─────────────────────────────────────────
     def _build_schedule_panel(self, parent):
         outer = tk.Frame(parent, bg=BG_PANEL)
-        outer.pack(fill=tk.X, pady=(6, 0))
+        outer.pack(fill=tk.BOTH, expand=True, pady=(6, 0))
         tk.Frame(outer, bg=ACCENT, height=2).pack(fill=tk.X)
 
         hdr = tk.Frame(outer, bg=BG_PANEL)
@@ -2158,9 +2158,9 @@ class HAMIOSApp:
         tk.Label(hdr, textvariable=self._sched_updated_var,
                  font=_font(8), bg=BG_PANEL, fg=TEXT_DIM).pack(side=tk.RIGHT)
 
-        self._sched_canvas = tk.Canvas(outer, height=110, bg=BG_PANEL,
+        self._sched_canvas = tk.Canvas(outer, bg=BG_PANEL,
                                        bd=0, highlightthickness=0)
-        self._sched_canvas.pack(fill=tk.X, padx=10, pady=(0, 6))
+        self._sched_canvas.pack(fill=tk.BOTH, expand=True, padx=10, pady=(0, 6))
         self._sched_canvas.bind("<Configure>", lambda *_: self._draw_schedule())
         self._sched_tooltip = _Tooltip(self._sched_canvas)
         self._sched_layout: dict = {}   # grid-layout voor hover
