@@ -2,6 +2,37 @@
 ─────────────────────────────────────────────────────────────────────
 Change Log (1.0)
 ─────────────────────────────────────────────────────────────────────
+· 2026-04-13 09:55 CEST — Wereldkaart 2:1 ratio hersteld: kaart verplaatst naar linker
+               kolom (480px breed → 240px hoog, exact 2:1). Kunstmatige 240px-cap
+               verwijderd; _on_map_resize gebruikt weer pure width//2.
+               Propagatie-analyse uitgebreid naar 10 kaarten in 3 kolommen:
+               beste banden, geo-storm (K+A), zonactiviteit (SFI+SSN), solarwind
+               (v+Bz), X-flare/SWF, ionosfeer (MUF+LUF), dag/nacht+grey-line
+               tijdvensters, modus/vermogen-advies, auroraal absorptie poolroutes,
+               algehele score-kaart. Panel hernoemd naar "Propagatie-analyse & Advies".
+· 2026-04-13 09:50 CEST — Opstartgrootte: alles past op scherm bij opstart. Map-canvas
+               hoogte begrensd op max 240px (2:1 blijft actief voor kleinere
+               breedtes); initiële hoogte 200px zodat reqheight correct is.
+               Prop-canvas compacter: BAR_H 18→16, BAR_PAD 4→2 → 352→290px.
+               Hist 140→120px, Schema 130→110px, DX 400→280px. Startvenster
+               960px hoog. _center_window stelt ook minsize in (900×600).
+· 2026-04-13 09:40 CEST — Layout herstructurering: Wereldkaart-paneel fixed (geen
+               expand), past exact op breedte via 2:1 resizing. Bandopenings-
+               schema verplaatst naar rechterkolom onder HF Band Betrouwbaarheid.
+               DX Spots canvas vergroot van 260 naar 400px (~25 rijen). Advies-
+               paneel verplaatst naar body-niveau zodat het de volledige breedte
+               beslaat (over kaart + solar kolom).
+· 2026-04-13 09:34 CEST — Efficiëntie: _font() gecached via module-level dict; 53
+               aanroepen hergebruiken nu 8 unieke Font-objecten i.p.v. telkens
+               nieuwe te maken. K-index rij verplaatst naar onderaan de solar-
+               metriekenlijst (na Bz), direct boven "Melding K ≥" spinbox.
+               TODO-blok uit bestandshoofd verwijderd.
+· 2026-04-13 09:22 CEST — Layout: "Melding K ≥" spinbox verplaatst naar onder alle
+               solar-waarden (ipv inline na K-index rij). DX Spots canvas hoogte
+               beperkt tot 15 rijen (260px = 16×ROW_H+4) i.p.v. 200px; scrollbar
+               blijft actief voor meer dan 15 spots.
+· 2026-04-13 09:15 CEST — Fix solarwind: NOAA retourneert lijst; sleutels zijn
+               'proton_speed' en 'bz_gsm' (ipv 'WindSpeed'/'Bz').
 · 2026-04-13 09:08 CEST — Zoomen/pannen wereldkaart: muiswiel zoom 1×–8×
                (cursor-gecentreerd), click+drag pant, rechts reset zoom/pan.
                Alle overlays correct op VW×VH virtuele kaart + viewport-crop.

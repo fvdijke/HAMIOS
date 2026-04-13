@@ -11,19 +11,11 @@ Dependencies:
   pip install pillow
 
 ─────────────────────────────────────────────────────────────────────
-TODO
-─────────────────────────────────────────────────────────────────────
-Maak een versie 2.0, ook in Git en exe.
-Zet de panelen in een betere volgorde zodat alles netjes past.
-Zoomen en pannen van de worldmap.
-Melding K, getal moet onder de overige getallen.
-Verbeteren van de tooltips. Wat uitgebreider en betere presentatie.
-Voeg in Solar/Ionosfeer Solarwind toe
-
-─────────────────────────────────────────────────────────────────────
 Change Log (2.0)
 ─────────────────────────────────────────────────────────────────────
 
+· 2026-04-13 09:15 CEST — Fix solarwind fetch: NOAA SWPC retourneert lijst van dicts
+               ipv een dict; sleutelnamen zijn 'proton_speed' en 'bz_gsm'.
 · 2026-04-13 09:08 CEST — Zoomen en pannen van de wereldkaart: muiswiel zoom
                (1×–8×, cursor-gecentreerd), click+drag pant, rechter muisklik
                reset zoom/pan (of wist groot-cirkel als zoom=1). Alle overlays
@@ -312,9 +304,14 @@ def _bearing_deg(lat1, lon1, lat2, lon2) -> float:
     return (math.degrees(math.atan2(x, y)) + 360) % 360
 
 
-# ── Font helper ────────────────────────────────────────────────────────────────
+# ── Font helper (gecached — elke combinatie wordt slechts één keer aangemaakt) ──
+_FONT_CACHE: dict = {}
+
 def _font(size=10, weight="normal"):
-    return tkfont.Font(family="Segoe UI", size=size, weight=weight)
+    key = (size, weight)
+    if key not in _FONT_CACHE:
+        _FONT_CACHE[key] = tkfont.Font(family="Segoe UI", size=size, weight=weight)
+    return _FONT_CACHE[key]
 
 # ── Instellingen ───────────────────────────────────────────────────────────────
 def _load_settings() -> dict:
@@ -400,17 +397,20 @@ def _fetch_solar() -> dict:
             "band_10m_ngt":  _band_cond(sd, "12m-10m",  "night"),
         }
         # ── Solarwind (NOAA SWPC) ──────────────────────────────────────────────
+        # Beide endpoints retourneren een lijst van dicts: [{...}, ...]
         try:
             with urllib.request.urlopen(SW_SPEED_URL, timeout=6) as r:
                 sw_speed_data = json.loads(r.read())
-            spd = sw_speed_data.get("WindSpeed")
+            entry = sw_speed_data[0] if isinstance(sw_speed_data, list) and sw_speed_data else {}
+            spd = entry.get("proton_speed")
             data["sw_speed"] = f"{float(spd):.0f}" if spd is not None else "—"
         except Exception:
             data["sw_speed"] = "—"
         try:
             with urllib.request.urlopen(SW_MAG_URL, timeout=6) as r:
                 sw_mag_data = json.loads(r.read())
-            bz = sw_mag_data.get("Bz")
+            entry = sw_mag_data[0] if isinstance(sw_mag_data, list) and sw_mag_data else {}
+            bz = entry.get("bz_gsm")
             data["sw_bz"] = f"{float(bz):.1f}" if bz is not None else "—"
         except Exception:
             data["sw_bz"] = "—"
@@ -1010,7 +1010,7 @@ class HAMIOSApp:
                 lbl_d.config(fg=color     if active else TEXT_DIM)
                 lbl_n.config(fg=TEXT_BODY if active else TEXT_DIM,
                              font=_font(8, "bold") if active else _font(8))
-        self._center_window(1400, 900)
+        self._center_window(1400, 960)
         self._tick_clock()
         self._start_tray()
         self.root.protocol("WM_DELETE_WINDOW", self._on_close)
@@ -1173,11 +1173,11 @@ class HAMIOSApp:
             ("sfi",      "Solar Flux (SFI)"),
             ("ssn",      "Sunspot Nr (SSN)"),
             ("a_index",  "A-index"),
-            ("k_index",  "K-index"),
             ("xray",     "X-ray"),
             ("muf",      "MUF (MHz)"),
             ("sw_speed", "Solarwind (km/s)"),
             ("sw_bz",    "Bz (nT)"),
+            ("k_index",  "K-index"),
         ]:
             row = tk.Frame(self._solar_frame, bg=BG_PANEL)
             row.pack(fill=tk.X, pady=2)
@@ -1193,17 +1193,16 @@ class HAMIOSApp:
             _bind_tip(val_lbl, key)
             self._solar_val_lbls[key] = val_lbl
 
-            # K-index melding direct onder de K-index rij
-            if key == "k_index":
-                alert_row = tk.Frame(self._solar_frame, bg=BG_PANEL)
-                alert_row.pack(fill=tk.X, pady=(0, 2))
-                tk.Label(alert_row, text="Melding K ≥", font=_font(8), bg=BG_PANEL,
-                         fg=TEXT_DIM, anchor='w', width=16).pack(side=tk.LEFT)
-                tk.Spinbox(alert_row, from_=1, to=9, width=2,
-                           textvariable=self._k_alert_var,
-                           command=self._save_cur_settings,
-                           bg=BG_SURFACE, fg=TEXT_H1, buttonbackground=BG_SURFACE,
-                           relief=tk.FLAT, font=_font(9)).pack(side=tk.LEFT, padx=(4, 0))
+        # Melding K ≥ — onder alle solar-waarden
+        alert_row = tk.Frame(self._solar_frame, bg=BG_PANEL)
+        alert_row.pack(fill=tk.X, pady=(0, 2))
+        tk.Label(alert_row, text="Melding K ≥", font=_font(8), bg=BG_PANEL,
+                 fg=TEXT_DIM, anchor='w', width=16).pack(side=tk.LEFT)
+        tk.Spinbox(alert_row, from_=1, to=9, width=2,
+                   textvariable=self._k_alert_var,
+                   command=self._save_cur_settings,
+                   bg=BG_SURFACE, fg=TEXT_H1, buttonbackground=BG_SURFACE,
+                   relief=tk.FLAT, font=_font(9)).pack(side=tk.LEFT, padx=(4, 0))
 
         tk.Frame(self._solar_frame, bg=BORDER, height=1).pack(fill=tk.X, pady=6)
 
@@ -1239,35 +1238,34 @@ class HAMIOSApp:
                                     wraplength=200, justify='left')
         self._xflare_lbl.pack(anchor='w', pady=(4, 0))
 
-        # ── Gecombineerde linker+midden zone (kaart overspant beide kolommen) ──
+        # ── Gecombineerde linker+midden zone ──────────────────────────────────
         combined = tk.Frame(top_row, bg=BG_ROOT)
         combined.pack(side=tk.LEFT, fill=tk.BOTH, expand=True, padx=(0, 10))
 
-        # Kaart bovenaan, volledige breedte van combined
-        self._build_map_panel(combined)
-
-        # Sub-rij onder de kaart: Schema+Bandverloop+DX links | Prop rechts
+        # Sub-rij: Kaart+Hist+DX links (vaste breedte) | Prop+Schema rechts (expand)
         sub_row = tk.Frame(combined, bg=BG_ROOT)
-        sub_row.pack(fill=tk.BOTH, expand=True, pady=(6, 0))
+        sub_row.pack(fill=tk.BOTH, expand=True)
 
-        left_sub = tk.Frame(sub_row, bg=BG_ROOT, width=540)
+        # Linkerkolom: Kaart bovenaan (2:1 op 480px → 240px hoog), dan Hist, dan DX
+        left_sub = tk.Frame(sub_row, bg=BG_ROOT, width=480)
         left_sub.pack(side=tk.LEFT, fill=tk.Y)
         left_sub.pack_propagate(False)
-        self._build_schedule_panel(left_sub)
-        self._build_hist_panel(left_sub)      # Bandverloop onder schema
+        self._build_map_panel(left_sub)
+        self._build_hist_panel(left_sub)
         self._build_dx_panel(left_sub)
 
         right_sub = tk.Frame(sub_row, bg=BG_ROOT)
         right_sub.pack(side=tk.LEFT, fill=tk.BOTH, expand=True, padx=(10, 0))
         self._build_prop_panel(right_sub)
+        self._build_schedule_panel(right_sub)  # Schema onder HF Betrouwbaarheid
 
-        # Advies: volledige breedte onderin combined
-        self._build_advice_panel(combined)
+        # Advies: volledige breedte onderin body (over alle kolommen inclusief Solar)
+        self._build_advice_panel(body)
 
     # ── Wereldkaart panel ─────────────────────────────────────────────────────
     def _build_map_panel(self, parent):
         outer = tk.Frame(parent, bg=BG_PANEL)
-        outer.pack(fill=tk.BOTH, expand=True, pady=(0, 0))
+        outer.pack(fill=tk.X, pady=(0, 0))
         tk.Frame(outer, bg=ACCENT, height=2).pack(fill=tk.X)
 
         map_hdr = tk.Frame(outer, bg=BG_PANEL)
@@ -1337,7 +1335,7 @@ class HAMIOSApp:
         tk.Label(map_hdr, textvariable=self._map_updated_var,
                  font=_font(8), bg=BG_PANEL, fg=TEXT_DIM).pack(side=tk.LEFT, padx=(14, 0))
 
-        self._map_canvas = tk.Canvas(outer, height=400, bg="#1B3A5C",
+        self._map_canvas = tk.Canvas(outer, height=200, bg="#1B3A5C",
                                      bd=0, highlightthickness=0)
         self._map_canvas.pack(fill=tk.X)
         self._map_photo = None
@@ -1357,8 +1355,8 @@ class HAMIOSApp:
                  anchor='w').pack(fill=tk.X, padx=10, pady=(0, 4))
 
     def _on_map_resize(self, event):
-        """Handhaaf 2:1 verhouding (equirectangulair) bij breedte-wijziging."""
-        new_h = max(100, event.width // 2)
+        """Handhaaf exacte 2:1 verhouding (equirectangulair)."""
+        new_h = max(80, event.width // 2)
         if self._map_canvas.winfo_height() != new_h:
             self._map_canvas.config(height=new_h)
         self._draw_map()
@@ -1805,8 +1803,8 @@ class HAMIOSApp:
             tk.Label(info, textvariable=var, font=_font(9, "bold"),
                      bg=BG_PANEL, fg=fg).pack(side=tk.LEFT, padx=(0, 18))
 
-        BAR_H    = 18
-        BAR_PAD  = 4
+        BAR_H    = 16
+        BAR_PAD  = 2
         HDR_H    = 16
         canvas_h = HDR_H + len(_BANDS) * (BAR_H + BAR_PAD) + BAR_PAD + 2
         self._prop_canvas = tk.Canvas(outer, height=canvas_h, bg=BG_PANEL,
@@ -1826,8 +1824,8 @@ class HAMIOSApp:
         self._bar_rows = []
 
         W       = c.winfo_width() or 700
-        BAR_H   = 18
-        BAR_PAD = 4
+        BAR_H   = 16
+        BAR_PAD = 2
         HDR_H   = 16
         LABEL_W = 40
         LIC_W   = 20
@@ -1983,7 +1981,7 @@ class HAMIOSApp:
         tk.Label(hdr, textvariable=self._hist_updated_var,
                  font=_font(8), bg=BG_PANEL, fg=TEXT_DIM).pack(side=tk.RIGHT, padx=(0, 10))
 
-        self._hist_canvas = tk.Canvas(outer, height=140, bg=BG_PANEL,
+        self._hist_canvas = tk.Canvas(outer, height=120, bg=BG_PANEL,
                                       bd=0, highlightthickness=0)
         self._hist_canvas.pack(fill=tk.X, padx=10, pady=(0, 6))
         self._hist_canvas.bind("<Configure>", lambda *_: self._draw_hist_graph())
@@ -2160,7 +2158,7 @@ class HAMIOSApp:
         tk.Label(hdr, textvariable=self._sched_updated_var,
                  font=_font(8), bg=BG_PANEL, fg=TEXT_DIM).pack(side=tk.RIGHT)
 
-        self._sched_canvas = tk.Canvas(outer, height=130, bg=BG_PANEL,
+        self._sched_canvas = tk.Canvas(outer, height=110, bg=BG_PANEL,
                                        bd=0, highlightthickness=0)
         self._sched_canvas.pack(fill=tk.X, padx=10, pady=(0, 6))
         self._sched_canvas.bind("<Configure>", lambda *_: self._draw_schedule())
@@ -2362,7 +2360,7 @@ class HAMIOSApp:
 
         dx_wrap = tk.Frame(outer, bg=BG_PANEL)
         dx_wrap.pack(fill=tk.X, padx=10, pady=(2, 6))
-        self._dx_canvas = tk.Canvas(dx_wrap, height=200, bg=BG_PANEL,
+        self._dx_canvas = tk.Canvas(dx_wrap, height=280, bg=BG_PANEL,
                                     bd=0, highlightthickness=0)
         dx_sb = tk.Scrollbar(dx_wrap, orient=tk.VERTICAL,
                              command=self._dx_canvas.yview,
@@ -2464,7 +2462,7 @@ class HAMIOSApp:
         tk.Frame(outer, bg=ACCENT, height=2).pack(fill=tk.X)
         adv_hdr = tk.Frame(outer, bg=BG_PANEL)
         adv_hdr.pack(fill=tk.X, padx=10, pady=(4, 0))
-        tk.Label(adv_hdr, text="💡  Advies",
+        tk.Label(adv_hdr, text="💡  Propagatie-analyse & Advies",
                  font=_font(10, "bold"), bg=BG_PANEL, fg=ACCENT).pack(side=tk.LEFT)
         self._advice_updated_var = tk.StringVar(value="")
         tk.Label(adv_hdr, textvariable=self._advice_updated_var,
@@ -2478,79 +2476,228 @@ class HAMIOSApp:
         for w in self._advice_frame.winfo_children():
             w.destroy()
 
-        data    = self._solar_data
+        data = self._solar_data
         try:
             sfi     = float(data.get("sfi",     "90").replace("—", "90"))
             ssn     = float(data.get("ssn",     "50").replace("—", "50"))
             k_index = float(data.get("k_index", "2" ).replace("—", "2"))
+            a_index = float(data.get("a_index", "5" ).replace("—", "5"))
         except (ValueError, TypeError):
-            sfi, ssn, k_index = 90.0, 50.0, 2.0
+            sfi, ssn, k_index, a_index = 90.0, 50.0, 2.0, 5.0
 
+        xray    = data.get("xray", "")
+        sw_spd  = data.get("sw_speed", "—")
+        sw_bz   = data.get("sw_bz",    "—")
         is_day  = self._day_var.get()
         bp      = {n: p for n, _, p in self._last_band_pct if p >= 0}
+        hf_open = sorted([(n, p) for n, p in bp.items() if p > 0], key=lambda x: -x[1])
 
         tips: list[tuple[str, str, str]] = []   # (icon, tekst, kleur)
 
-        # ── Beste band(en) ────────────────────────────────────────────────
-        hf_open = [(n, p) for n, p in bp.items() if p > 0]
-        hf_open.sort(key=lambda x: -x[1])
+        # ── 1. Beste banden ───────────────────────────────────────────────
         if hf_open:
-            best = hf_open[:3]
-            bstr = ",  ".join(f"{n} ({p}%)" for n, p in best)
-            tips.append(("📡", f"Beste banden nu:  {bstr}", "#4CAF50"))
+            best = hf_open[:5]
+            bstr = "  ·  ".join(f"{n} {p}%" for n, p in best)
+            extra = f"  ({len(hf_open)} banden open)" if len(hf_open) > 5 else ""
+            tips.append(("📡", f"Beste banden nu:  {bstr}{extra}", "#4CAF50"))
         else:
             tips.append(("📡", "Alle HF-banden zijn momenteel gesloten.", TEXT_DIM))
 
-        # ── Geomagneetse activiteit ───────────────────────────────────────
-        if k_index >= 5:
-            tips.append(("⚠️", f"Geomagnetische storm  (K={int(k_index)}) — "
-                                "HF-propagatie ernstig verstoord, poolroutes geblokkeerd.",
-                         "#F44336"))
+        # ── 2. Geomagnetische condities (K + A) ────────────────────────────
+        a_kwal = ("rustig" if a_index < 10 else
+                  "onrustig" if a_index < 30 else
+                  "storm" if a_index < 100 else "ernstige storm")
+        if k_index >= 7:
+            tips.append(("🚨", f"Zware geomagnetische storm  K={int(k_index)}, A={int(a_index)} ({a_kwal}) — "
+                                "HF vrijwel onbruikbaar, auroraal absorptie op alle routes. "
+                                "Wacht op herstel (normaal binnen 12–24u).", "#F44336"))
+        elif k_index >= 5:
+            tips.append(("⚠️", f"Geomagnetische storm  K={int(k_index)}, A={int(a_index)} ({a_kwal}) — "
+                                "poolroutes geblokkeerd, 40m/80m meest betrouwbaar. "
+                                "Hoge banden en DX sterk verstoord.", "#F44336"))
         elif k_index >= 3:
-            tips.append(("⚡", f"Verhoogde geomagnetische activiteit  (K={int(k_index)}) — "
-                                "lagere banden (40m/80m) stabielere keuze.", "#FFC107"))
+            tips.append(("⚡", f"Verhoogde geo-activiteit  K={int(k_index)}, A={int(a_index)} ({a_kwal}) — "
+                                "lagere banden stabieler; vermijd trans-polair DX. "
+                                "Overweeg 40m/80m voor betrouwbare verbindingen.", "#FFC107"))
         else:
-            tips.append(("✅", f"Rustige geomagnetische condities  (K={int(k_index)}).",
-                         "#4CAF50"))
+            tips.append(("✅", f"Rustige geo-condities  K={int(k_index)}, A={int(a_index)} — "
+                                "optimaal voor alle routes incl. poolpaden en DX.", "#4CAF50"))
 
-        # ── SFI / SSN / Zonnecyclus ──────────────────────────────────────
-        if sfi >= 150:
-            tips.append(("☀️", f"Uitstekende zonnecyclus  (SFI={int(sfi)}, SSN={int(ssn)}) — "
-                                "10m/12m/15m kunnen open zijn voor DX.", ACCENT))
+        # ── 3. Zonactiviteit / zonnecyclus ─────────────────────────────────
+        if sfi >= 200:
+            tips.append(("🌟", f"Exceptionele zonactiviteit  SFI={int(sfi)}, SSN={int(ssn)} — "
+                                "zonnecyclus-maximum. 10m/12m/15m open voor wereldwijd DX; "
+                                "kans op Es-versterking en TEP.", ACCENT))
+        elif sfi >= 150:
+            tips.append(("☀️", f"Hoge zonactiviteit  SFI={int(sfi)}, SSN={int(ssn)} — "
+                                "uitstekend voor 10m t/m 17m DX. F2-propagatie sterk; "
+                                "MUF hoog, lange skips mogelijk.", ACCENT))
         elif sfi >= 100:
-            tips.append(("🌤", f"Goede zonnecyclus  (SFI={int(sfi)}, SSN={int(ssn)}) — "
-                                "20m/17m/15m zijn beste DX-banden.", ACCENT))
-        elif sfi < 80:
-            tips.append(("🌧", f"Lage zonactiviteit  (SFI={int(sfi)}, SSN={int(ssn)}) — "
-                                "40m en 80m bieden meeste kans; hoge banden grotendeels dicht.",
-                         TEXT_DIM))
-
-        # ── Dag/nacht advies ─────────────────────────────────────────────
-        if is_day:
-            if hf_open and hf_open[0][1] >= 60:
-                tips.append(("🌞", "Dagcondities: overweeg SSB of FT8 op de beste band.", TEXT_BODY))
+            tips.append(("🌤", f"Goede zonactiviteit  SFI={int(sfi)}, SSN={int(ssn)} — "
+                                "20m en 17m zijn primaire DX-banden; 15m kan open zijn. "
+                                "Verwacht betrouwbare F2-propagatie overdag.", ACCENT))
+        elif sfi >= 80:
+            tips.append(("🌥", f"Matige zonactiviteit  SFI={int(sfi)}, SSN={int(ssn)} — "
+                                "20m/40m meest betrouwbaar. Hoge banden onzeker; "
+                                "80m goed voor regionaal verkeer.", TEXT_BODY))
         else:
-            night_good = [(n, p) for n, p in bp.items() if p >= 40
-                          and any(b == n for b, _, _ in _BANDS if b in ("160m","80m","40m"))]
-            if night_good:
-                tips.append(("🌙", "Nachtcondities: 40m en 80m zijn vaak beter 's nachts "
-                                   "— probeer FT8 voor lange afstanden.", TEXT_BODY))
-            else:
-                tips.append(("🌙", "Nachtcondities: lagere banden (160m/80m/40m) "
-                                   "voor regionale en continentale verbindingen.", TEXT_BODY))
+            tips.append(("🌧", f"Lage zonactiviteit  SFI={int(sfi)}, SSN={int(ssn)} — "
+                                "40m en 80m bieden meeste kans op verbindingen. "
+                                "Banden ≥15m grotendeels dicht; 160m voor nacht-DX.", TEXT_DIM))
 
-        # ── Weergave ─────────────────────────────────────────────────────
-        cols = 2
+        # ── 4. Solarwind en Bz ─────────────────────────────────────────────
+        try:
+            spd = float(sw_spd)
+            bz  = float(sw_bz)
+            if spd > 700 or bz <= -20:
+                tips.append(("🌪", f"Stormachtige solarwind  v={int(spd)} km/s, Bz={bz:+.1f} nT — "
+                                    "verhoogde kans op CME-impact; K-index kan snel stijgen. "
+                                    "Monitor condities actief.", "#F44336"))
+            elif spd > 500 or bz <= -10:
+                tips.append(("💨", f"Verhoogde solarwind  v={int(spd)} km/s, Bz={bz:+.1f} nT — "
+                                    "Bz negatief koppelt aan aardveld → K-stijging mogelijk. "
+                                    "Lagere banden aanhouden.", "#FFC107"))
+            elif bz > 5:
+                tips.append(("🛡", f"Rustige solarwind  v={int(spd)} km/s, Bz={bz:+.1f} nT — "
+                                   "positieve Bz beschermt aardveld. Stabiele condities.", "#4CAF50"))
+            else:
+                tips.append(("💫", f"Normale solarwind  v={int(spd)} km/s, Bz={bz:+.1f} nT — "
+                                   "geen direct effect op propagatie verwacht.", TEXT_BODY))
+        except (ValueError, TypeError):
+            pass   # solarwind nog niet beschikbaar
+
+        # ── 5. X-ray / flares ─────────────────────────────────────────────
+        xclass = xray[:1].upper() if xray else ""
+        if xclass in ("X",):
+            tips.append(("☢", f"X-flare gedetecteerd  ({xray}) — Short Wave Fadeout (SWF) "
+                               "mogelijk op dag-zijde; HF tijdelijk geblokkeerd. "
+                               "Herstel verwacht binnen 15–60 min.", "#F44336"))
+        elif xclass == "M":
+            tips.append(("⚡", f"M-flare actief  ({xray}) — lichte SWF mogelijk op lagere HF. "
+                               "Verhoogde kans op Proton Event (PCA) bij M5+.", "#FFC107"))
+        # C en lager: geen melding nodig
+
+        # ── 6. Ionosfeer / MUF / LUF ──────────────────────────────────────
+        try:
+            muf = float(data.get("muf", "0").replace("—", "0"))
+            if muf > 0:
+                if muf >= 28:
+                    muf_txt = f"MUF={muf:.1f} MHz — 10m t/m 20m alle open; F2-laag optimaal"
+                elif muf >= 14:
+                    muf_txt = f"MUF={muf:.1f} MHz — 20m open; banden > {muf:.0f} MHz dicht"
+                elif muf >= 7:
+                    muf_txt = f"MUF={muf:.1f} MHz — alleen 40m–80m bruikbaar"
+                else:
+                    muf_txt = f"MUF={muf:.1f} MHz — ionosfeer zwak; alleen 80m/160m"
+                luf_est = 3.5 + k_index * 0.8
+                tips.append(("📶", f"Ionosfeer: {muf_txt}. "
+                                   f"Geschatte LUF ≈ {luf_est:.1f} MHz "
+                                   f"({'verhoogd door K-index' if k_index >= 3 else 'normaal'}).",
+                             TEXT_BODY))
+        except (ValueError, TypeError):
+            pass
+
+        # ── 7. Dag/nacht + transitievensters ──────────────────────────────
+        utc_h = datetime.datetime.now(datetime.timezone.utc).hour
+        tz_off = 2 if self._dst_var.get() else 1
+        lok_h  = (utc_h + tz_off) % 24
+        if is_day:
+            if 6 <= lok_h < 10:
+                tips.append(("🌅", f"Ochtend ({lok_h:02d}:xx lokaal) — F2-laag bouwt op; "
+                                   "20m wordt snel bruikbaar. Grey-line kansen voor DX-paden "
+                                   "richting Amerika en Azië.", TEXT_BODY))
+            elif 10 <= lok_h < 16:
+                tips.append(("🌞", f"Middag ({lok_h:02d}:xx lokaal) — F2 op maximale hoogte; "
+                                   "beste window voor 15m/17m/20m DX. "
+                                   "Probeer SSB of FT8 voor trans-Atlantische verbindingen.", TEXT_BODY))
+            else:
+                tips.append(("🌇", f"Namiddag ({lok_h:02d}:xx lokaal) — Grey-line nadert; "
+                                   "uitstekend voor DX richting Azië en Pacific. "
+                                   "15m en 17m vaak prachtig in deze uren.", TEXT_BODY))
+        else:
+            if 22 <= lok_h or lok_h < 2:
+                tips.append(("🌃", f"Vroege nacht ({lok_h:02d}:xx lokaal) — 40m en 80m open "
+                                   "voor regionaal Europa-verkeer. F2-laag daalt; "
+                                   "LUF stijgt op korte paden.", TEXT_BODY))
+            elif 2 <= lok_h < 6:
+                tips.append(("🌌", f"Nacht ({lok_h:02d}:xx lokaal) — 160m en 80m actief voor "
+                                   "trans-Atlantisch DX. 40m goed voor Noord-Amerika. "
+                                   "FT8 op lage banden voor DX-afstanden > 5000 km.", TEXT_BODY))
+            else:
+                tips.append(("🌄", f"Voor de ochtend ({lok_h:02d}:xx lokaal) — Grey-line "
+                                   "nadert; 80m/40m DX-window naar Azië/Pacific. "
+                                   "20m begint te openen richting Amerika.", TEXT_BODY))
+
+        # ── 8. Modus / vermogen advies ────────────────────────────────────
+        mode  = self._mode_var.get()
+        power = self._power_var.get()
+        snr_db = (_MODE_DB.get(mode, 0) + _POWER_DB.get(power, 0) +
+                  _ANT_DB.get(self._ant_var.get(), 0))
+        if hf_open:
+            best_pct = hf_open[0][1]
+            if best_pct < 30 and mode == "SSB":
+                tips.append(("🔧", f"Modus-advies: condities zwak ({best_pct}% op {hf_open[0][0]}) — "
+                                   "overweeg FT8 (+25 dB winst t.o.v. SSB) of CW (+10 dB). "
+                                   f"Huidig SNR-budget: {snr_db:+d} dB.", "#FFC107"))
+            elif best_pct >= 60 and snr_db < -5:
+                tips.append(("🔧", f"Modus-advies: goede condities ({best_pct}% op {hf_open[0][0]}) — "
+                                   f"SSB goed bruikbaar. SNR-budget {snr_db:+d} dB; "
+                                   "verhoog vermogen of verbeter antenne voor meer bereik.", TEXT_BODY))
+            else:
+                tips.append(("🔧", f"Modus-advies: {mode} passend bij huidig {best_pct}% op {hf_open[0][0]}. "
+                                   f"SNR-budget: {snr_db:+d} dB. "
+                                   "FT8 geeft altijd +25 dB extra marge.", TEXT_BODY))
+
+        # ── 9. Absorptie & poolroutes ─────────────────────────────────────
+        lat = abs(self._qth_lat)
+        if lat > 50 and k_index >= 4:
+            tips.append(("🧲", f"Auroraal absorptie verhoogd (K={int(k_index)}, QTH {lat:.0f}°) — "
+                               "trans-polaire paden (Europa→Canada, Europa→Japan via pool) "
+                               "sterk verzwakt. Gebruik equatoriale routes via 20m/17m.", "#FFC107"))
+        elif lat > 45 and k_index >= 3:
+            tips.append(("🧲", f"Lichte absorptie mogelijk (K={int(k_index)}, QTH {lat:.0f}°) — "
+                               "poolpaden kunnen sporadisch verstoord zijn. "
+                               "Monitor 40m voor bruikbaarheid.", TEXT_BODY))
+
+        # ── 10. Algehele beoordeling ──────────────────────────────────────
+        score = 0
+        if sfi >= 150: score += 3
+        elif sfi >= 100: score += 2
+        elif sfi >= 80: score += 1
+        if k_index <= 2: score += 2
+        elif k_index <= 4: score += 1
+        if hf_open and hf_open[0][1] >= 60: score += 2
+        elif hf_open: score += 1
+        try:
+            if float(sw_bz) < -10: score -= 1
+        except (ValueError, TypeError):
+            pass
+        overall = ("Uitstekend 🏆" if score >= 6 else
+                   "Goed ✅" if score >= 4 else
+                   "Matig ⚡" if score >= 2 else
+                   "Slecht ⚠️")
+        overall_clr = ("#4CAF50" if score >= 6 else
+                       "#8BC34A" if score >= 4 else
+                       "#FFC107" if score >= 2 else "#F44336")
+        open_cnt = len(hf_open)
+        tips.append(("📊", f"Algehele propagatie-score: {overall}  "
+                           f"(SFI {int(sfi)} · K {int(k_index)} · {open_cnt} banden open). "
+                           f"{'Dag' if is_day else 'Nacht'}condities, QTH {self._qth_lat:.1f}°N.",
+                     overall_clr))
+
+        # ── Weergave: 3 kolommen ──────────────────────────────────────────
+        COLS = 3
+        for c in range(COLS):
+            self._advice_frame.columnconfigure(c, weight=1)
         for i, (icon, tekst, kleur) in enumerate(tips):
-            cell = tk.Frame(self._advice_frame, bg=BG_SURFACE,
-                            padx=8, pady=5)
-            cell.grid(row=i // cols, column=i % cols,
-                      sticky='nsew', padx=(0 if i % cols else 0, 6 if i % cols == 0 else 0),
-                      pady=(0, 4))
-            self._advice_frame.columnconfigure(i % cols, weight=1)
+            col = i % COLS
+            row = i // COLS
+            cell = tk.Frame(self._advice_frame, bg=BG_SURFACE, padx=8, pady=5)
+            cell.grid(row=row, column=col, sticky='nsew',
+                      padx=(0, 5 if col < COLS - 1 else 0), pady=(0, 4))
             tk.Label(cell, text=f"{icon}  {tekst}", font=_font(9),
                      bg=BG_SURFACE, fg=kleur,
-                     anchor='w', wraplength=420, justify='left').pack(fill=tk.X)
+                     anchor='nw', wraplength=300, justify='left').pack(fill=tk.X)
         if hasattr(self, "_advice_updated_var"):
             self._advice_updated_var.set(datetime.datetime.now().strftime("%H:%M"))
 
@@ -2822,21 +2969,25 @@ class HAMIOSApp:
 
     # ── Venster centreren ─────────────────────────────────────────────────────
     def _center_window(self, min_w: int, min_h: int):
-        # update() ipv update_idletasks() zodat canvas-widgets ook correct gemeten worden
+        # update() zodat canvas-widgets correct gemeten worden (resize-events vuren)
         self.root.update()
         scr_w = self.root.winfo_screenwidth()
         scr_h = self.root.winfo_screenheight()
-        # Gebruik de door tkinter berekende benodigde grootte als die groter is
+        usable_h = scr_h - 60   # reserveer ruimte voor taakbalk
+        usable_w = scr_w - 60
+        # Gebruik tkinter-berekende benodigde grootte als die groter is
         req_w = self.root.winfo_reqwidth()
         req_h = self.root.winfo_reqheight()
         w = max(min_w, req_w if req_w > 100 else min_w)
         h = max(min_h, req_h if req_h > 100 else min_h)
-        # Niet groter dan het scherm (laat 60px taskbalk-marge vrij)
-        w = min(w, scr_w - 60)
-        h = min(h, scr_h - 60)
+        # Hard begrenzen aan beschikbaar schermgebied
+        w = min(w, usable_w)
+        h = min(h, usable_h)
         x = max(0, (scr_w - w) // 2)
         y = max(0, (scr_h - h) // 2)
         self.root.geometry(f"{w}x{h}+{x}+{y}")
+        # Stel minsize in zodat verkleinen niet onder bruikbare grens gaat
+        self.root.minsize(min(900, usable_w), min(600, usable_h))
 
 
 # ── Entrypoint ─────────────────────────────────────────────────────────────────

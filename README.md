@@ -4,176 +4,197 @@
 
 **HAMIOS** is een krachtige desktop tool voor radioamateurs die realtime inzicht geeft in HF-propagatie, zonne-activiteit en DX-mogelijkheden — verpakt in een moderne, donkere GUI.
 
-Ontwikkeld door Frank van Dijke.
+Ontwikkeld door **Frank van Dijke (PA0FVD)**.
+
+---
+
+## Schermindeling
+
+```
+┌─────────────────────────────────────────────────────────────────────────────┐
+│ HAMIOS v2.0          [Auto: ▾]  [Tooltips] [Zomertijd]   CET 09:55  UTC ... │
+├──────────────────────────────────────────────────────┬──────────────────────┤
+│  Wereldkaart (480 × 240 px, 2:1)                     │  ☀ Solar/Ionosfeer   │
+│  [Zon] [Maan] [Graylijn] [ITU] [CS] [Locator]        │  SFI / SSN / A / K  │
+│  QTH Lat: __  Lon: __                                │  X-ray / MUF        │
+├──────────────────┬───────────────────────────────────│  Solarwind / Bz     │
+│ 📈 Band Verloop  │ 📶 HF Band Betrouwbaarheid         │  K-index            │
+│ [Uren/Dagen/...] │  Mode / Vermogen / Antenne         │  Melding K ≥ [▲▼]  │
+│                  │  MUF · LUF · SNR-budget            │─────────────────────│
+├──────────────────│  Balk per band (160m–23cm)         │  Band dag/nacht     │
+│ 📡 Live DX Spots │                                    │  (Goed/Fair/Arm)   │
+│ [Eigen continent]│─────────────────────────────────── │                     │
+│ UTC Band DX  MHz │ 🕐 Bandopenings-schema (heatmap)   │  bijgewerkt HH:MM   │
+│ …               │  0–24 uur lokale tijd, 11 HF-banden│                     │
+├──────────────────┴───────────────────────────────────┴─────────────────────┤
+│  💡 Propagatie-analyse & Advies  (10 kaarten, 3 kolommen)                   │
+└─────────────────────────────────────────────────────────────────────────────┘
+```
 
 ---
 
 ## 🚀 Features
 
+### 🌍 Interactieve Wereldkaart
+- Equirectangulaire NASA-kaart (2048 × 1024, automatisch gedownload)
+- Exacte 2:1 verhouding, past zich aan bij vensterbreedte
+- **Dag/nacht-terminator** met zachte overgangszone
+- **Graylijn** (amber terminator-band, ~1000 km breed)
+- **Zon- en maanpositie** (geocentrisch berekend)
+- **QTH-markering** (blauw kruisje); lat/lon instelbaar in header
+- **Groot-cirkelpad**: klik → afstand en richting; rechtermuisklik wist
+- **Auroraal absorptie-ovaal** bij K ≥ 4
+- **ITU-regio overlay** R1/R2/R3 (officieel ITU RR Art. 5)
+- **Maidenhead-locatorraster** (20° × 10°, labels AA–RR)
+- **Callsign-prefix laag** (~110 DXCC-entiteiten)
+- **Zoom/pan**: muiswiel 1×–8×, click+drag pant, rechts reset
+
 ### 🌞 Solar & Ionosfeer Data
 
-* Real-time data van o.a.:
+| Parameter | Bron | Beschrijving |
+|-----------|------|--------------|
+| SFI | hamqsl.com | Solar Flux Index op 10,7 cm |
+| SSN | hamqsl.com | Sunspot Number |
+| A-index | hamqsl.com | Dagelijkse geomagnetische activiteit |
+| K-index | hamqsl.com | 3-uurs geomagnetische activiteit (0–9) |
+| X-ray | hamqsl.com | GOES röntgenflux (A/B/C/M/X klasse) |
+| MUF | hamqsl.com | Maximum Usable Frequency |
+| Solarwindsnelheid | NOAA SWPC | km/s via DSCOVR/ACE |
+| Bz | NOAA SWPC | Interplanetair magneetveld Z-component (nT) |
 
-  * Solar Flux Index (SFI)
-  * Sunspot Number (SSN)
-  * A- en K-index
-  * X-ray flux
-  * MUF (Maximum Usable Frequency)
-* Solarwind data:
+- K-index kleurt **oranje** (K 3–4) of **rood** (K 5+)
+- Bz kleurt **oranje** (≤ −10 nT) of **rood** (≤ −20 nT)
+- X-flare detectie → SWF-waarschuwing in paneel en systeemtray
 
-  * Snelheid (km/s)
-  * Bz-component (geomagnetische impact)
-* Automatische updates via externe bronnen (NOAA / HamQSL)
+### 📶 HF Band Betrouwbaarheid
+- Intern MUF/LUF-model (SFI, SSN, K-index, QTH-breedtegraad)
+- SNR-budget gecorrigeerd voor **mode**, **vermogen** en **antenne**
+- Modes: SSB (0 dB) · CW (+10 dB) · FT8 (+25 dB) · AM (−6 dB)
+- Vermogens: 5W – 1 kW · Antennes: Dipole, EFHW, Yagi, Beam, Quad…
+- Kleurbalken: groen ≥60% · geel 30–59% · rood 1–29% · grijs dicht
+- Licentieklasse per band (N = Novice/Basis, F = Full/HAREC)
+- FT8-frequentie en aanbevolen modi per band
 
----
+### 🕐 Bandopenings-schema
+- 24-uur heatmap voor alle 11 HF-banden (160m – 6m)
+- Tijdas in lokale tijd (CET/CEST), huidige tijd gemarkeerd
+- Hover-tooltip: band, uur, kwaliteit %, FT8-freq, modi
 
-### 📡 HF Propagation Analyse
+### 📈 Band Verloop (historiek)
+- Grafiek van alle HF-banden (%) over tijd — 90 dagen bewaard in CSV
+- Tijdbereik: Uren · Dagen · Weken · Maanden
+- Toggle: **Banden** of **Solar** (SFI/SSN/K/A)
+- Klikbare legenda, hover-tooltip per tijdstip
 
-* Slim MUF/LUF-model voor bandvoorspellingen
-* Betrouwbaarheidsscore per band (160m t/m 6m)
-* Invloed van:
+### 📻 Live DX Spots
+- JSON-feed van dxwatch.com, ververst elke 2 minuten
+- Gefilterd op HF-banden · Eigen continent toggle
+- Kolommen: UTC · Band · DX · MHz · Spotter · Comment
+- Scrollbaar met muiswiel
 
-  * Tijd (dag/nacht)
-  * Vermogen
-  * Mode (SSB / CW / FT8)
-  * Antenne-type
-* Ondersteuning voor VHF/UHF indicaties
+### 💡 Propagatie-analyse & Advies
+10 analyse-kaarten in 3 kolommen, automatisch bijgewerkt:
 
----
+| # | Kaart | Inhoud |
+|---|-------|--------|
+| 1 | 📡 Beste banden | Top-5 open banden met percentage |
+| 2 | ✅/⚠️ Geo-storm | K + A-index, routeadvies, ernst |
+| 3 | ☀️ Zonactiviteit | SFI + SSN, zonnecyclus-fase |
+| 4 | 💨 Solarwind | Snelheid + Bz-impact |
+| 5 | ☢ X-flare/SWF | Xray-klasse, herstelschatting |
+| 6 | 📶 Ionosfeer | MUF, LUF-schatting, F2-laag |
+| 7 | 🌅 Dag/nacht | Grey-line tijdvensters per uurblok |
+| 8 | 🔧 Modus-advies | FT8 vs SSB/CW op basis van SNR-budget |
+| 9 | 🧲 Absorptie | Auroraal absorptie poolroutes (QTH-lat) |
+| 10 | 📊 Overall score | Samengesteld propagatie-oordeel |
 
-### 🌍 Interactieve Wereldkaart
-
-* Equirectangular wereldkaart (NASA)
-* Overlays:
-
-  * Dag/nacht terminator
-  * Grayline (DX sweet spot)
-  * Zon- en maanpositie
-  * ITU-regio’s
-  * Callsign prefixes (~110 DXCC entiteiten)
-* Functionaliteit:
-
-  * Zoom (muiswiel)
-  * Pan (klik + drag)
-  * Reset (rechtermuisklik)
-  * Groot-cirkel routes berekenen
-
----
-
-### 📊 Band Activiteit & Historie
-
-* Band openingsschema per uur
-* Historische grafieken (tot 90 dagen)
-* Selecteerbare banden
-* Trendanalyse van condities
-
----
-
-### 📻 DX Cluster Integratie
-
-* Live DX spots van DXWatch
-* Filtering op HF-banden
-* Callsign → continent mapping
-* Frequentie, tijd en commentaar zichtbaar
-
----
-
-### ⚙️ Configuratie & Opslag
-
-* Instellingen via `HAMIOS.ini`
-* Historische data in CSV (`HAMIOS_history.csv`)
-* Volledig lokaal draaiend (geen cloud dependency)
+### ⚙️ Overig
+- **Systeemtray**: minimaliseren naar tray, band-opening en K-index notificaties
+- **Tooltips** met uitleg per solar-parameter (350ms vertraging, schermrand-detectie)
+- **Automatische refresh**: Uit / 30s / 1 min / 5 min / 10 min / 30 min / 1 uur
+- Alle instellingen opgeslagen in `HAMIOS.ini`
 
 ---
 
-### 🧠 Slimme Details
+## 🖥️ Installatie
 
-* Tooltips met uitleg (ook voor beginners)
-* Automatische refresh intervals
-* K-index alerts
-* Tray ondersteuning (indien beschikbaar)
-* Dag/nacht detectie op jouw QTH
-
----
-
-## 🖥️ Requirements
-
-* Python 3.x
-* Vereiste packages:
-
+### Vereisten
 ```bash
 pip install pillow
 ```
-
-Optioneel:
-
+Optioneel (systeemtray):
 ```bash
 pip install pystray
 ```
 
----
-
-## 📦 Installatie
-
-1. Clone deze repository:
-
-```bash
-git clone https://github.com/fvdijke/hamios.git
-```
-
-2. Ga naar de map:
-
-```bash
-cd hamios
-```
-
-3. Installeer dependencies:
-
-```bash
-pip install pillow
-```
-
-4. Start de applicatie:
-
+### Starten
 ```bash
 python HAMIOS.py
 ```
 
+### Standalone EXE (Windows)
+```bash
+pip install pyinstaller
+pyinstaller HAMIOS.spec
+```
+De executable verschijnt in `dist\HAMIOS.exe`.
+
 ---
 
-## ⚡ Gebruik
+## Propagatiemodel
 
-* Stel je QTH in (lat/lon)
-* Kies mode, vermogen en antenne
-* Bekijk realtime propagatie en DX kansen
-* Gebruik de kaart voor visuele analyse
-* Check DX spots voor live activiteit
+**MUF** (Maximum Usable Frequency):
+```
+foF2 = 4.0 + (SFI − 70) × 0.065 + SSN × 0.012
+MUF  = foF2 × breedtegraad-factor × dag/nacht-factor × 3.8
+```
+
+**LUF** (Lowest Usable Frequency):
+```
+LUF = (3.5 + K × 0.8) × auroraal-factor / 10^(SNR/20)
+```
+
+**Bandkwaliteit**: optimum rond 55% van het MUF/LUF-venster → 100%.
+
+---
+
+## Sneltoetsen & muisinteractie
+
+| Actie | Effect |
+|-------|--------|
+| Muiswiel op kaart | Zoom 1×–8× (cursor-gecentreerd) |
+| Klik + sleep | Pan viewport |
+| Linkermuisklik | Groot-cirkelbestemming instellen |
+| Rechtermuisklik | Reset zoom/pan of wis groot-cirkelpad |
+| Muiswiel op DX-paneel | Scroll door spotlijst |
+| Hover op banden/heatmap/grafiek | Gedetailleerde tooltip |
+| Klik legenda-label | Band aan/uitzetten in historiekgrafiek |
+
+---
+
+## Systeemvereisten
+
+| | Minimum | Aanbevolen |
+|-|---------|-----------|
+| OS | Windows 10 | Windows 11 |
+| Schermresolutie | 1280 × 768 | 1920 × 1080 |
+| Python | 3.10 | 3.12+ |
+| Internet | Vereist | — |
 
 ---
 
 ## 🔧 Toekomstige ideeën
 
-* SDR integratie
-* Logging koppeling (ADIF)
-* AI-gegenereerde band voorspellingen
-* Satelliet tracking
-* Webversie
+- SDR-integratie
+- Logging-koppeling (ADIF)
+- Satelliet tracking
+- Webversie
 
 ---
 
-## 📝 Changelog (v2.0 highlights)
+## 📜 Licentie
 
-* Zoom & pan functionaliteit toegevoegd aan kaart
-* Solarwind data geïntegreerd
-* Callsign prefix overlay toegevoegd
-* Verbeterde tooltips en UI
-* Performance optimalisaties (o.a. caching)
-
----
-
-## 📜 License
-
-Vrij te gebruiken voor persoonlijk gebruik.
+Vrij te gebruiken voor persoonlijk, niet-commercieel amateur radio gebruik.
 Voor commerciële toepassingen: neem contact op.
 
 ---
@@ -184,10 +205,5 @@ Pull requests, ideeën en verbeteringen zijn welkom!
 Dit project leeft van experimenteren — net als de hobby zelf 😉
 
 ---
-
-## 📡 Tot slot
-
-HAMIOS is gebouwd vanuit passie voor radio, propagatie en DX.
-Of je nu jaagt op verre stations of gewoon wilt begrijpen wat de ionosfeer vandaag van plan is — deze tool helpt je een stap verder.
 
 *73 en veel DX!*
