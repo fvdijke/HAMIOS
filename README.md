@@ -4,32 +4,7 @@
 
 **HAMIOS** is een krachtige desktop tool voor radioamateurs die realtime inzicht geeft in HF-propagatie, zonne-activiteit en DX-mogelijkheden — verpakt in een moderne, donkere GUI.
 
-Ontwikkeld door **Frank van Dijke (PA0FVD)**.
-
----
-
-## Schermindeling
-
-```
-┌─────────────────────────────────────────────────────────────────────────────┐
-│ HAMIOS v2.0          [Auto: ▾]  [Tooltips] [Zomertijd]   CET 09:55  UTC ... │
-├──────────────────────────────────────────────────────┬──────────────────────┤
-│  Wereldkaart (480 × 240 px, 2:1)                     │  ☀ Solar/Ionosfeer   │
-│  [Zon] [Maan] [Graylijn] [ITU] [CS] [Locator]        │  SFI / SSN / A / K  │
-│  QTH Lat: __  Lon: __                                │  X-ray / MUF        │
-├──────────────────┬───────────────────────────────────│  Solarwind / Bz     │
-│ 📈 Band Verloop  │ 📶 HF Band Betrouwbaarheid         │  K-index            │
-│ [Uren/Dagen/...] │  Mode / Vermogen / Antenne         │  Melding K ≥ [▲▼]  │
-│                  │  MUF · LUF · SNR-budget            │─────────────────────│
-├──────────────────│  Balk per band (160m–23cm)         │  Band dag/nacht     │
-│ 📡 Live DX Spots │                                    │  (Goed/Fair/Arm)   │
-│ [Eigen continent]│─────────────────────────────────── │                     │
-│ UTC Band DX  MHz │ 🕐 Bandopenings-schema (heatmap)   │  bijgewerkt HH:MM   │
-│ …               │  0–24 uur lokale tijd, 11 HF-banden│                     │
-├──────────────────┴───────────────────────────────────┴─────────────────────┤
-│  💡 Propagatie-analyse & Advies  (10 kaarten, 3 kolommen)                   │
-└─────────────────────────────────────────────────────────────────────────────┘
-```
+Ontwikkeld door **Frank van Dijke ()**.
 
 ---
 
