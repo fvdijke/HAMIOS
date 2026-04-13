@@ -1,5 +1,4 @@
 <img width="1731" height="1372" alt="HAMIOS v2 0" src="https://github.com/user-attachments/assets/4ca91ba4-1fc0-4541-9c97-348d8c61710c" />
-HAMIOS
 
 # 📡 HAMIOS v2.0
 
@@ -119,13 +118,13 @@ pip install pystray
 1. Clone deze repository:
 
 ```bash
-git clone https://github.com/fvdijke/fvdijke.git
+git clone https://github.com/fvdijke/hamios.git
 ```
 
 2. Ga naar de map:
 
 ```bash
-cd fvdijke
+cd hamios
 ```
 
 3. Installeer dependencies:
