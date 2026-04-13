@@ -2,6 +2,8 @@
 ─────────────────────────────────────────────────────────────────────
 Change Log (1.0)
 ─────────────────────────────────────────────────────────────────────
+· 2026-04-13 13:53 CEST — Wereldkaart, HF Betrouwbaarheid en Solar/Ionosfeer starten
+               nu op gelijke hoogte: pady=(6,0) verwijderd van prop-panel outer.
 · 2026-04-13 13:29 CEST — Bandopenings-schema vult nu resterende hoogte van de
                rechterkolom (fill=BOTH, expand=True); canvas heeft geen vaste
                hoogte meer en loopt door tot aan het advies-paneel.

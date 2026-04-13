@@ -1754,7 +1754,7 @@ class HAMIOSApp:
     # ── HF Propagatie panel ───────────────────────────────────────────────────
     def _build_prop_panel(self, parent):
         outer = tk.Frame(parent, bg=BG_PANEL)
-        outer.pack(fill=tk.X, pady=(6, 0))
+        outer.pack(fill=tk.X, pady=(0, 0))
 
         tk.Frame(outer, bg=ACCENT, height=2).pack(fill=tk.X)
         prop_hdr = tk.Frame(outer, bg=BG_PANEL)
