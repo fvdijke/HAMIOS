@@ -1345,7 +1345,7 @@ class HAMIOSApp:
 
         self._map_canvas = tk.Canvas(outer, height=200, bg="#1B3A5C",
                                      bd=0, highlightthickness=0)
-        self._map_canvas.pack(fill=tk.X)
+        self._map_canvas.pack(fill=tk.X, padx=10, pady=(2, 2))
         self._map_photo = None
         self._map_canvas.bind("<Configure>",      self._on_map_resize)
         self._map_canvas.bind("<Button-1>",       self._on_map_btn1_press)
@@ -1363,8 +1363,8 @@ class HAMIOSApp:
                  anchor='w').pack(fill=tk.X, padx=10, pady=(0, 4))
 
     def _on_map_resize(self, event):
-        """Handhaaf exacte 2:1 verhouding (equirectangulair)."""
-        new_h = max(80, min(event.width // 2, 240))
+        """Stel canvas hoogte in; rendering gebruikt altijd 2:1 ratio."""
+        new_h = max(80, min(event.width // 2, 320))
         if self._map_canvas.winfo_height() != new_h:
             self._map_canvas.config(height=new_h)
         self._draw_map()
@@ -1380,9 +1380,8 @@ class HAMIOSApp:
     def _viewport_to_latlon(self, vx: int, vy: int) -> tuple[float, float]:
         """Viewport pixel → (lat, lon) met zoom/pan."""
         W  = self._map_canvas.winfo_width()  or 960
-        H  = self._map_canvas.winfo_height() or 400
         VW = int(W * max(1.0, self._map_zoom))
-        VH = int(H * max(1.0, self._map_zoom))
+        VH = int(W // 2 * max(1.0, self._map_zoom))
         wx  = self._map_crop_left + vx
         wy  = self._map_crop_top  + vy
         lon = wx / VW * 360 - 180
@@ -1417,10 +1416,9 @@ class HAMIOSApp:
         if not self._map_drag_moved:
             return
         W  = self._map_canvas.winfo_width()  or 960
-        H  = self._map_canvas.winfo_height() or 400
         zoom      = max(1.0, self._map_zoom)
-        d_lon     = -dx / W * (360 / zoom)
-        d_lat     =  dy / H * (180 / zoom)
+        d_lon     = -dx / W       * (360 / zoom)
+        d_lat     =  dy / (W // 2) * (180 / zoom)
         half_lon  = 180 / zoom
         half_lat  =  90 / zoom
         self._map_cx = max(-180 + half_lon, min(180 - half_lon, ocx + d_lon))
@@ -1446,16 +1444,16 @@ class HAMIOSApp:
         new_zoom = max(1.0, min(8.0, old_zoom * factor))
         if new_zoom == old_zoom:
             return
-        # Bepaal lat/lon onder cursor vóór zoom
+        # Bepaal lat/lon onder cursor vóór zoom (VH altijd 2:1)
         VW_old   = int(W * old_zoom)
-        VH_old   = int(H * old_zoom)
+        VH_old   = int(W // 2 * old_zoom)
         wx_old   = self._map_crop_left + event.x
         wy_old   = self._map_crop_top  + event.y
         lon_cur  = wx_old / VW_old * 360 - 180
         lat_cur  = 90 - wy_old / VH_old * 180
         # Nieuw center zodat cursor dezelfde lat/lon wijst
         VW_new   = int(W * new_zoom)
-        VH_new   = int(H * new_zoom)
+        VH_new   = int(W // 2 * new_zoom)
         new_cl   = (lon_cur + 180) / 360 * VW_new - event.x
         new_ct   = (90 - lat_cur)  / 180 * VH_new - event.y
         new_cx   = (new_cl + W / 2) / VW_new * 360 - 180
@@ -1486,10 +1484,10 @@ class HAMIOSApp:
         c = self._map_canvas
         W = c.winfo_width()  or 960
         H = c.winfo_height() or 400
-        # Virtuele wereld-afmetingen (groter bij zoom)
+        # Virtuele wereld-afmetingen: altijd 2:1 ongeacht canvas-hoogte
         zoom = max(1.0, self._map_zoom)
         VW   = int(W * zoom)
-        VH   = int(H * zoom)
+        VH   = int(W // 2 * zoom)
 
         if not _PIL_OK:
             c.delete("all")
@@ -1773,7 +1771,11 @@ class HAMIOSApp:
             crop_t   = max(0, min(VH - H, world_cy - H // 2))
             img      = img.crop((crop_l, crop_t, crop_l + W, crop_t + H))
         else:
-            crop_l, crop_t = 0, 0
+            crop_l = 0
+            # VH = W//2 maar canvas H kan kleiner zijn → centreer op evenaar
+            crop_t = max(0, (VH - H) // 2)
+            if crop_t > 0:
+                img = img.crop((0, crop_t, W, crop_t + H))
         self._map_crop_left = crop_l
         self._map_crop_top  = crop_t
 

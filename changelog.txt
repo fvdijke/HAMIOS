@@ -2,6 +2,14 @@
 ─────────────────────────────────────────────────────────────────────
 Change Log (1.0)
 ─────────────────────────────────────────────────────────────────────
+· 2026-04-14 16:31 CEST — Wereldkaart canvas gecentreerd in paneel: padx=10, pady=(2,2)
+               toegevoegd aan map_canvas.pack() zodat het overeenkomt met de
+               marges van andere canvassen (schedule, hist, dx).
+· 2026-04-14 16:28 CEST — Kaart rendering altijd in 2:1 verhouding (VH = W//2 * zoom
+               i.p.v. H * zoom). Canvas hoogte max 320px; bij smaller canvas wordt
+               de kaart verticaal gecentreerd bijgesneden (toont equatorband zonder
+               vervorming). _viewport_to_latlon, _on_map_drag en _on_map_scroll
+               bijgewerkt met dezelfde VH-definitie.
 · 2026-04-14 14:22 CEST — Bandopenings-schema outer pady=(6,0)→(0,0) zodat bovenkant
                aansluit op de bovenkant van de Wereldkaart (right_sub heeft geen gap).
 · 2026-04-14 14:21 CEST — DX Spots dx_wrap en dx_canvas: fill=BOTH/expand=True zodat
