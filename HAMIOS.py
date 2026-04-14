@@ -1146,6 +1146,10 @@ class HAMIOSApp:
                         "Hoogste frequentie die op een bepaald pad weerkaatst\n"
                         "wordt door de F2-laag. Banden boven de MUF zijn dicht.\n"
                         "Berekend via foF2 × oblique factor 3,8."),
+            "luf":     ("Lowest Usable Frequency (LUF)",
+                        "Laagste frequentie die bruikbaar is door D-laag absorptie.\n"
+                        "Banden onder de LUF worden te sterk geabsorbeerd.\n"
+                        "Stijgt met hogere K-index en aurorale activiteit."),
             "sw_speed": ("Solarwindsnelheid (km/s)",
                          "Snelheid van de solarwind gemeten door DSCOVR/ACE (NOAA).\n"
                          "< 400: rustig  |  400–600: verhoogd  |  > 600: stormachtig\n"
@@ -1173,11 +1177,12 @@ class HAMIOSApp:
             ("sfi",      "Solar Flux (SFI)"),
             ("ssn",      "Sunspot Nr (SSN)"),
             ("a_index",  "A-index"),
+            ("k_index",  "K-index"),
             ("xray",     "X-ray"),
             ("muf",      "MUF (MHz)"),
+            ("luf",      "LUF (MHz)"),
             ("sw_speed", "Solarwind (km/s)"),
             ("sw_bz",    "Bz (nT)"),
-            ("k_index",  "K-index"),
         ]:
             row = tk.Frame(self._solar_frame, bg=BG_PANEL)
             row.pack(fill=tk.X, pady=2)
@@ -1193,16 +1198,17 @@ class HAMIOSApp:
             _bind_tip(val_lbl, key)
             self._solar_val_lbls[key] = val_lbl
 
-        # Melding K ≥ — onder alle solar-waarden
-        alert_row = tk.Frame(self._solar_frame, bg=BG_PANEL)
-        alert_row.pack(fill=tk.X, pady=(0, 2))
-        tk.Label(alert_row, text="Melding K ≥", font=_font(8), bg=BG_PANEL,
-                 fg=TEXT_DIM, anchor='w', width=16).pack(side=tk.LEFT)
-        tk.Spinbox(alert_row, from_=1, to=9, width=2,
-                   textvariable=self._k_alert_var,
-                   command=self._save_cur_settings,
-                   bg=BG_SURFACE, fg=TEXT_H1, buttonbackground=BG_SURFACE,
-                   relief=tk.FLAT, font=_font(9)).pack(side=tk.LEFT, padx=(4, 0))
+            # Melding K ≥ direct onder K-index, waarde uitgelijnd met getallen-kolom
+            if key == "k_index":
+                alert_row = tk.Frame(self._solar_frame, bg=BG_PANEL)
+                alert_row.pack(fill=tk.X, pady=(0, 2))
+                tk.Label(alert_row, text="Melding K ≥", font=_font(9), bg=BG_PANEL,
+                         fg=TEXT_DIM, anchor='w', width=16).pack(side=tk.LEFT)
+                tk.Spinbox(alert_row, from_=1, to=9, width=3,
+                           textvariable=self._k_alert_var,
+                           command=self._save_cur_settings,
+                           bg=BG_SURFACE, fg=TEXT_H1, buttonbackground=BG_SURFACE,
+                           relief=tk.FLAT, font=_font(9, "bold")).pack(side=tk.LEFT)
 
         tk.Frame(self._solar_frame, bg=BORDER, height=1).pack(fill=tk.X, pady=6)
 
@@ -1214,6 +1220,8 @@ class HAMIOSApp:
 
         self._band_cond_labels: dict = {}   # band → (day_lbl, ngt_lbl, is_hf)
         for name, _, is_hf in _BANDS:
+            if not is_hf:
+                continue   # VHF/UHF niet tonen in solar-panel bandtabel
             row = tk.Frame(self._solar_frame, bg=BG_PANEL)
             row.pack(fill=tk.X, pady=1)
             tk.Label(row, text=name, font=_font(8), bg=BG_PANEL,
@@ -1246,18 +1254,18 @@ class HAMIOSApp:
         sub_row = tk.Frame(combined, bg=BG_ROOT)
         sub_row.pack(fill=tk.BOTH, expand=True)
 
-        # Linkerkolom: Kaart bovenaan (2:1 op 480px → 240px hoog), dan Hist, dan DX
+        # Linkerkolom: Bandopenings-schema + Hist + DX (vaste breedte)
         left_sub = tk.Frame(sub_row, bg=BG_ROOT, width=480)
         left_sub.pack(side=tk.LEFT, fill=tk.Y)
         left_sub.pack_propagate(False)
-        self._build_map_panel(left_sub)
+        self._build_schedule_panel(left_sub)
         self._build_hist_panel(left_sub)
         self._build_dx_panel(left_sub)
 
         right_sub = tk.Frame(sub_row, bg=BG_ROOT)
         right_sub.pack(side=tk.LEFT, fill=tk.BOTH, expand=True, padx=(10, 0))
-        self._build_prop_panel(right_sub)
-        self._build_schedule_panel(right_sub)  # Schema onder HF Betrouwbaarheid
+        self._build_map_panel(right_sub)
+        self._build_prop_panel(right_sub)  # HF Betrouwbaarheid onder Wereldkaart
 
         # Advies: volledige breedte onderin body (over alle kolommen inclusief Solar)
         self._build_advice_panel(body)
@@ -1356,7 +1364,7 @@ class HAMIOSApp:
 
     def _on_map_resize(self, event):
         """Handhaaf exacte 2:1 verhouding (equirectangulair)."""
-        new_h = max(80, event.width // 2)
+        new_h = max(80, min(event.width // 2, 240))
         if self._map_canvas.winfo_height() != new_h:
             self._map_canvas.config(height=new_h)
         self._draw_map()
@@ -1523,216 +1531,241 @@ class HAMIOSApp:
 
             self._map_base_img  = src
             self._map_base_size = cache_key
+            self._map_render_key = None   # basiskaart veranderd → forceer re-render
 
-        img  = self._map_base_img.copy()
-
-        # ── Nacht overlay ────────────────────────────────────────────────────
+        # ── Render-cache sleutel (alles behalve pan-positie cx/cy) ───────────
         sun_lat, sun_lon = _subsolar_point()
-        night = _night_mask(sun_lat, sun_lon, VW, VH)
-        img   = img.convert("RGBA")
-        img   = Image.alpha_composite(img, night)
-        img   = img.convert("RGB")
-        draw  = ImageDraw.Draw(img)
-
-        # ── Zon ──────────────────────────────────────────────────────────────
-        if self._show_sun_var.get():
-            sx, sy = _ll_to_xy(sun_lat, sun_lon, VW, VH)
-            draw.ellipse([(sx - 7, sy - 7), (sx + 7, sy + 7)],
-                         fill=MAP_SUN, outline=(200, 160, 0), width=1)
-
-        # ── Maan ─────────────────────────────────────────────────────────────
-        if self._show_moon_var.get():
-            moon_lat, moon_lon = _submoon_point()
-            mx, my = _ll_to_xy(moon_lat, moon_lon, VW, VH)
-            draw.ellipse([(mx - 5, my - 5), (mx + 5, my + 5)],
-                         fill=MAP_MOON, outline=(150, 150, 150), width=1)
-
-        # ── Graylijn ─────────────────────────────────────────────────────────
-        if self._show_graylijn_var.get():
-            gray = _graylijn_mask(sun_lat, sun_lon, VW, VH)
-            img  = Image.alpha_composite(img.convert("RGBA"), gray).convert("RGB")
-            draw = ImageDraw.Draw(img)
-
-        # ── ITU regio-overlay (correcte R1/R2/R3 grenzen) ───────────────────
-        if self._show_iaru_var.get():
-            itu_img = Image.new("RGBA", (VW, VH), (0, 0, 0, 0))
-            id_     = ImageDraw.Draw(itu_img)
-            AF, AL  = 55, 220   # alpha vulling / grenslijn  (55≈22% dekking)
-            # Kleuren conform referentieplaatje: R1=geel, R2=roze, R3=groen
-            C_R1 = (210, 190,  70, AF)
-            C_R2 = (210,  80,  80, AF)
-            C_R3 = ( 60, 170,  80, AF)
-
-            def _px(pts):
-                return [_ll_to_xy(la, lo, VW, VH) for la, lo in pts]
-
-            # ── Gevulde regio-polygonen ───────────────────────────────────
-            # R3 Pacific west (kaartrand -180 tot Lijn-C)
-            id_.polygon(_px([
-                (90,-180),(90,-170),(60,-170),(60,-120),(-90,-120),(-90,-180)
-            ]), fill=C_R3)
-
-            # R2 Amerika: Lijn-C → Lijn-B → Z-pool
-            id_.polygon(_px([
-                (90,-170),(90,-10),(72,-10),(40,-50),(30,-20),(0,-20),
-                (-90,-20),(-90,-120),(60,-120),(60,-170)
-            ]), fill=C_R2)
-
-            # R1 hoofd: Lijn-B → Z-pool → Lijn-A omgekeerd → Oeral-knoop
-            # (Europa, Afrika, Arabisch schiereiland, Turkije)
-            id_.polygon(_px([
-                (90,-10),(72,-10),(40,-50),(30,-20),(0,-20),(-90,-20),
-                (-90,59),
-                (11,59),(11,55),
-                (13,57),(15,58),(18,60),
-                (21,60),(23,59),(25,57),
-                (27,53),(29,49),
-                (30,48),(31,47),(33,47),(35,46),
-                (37,44),(38,42),(39,40),
-                (41,40),(45,39),(47,43),
-                (55,55),(90,55)
-            ]), fill=C_R1)
-
-            # R3 oost (Azië-Pacific): Lijn-A zuidelijk → 180°E
-            id_.polygon(_px([
-                (55,55),(47,43),
-                (45,39),(41,40),
-                (39,40),(38,42),(37,44),
-                (35,46),(33,47),(31,47),(30,48),
-                (29,49),(27,53),(25,57),
-                (23,59),(21,60),(18,60),
-                (15,58),(13,57),(11,55),
-                (11,59),
-                (-90,59),(-90,180),(90,180),(90,55)
-            ]), fill=C_R3)
-
-            # R1 Rusland-patch: heel Rusland (boven Kazachstaan/Mongolië/China
-            # grens ~50-55N) is R1 — overtekent R3 oost voor Siberisch gebied
-            id_.polygon(_px([
-                (55, 55),
-                (53, 60),(52, 73),(51, 82),(52, 87),
-                (52, 98),(50,107),(50,118),(49,127),
-                (47,130),(46,134),(43,131),
-                (45,136),(50,141),(55,141),
-                (59,151),(63,163),(67,178),
-                (90,180),(90,55),
-            ]), fill=C_R1)
-
-            # ── Grenslijnen ───────────────────────────────────────────────
-            for pts, clr, w in [
-                (_ITU_B,     (255, 200,  80, AL), 2),   # R1/R2
-                (_ITU_A,     ( 80, 220, 100, AL), 2),   # R1/R3 Arabisch deel
-                (_ITU_A_RUS, ( 80, 220, 100, AL), 2),   # R1/R3 Rusland-arm
-                (_ITU_C,     (160, 220, 160, AL), 1),   # R2/R3 Pacific
-            ]:
-                px = _px(pts)
-                for j in range(len(px) - 1):
-                    id_.line([px[j], px[j+1]], fill=clr, width=w)
-
-            # ── Labels (volledige naam) ────────────────────────────────────
-            for txt, la, lo in [
-                ("Regio 2", 35, -100),
-                ("Regio 1", 35,   15),
-                ("Regio 3", 35,  115),
-            ]:
-                x_l, y_l = _ll_to_xy(la, lo, VW, VH)
-                if 0 <= x_l < VW and 0 <= y_l < VH:
-                    id_.text((x_l - 22, y_l - 5), txt, fill=(230,230,230,210))
-
-            img  = Image.alpha_composite(img.convert("RGBA"), itu_img).convert("RGB")
-            draw = ImageDraw.Draw(img)
-
-        # ── Maidenhead locatorraster ─────────────────────────────────────────
-        if self._show_locator_var.get():
-            LOC_GRID = (100, 160, 220, 180)   # lichtblauw, semi-transparant
-            LOC_LBL  = (160, 210, 255, 200)
-            loc_img  = Image.new("RGBA", (VW, VH), (0, 0, 0, 0))
-            ld       = ImageDraw.Draw(loc_img)
-            # Grote velden: 20° breed × 10° hoog
-            for fi in range(19):          # 18 velden in lon-richting
-                gx = int(fi * 20 / 360 * VW)
-                ld.line([(gx, 0), (gx, VH)], fill=LOC_GRID, width=1)
-            for fi in range(19):          # 18 velden in lat-richting
-                gy = int(fi * 10 / 180 * VH)
-                ld.line([(0, gy), (VW, gy)], fill=LOC_GRID, width=1)
-            # Labels (2-letter locator) in het midden van elk groot veld
-            for lon_i in range(18):
-                for lat_i in range(18):
-                    lon_c = -180 + lon_i * 20 + 10
-                    lat_c =  -90 + lat_i * 10 +  5
-                    lbl   = chr(ord('A') + lon_i) + chr(ord('A') + lat_i)
-                    cx_l, cy_l = _ll_to_xy(lat_c, lon_c, VW, VH)
-                    ld.text((cx_l - 8, cy_l - 5), lbl, fill=LOC_LBL)
-            img = Image.alpha_composite(img.convert("RGBA"), loc_img).convert("RGB")
-            draw = ImageDraw.Draw(img)
-
-        # ── Auroraal absorptie-ovaal (K≥4) ───────────────────────────────────
         try:
             k_val = float(self._solar_data.get("k_index", "0").replace("—", "0"))
         except (ValueError, TypeError, AttributeError):
             k_val = 0.0
-        if k_val >= 4:
-            # Equatorwaartse grens van het auroraal ovaal ≈ 75 − K×2.5 graden
-            aurora_lat = max(50.0, 75.0 - k_val * 2.5)
-            aurora_img = Image.new("RGBA", (VW, VH), (0, 0, 0, 0))
-            ad = ImageDraw.Draw(aurora_img)
-            # Trek een horizontale band als proxy voor het ovaal (beide hemisferen)
-            thickness = max(4, int(k_val * 1.5))
-            alpha = min(200, int(80 + k_val * 15))
-            for sign in (1, -1):
-                lat_c = sign * aurora_lat
-                _, y_c = _ll_to_xy(lat_c, 0, VW, VH)
-                y_top = max(0, y_c - thickness)
-                y_bot = min(VH, y_c + thickness)
-                # Rood/oranje ovaal
-                ad.rectangle([(0, y_top), (VW, y_bot)],
-                              fill=(220, 80, 20, alpha))
-            img = Image.alpha_composite(img.convert("RGBA"), aurora_img).convert("RGB")
-            draw = ImageDraw.Draw(img)
 
-        # ── Groot-cirkel pad ─────────────────────────────────────────────────
-        if self._gc_dest:
-            dlat, dlon = self._gc_dest
-            pts = _great_circle_pts(self._qth_lat, self._qth_lon, dlat, dlon)
-            gc_img = Image.new("RGBA", (VW, VH), (0, 0, 0, 0))
-            gd     = ImageDraw.Draw(gc_img)
-            xy     = [_ll_to_xy(la, lo, VW, VH) for la, lo in pts]
-            # Splits op anti-meridian (|Δx| > VW/2) om wraparound te vermijden
-            seg_start = 0
-            for i in range(1, len(xy)):
-                if abs(xy[i][0] - xy[i-1][0]) > VW // 2:
-                    if i - seg_start > 1:
-                        gd.line(xy[seg_start:i], fill=(255, 220, 50, 220), width=2)
-                    seg_start = i
-            if len(xy) - seg_start > 1:
-                gd.line(xy[seg_start:], fill=(255, 220, 50, 220), width=2)
-            # Bestemmingsmarkering
-            dx, dy = _ll_to_xy(dlat, dlon, VW, VH)
-            gd.ellipse([(dx-5, dy-5), (dx+5, dy+5)], fill=(255, 220, 50, 220))
-            img  = Image.alpha_composite(img.convert("RGBA"), gc_img).convert("RGB")
-            draw = ImageDraw.Draw(img)
+        render_key = (
+            VW, VH,
+            round(sun_lat, 1), round(sun_lon, 1),
+            bool(self._show_sun_var.get()),
+            bool(self._show_moon_var.get()),
+            bool(self._show_graylijn_var.get()),
+            bool(self._show_iaru_var.get()),
+            bool(self._show_locator_var.get()),
+            bool(self._show_cs_var.get()),
+            int(k_val),
+            round(self._qth_lat, 2), round(self._qth_lon, 2),
+            self._gc_dest,
+        )
 
-        # ── Callsign-prefix labels ────────────────────────────────────────────
-        if self._show_cs_var.get() and _PIL_OK:
-            CS_DOT  = (255, 230, 120, 230)   # geel, opaque
-            CS_TXT  = (255, 230, 120, 210)
-            cs_img  = Image.new("RGBA", (VW, VH), (0, 0, 0, 0))
-            cd      = ImageDraw.Draw(cs_img)
-            for prefix, lat, lon in _CS_PREFIXES:
-                px, py = _ll_to_xy(lat, lon, VW, VH)
-                # Klein stipje op de positie
-                cd.ellipse([(px - 2, py - 2), (px + 2, py + 2)], fill=CS_DOT)
-                # Prefix-tekst net rechts/boven het stipje
-                cd.text((px + 4, py - 6), prefix, fill=CS_TXT)
-            img  = Image.alpha_composite(img.convert("RGBA"), cs_img).convert("RGB")
-            draw = ImageDraw.Draw(img)
+        if getattr(self, "_map_render_key", None) != render_key:
+            # ── Volledige render (alleen bij echte inhoud-wijziging) ──────────
+            img  = self._map_base_img.copy()
 
-        # ── QTH marker (alleen kruisje) ───────────────────────────────────────
-        qx, qy = _ll_to_xy(self._qth_lat, self._qth_lon, VW, VH)
-        draw.line([(qx - 10, qy), (qx + 10, qy)], fill=MAP_QTH, width=2)
-        draw.line([(qx, qy - 10), (qx, qy + 10)], fill=MAP_QTH, width=2)
+            # Nacht overlay — masker op ¼ resolutie → 16× sneller, zacht genoeg
+            NW, NH = max(1, VW // 4), max(1, VH // 4)
+            night_small = _night_mask(sun_lat, sun_lon, NW, NH)
+            night = night_small.resize((VW, VH), Image.BILINEAR)
+            img   = Image.alpha_composite(img.convert("RGBA"), night).convert("RGB")
+            draw  = ImageDraw.Draw(img)
 
-        # ── Crop naar viewport (bij zoom > 1) ────────────────────────────────
+            # ── Zon ──────────────────────────────────────────────────────────
+            if self._show_sun_var.get():
+                sx, sy = _ll_to_xy(sun_lat, sun_lon, VW, VH)
+                draw.ellipse([(sx - 7, sy - 7), (sx + 7, sy + 7)],
+                             fill=MAP_SUN, outline=(200, 160, 0), width=1)
+
+            # ── Maan ─────────────────────────────────────────────────────────
+            if self._show_moon_var.get():
+                moon_lat, moon_lon = _submoon_point()
+                mx, my = _ll_to_xy(moon_lat, moon_lon, VW, VH)
+                draw.ellipse([(mx - 5, my - 5), (mx + 5, my + 5)],
+                             fill=MAP_MOON, outline=(150, 150, 150), width=1)
+
+            # ── Graylijn — ook op ¼ resolutie ────────────────────────────────
+            if self._show_graylijn_var.get():
+                gray_small = _graylijn_mask(sun_lat, sun_lon, NW, NH)
+                gray = gray_small.resize((VW, VH), Image.BILINEAR)
+                img  = Image.alpha_composite(img.convert("RGBA"), gray).convert("RGB")
+                draw = ImageDraw.Draw(img)
+
+            # ── ITU regio-overlay (correcte R1/R2/R3 grenzen) ────────────────
+            if self._show_iaru_var.get():
+                itu_img = Image.new("RGBA", (VW, VH), (0, 0, 0, 0))
+                id_     = ImageDraw.Draw(itu_img)
+                AF, AL  = 55, 220   # alpha vulling / grenslijn  (55≈22% dekking)
+                # Kleuren conform referentieplaatje: R1=geel, R2=roze, R3=groen
+                C_R1 = (210, 190,  70, AF)
+                C_R2 = (210,  80,  80, AF)
+                C_R3 = ( 60, 170,  80, AF)
+
+                def _px(pts):
+                    return [_ll_to_xy(la, lo, VW, VH) for la, lo in pts]
+
+                # ── Gevulde regio-polygonen ───────────────────────────────
+                # R3 Pacific west (kaartrand -180 tot Lijn-C)
+                id_.polygon(_px([
+                    (90,-180),(90,-170),(60,-170),(60,-120),(-90,-120),(-90,-180)
+                ]), fill=C_R3)
+
+                # R2 Amerika: Lijn-C → Lijn-B → Z-pool
+                id_.polygon(_px([
+                    (90,-170),(90,-10),(72,-10),(40,-50),(30,-20),(0,-20),
+                    (-90,-20),(-90,-120),(60,-120),(60,-170)
+                ]), fill=C_R2)
+
+                # R1 hoofd: Lijn-B → Z-pool → Lijn-A omgekeerd → Oeral-knoop
+                # (Europa, Afrika, Arabisch schiereiland, Turkije)
+                id_.polygon(_px([
+                    (90,-10),(72,-10),(40,-50),(30,-20),(0,-20),(-90,-20),
+                    (-90,59),
+                    (11,59),(11,55),
+                    (13,57),(15,58),(18,60),
+                    (21,60),(23,59),(25,57),
+                    (27,53),(29,49),
+                    (30,48),(31,47),(33,47),(35,46),
+                    (37,44),(38,42),(39,40),
+                    (41,40),(45,39),(47,43),
+                    (55,55),(90,55)
+                ]), fill=C_R1)
+
+                # R3 oost (Azië-Pacific): Lijn-A zuidelijk → 180°E
+                id_.polygon(_px([
+                    (55,55),(47,43),
+                    (45,39),(41,40),
+                    (39,40),(38,42),(37,44),
+                    (35,46),(33,47),(31,47),(30,48),
+                    (29,49),(27,53),(25,57),
+                    (23,59),(21,60),(18,60),
+                    (15,58),(13,57),(11,55),
+                    (11,59),
+                    (-90,59),(-90,180),(90,180),(90,55)
+                ]), fill=C_R3)
+
+                # R1 Rusland-patch: heel Rusland (boven Kazachstaan/Mongolië/China
+                # grens ~50-55N) is R1 — overtekent R3 oost voor Siberisch gebied
+                id_.polygon(_px([
+                    (55, 55),
+                    (53, 60),(52, 73),(51, 82),(52, 87),
+                    (52, 98),(50,107),(50,118),(49,127),
+                    (47,130),(46,134),(43,131),
+                    (45,136),(50,141),(55,141),
+                    (59,151),(63,163),(67,178),
+                    (90,180),(90,55),
+                ]), fill=C_R1)
+
+                # ── Grenslijnen ───────────────────────────────────────────
+                for pts, clr, w in [
+                    (_ITU_B,     (255, 200,  80, AL), 2),   # R1/R2
+                    (_ITU_A,     ( 80, 220, 100, AL), 2),   # R1/R3 Arabisch deel
+                    (_ITU_A_RUS, ( 80, 220, 100, AL), 2),   # R1/R3 Rusland-arm
+                    (_ITU_C,     (160, 220, 160, AL), 1),   # R2/R3 Pacific
+                ]:
+                    px = _px(pts)
+                    for j in range(len(px) - 1):
+                        id_.line([px[j], px[j+1]], fill=clr, width=w)
+
+                # ── Labels (volledige naam) ────────────────────────────────
+                for txt, la, lo in [
+                    ("Regio 2", 35, -100),
+                    ("Regio 1", 35,   15),
+                    ("Regio 3", 35,  115),
+                ]:
+                    x_l, y_l = _ll_to_xy(la, lo, VW, VH)
+                    if 0 <= x_l < VW and 0 <= y_l < VH:
+                        id_.text((x_l - 22, y_l - 5), txt, fill=(230,230,230,210))
+
+                img  = Image.alpha_composite(img.convert("RGBA"), itu_img).convert("RGB")
+                draw = ImageDraw.Draw(img)
+
+            # ── Maidenhead locatorraster ──────────────────────────────────────
+            if self._show_locator_var.get():
+                LOC_GRID = (100, 160, 220, 180)   # lichtblauw, semi-transparant
+                LOC_LBL  = (160, 210, 255, 200)
+                loc_img  = Image.new("RGBA", (VW, VH), (0, 0, 0, 0))
+                ld       = ImageDraw.Draw(loc_img)
+                # Grote velden: 20° breed × 10° hoog
+                for fi in range(19):          # 18 velden in lon-richting
+                    gx = int(fi * 20 / 360 * VW)
+                    ld.line([(gx, 0), (gx, VH)], fill=LOC_GRID, width=1)
+                for fi in range(19):          # 18 velden in lat-richting
+                    gy = int(fi * 10 / 180 * VH)
+                    ld.line([(0, gy), (VW, gy)], fill=LOC_GRID, width=1)
+                # Labels (2-letter locator) in het midden van elk groot veld
+                for lon_i in range(18):
+                    for lat_i in range(18):
+                        lon_c = -180 + lon_i * 20 + 10
+                        lat_c =  -90 + lat_i * 10 +  5
+                        lbl   = chr(ord('A') + lon_i) + chr(ord('A') + lat_i)
+                        cx_l, cy_l = _ll_to_xy(lat_c, lon_c, VW, VH)
+                        ld.text((cx_l - 8, cy_l - 5), lbl, fill=LOC_LBL)
+                img = Image.alpha_composite(img.convert("RGBA"), loc_img).convert("RGB")
+                draw = ImageDraw.Draw(img)
+
+            # ── Auroraal absorptie-ovaal (K≥4) ───────────────────────────────
+            if k_val >= 4:
+                # Equatorwaartse grens van het auroraal ovaal ≈ 75 − K×2.5 graden
+                aurora_lat = max(50.0, 75.0 - k_val * 2.5)
+                aurora_img = Image.new("RGBA", (VW, VH), (0, 0, 0, 0))
+                ad = ImageDraw.Draw(aurora_img)
+                # Trek een horizontale band als proxy voor het ovaal (beide hemisferen)
+                thickness = max(4, int(k_val * 1.5))
+                alpha = min(200, int(80 + k_val * 15))
+                for sign in (1, -1):
+                    lat_c = sign * aurora_lat
+                    _, y_c = _ll_to_xy(lat_c, 0, VW, VH)
+                    y_top = max(0, y_c - thickness)
+                    y_bot = min(VH, y_c + thickness)
+                    # Rood/oranje ovaal
+                    ad.rectangle([(0, y_top), (VW, y_bot)],
+                                  fill=(220, 80, 20, alpha))
+                img = Image.alpha_composite(img.convert("RGBA"), aurora_img).convert("RGB")
+                draw = ImageDraw.Draw(img)
+
+            # ── Groot-cirkel pad ──────────────────────────────────────────────
+            if self._gc_dest:
+                dlat, dlon = self._gc_dest
+                pts = _great_circle_pts(self._qth_lat, self._qth_lon, dlat, dlon)
+                gc_img = Image.new("RGBA", (VW, VH), (0, 0, 0, 0))
+                gd     = ImageDraw.Draw(gc_img)
+                xy     = [_ll_to_xy(la, lo, VW, VH) for la, lo in pts]
+                # Splits op anti-meridian (|Δx| > VW/2) om wraparound te vermijden
+                seg_start = 0
+                for i in range(1, len(xy)):
+                    if abs(xy[i][0] - xy[i-1][0]) > VW // 2:
+                        if i - seg_start > 1:
+                            gd.line(xy[seg_start:i], fill=(255, 220, 50, 220), width=2)
+                        seg_start = i
+                if len(xy) - seg_start > 1:
+                    gd.line(xy[seg_start:], fill=(255, 220, 50, 220), width=2)
+                # Bestemmingsmarkering
+                dx, dy = _ll_to_xy(dlat, dlon, VW, VH)
+                gd.ellipse([(dx-5, dy-5), (dx+5, dy+5)], fill=(255, 220, 50, 220))
+                img  = Image.alpha_composite(img.convert("RGBA"), gc_img).convert("RGB")
+                draw = ImageDraw.Draw(img)
+
+            # ── Callsign-prefix labels ────────────────────────────────────────
+            if self._show_cs_var.get() and _PIL_OK:
+                CS_DOT  = (255, 230, 120, 230)   # geel, opaque
+                CS_TXT  = (255, 230, 120, 210)
+                cs_img  = Image.new("RGBA", (VW, VH), (0, 0, 0, 0))
+                cd      = ImageDraw.Draw(cs_img)
+                for prefix, lat, lon in _CS_PREFIXES:
+                    px, py = _ll_to_xy(lat, lon, VW, VH)
+                    # Klein stipje op de positie
+                    cd.ellipse([(px - 2, py - 2), (px + 2, py + 2)], fill=CS_DOT)
+                    # Prefix-tekst net rechts/boven het stipje
+                    cd.text((px + 4, py - 6), prefix, fill=CS_TXT)
+                img  = Image.alpha_composite(img.convert("RGBA"), cs_img).convert("RGB")
+                draw = ImageDraw.Draw(img)
+
+            # ── QTH marker (alleen kruisje) ───────────────────────────────────
+            qx, qy = _ll_to_xy(self._qth_lat, self._qth_lon, VW, VH)
+            draw.line([(qx - 10, qy), (qx + 10, qy)], fill=MAP_QTH, width=2)
+            draw.line([(qx, qy - 10), (qx, qy + 10)], fill=MAP_QTH, width=2)
+
+            # Sla volledig gerenderde afbeelding op in cache
+            self._map_render_img = img
+            self._map_render_key = render_key
+
+        # ── Pan = alleen crop uit gecachede afbeelding (microseconden) ────────
+        img = self._map_render_img
         if zoom > 1.0:
             world_cx = int((self._map_cx + 180) / 360 * VW)
             world_cy = int((90 - self._map_cy) / 180 * VH)
@@ -1754,11 +1787,11 @@ class HAMIOSApp:
     # ── HF Propagatie panel ───────────────────────────────────────────────────
     def _build_prop_panel(self, parent):
         outer = tk.Frame(parent, bg=BG_PANEL)
-        outer.pack(fill=tk.X, pady=(0, 0))
+        outer.pack(fill=tk.BOTH, expand=True, pady=(0, 0))
 
         tk.Frame(outer, bg=ACCENT, height=2).pack(fill=tk.X)
         prop_hdr = tk.Frame(outer, bg=BG_PANEL)
-        prop_hdr.pack(fill=tk.X, padx=10, pady=(6, 0))
+        prop_hdr.pack(fill=tk.X, padx=10, pady=(2, 0))
         tk.Label(prop_hdr, text="📶  HF Band Betrouwbaarheid",
                  font=_font(10, "bold"), bg=BG_PANEL, fg=ACCENT).pack(side=tk.LEFT)
         self._prop_updated_var = tk.StringVar(value="")
@@ -1803,10 +1836,11 @@ class HAMIOSApp:
             tk.Label(info, textvariable=var, font=_font(9, "bold"),
                      bg=BG_PANEL, fg=fg).pack(side=tk.LEFT, padx=(0, 18))
 
-        BAR_H    = 16
-        BAR_PAD  = 2
-        HDR_H    = 16
-        canvas_h = HDR_H + len(_BANDS) * (BAR_H + BAR_PAD) + BAR_PAD + 2
+        BAR_H    = 13
+        BAR_PAD  = 1
+        HDR_H    = 14
+        _hf_count = sum(1 for _, _, is_hf in _BANDS if is_hf)
+        canvas_h = HDR_H + _hf_count * (BAR_H + BAR_PAD) + BAR_PAD + 2
         self._prop_canvas = tk.Canvas(outer, height=canvas_h, bg=BG_PANEL,
                                       bd=0, highlightthickness=0)
         self._prop_canvas.pack(fill=tk.X, padx=10, pady=(0, 8))
@@ -1824,9 +1858,9 @@ class HAMIOSApp:
         self._bar_rows = []
 
         W       = c.winfo_width() or 700
-        BAR_H   = 16
-        BAR_PAD = 2
-        HDR_H   = 16
+        BAR_H   = 13
+        BAR_PAD = 1
+        HDR_H   = 14
         LABEL_W = 40
         LIC_W   = 20
         PCT_W   = 36
@@ -1847,7 +1881,8 @@ class HAMIOSApp:
         _hdr(BAR_X + BAR_MAX + PCT_W + FREQ_W,         MODES_W, "Mode")
         _hdr(BAR_X + BAR_MAX + PCT_W + FREQ_W + MODES_W, FT8_W, "FT8")
 
-        for i, entry in enumerate(band_pct):
+        hf_pct = [(n, f, p) for n, f, p in band_pct if p != -1]
+        for i, entry in enumerate(hf_pct):
             name, freq, pct = entry[0], entry[1], entry[2]
             y = HDR_H + BAR_PAD + i * (BAR_H + BAR_PAD)
 
@@ -1864,22 +1899,7 @@ class HAMIOSApp:
 
             freq_str = f"{freq:.3f} MHz" if freq < 1000 else f"{freq/1000:.3f} GHz"
 
-            if pct == -1:
-                # VHF/UHF: geen HF-propagatiemodel
-                c.create_rectangle(BAR_X, y, BAR_X + BAR_MAX, y + BAR_H,
-                                   fill=BG_SURFACE, outline=BORDER, width=1)
-                c.create_text(BAR_X + BAR_MAX // 2, y + BAR_H // 2,
-                              text="LOS / Tropo", font=("Segoe UI", 8),
-                              fill=TEXT_DIM, anchor='center')
-                tip = [
-                    (f"{name}  ·  {freq_str}", None),
-                    None,
-                    ("Type:",        "VHF / UHF"),
-                    ("Propagatie:",  "Lijn-van-zicht / Troposfeer"),
-                    ("Modi:",        _BAND_MODES.get(name, "—")),
-                    ("FT8:",         _BAND_FT8.get(name, "—") + " MHz"),
-                ]
-            elif pct == 0:
+            if pct == 0:
                 # Band volledig gesloten — zelfde stijl als LOS/Tropo
                 c.create_rectangle(BAR_X, y, BAR_X + BAR_MAX, y + BAR_H,
                                    fill=BG_SURFACE, outline=BORDER, width=1)
@@ -1968,20 +1988,11 @@ class HAMIOSApp:
                            activebackground=BG_PANEL, activeforeground=TEXT_H1,
                            font=_font(9)).pack(side=tk.LEFT, padx=(8, 0))
 
-        # Toggle: Banden vs Solar-indices
-        self._hist_mode_var = tk.StringVar(value="Banden")
-        for opt in ("Banden", "Solar"):
-            tk.Radiobutton(hdr, text=opt, variable=self._hist_mode_var,
-                           value=opt, command=self._draw_hist_graph,
-                           bg=BG_PANEL, fg=TEXT_BODY, selectcolor=BG_SURFACE,
-                           activebackground=BG_PANEL, activeforeground=TEXT_H1,
-                           font=_font(9)).pack(side=tk.RIGHT, padx=(0, 6))
-
         self._hist_updated_var = tk.StringVar(value="")
         tk.Label(hdr, textvariable=self._hist_updated_var,
                  font=_font(8), bg=BG_PANEL, fg=TEXT_DIM).pack(side=tk.RIGHT, padx=(0, 10))
 
-        self._hist_canvas = tk.Canvas(outer, height=120, bg=BG_PANEL,
+        self._hist_canvas = tk.Canvas(outer, height=75, bg=BG_PANEL,
                                       bd=0, highlightthickness=0)
         self._hist_canvas.pack(fill=tk.X, padx=10, pady=(0, 6))
         self._hist_canvas.bind("<Configure>", lambda *_: self._draw_hist_graph())
@@ -2047,56 +2058,7 @@ class HAMIOSApp:
         gw = W - PAD_L - PAD_R
         gh = H - PAD_T - PAD_B
 
-        solar_mode = getattr(self, "_hist_mode_var", None) and self._hist_mode_var.get() == "Solar"
-
-        if solar_mode:
-            # Toon solar-indices grafiek
-            _SOLAR_SERIES = [
-                ("sfi",     "#FFC107",  300, "SFI"),
-                ("k_index", "#EF5350",    9, "K"),
-                ("a_index", "#FF7043",  400, "A"),
-                ("ssn",     "#66BB6A",  300, "SSN"),
-            ]
-            # Y-labels (0 en max per serie — gebruik tweede serie als voorbeeld)
-            for i in range(5):
-                frac = i / 4
-                gy   = PAD_T + gh - int(gh * frac)
-                c.create_line(PAD_L, gy, W - PAD_R, gy, fill=BORDER, dash=(2, 4))
-            c.create_text(PAD_L - 3, PAD_T,      text="max", fill=TEXT_DIM, font=("Segoe UI", 7), anchor='e')
-            c.create_text(PAD_L - 3, PAD_T + gh, text="0",   fill=TEXT_DIM, font=("Segoe UI", 7), anchor='e')
-
-            if len(data) < 2:
-                c.create_text(W // 2, PAD_T + gh // 2,
-                              text="Nog geen historische data beschikbaar",
-                              fill=TEXT_DIM, font=("Segoe UI", 9), anchor='center')
-                return
-
-            t0 = t_min.timestamp()
-            t1 = now.timestamp()
-            dt = max(1.0, t1 - t0)
-
-            for key, color, max_val, short in _SOLAR_SERIES:
-                pts = []
-                for ts, bp, sol in data:
-                    val = sol.get(key, 0)
-                    frac = min(1.0, val / max_val)
-                    tx = PAD_L + int(gw * (ts.timestamp() - t0) / dt)
-                    ty = PAD_T + gh - int(gh * frac)
-                    pts.append((tx, ty))
-                for j in range(len(pts) - 1):
-                    c.create_line(pts[j][0], pts[j][1],
-                                  pts[j + 1][0], pts[j + 1][1],
-                                  fill=color, width=1)
-            # Legenda
-            lx = PAD_L
-            for key, color, max_val, short in _SOLAR_SERIES:
-                c.create_line(lx, PAD_T + gh + 10, lx + 12, PAD_T + gh + 10, fill=color, width=2)
-                c.create_text(lx + 14, PAD_T + gh + 10, text=short, fill=TEXT_DIM,
-                               font=("Segoe UI", 7), anchor='w')
-                lx += 38
-            return
-
-        # ── Banden modus ──────────────────────────────────────────────────────
+        # ── Banden historiek ─────────────────────────────────────────────────────
         # Y-raster
         for pct in (0, 25, 50, 75, 100):
             gy = PAD_T + gh - int(gh * pct / 100)
@@ -2124,7 +2086,7 @@ class HAMIOSApp:
                 continue
             color = _BAND_COLORS.get(name, TEXT_DIM)
             pts = []
-            for ts, bp, sol in data:
+            for ts, bp, _ in data:
                 pct = bp.get(name, 0)
                 if pct < 0:
                     pct = 0
@@ -2147,7 +2109,7 @@ class HAMIOSApp:
     # ── Bandopenings-schema (heatmap) ─────────────────────────────────────────
     def _build_schedule_panel(self, parent):
         outer = tk.Frame(parent, bg=BG_PANEL)
-        outer.pack(fill=tk.BOTH, expand=True, pady=(6, 0))
+        outer.pack(fill=tk.X, pady=(0, 0))
         tk.Frame(outer, bg=ACCENT, height=2).pack(fill=tk.X)
 
         hdr = tk.Frame(outer, bg=BG_PANEL)
@@ -2158,9 +2120,9 @@ class HAMIOSApp:
         tk.Label(hdr, textvariable=self._sched_updated_var,
                  font=_font(8), bg=BG_PANEL, fg=TEXT_DIM).pack(side=tk.RIGHT)
 
-        self._sched_canvas = tk.Canvas(outer, bg=BG_PANEL,
+        self._sched_canvas = tk.Canvas(outer, height=180, bg=BG_PANEL,
                                        bd=0, highlightthickness=0)
-        self._sched_canvas.pack(fill=tk.BOTH, expand=True, padx=10, pady=(0, 6))
+        self._sched_canvas.pack(fill=tk.X, padx=10, pady=(0, 6))
         self._sched_canvas.bind("<Configure>", lambda *_: self._draw_schedule())
         self._sched_tooltip = _Tooltip(self._sched_canvas)
         self._sched_layout: dict = {}   # grid-layout voor hover
@@ -2336,7 +2298,7 @@ class HAMIOSApp:
     # ── DX Spots panel ───────────────────────────────────────────────────────
     def _build_dx_panel(self, parent):
         outer = tk.Frame(parent, bg=BG_PANEL)
-        outer.pack(fill=tk.X, pady=(6, 0))
+        outer.pack(fill=tk.BOTH, expand=True, pady=(6, 0))
         tk.Frame(outer, bg=ACCENT, height=2).pack(fill=tk.X)
 
         hdr = tk.Frame(outer, bg=BG_PANEL)
@@ -2359,15 +2321,15 @@ class HAMIOSApp:
                  font=_font(8), bg=BG_PANEL, fg=ACCENT).pack(side=tk.RIGHT)
 
         dx_wrap = tk.Frame(outer, bg=BG_PANEL)
-        dx_wrap.pack(fill=tk.X, padx=10, pady=(2, 6))
-        self._dx_canvas = tk.Canvas(dx_wrap, height=280, bg=BG_PANEL,
+        dx_wrap.pack(fill=tk.BOTH, expand=True, padx=10, pady=(2, 6))
+        self._dx_canvas = tk.Canvas(dx_wrap, height=180, bg=BG_PANEL,
                                     bd=0, highlightthickness=0)
         dx_sb = tk.Scrollbar(dx_wrap, orient=tk.VERTICAL,
                              command=self._dx_canvas.yview,
                              bg=BG_SURFACE, troughcolor=BG_ROOT, width=8)
         self._dx_canvas.configure(yscrollcommand=dx_sb.set)
         dx_sb.pack(side=tk.RIGHT, fill=tk.Y)
-        self._dx_canvas.pack(side=tk.LEFT, fill=tk.X, expand=True)
+        self._dx_canvas.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
         self._dx_canvas.bind("<Configure>", lambda *_: self._draw_dx_panel())
         self._dx_canvas.bind("<MouseWheel>",
             lambda e: self._dx_canvas.yview_scroll(
@@ -2467,8 +2429,11 @@ class HAMIOSApp:
         self._advice_updated_var = tk.StringVar(value="")
         tk.Label(adv_hdr, textvariable=self._advice_updated_var,
                  font=_font(8), bg=BG_PANEL, fg=TEXT_DIM).pack(side=tk.RIGHT)
-        self._advice_frame = tk.Frame(outer, bg=BG_PANEL)
-        self._advice_frame.pack(fill=tk.X, padx=10, pady=(0, 8))
+        adv_wrap = tk.Frame(outer, bg=BG_PANEL, height=180)
+        adv_wrap.pack(fill=tk.X, padx=10, pady=(0, 8))
+        adv_wrap.pack_propagate(False)
+        self._advice_frame = tk.Frame(adv_wrap, bg=BG_PANEL)
+        self._advice_frame.pack(fill=tk.BOTH, expand=True)
 
     def _update_advice(self):
         if not hasattr(self, "_advice_frame"):
@@ -2692,12 +2657,12 @@ class HAMIOSApp:
         for i, (icon, tekst, kleur) in enumerate(tips):
             col = i % COLS
             row = i // COLS
-            cell = tk.Frame(self._advice_frame, bg=BG_SURFACE, padx=8, pady=5)
+            cell = tk.Frame(self._advice_frame, bg=BG_SURFACE, padx=6, pady=2)
             cell.grid(row=row, column=col, sticky='nsew',
-                      padx=(0, 5 if col < COLS - 1 else 0), pady=(0, 4))
+                      padx=(0, 4 if col < COLS - 1 else 0), pady=(0, 3))
             tk.Label(cell, text=f"{icon}  {tekst}", font=_font(9),
                      bg=BG_SURFACE, fg=kleur,
-                     anchor='nw', wraplength=300, justify='left').pack(fill=tk.X)
+                     anchor='nw', wraplength=260, justify='left').pack(fill=tk.X)
         if hasattr(self, "_advice_updated_var"):
             self._advice_updated_var.set(datetime.datetime.now().strftime("%H:%M"))
 
@@ -2748,6 +2713,10 @@ class HAMIOSApp:
         )
         self._muf_var.set(f"MUF: {muf} MHz")
         self._luf_var.set(f"LUF: {luf} MHz")
+        if "muf" in self._solar_vars:
+            self._solar_vars["muf"].set(f"{muf}")
+        if "luf" in self._solar_vars:
+            self._solar_vars["luf"].set(f"{luf}")
         self._draw_prop_bars(band_pct)
 
         # Bandconditie panel: altijd zowel dag als nacht berekenen
@@ -2894,6 +2863,8 @@ class HAMIOSApp:
             return
 
         for key, var in self._solar_vars.items():
+            if key in ("muf", "luf"):
+                continue   # worden bijgewerkt door _recalc_prop (model-waarden)
             var.set(data.get(key, "—"))
 
         # K-index: alleen getal, kleur op drempelwaarde
@@ -2968,21 +2939,17 @@ class HAMIOSApp:
         self._last_xflare = ""
 
     # ── Venster centreren ─────────────────────────────────────────────────────
-    def _center_window(self, min_w: int, min_h: int):
+    def _center_window(self, w_hint: int, *_):
         # update() zodat canvas-widgets correct gemeten worden (resize-events vuren)
         self.root.update()
         scr_w = self.root.winfo_screenwidth()
         scr_h = self.root.winfo_screenheight()
-        usable_h = scr_h - 60   # reserveer ruimte voor taakbalk
         usable_w = scr_w - 60
-        # Gebruik tkinter-berekende benodigde grootte als die groter is
-        req_w = self.root.winfo_reqwidth()
-        req_h = self.root.winfo_reqheight()
-        w = max(min_w, req_w if req_w > 100 else min_w)
-        h = max(min_h, req_h if req_h > 100 else min_h)
-        # Hard begrenzen aan beschikbaar schermgebied
-        w = min(w, usable_w)
-        h = min(h, usable_h)
+        usable_h = scr_h - 60   # reserveer ruimte voor taakbalk
+        # Breedte: gebruik hint, begrensd aan scherm
+        w = min(w_hint, usable_w)
+        # Hoogte: 920px streefwaarde; nooit meer dan scherm toelaat
+        h = min(usable_h, 920)
         x = max(0, (scr_w - w) // 2)
         y = max(0, (scr_h - h) // 2)
         self.root.geometry(f"{w}x{h}+{x}+{y}")

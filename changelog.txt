@@ -2,6 +2,52 @@
 ─────────────────────────────────────────────────────────────────────
 Change Log (1.0)
 ─────────────────────────────────────────────────────────────────────
+· 2026-04-14 14:22 CEST — Bandopenings-schema outer pady=(6,0)→(0,0) zodat bovenkant
+               aansluit op de bovenkant van de Wereldkaart (right_sub heeft geen gap).
+· 2026-04-14 14:21 CEST — DX Spots dx_wrap en dx_canvas: fill=BOTH/expand=True zodat
+               Bandopenings-schema + Band Verloop + DX Spots samen de volledige
+               hoogte van het Solar-paneel vullen (left_sub vult al de volle hoogte).
+· 2026-04-14 14:16 CEST — HF Band prop outer: fill=BOTH/expand=True zodat Wereldkaart
+               + HF Betrouwbaarheid samen de volledige hoogte van het Solar-paneel
+               vullen (right_sub is al even hoog als solar_col).
+· 2026-04-14 14:14 CEST — HF Band Betrouwbaarheid en Bandopenings-schema geruild:
+               schema nu in linkerkolom (met Hist + DX), HF Betrouwbaarheid in
+               rechterkolom onder Wereldkaart.
+· 2026-04-14 14:10 CEST — Schermfit: BAR_H 16→13 / BAR_PAD 2→1 / HDR_H 16→14 in
+               prop-panel (canvas ~45px kleiner); prop-header pady 6→2; hist-canvas
+               90→75px; venster-hoogte begrensd op min(usable,920)px.
+· 2026-04-14 14:06 CEST — Bandopenings-schema canvas op 180px gezet (fill=X, expand
+               verwijderd); outer niet langer expand zodat hoogte consistent is met
+               DX Spots en Analyse & Advies.
+· 2026-04-14 14:05 CEST — DX Spots canvas terug naar 180px. Analyse & Advies inhoud
+               ingepakt in adv_wrap (height=180, pack_propagate=False) zodat beide
+               panelen een gelijke vaste hoogte van 180px hebben.
+· 2026-04-14 13:48 CEST — DX Spots canvas 180→90px; expand verwijderd zodat paneel
+               dezelfde hoogte heeft als Band Verloop.
+· 2026-04-14 13:45 CEST — DX Spots: outer en dx_wrap fill=BOTH/expand zodat de onderkant
+               van het paneel aansluit tegen het advies-paneel. Melding K ≥ label
+               font 8→9 zodat width=16 dezelfde pixelbreedte geeft als de overige
+               labels en het spinbox-getal uitlijnt onder de andere getallen.
+· 2026-04-14 13:40 CEST — Melding K ≥ verplaatst naar direct onder K-index (solar paneel);
+               spinbox uitgelijnd met getallen-kolom. Schermfit bij opstart: histogram
+               90px, DX 180px, kaart max 240px hoog, advies-cellen compacter (pady 2,
+               wraplength 260). _center_window gebruikt altijd de volle schermhoogte
+               zodat het advies-paneel (3 rijen) bij elke schermresolutie zichtbaar is.
+· 2026-04-14 13:32 CEST — Band Verloop: "Banden"/"Solar" toggle en solar-indices grafiek
+               volledig verwijderd; paneel toont uitsluitend de HF-band historiek.
+· 2026-04-14 13:21 CEST — Layout: HF Band Betrouwbaarheid en Wereldkaart van positie
+               geruild (prop+hist+DX nu links, kaart+schema rechts). VHF/UHF-banden
+               (4m, 2m, 70cm, 23cm) verwijderd uit HF Betrouwbaarheid en Solar-
+               bandtabel. LUF-rij toegevoegd aan Solar/Ionosfeer paneel; MUF en LUF
+               worden nu vanuit het propagatiemodel bijgewerkt (niet meer via API).
+               K-index volgorde in solar paneel: direct onder A-index. Bandconditie-
+               tabel in solar paneel toont alleen HF-banden (160m–6m).
+· 2026-04-14 13:10 CEST — Zoom/pan wereldkaart sterk versneld: render-cache slaat
+               volledig gerenderd VW×VH beeld op; panning is nu alleen een .crop()
+               (microseconden i.p.v. seconden). Nacht- en graylijn-masker worden op
+               ¼ resolutie berekend en bilineair opgeschaald → 16× minder pixels.
+               Re-render treedt alleen op bij echte inhoud-wijziging (overlay-toggle,
+               K-index, zonpositie, QTH, groot-cirkelpad); niet bij panning.
 · 2026-04-13 13:53 CEST — Wereldkaart, HF Betrouwbaarheid en Solar/Ionosfeer starten
                nu op gelijke hoogte: pady=(6,0) verwijderd van prop-panel outer.
 · 2026-04-13 13:29 CEST — Bandopenings-schema vult nu resterende hoogte van de
