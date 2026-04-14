@@ -4,8 +4,8 @@
 
 **HAMIOS** is een krachtige desktop tool voor radioamateurs die realtime inzicht geeft in HF-propagatie, zonne-activiteit en DX-mogelijkheden — verpakt in een moderne, donkere GUI.
 
-Ontwikkeld door **Frank van Dijke ()**.
-
+Bedacht door **Frank van Dijke ()**.
+Ontwikkeld door **Claude AI**.
 ---
 
 ## 🚀 Features
