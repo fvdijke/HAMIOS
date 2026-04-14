@@ -2,6 +2,12 @@
 ─────────────────────────────────────────────────────────────────────
 Change Log (1.0)
 ─────────────────────────────────────────────────────────────────────
+· 2026-04-14 20:14 CEST — _center_window hoogte: 920px hard cap vervangen door
+               min(usable_h, root.winfo_reqheight()) zodat het venster exact
+               past bij de werkelijke inhoud (incl. 4 rijen advieskaarten).
+· 2026-04-14 20:12 CEST — Analyse & Advies paneel vaste hoogte voor 4 rijen kaarten:
+               ADV_ROWS=4, ADV_CARD_H=74, ADV_CARD_GAP=4 als module-constanten;
+               adv_wrap height=4×(74+4)=312px met pack_propagate(False).
 · 2026-04-14 16:31 CEST — Wereldkaart canvas gecentreerd in paneel: padx=10, pady=(2,2)
                toegevoegd aan map_canvas.pack() zodat het overeenkomt met de
                marges van andere canvassen (schedule, hist, dx).

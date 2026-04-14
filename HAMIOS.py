@@ -11,9 +11,96 @@ Dependencies:
   pip install pillow
 
 ─────────────────────────────────────────────────────────────────────
+Todo
+─────────────────────────────────────────────────────────────────────
+
+[ ] WSPR/PSKReporter spots op kaart
+    Haal live gemeten propagatiepaden op van wspr.rocks (WSPR) of
+    pskreporter.info (FT8/FT4). Teken verbindingslijnen op de wereldkaart
+    (kleur = band, dikte = SNR). Selecteerbaar via checkbox in kaart-header.
+    Geeft echte gemeten propagatie i.p.v. alleen modelwaarden.
+
+[ ] Aurora-ring overlay op kaart
+    Teken de magnetische aurora-ovaal op de kaart op basis van de K-index
+    (hogere K → ring schuift equatorwaarts). Gebruik de empirische formule
+    van Feldstein/Holzworth. Geeft direct inzicht in geblokkeerde poolroutes.
+    Kleur: groen/geel/rood afhankelijk van K-niveau.
+
+[ ] DX-spot markers op de kaart
+    Teken de actieve DX-cluster spots als lijnen op de kaart: stip op de
+    DX-locatie (DXCC-centroid) en lijn naar de spotter. Kleur per band.
+    Toggle via "Spots"-checkbox in de kaart-header. Klikken op een stip
+    toont de callsign, frequentie en comment als pop-up.
+
+[ ] Meerdere QTH-profielen
+    Sla meerdere locaties op in HAMIOS.ini (Thuis, Portable, Vakantie, …)
+    en schakel snel tussen profielen via een dropdown in de header.
+    Bij wisselen: alle kaarten, propagatieberekening en groot-cirkel
+    actualiseren automatisch voor de nieuwe locatie.
+
+[ ] Maidenhead-locator invoer
+    Naast Lat/Lon ook een QTH-locator invoerveld (bijv. JO22ip).
+    Conversie locator ↔ lat/lon in beide richtingen. Toon de berekende
+    locator ook als info-label naast de coördinaten.
+
+[ ] CAT-interface via rigctld (Hamlib)
+    Verbinding met transceiver via rigctld TCP (localhost:4532).
+    Lees actieve frequentie/band uit en markeer die band visueel in het
+    HF-betrouwbaarheidspaneel. Optioneel: stuur frequentie naar de radio
+    via klikken op een band in het schema.
+
+[ ] Contest-kalender
+    Toon welke grote HF-contesten dit weekend of de komende 7 dagen actief
+    zijn (CQWW, CQWPX, PACC, WAE, IOTA, ARRL DX, …). Statische jaarkalender
+    aangevuld met een JSON-feed van contest-calendar.com. Weergave als
+    compacte lijst of badge in de header.
+
+[ ] Simpele QSO-logger
+    Tab of uitklapbaar paneel met snellog-formulier: datum/tijd (auto),
+    callsign, band, modus, RST. Opslaan naar ADIF-bestand (standaard
+    HAM-logformaat). Toon het aantal QSO's van die dag als teller in
+    de header. Export-knop voor ADIF.
+
+[ ] Exporteren / screenshot
+    Knop "Exporteer rapport" die de huidige propagatiestaat opslaat als
+    PNG-screenshot van het hoofdvenster (tkinter canvas → PIL → bestand)
+    en/of als HTML-rapport met alle solarwaarden, bandtabel en adviezen.
+    Tijdstempel in bestandsnaam.
+
+─────────────────────────────────────────────────────────────────────
 Change Log (2.0)
 ─────────────────────────────────────────────────────────────────────
 
+· 2026-04-14   Scrollende ticker onderaan het venster: toont een gecumuleerde
+               samenvatting van alle propagatie-adviezen (tips-lijst). Canvas-
+               animatie verschuift de tekst met 2 px/30 ms van rechts naar links;
+               reset automatisch zodra de tekst volledig verdwijnt. Wordt ververst
+               bij elke _update_advice()-aanroep. Pakket voor body (side=BOTTOM).
+· 2026-04-14   Ionosonde foF2 live data: rij "foF2 <station>:" in Solar-paneel toont
+               gemeten/model (bijv. "4.5/4.2"). Dichtstbijzijnde Europese ionosonde
+               automatisch gekozen o.b.v. QTH (Dourbes BE, Juliusruh DE, Ebro ES,
+               Průhonice CZ, Rome IT, Athene GR). Bron: GIRO/LGDC DIDBase. Kleur:
+               groen (≤0.8 MHz afwijking) / oranje (≤2.0) / rood (>2.0). Label-tekst
+               toont stationsnaam na eerste fetch. _last_fof2_model opgeslagen in
+               _recalc_prop (= MUF/3.8); ionosonde parallel opgehaald in _refresh_solar.
+· 2026-04-14   Proton flux / PCA-indicator: nieuwe rij "Proton >10MeV (pfu)" in het
+               Solar-paneel (paars kleurschema S1–S5). Primaire bron: HamQSL XML
+               protonflux-veld; backup: NOAA GOES integral-protons JSON. PCA-
+               waarschuwingslabel (paars) en tray-notificatie bij event (S1+).
+               Advies item #5 toont altijd proton flux status met PCA-tekst bij event.
+· 2026-04-14   Advies-paneel: alle kaarten zichtbaar (vaste hoogte 74px per kaart,
+               geen height-cap op wrapper). 3 gelijke kolommen; wraplength past
+               zich dynamisch aan bij venstergrootte (<Configure>-binding).
+· 2026-04-14   Propagatie Advies uitgebreid: 6 nieuwe analyses (items 10–15):
+               Sporadic-E kans (seizoen + piekuren), TEP-venster (equinox),
+               propagatie trend (delta SFI/K/banden vs ~2u geleden uit history),
+               zonnecyclus fase (SSN positie cyclus 25), storm-herstelprognose
+               (A-index gebaseerde normaliseringstijd bij K≥5), DX-cluster
+               continent-verdeling, beste DX-routes op basis van UTC-uur + MUF.
+· 2026-04-14   Exit knop (rood, links in header) sluit programma netjes af.
+               Taalkeuzelijst (NL/EN/DE/FR) in header: vertaalt header-labels,
+               paneltitels en kaart-checkboxes live. QTH Lat/Lon invoer verplaatst
+               van kaart-header naar hoofd-header.
 · 2026-04-13 09:15 CEST — Fix solarwind fetch: NOAA SWPC retourneert lijst van dicts
                ipv een dict; sleutelnamen zijn 'proton_speed' en 'bz_gsm'.
 · 2026-04-13 09:08 CEST — Zoomen en pannen van de wereldkaart: muiswiel zoom
@@ -41,6 +128,7 @@ Change Log (2.0)
                velden toegevoegd.
 
 """
+
 
 import configparser
 import csv
@@ -77,6 +165,10 @@ MAP_URL       = ("https://eoimages.gsfc.nasa.gov/images/imagerecords/"
                  "57000/57752/land_shallow_topo_2048.jpg")
 
 # ── Thema ──────────────────────────────────────────────────────────────────────
+ADV_CARD_H  = 74    # vaste hoogte per advieskaart (pixels)
+ADV_CARD_GAP = 4   # verticale ruimte tussen rijen
+ADV_ROWS     = 4   # zichtbare rijen bij opstarten
+
 BG_ROOT    = "#1A1C1F"
 BG_PANEL   = "#22252A"
 BG_SURFACE = "#2A2E35"
@@ -327,6 +419,7 @@ def _load_settings() -> dict:
         "antenna":       cfg.get       ("App",   "antenna",        fallback="Isotropic 0dBi"),
         "dst":           cfg.getboolean("App",   "dst",            fallback=True),
         "show_tips":     cfg.getboolean("App",   "show_tips",      fallback=True),
+        "language":      cfg.get       ("App",   "language",       fallback="Nederlands"),
         "show_sun":      cfg.getboolean("Map",   "show_sun",       fallback=True),
         "show_moon":     cfg.getboolean("Map",   "show_moon",      fallback=True),
         "show_locator":  cfg.getboolean("Map",   "show_locator",   fallback=False),
@@ -349,12 +442,13 @@ def _save_settings(lat: float, lon: float, refresh: str,
                    show_cs: bool = False,
                    hist_range: str = "Uren",
                    hist_sel: set = None,
-                   k_alert: int = 4) -> None:
+                   k_alert: int = 4,
+                   language: str = "Nederlands") -> None:
     cfg = configparser.ConfigParser()
     cfg["QTH"]   = {"lat": str(lat), "lon": str(lon)}
     cfg["App"]   = {"refresh": refresh, "mode": mode, "power": power,
                     "antenna": antenna, "dst": str(dst),
-                    "show_tips": str(show_tips)}
+                    "show_tips": str(show_tips), "language": language}
     cfg["Map"]   = {"show_sun": str(show_sun), "show_moon": str(show_moon),
                     "show_locator": str(show_locator),
                     "show_graylijn": str(show_graylijn),
@@ -370,6 +464,24 @@ def _save_settings(lat: float, lon: float, refresh: str,
 SOLAR_URL    = "https://www.hamqsl.com/solarxml.php"
 SW_SPEED_URL = "https://services.swpc.noaa.gov/products/summary/solar-wind-speed.json"
 SW_MAG_URL   = "https://services.swpc.noaa.gov/products/summary/solar-wind-mag-field.json"
+# GOES >10 MeV integraalproton flux — meest recente meting (laatste element in array)
+# Formaat: [{time_tag, satellite, flux, channel}, ...] — channel "P5" = >10 MeV
+PROTON_URL   = "https://services.swpc.noaa.gov/json/goes/primary/integral-protons-1-day.json"
+# GIRO/LGDC DIDBase — foF2 van Europese ionosondes
+# Formaat antwoord: TSV met commentaarregels (#); kolommen: Time(UTC)  foF2  QD
+IONO_URL     = ("https://lgdc.uml.edu/common/DIDBGetValues"
+                "?ursiCode={code}&charName=foF2"
+                "&fromDate={t_from}&toDate={t_to}")
+
+# Europese ionosondes: (URSI-code, naam, lat, lon)
+_IONO_STATIONS: list[tuple[str, str, float, float]] = [
+    ("DB049", "Dourbes BE",    50.1,   4.6),
+    ("JR055", "Juliusruh DE",  54.6,  13.4),
+    ("EB040", "Ebro ES",       40.8,   0.5),
+    ("AT138", "Athene GR",     38.0,  23.5),
+    ("PQ052", "Průhonice CZ",  50.0,  14.6),
+    ("RO041", "Rome IT",       41.9,  12.5),
+]
 
 def _fetch_solar() -> dict:
     try:
@@ -414,6 +526,39 @@ def _fetch_solar() -> dict:
             data["sw_bz"] = f"{float(bz):.1f}" if bz is not None else "—"
         except Exception:
             data["sw_bz"] = "—"
+        # ── Proton flux >10 MeV (GOES SWPC) ───────────────────────────────────
+        # Primair: HamQSL XML 'protonflux' veld; backup: NOAA GOES JSON
+        pf_hamqsl = sd.findtext("protonflux", "").strip()
+        try:
+            data["proton_flux"] = f"{float(pf_hamqsl):.2f}"
+        except (ValueError, TypeError):
+            # Fallback: NOAA GOES integraal-proton JSON
+            try:
+                with urllib.request.urlopen(PROTON_URL, timeout=6) as r:
+                    pf_data = json.loads(r.read())
+                # Zoek meest recente P5 (>10 MeV) of P3 entry
+                pf_val = None
+                if isinstance(pf_data, list):
+                    # Formaat: lijst van dicts met 'channel' en 'flux'
+                    # of 2D-array: [[time, p1, p2, p3, p4, p5, ...], ...]
+                    for entry in reversed(pf_data):
+                        if isinstance(entry, dict):
+                            ch = entry.get("channel", "")
+                            if ch in ("P5", "P3", ">10 MeV"):
+                                v = entry.get("flux") or entry.get("observed_flux")
+                                if v is not None:
+                                    pf_val = float(v)
+                                    break
+                        elif isinstance(entry, list) and len(entry) >= 5:
+                            # kolom 4 (index 3) is vaak >10 MeV in 2D array
+                            try:
+                                pf_val = float(entry[3])
+                                break
+                            except (ValueError, TypeError):
+                                pass
+                data["proton_flux"] = f"{pf_val:.2f}" if pf_val is not None else "—"
+            except Exception:
+                data["proton_flux"] = "—"
         return data
     except Exception as e:
         return {"error": str(e)}
@@ -424,6 +569,69 @@ def _band_cond(sd, band: str, time_of_day: str) -> str:
         if item.get("name") == band and item.get("time") == time_of_day:
             return (item.text or "—").strip()
     return "—"
+
+
+# ── Ionosonde helpers ─────────────────────────────────────────────────────────
+def _nearest_iono_station(lat: float, lon: float) -> tuple:
+    """Geeft (ursi_code, naam, lat, lon) van de dichtstbijzijnde ionosonde."""
+    best = _IONO_STATIONS[0]
+    best_d = float("inf")
+    for station in _IONO_STATIONS:
+        dlat = station[2] - lat
+        dlon = station[3] - lon
+        d = dlat * dlat + dlon * dlon   # ruwe kwadratische afstand volstaat
+        if d < best_d:
+            best_d = d
+            best = station
+    return best
+
+
+def _fetch_ionosonde(ursi_code: str) -> dict:
+    """Haal meest recente foF2 op van de opgegeven GIRO/LGDC ionosonde.
+
+    Geeft {'fof2': '4.50', 'time': '12:00', 'station': 'Dourbes BE'}
+    of    {'fof2': '—', ...} bij fout/geen data.
+    """
+    station_name = next(
+        (s[1] for s in _IONO_STATIONS if s[0] == ursi_code), ursi_code
+    )
+    try:
+        now_utc = datetime.datetime.now(datetime.timezone.utc)
+        t_to    = now_utc.strftime("%Y-%m-%dT%H:%M:%S")
+        t_from  = (now_utc - datetime.timedelta(hours=1, minutes=30)).strftime(
+                      "%Y-%m-%dT%H:%M:%S")
+        url = IONO_URL.format(code=ursi_code, t_from=t_from, t_to=t_to)
+        req = urllib.request.Request(url, headers={"User-Agent": "HAMIOS/1.0"})
+        with urllib.request.urlopen(req, timeout=9) as r:
+            text = r.read().decode("utf-8", errors="replace")
+
+        # TSV-respons: regels met # zijn commentaar; kolom 0 = tijd, kolom 1 = foF2
+        fof2_val  = None
+        time_str  = "—"
+        for line in text.splitlines():
+            line = line.strip()
+            if not line or line.startswith("#"):
+                continue
+            parts = line.split()
+            if len(parts) < 2:
+                continue
+            try:
+                v = float(parts[1])
+                if 1.0 <= v <= 22.0:      # sanity check: foF2 tussen 1 en 22 MHz
+                    fof2_val = v
+                    # Tijdstip uit ISO-formaat: "2024-01-01T12:00:00.000Z" → "12:00"
+                    t_raw = parts[0]
+                    t_part = t_raw.split("T")
+                    time_str = t_part[1][:5] if len(t_part) > 1 else "—"
+            except (ValueError, IndexError):
+                pass
+
+        if fof2_val is not None:
+            return {"fof2": f"{fof2_val:.2f}", "time": time_str,
+                    "station": station_name}
+        return {"fof2": "—", "time": "—", "station": station_name}
+    except Exception:
+        return {"fof2": "—", "time": "—", "station": station_name}
 
 
 # ── Callsign-prefix locaties (DXCC-entiteiten) ───────────────────────────────
@@ -574,6 +782,36 @@ _ANT_DB = {
 _REFRESH_OPTIONS = {
     "Uit": 0, "30s": 30, "1 min": 60, "5 min": 300,
     "10 min": 600, "30 min": 1800, "1 uur": 3600,
+}
+
+# ── Taal / Language ────────────────────────────────────────────────────────────
+_LANG_NAMES = ["Nederlands", "English", "Deutsch", "Français"]
+_LANG_CODES = {"Nederlands": "nl", "English": "en", "Deutsch": "de", "Français": "fr"}
+
+_T: dict[str, dict[str, str]] = {
+    # Header
+    "exit":        {"nl": "Afsluiten",   "en": "Exit",          "de": "Beenden",     "fr": "Quitter"},
+    "summer_time": {"nl": "Zomertijd",   "en": "Summer time",   "de": "Sommerzeit",  "fr": "Heure d'été"},
+    "tooltips":    {"nl": "Tooltips",    "en": "Tooltips",      "de": "Tooltips",    "fr": "Infobulles"},
+    "auto_lbl":    {"nl": "Auto:",       "en": "Auto:",         "de": "Auto:",       "fr": "Auto:"},
+    "lang_lbl":    {"nl": "Taal:",       "en": "Lang:",         "de": "Sprache:",    "fr": "Langue:"},
+    "qth_lat_lbl": {"nl": "QTH  Lat:",   "en": "QTH  Lat:",     "de": "QTH  Br:",    "fr": "QTH  Lat:"},
+    "lon_lbl":     {"nl": "Lon:",        "en": "Lon:",          "de": "Lg:",         "fr": "Lon:"},
+    # Panel titels
+    "worldmap":    {"nl": "🌍  Wereldkaart",          "en": "🌍  World Map",             "de": "🌍  Weltkarte",           "fr": "🌍  Carte du monde"},
+    "solar":       {"nl": "☀  Solar / Ionosfeer",     "en": "☀  Solar / Ionosphere",    "de": "☀  Solar / Ionosphäre",  "fr": "☀  Solaire / Ionosphère"},
+    "reliability": {"nl": "📻  HF Betrouwbaarheid",   "en": "📻  HF Reliability",        "de": "📻  KW-Zuverlässigkeit", "fr": "📻  Fiabilité HF"},
+    "schedule":    {"nl": "📅  Bandopenings-schema",  "en": "📅  Band Opening Schedule", "de": "📅  Bandöffnungsplan",   "fr": "📅  Planning des ouvertures"},
+    "history":     {"nl": "📈  Band Verloop",          "en": "📈  Band History",          "de": "📈  Bandverlauf",        "fr": "📈  Historique des bandes"},
+    "dx_spots":    {"nl": "📡  DX Spots",              "en": "📡  DX Spots",              "de": "📡  DX-Spots",           "fr": "📡  DX Spots"},
+    "advice":      {"nl": "💡  Propagatie Advies",     "en": "💡  Propagation Advice",    "de": "💡  Ausbreitungshinweise","fr": "💡  Conseils de propagation"},
+    # Kaart checkboxes
+    "sun":         {"nl": "Zon",       "en": "Sun",        "de": "Sonne",     "fr": "Soleil"},
+    "moon":        {"nl": "Maan",      "en": "Moon",       "de": "Mond",      "fr": "Lune"},
+    "graylijn":    {"nl": "Graylijn",  "en": "Gray line",  "de": "Grauzone",  "fr": "Ligne grise"},
+    "locator":     {"nl": "Locator",   "en": "Locator",    "de": "Locator",   "fr": "Locator"},
+    # Solar veld labels
+    "updated_lbl": {"nl": "Bijgewerkt",   "en": "Updated",     "de": "Aktualisiert", "fr": "Mis à jour"},
 }
 
 _HIST_KEEP_DAYS  = 90   # hoeveel dagen geschiedenis bewaren
@@ -968,6 +1206,7 @@ class HAMIOSApp:
         self._ant_var     = tk.StringVar(value=s["antenna"])
         self._day_var     = tk.BooleanVar(value=True)
         self._refresh_var = tk.StringVar(value=s["refresh"])
+        self._lang_var    = tk.StringVar(value=s["language"])
         self._last_band_pct = [(n, f, 0) for n, f, _ in _BANDS]
         _prune_history()
         self._history:    list = _load_history()
@@ -980,6 +1219,9 @@ class HAMIOSApp:
         self._show_graylijn_var = tk.BooleanVar(value=s["show_graylijn"])
         self._show_iaru_var     = tk.BooleanVar(value=s["show_iaru"])
         self._show_cs_var       = tk.BooleanVar(value=s["show_cs"])
+        self._qth_lat_var = tk.StringVar(value=f"{self._qth_lat:.2f}")
+        self._qth_lon_var = tk.StringVar(value=f"{self._qth_lon:.2f}")
+        self._tr_widgets: dict = {}   # key → widget of list van widgets voor vertalingen
         self._gc_dest: tuple | None = None   # (lat, lon) groot-cirkel bestemming
         self._map_zoom:       float = 1.0   # zoom-factor (1.0 = volledig)
         self._map_cx:         float = 0.0   # viewport-middelpunt lon
@@ -996,6 +1238,8 @@ class HAMIOSApp:
         self._tray_icon             = None
         self._last_xflare: str      = ""   # voor dedup van X-flare tray-notificatie
         self._xflare_var            = tk.StringVar(value="")
+        self._last_pca_level: int   = 0    # S-level van vorig proton event (0 = geen)
+        self._last_fof2_model: float = 0.0 # model foF2 (MHz), bijgewerkt door _recalc_prop
         self._dx_all_spots: list    = []   # ruwe spots van dxwatch
         self._dx_after_id           = None
         self._dx_next_at: datetime.datetime | None = None
@@ -1052,6 +1296,55 @@ class HAMIOSApp:
 
         self._clock_after_id = self.root.after(1000, self._tick_clock)
 
+    # ── Vertalingen ───────────────────────────────────────────────────────────
+    def _tr(self, key: str) -> str:
+        """Geeft vertaling terug voor de actieve taal."""
+        lang = _LANG_CODES.get(self._lang_var.get(), "nl")
+        return _T.get(key, {}).get(lang, key)
+
+    def _apply_translations(self):
+        """Werk alle opgeslagen widget-referenties bij met de nieuwe taal."""
+        for key, widgets in self._tr_widgets.items():
+            text = self._tr(key)
+            if not isinstance(widgets, list):
+                widgets = [widgets]
+            for w in widgets:
+                try:
+                    w.config(text=text)
+                except tk.TclError:
+                    pass
+
+    def _on_lang_change(self, *_):
+        self._apply_translations()
+        self._save_cur_settings()
+
+    def _apply_qth(self, *_):
+        """Verwerk gewijzigde QTH lat/lon invoer."""
+        try:
+            lat = float(self._qth_lat_var.get().replace(",", "."))
+            lon = float(self._qth_lon_var.get().replace(",", "."))
+            lat = max(-90.0,  min(90.0,  lat))
+            lon = max(-180.0, min(180.0, lon))
+            self._qth_lat = lat
+            self._qth_lon = lon
+            self._qth_lat_var.set(f"{lat:.2f}")
+            self._qth_lon_var.set(f"{lon:.2f}")
+            self._save_cur_settings()
+            self._draw_map()
+            self._recalc_prop()
+        except ValueError:
+            pass
+
+    def _quit_app(self):
+        """Netjes afsluiten: tray stoppen, instellingen opslaan, venster sluiten."""
+        self._save_cur_settings()
+        if self._tray_icon:
+            try:
+                self._tray_icon.stop()
+            except Exception:
+                pass
+        self.root.destroy()
+
     # ── Layout ────────────────────────────────────────────────────────────────
     def _build_ui(self):
         # Header
@@ -1061,6 +1354,17 @@ class HAMIOSApp:
         tk.Label(hdr, text="📡  HAMIOS v2.0",
                  font=_font(13, "bold"), bg=BG_PANEL, fg=ACCENT,
                  pady=8).pack(side=tk.LEFT, padx=10)
+
+        # Exit knop (links, naast titel)
+        exit_btn = tk.Button(hdr, text=self._tr("exit"),
+                             command=self._quit_app,
+                             font=_font(9), bg="#5A1010", fg=TEXT_H1,
+                             activebackground="#8B1A1A", activeforeground=TEXT_H1,
+                             relief=tk.FLAT, padx=8, pady=2, cursor="hand2")
+        exit_btn.pack(side=tk.LEFT, padx=(0, 10))
+        self._tr_widgets["exit"] = exit_btn
+
+        # ── Rechter kant (right → left volgorde) ────────────────────────────
         # Tijden rechts (UTC + lokaal)
         self._utc_var   = tk.StringVar()
         self._local_var = tk.StringVar()
@@ -1071,17 +1375,67 @@ class HAMIOSApp:
                  font=_font(10, "bold"), bg=BG_PANEL, fg=TEXT_H1).pack(side=tk.RIGHT, padx=(0, 10))
 
         # Checkboxes
-        tk.Checkbutton(hdr, text="Zomertijd", variable=self._dst_var,
-                       command=self._save_cur_settings,
-                       bg=BG_PANEL, fg=TEXT_DIM, selectcolor=BG_SURFACE,
-                       activebackground=BG_PANEL, activeforeground=TEXT_BODY,
-                       font=_font(9)).pack(side=tk.RIGHT, padx=(0, 8))
-        tk.Checkbutton(hdr, text="Tooltips", variable=self._show_tips_var,
-                       bg=BG_PANEL, fg=TEXT_DIM, selectcolor=BG_SURFACE,
-                       activebackground=BG_PANEL, activeforeground=TEXT_BODY,
-                       font=_font(9)).pack(side=tk.RIGHT, padx=(0, 4))
+        tk.Frame(hdr, bg=BORDER, width=1).pack(side=tk.RIGHT, fill=tk.Y, pady=8)
+        cb_dst = tk.Checkbutton(hdr, text=self._tr("summer_time"), variable=self._dst_var,
+                                command=self._save_cur_settings,
+                                bg=BG_PANEL, fg=TEXT_DIM, selectcolor=BG_SURFACE,
+                                activebackground=BG_PANEL, activeforeground=TEXT_BODY,
+                                font=_font(9))
+        cb_dst.pack(side=tk.RIGHT, padx=(0, 8))
+        self._tr_widgets["summer_time"] = cb_dst
+        cb_tips = tk.Checkbutton(hdr, text=self._tr("tooltips"), variable=self._show_tips_var,
+                                 bg=BG_PANEL, fg=TEXT_DIM, selectcolor=BG_SURFACE,
+                                 activebackground=BG_PANEL, activeforeground=TEXT_BODY,
+                                 font=_font(9))
+        cb_tips.pack(side=tk.RIGHT, padx=(0, 4))
+        self._tr_widgets["tooltips"] = cb_tips
+
+        # QTH Lat/Lon invoer
+        tk.Frame(hdr, bg=BORDER, width=1).pack(side=tk.RIGHT, fill=tk.Y, pady=8)
+        lon_e = tk.Entry(hdr, textvariable=self._qth_lon_var, width=8,
+                         bg=BG_SURFACE, fg=TEXT_H1, insertbackground=TEXT_H1,
+                         relief=tk.FLAT, font=_font(9))
+        lon_e.pack(side=tk.RIGHT, padx=(2, 8))
+        lon_e.bind("<Return>",   self._apply_qth)
+        lon_e.bind("<FocusOut>", self._apply_qth)
+        lon_lbl = tk.Label(hdr, text=self._tr("lon_lbl"), font=_font(9),
+                           bg=BG_PANEL, fg=TEXT_DIM)
+        lon_lbl.pack(side=tk.RIGHT)
+        self._tr_widgets["lon_lbl"] = lon_lbl
+        lat_e = tk.Entry(hdr, textvariable=self._qth_lat_var, width=7,
+                         bg=BG_SURFACE, fg=TEXT_H1, insertbackground=TEXT_H1,
+                         relief=tk.FLAT, font=_font(9))
+        lat_e.pack(side=tk.RIGHT, padx=(2, 4))
+        lat_e.bind("<Return>",    self._apply_qth)
+        lat_e.bind("<FocusOut>",  self._apply_qth)
+        qth_lbl = tk.Label(hdr, text=self._tr("qth_lat_lbl"), font=_font(9),
+                           bg=BG_PANEL, fg=TEXT_DIM)
+        qth_lbl.pack(side=tk.RIGHT, padx=(8, 0))
+        self._tr_widgets["qth_lat_lbl"] = qth_lbl
+
+        # Taal selector
+        tk.Frame(hdr, bg=BORDER, width=1).pack(side=tk.RIGHT, fill=tk.Y, pady=8)
+        lang_mb = tk.Menubutton(hdr, textvariable=self._lang_var,
+                                font=_font(9), bg=BG_SURFACE, fg=TEXT_H1,
+                                relief=tk.FLAT, activebackground=BG_HOVER,
+                                activeforeground=TEXT_H1, width=10,
+                                anchor='w', padx=6, pady=3, cursor="hand2")
+        lang_menu = tk.Menu(lang_mb, tearoff=False, bg=BG_SURFACE, fg=TEXT_H1,
+                            activebackground=ACCENT, activeforeground=BG_ROOT,
+                            font=_font(9))
+        for name in _LANG_NAMES:
+            lang_menu.add_command(label=name,
+                                  command=lambda v=name: (self._lang_var.set(v),
+                                                          self._on_lang_change()))
+        lang_mb["menu"] = lang_menu
+        lang_mb.pack(side=tk.RIGHT, padx=(0, 4))
+        lang_lbl = tk.Label(hdr, text=self._tr("lang_lbl"), font=_font(9),
+                            bg=BG_PANEL, fg=TEXT_DIM)
+        lang_lbl.pack(side=tk.RIGHT, padx=(8, 2))
+        self._tr_widgets["lang_lbl"] = lang_lbl
 
         # Interval keuze in header
+        tk.Frame(hdr, bg=BORDER, width=1).pack(side=tk.RIGHT, fill=tk.Y, pady=8)
         mb = tk.Menubutton(hdr, textvariable=self._refresh_var,
                            font=_font(9), bg=BG_SURFACE, fg=TEXT_H1,
                            relief=tk.FLAT, activebackground=BG_HOVER,
@@ -1098,8 +1452,13 @@ class HAMIOSApp:
         self._countdown_var = tk.StringVar(value="")
         tk.Label(hdr, textvariable=self._countdown_var,
                  font=_font(9), bg=BG_PANEL, fg=ACCENT).pack(side=tk.RIGHT, padx=(0, 6))
-        tk.Label(hdr, text="Auto:", font=_font(9), bg=BG_PANEL,
-                 fg=TEXT_DIM).pack(side=tk.RIGHT, padx=(0, 2))
+        auto_lbl = tk.Label(hdr, text=self._tr("auto_lbl"), font=_font(9),
+                            bg=BG_PANEL, fg=TEXT_DIM)
+        auto_lbl.pack(side=tk.RIGHT, padx=(4, 2))
+        self._tr_widgets["auto_lbl"] = auto_lbl
+
+        # Ticker onderaan (pack VOOR body zodat hij aan de onderkant blijft)
+        self._build_ticker()
 
         # Hoofd body — 3 kolommen: Kaart | Panelen | Solar  +  onderaan DX + Advies
         body = tk.Frame(self.root, bg=BG_ROOT)
@@ -1159,6 +1518,23 @@ class HAMIOSApp:
                          "van het interplanetair magneetveld (IMF).\n"
                          "Bz < −10 nT: kans op geomagnetische storm neemt sterk toe.\n"
                          "Negatieve Bz koppelt aan het aardveld → verhoogde K-index."),
+            "iono_fof2":  ("Ionosonde foF2 — gemeten vs model (MHz)",
+                           "foF2 = kritische frequentie van de F2-laag (ionosonde-meting).\n"
+                           "Gemeten: actuele waarde van de dichtstbijzijnde Europese\n"
+                           "ionosonde (GIRO/LGDC DIDBase, interval ≈15 min).\n"
+                           "Model: HAMIOS-berekening op basis van SFI en SSN.\n"
+                           "Verschil > 1 MHz: ionosfeer wijkt af van model — gebruik\n"
+                           "gemeten waarde voor nauwkeurigere MUF-schatting.\n"
+                           "Groen = goede overeenkomst  |  Oranje = matige afwijking\n"
+                           "Rood = grote afwijking (storm of ongewone activiteit)."),
+            "proton_flux": ("Proton flux >10 MeV (pfu)",
+                            "Hoog-energetische protonen afkomstig van zonne-uitbarstingen.\n"
+                            "Eenheid: pfu (particles/cm²/s/sr).\n"
+                            "< 10 pfu  : normaal\n"
+                            "≥ 10 pfu  : S1-event — begin PCA mogelijk\n"
+                            "≥ 100 pfu : S3-event — poolroutes geblokkeerd\n"
+                            "≥ 1000 pfu: S5-event — ernstige PCA, alle poolpaden dicht\n"
+                            "PCA (Polar Cap Absorption) blokkeert poolroutes 1–7 dagen."),
         }
 
         def _bind_tip(widget, key):
@@ -1173,21 +1549,31 @@ class HAMIOSApp:
 
         self._solar_vars     = {}
         self._solar_val_lbls = {}   # key → Label widget (voor kleur-updates)
+        # Dynamisch label voor ionosonde-rij (stationsnaam wordt ingevuld na fetch)
+        self._iono_station_var = tk.StringVar(value="foF2 ms/md:")
         for key, label in [
-            ("sfi",      "Solar Flux (SFI)"),
-            ("ssn",      "Sunspot Nr (SSN)"),
-            ("a_index",  "A-index"),
-            ("k_index",  "K-index"),
-            ("xray",     "X-ray"),
-            ("muf",      "MUF (MHz)"),
-            ("luf",      "LUF (MHz)"),
-            ("sw_speed", "Solarwind (km/s)"),
-            ("sw_bz",    "Bz (nT)"),
+            ("sfi",         "Solar Flux (SFI)"),
+            ("ssn",         "Sunspot Nr (SSN)"),
+            ("a_index",     "A-index"),
+            ("k_index",     "K-index"),
+            ("xray",        "X-ray"),
+            ("muf",         "MUF (MHz)"),
+            ("luf",         "LUF (MHz)"),
+            ("sw_speed",    "Solarwind (km/s)"),
+            ("sw_bz",       "Bz (nT)"),
+            ("proton_flux", "Proton >10MeV"),
+            ("iono_fof2",   None),      # None → dynamisch label via StringVar
         ]:
             row = tk.Frame(self._solar_frame, bg=BG_PANEL)
             row.pack(fill=tk.X, pady=2)
-            lbl = tk.Label(row, text=label + ":", font=_font(9), bg=BG_PANEL,
-                           fg=TEXT_DIM, anchor='w', width=16, cursor="question_arrow")
+            if label is None:
+                # Ionosonde-rij: label tekst is dynamisch
+                lbl = tk.Label(row, textvariable=self._iono_station_var,
+                               font=_font(9), bg=BG_PANEL,
+                               fg=TEXT_DIM, anchor='w', width=16, cursor="question_arrow")
+            else:
+                lbl = tk.Label(row, text=label + ":", font=_font(9), bg=BG_PANEL,
+                               fg=TEXT_DIM, anchor='w', width=16, cursor="question_arrow")
             lbl.pack(side=tk.LEFT)
             _bind_tip(lbl, key)
             var = tk.StringVar(value="—")
@@ -1246,6 +1632,13 @@ class HAMIOSApp:
                                     wraplength=200, justify='left')
         self._xflare_lbl.pack(anchor='w', pady=(4, 0))
 
+        # PCA-waarschuwing (proton event — paars)
+        self._pca_var = tk.StringVar(value="")
+        self._pca_lbl = tk.Label(self._solar_frame, textvariable=self._pca_var,
+                                 font=_font(8, "bold"), bg=BG_PANEL, fg="#CE93D8",
+                                 wraplength=200, justify='left')
+        self._pca_lbl.pack(anchor='w', pady=(2, 0))
+
         # ── Gecombineerde linker+midden zone ──────────────────────────────────
         combined = tk.Frame(top_row, bg=BG_ROOT)
         combined.pack(side=tk.LEFT, fill=tk.BOTH, expand=True, padx=(0, 10))
@@ -1278,66 +1671,35 @@ class HAMIOSApp:
 
         map_hdr = tk.Frame(outer, bg=BG_PANEL)
         map_hdr.pack(fill=tk.X)
-        tk.Label(map_hdr, text="🌍  Wereldkaart",
-                 font=_font(10, "bold"), bg=BG_PANEL, fg=ACCENT,
-                 pady=4).pack(side=tk.LEFT, padx=10)
+        map_title = tk.Label(map_hdr, text=self._tr("worldmap"),
+                             font=_font(10, "bold"), bg=BG_PANEL, fg=ACCENT,
+                             pady=4)
+        map_title.pack(side=tk.LEFT, padx=10)
+        self._tr_widgets["worldmap"] = map_title
 
-        def _cb(text, var):
+        def _cb(tr_key, var, fallback_text=""):
             def _on_toggle():
                 self._save_cur_settings()
                 self._draw_map()
-            tk.Checkbutton(map_hdr, text=text, variable=var,
-                           command=_on_toggle,
-                           bg=BG_PANEL, fg=TEXT_DIM, selectcolor=BG_SURFACE,
-                           activebackground=BG_PANEL, activeforeground=TEXT_BODY,
-                           font=_font(9)).pack(side=tk.RIGHT, padx=(0, 8))
+            cb = tk.Checkbutton(map_hdr, text=self._tr(tr_key) if tr_key else fallback_text,
+                                variable=var, command=_on_toggle,
+                                bg=BG_PANEL, fg=TEXT_DIM, selectcolor=BG_SURFACE,
+                                activebackground=BG_PANEL, activeforeground=TEXT_BODY,
+                                font=_font(9))
+            cb.pack(side=tk.RIGHT, padx=(0, 8))
+            if tr_key:
+                self._tr_widgets.setdefault(tr_key, [])
+                if isinstance(self._tr_widgets[tr_key], list):
+                    self._tr_widgets[tr_key].append(cb)
+                else:
+                    self._tr_widgets[tr_key] = [self._tr_widgets[tr_key], cb]
 
-        _cb("Locator",  self._show_locator_var)
-        _cb("CS",       self._show_cs_var)
-        _cb("ITU",      self._show_iaru_var)
-        _cb("Graylijn", self._show_graylijn_var)
-        _cb("Maan",     self._show_moon_var)
-        _cb("Zon",      self._show_sun_var)
-
-        # QTH lat/lon invoer
-        def _apply_qth(*_):
-            try:
-                lat = float(self._qth_lat_var.get().replace(",", "."))
-                lon = float(self._qth_lon_var.get().replace(",", "."))
-                lat = max(-90.0,  min(90.0,  lat))
-                lon = max(-180.0, min(180.0, lon))
-                self._qth_lat = lat
-                self._qth_lon = lon
-                self._qth_lat_var.set(f"{lat:.2f}")
-                self._qth_lon_var.set(f"{lon:.2f}")
-                self._save_cur_settings()
-                self._draw_map()
-                self._recalc_prop()
-            except ValueError:
-                pass
-
-        self._qth_lat_var = tk.StringVar(value=f"{self._qth_lat:.2f}")
-        self._qth_lon_var = tk.StringVar(value=f"{self._qth_lon:.2f}")
-
-        qth_row = tk.Frame(map_hdr, bg=BG_PANEL)
-        qth_row.pack(side=tk.LEFT, padx=(16, 0))
-        tk.Label(qth_row, text="QTH  Lat:", font=_font(9), bg=BG_PANEL,
-                 fg=TEXT_DIM).pack(side=tk.LEFT)
-        lat_e = tk.Entry(qth_row, textvariable=self._qth_lat_var, width=7,
-                         bg=BG_SURFACE, fg=TEXT_H1, insertbackground=TEXT_H1,
-                         relief=tk.FLAT, font=_font(9))
-        lat_e.pack(side=tk.LEFT, padx=(2, 6))
-        lat_e.bind("<Return>",    _apply_qth)
-        lat_e.bind("<FocusOut>",  _apply_qth)
-
-        tk.Label(qth_row, text="Lon:", font=_font(9), bg=BG_PANEL,
-                 fg=TEXT_DIM).pack(side=tk.LEFT)
-        lon_e = tk.Entry(qth_row, textvariable=self._qth_lon_var, width=8,
-                         bg=BG_SURFACE, fg=TEXT_H1, insertbackground=TEXT_H1,
-                         relief=tk.FLAT, font=_font(9))
-        lon_e.pack(side=tk.LEFT, padx=(2, 0))
-        lon_e.bind("<Return>",   _apply_qth)
-        lon_e.bind("<FocusOut>", _apply_qth)
+        _cb("locator",  self._show_locator_var)
+        _cb(None,       self._show_cs_var,       "CS")
+        _cb(None,       self._show_iaru_var,      "ITU")
+        _cb("graylijn", self._show_graylijn_var)
+        _cb("moon",     self._show_moon_var)
+        _cb("sun",      self._show_sun_var)
 
         self._map_updated_var = tk.StringVar(value="")
         tk.Label(map_hdr, textvariable=self._map_updated_var,
@@ -2431,7 +2793,8 @@ class HAMIOSApp:
         self._advice_updated_var = tk.StringVar(value="")
         tk.Label(adv_hdr, textvariable=self._advice_updated_var,
                  font=_font(8), bg=BG_PANEL, fg=TEXT_DIM).pack(side=tk.RIGHT)
-        adv_wrap = tk.Frame(outer, bg=BG_PANEL, height=180)
+        adv_h = ADV_ROWS * (ADV_CARD_H + ADV_CARD_GAP)
+        adv_wrap = tk.Frame(outer, bg=BG_PANEL, height=adv_h)
         adv_wrap.pack(fill=tk.X, padx=10, pady=(0, 8))
         adv_wrap.pack_propagate(False)
         self._advice_frame = tk.Frame(adv_wrap, bg=BG_PANEL)
@@ -2533,7 +2896,30 @@ class HAMIOSApp:
         except (ValueError, TypeError):
             pass   # solarwind nog niet beschikbaar
 
-        # ── 5. X-ray / flares ─────────────────────────────────────────────
+        # ── 5. Proton event / PCA ─────────────────────────────────────────
+        try:
+            pf_adv = float(data.get("proton_flux", "0").replace("—", "0"))
+        except (ValueError, TypeError):
+            pf_adv = 0.0
+        if pf_adv >= 1000:
+            tips.append(("☢", f"ERNSTIG proton event S5  ({pf_adv:.0f} pfu) — "
+                               "Polar Cap Absorption actief. Alle poolroutes volledig "
+                               "geblokkeerd 3–7 dagen. Gebruik equatoriale paden (20m/17m).",
+                         "#EA80FC"))
+        elif pf_adv >= 100:
+            tips.append(("☢", f"Proton event S3  ({pf_adv:.0f} pfu) — "
+                               "PCA actief: poolroutes (EU→JA/W via pool) geblokkeerd 2–4 dagen. "
+                               "160m/80m/40m poolpaden onbruikbaar.", "#CE93D8"))
+        elif pf_adv >= 10:
+            tips.append(("⚛", f"Verhoogde proton flux S1  ({pf_adv:.1f} pfu) — "
+                               "PCA begint mogelijk. Monitor poolroutes op 40m. "
+                               "Kans op verdere escalatie bij actieve vlammenactiviteit.", "#BA68C8"))
+        else:
+            tips.append(("⚛", f"Proton flux normaal  ({pf_adv:.2f} pfu) — "
+                               "geen Polar Cap Absorption. Poolroutes niet door proton "
+                               "flux beïnvloed.", TEXT_DIM))
+
+        # ── 6. X-ray / flares ─────────────────────────────────────────────
         xclass = xray[:1].upper() if xray else ""
         if xclass in ("X",):
             tips.append(("☢", f"X-flare gedetecteerd  ({xray}) — Short Wave Fadeout (SWF) "
@@ -2626,7 +3012,185 @@ class HAMIOSApp:
                                "poolpaden kunnen sporadisch verstoord zijn. "
                                "Monitor 40m voor bruikbaarheid.", TEXT_BODY))
 
-        # ── 10. Algehele beoordeling ──────────────────────────────────────
+        # ── 10. Sporadic-E kans ───────────────────────────────────────────
+        now_dt = datetime.datetime.now()
+        month  = now_dt.month
+        doy    = now_dt.timetuple().tm_yday
+        # Europese Es: hoofdseizoen mei–aug, piek half-juni (doy ~160–200)
+        # Secundaire piek december–januari. Tijdstip: 09–14h en 18–22h lokaal.
+        es_score = 0
+        if 5 <= month <= 8:
+            if month in (6, 7):
+                es_score = 3    # piekmaanden
+            else:
+                es_score = 2    # mei / augustus
+        elif month in (12, 1):
+            es_score = 1        # secundaire winter-Es
+        es_time_ok = (9 <= lok_h < 14) or (17 <= lok_h < 22)
+        if es_score >= 2 and es_time_ok:
+            tips.append(("⚡",
+                         f"Sporadic-E kans HOOG (maand {month}, {lok_h:02d}:xx lok.) — "
+                         "6m/4m/2m kunnen onverwacht opengaan voor afstanden van 700–2500 km. "
+                         "Monitor 50.313 (FT8) en 50.150 (SSB). Typisch 15–90 min durend.",
+                         "#66BB6A"))
+        elif es_score >= 2:
+            tips.append(("⚡",
+                         f"Sporadic-E seizoen actief (maand {month}) maar buiten piekuren — "
+                         "kans op 6m/4m opens is laag; meest actief 09–14h en 17–22h lokaal.",
+                         TEXT_DIM))
+        elif es_score == 1 and es_time_ok:
+            tips.append(("⚡",
+                         f"Winter-Es mogelijk (maand {month}, {lok_h:02d}:xx lok.) — "
+                         "zeldzame maar plotselinge openingen op 6m; monitor 50.313 MHz.",
+                         TEXT_DIM))
+        # TEP (Trans-Equatorial Propagation): equinox ± 45 dg, middag lok.
+        if (75 <= doy <= 120 or 265 <= doy <= 310) and 12 <= lok_h <= 18:
+            tips.append(("🌐",
+                         f"TEP-venster (dag {doy}, {lok_h:02d}:xx lok.) — trans-equatoriale "
+                         "propagatie mogelijk. Paden richting Centraal-Afrika en "
+                         "Latijns-Amerika op 50 MHz en 144 MHz kunnen open zijn. "
+                         "Meest kansrijk 13–17h lokaal.", "#4FC3F7"))
+
+        # ── 11. Propagatie trend (historische data) ───────────────────────
+        if len(self._history) >= 4:
+            # Vergelijk laatste meting met meting ~2u geleden (of eerder beschikbaar)
+            latest_ts, latest_bp, latest_sol = self._history[-1]
+            target_ts = latest_ts - datetime.timedelta(hours=2)
+            # Zoek het dichtstbijzijnde historische punt ≥2u oud
+            ref = None
+            for ts, bp_h, sol_h in reversed(self._history[:-1]):
+                if ts <= target_ts:
+                    ref = (ts, bp_h, sol_h)
+                    break
+            if ref is None:
+                ref = self._history[0]   # neem oudste beschikbaar
+            ref_ts, ref_bp, ref_sol = ref
+            age_h = (latest_ts - ref_ts).total_seconds() / 3600
+
+            sfi_delta = latest_sol.get("sfi", sfi) - ref_sol.get("sfi", sfi)
+            k_delta   = latest_sol.get("k_index", k_index) - ref_sol.get("k_index", k_index)
+            # Gemiddeld % geopende banden
+            hf_band_names = [n for n, _, hf in _BANDS if hf]
+            avg_now = sum(latest_bp.get(n, 0) for n in hf_band_names) / max(len(hf_band_names), 1)
+            avg_ref = sum(ref_bp.get(n, 0)    for n in hf_band_names) / max(len(hf_band_names), 1)
+            band_delta = avg_now - avg_ref
+
+            trend_parts = []
+            if abs(sfi_delta) >= 3:
+                trend_parts.append(f"SFI {sfi_delta:+.0f}")
+            if abs(k_delta) >= 1:
+                trend_parts.append(f"K-index {k_delta:+.0f}")
+            if abs(band_delta) >= 5:
+                trend_parts.append(f"gemid. bandkwaliteit {band_delta:+.0f}%")
+
+            if trend_parts:
+                direction = "verbeterend" if band_delta > 0 else "verslechterend"
+                trend_clr = "#66BB6A" if band_delta > 0 else "#FF7043"
+                tips.append(("📈" if band_delta > 0 else "📉",
+                             f"Propagatie {direction} (afgelopen {age_h:.0f}u): "
+                             + "  ·  ".join(trend_parts) + ".",
+                             trend_clr))
+            else:
+                tips.append(("📊",
+                             f"Propagatie stabiel (laatste {age_h:.0f}u geen significante wijziging).",
+                             TEXT_DIM))
+
+        # ── 12. Zonnecyclus fase ──────────────────────────────────────────
+        # Cyclus 25 startte ~dec 2019; verwacht maximum ~2025–2026 (SSN ≈ 115–140)
+        # Simpele fase-schatting op basis van SSN
+        if ssn >= 130:
+            tips.append(("☀",
+                         f"Zonnecyclus 25 MAXIMUM — SSN={int(ssn)} (hoogtepunt verwacht 2025–2026). "
+                         "Optimale F2-propagatie op hoge banden; geniet van 10m–15m DX "
+                         "terwijl de cyclus op zijn best is.", ACCENT))
+        elif ssn >= 90:
+            tips.append(("🌤",
+                         f"Zonnecyclus 25 hoog/maximumfase — SSN={int(ssn)}. "
+                         "Hoge banden (10m–17m) regelmatig open voor DX. "
+                         "Verwacht verdere toename richting cycluspiek.", ACCENT))
+        elif ssn >= 50:
+            tips.append(("🌥",
+                         f"Zonnecyclus 25 opkomende fase — SSN={int(ssn)}. "
+                         "Cyclus in opbouw; 20m–17m betrouwbaar, hogere banden variabel. "
+                         "Positieve trend verwacht.", TEXT_BODY))
+        elif ssn >= 20:
+            tips.append(("🌦",
+                         f"Zonnecyclus in overgangsperiode — SSN={int(ssn)}. "
+                         "Afhankelijk van trend: controleer of SSN stijgt of daalt. "
+                         "20m/40m vormen ruggengraat.", TEXT_DIM))
+        else:
+            tips.append(("🌧",
+                         f"Zonnecyclus laag — SSN={int(ssn)}. "
+                         "Cyclus mogelijk in minimum of vroeg stadium; "
+                         "40m/80m/160m zijn de meest betrouwbare banden.", TEXT_DIM))
+
+        # ── 13. Herstelprognose bij K-storm ──────────────────────────────
+        if k_index >= 5:
+            # Ruwe hersteltijd: A-index gerelateerd. A > 50 → 24h+; A > 20 → 12h
+            recovery_h = (36 if a_index >= 50 else
+                          24 if a_index >= 30 else
+                          12 if a_index >= 20 else
+                          6)
+            tips.append(("🕐",
+                         f"Storm-herstelprognose: A={int(a_index)}, K={int(k_index)} — "
+                         f"geschatte normaliseringstijd ≈{recovery_h}u na piek. "
+                         "HF herstel verloopt van laag naar hoog (40m eerst, daarna 20m/15m). "
+                         "Monitor K-index voor herstel onder 3.", "#FF7043"))
+
+        # ── 14. DX-cluster activiteitsanalyse ────────────────────────────
+        all_spots = getattr(self, "_dx_all_spots", [])
+        if all_spots:
+            cont_count: dict = {}
+            rare_calls: list = []
+            for s in all_spots:
+                dx_cont = s.get("dx_cont", "??")
+                cont_count[dx_cont] = cont_count.get(dx_cont, 0) + 1
+                # Merk "zeldzame" calls: prefix ≤3 tekens en weinig spots
+                call = s.get("dx_call", "")
+                if call and len(call) <= 4 and cont_count.get(dx_cont, 0) == 1:
+                    rare_calls.append(call)
+            top_conts = sorted(cont_count.items(), key=lambda x: -x[1])[:4]
+            top_str = "  ·  ".join(f"{c}: {n}" for c, n in top_conts)
+            n_eu = cont_count.get("EU", 0)
+            n_as = cont_count.get("AS", 0)
+            n_na = cont_count.get("NA", 0)
+            n_oc = cont_count.get("OC", 0)
+            tip_txt = (f"DX-cluster: {len(all_spots)} spots actief — "
+                       f"top continenten: {top_str}. ")
+            if n_oc >= 2:
+                tip_txt += f"Oceanië ({n_oc}×) actief → goede Oost-kans. "
+            if n_as >= 3:
+                tip_txt += f"Azië ({n_as}×) goed vertegenwoordigd. "
+            tips.append(("📡", tip_txt.strip(), TEXT_BODY))
+
+        # ── 15. Beste DX-routes nu ────────────────────────────────────────
+        try:
+            muf_dx = float(data.get("muf", "0").replace("—", "0"))
+        except (ValueError, TypeError):
+            muf_dx = 0.0
+        qth_lat_abs = abs(self._qth_lat)
+        # Klassieke EU (≈50°N) DX-paden en hun optimale vensters (UTC)
+        dx_routes = []
+        if is_day:
+            if 5 <= utc_h < 10 and muf_dx >= 14:
+                dx_routes.append("EU→JA (Azië) via long path, 14–21 MHz")
+            if 12 <= utc_h < 18 and muf_dx >= 14:
+                dx_routes.append("EU→W (Noord-Amerika) short path, 14–21 MHz")
+            if 8 <= utc_h < 14 and muf_dx >= 14:
+                dx_routes.append("EU→Afrika short path, 14–28 MHz")
+            if 14 <= utc_h < 20 and muf_dx >= 14:
+                dx_routes.append("EU→VK/ZL (Pacific) long path, 14–21 MHz")
+        else:
+            if 22 <= utc_h or utc_h < 4:
+                dx_routes.append("EU→W (Noord-Amerika) 40m–80m nacht-DX")
+            if 2 <= utc_h < 8:
+                dx_routes.append("EU→JA (Azië) 40m–20m via pool night path")
+        if dx_routes:
+            tips.append(("🌍",
+                         "Optimale DX-routes nu: " + "  ·  ".join(dx_routes) + ".",
+                         "#4FC3F7"))
+
+        # ── 16. Algehele beoordeling ──────────────────────────────────────
         score = 0
         if sfi >= 150: score += 3
         elif sfi >= 100: score += 2
@@ -2652,21 +3216,133 @@ class HAMIOSApp:
                            f"{'Dag' if is_day else 'Nacht'}condities, QTH {self._qth_lat:.1f}°N.",
                      overall_clr))
 
-        # ── Weergave: 3 kolommen ──────────────────────────────────────────
-        COLS = 3
+        # ── Weergave: 3 gelijke kolommen, vaste kaartengrootte ───────────
+        COLS       = 3
+        CARD_H     = ADV_CARD_H
+        CARD_PAD_X = 8
+        CARD_PAD_Y = 5
+
         for c in range(COLS):
             self._advice_frame.columnconfigure(c, weight=1)
+
+        adv_labels: list = []   # bewaar label-refs voor wraplength-update
+
         for i, (icon, tekst, kleur) in enumerate(tips):
             col = i % COLS
             row = i // COLS
-            cell = tk.Frame(self._advice_frame, bg=BG_SURFACE, padx=6, pady=2)
+            self._advice_frame.rowconfigure(row, minsize=CARD_H)
+
+            cell = tk.Frame(self._advice_frame, bg=BG_SURFACE,
+                            padx=CARD_PAD_X, pady=CARD_PAD_Y,
+                            height=CARD_H)
             cell.grid(row=row, column=col, sticky='nsew',
-                      padx=(0, 4 if col < COLS - 1 else 0), pady=(0, 3))
-            tk.Label(cell, text=f"{icon}  {tekst}", font=_font(9),
-                     bg=BG_SURFACE, fg=kleur,
-                     anchor='nw', wraplength=260, justify='left').pack(fill=tk.X)
+                      padx=(0, 4 if col < COLS - 1 else 0), pady=(0, 4))
+            cell.pack_propagate(False)   # houd vaste hoogte, ongeacht tekst
+
+            lbl = tk.Label(cell, text=f"{icon}  {tekst}", font=_font(9),
+                           bg=BG_SURFACE, fg=kleur,
+                           anchor='nw', wraplength=400, justify='left')
+            lbl.pack(fill=tk.BOTH, expand=True)
+            adv_labels.append(lbl)
+
+        # Pas wraplength dynamisch aan op kolombreedte bij resize
+        def _on_adv_resize(event, _labels=adv_labels, _cols=COLS,
+                           _px=CARD_PAD_X):
+            col_w = max(120, (event.width - (_cols - 1) * 4) // _cols - _px * 2 - 4)
+            for _l in _labels:
+                try:
+                    _l.config(wraplength=col_w)
+                except tk.TclError:
+                    pass
+
+        self._advice_frame.bind("<Configure>", _on_adv_resize)
+
+        # Stuur tips door naar de scrollende ticker onderaan
+        self._update_ticker(tips)
+
         if hasattr(self, "_advice_updated_var"):
             self._advice_updated_var.set(datetime.datetime.now().strftime("%H:%M"))
+
+    # ──────────────────────────────────────────────────────────────────────────
+    # Ticker (scrollende prognose-balk onderaan het venster)
+    # ──────────────────────────────────────────────────────────────────────────
+
+    def _build_ticker(self):
+        """Bouw de scrollende ticker-balk onderaan self.root."""
+        TICKER_H = 22
+        outer = tk.Frame(self.root, bg=BG_PANEL, height=TICKER_H)
+        outer.pack(side=tk.BOTTOM, fill=tk.X)
+        outer.pack_propagate(False)
+        tk.Frame(outer, bg=ACCENT, height=1).pack(side=tk.TOP, fill=tk.X)
+
+        self._ticker_canvas = tk.Canvas(
+            outer, bg=BG_PANEL, height=TICKER_H - 1,
+            highlightthickness=0, bd=0
+        )
+        self._ticker_canvas.pack(fill=tk.BOTH, expand=True)
+
+        self._ticker_text_id = self._ticker_canvas.create_text(
+            0, (TICKER_H - 1) // 2,
+            text="",
+            fill=ACCENT,
+            font=_font(9),
+            anchor='w'
+        )
+        self._ticker_x      = 0      # huidige x-positie van het tekst-item
+        self._ticker_speed  = 2      # pixels per tick
+        self._ticker_active = False  # loopt de animatie al?
+        self._ticker_msg    = ""     # volledige te scrollen tekst
+
+    def _update_ticker(self, tips: list):
+        """Stel nieuwe ticker-tekst in op basis van de tips-lijst."""
+        if not hasattr(self, "_ticker_canvas"):
+            return
+        parts = []
+        for icon, tekst, _ in tips:
+            parts.append(f"{icon}  {tekst}")
+        separator = "    ·    "
+        full = separator.join(parts) + "    "
+        self._ticker_msg = full
+
+        # Zet tekst op canvas en bepaal breedte
+        self._ticker_canvas.itemconfig(self._ticker_text_id, text=full)
+        self._ticker_canvas.update_idletasks()
+        bbox = self._ticker_canvas.bbox(self._ticker_text_id)
+        text_w = (bbox[2] - bbox[0]) if bbox else 800
+        canvas_w = max(self._ticker_canvas.winfo_width(), 1)
+
+        # Begin rechts buiten beeld
+        self._ticker_x = canvas_w
+        self._ticker_canvas.coords(
+            self._ticker_text_id,
+            self._ticker_x,
+            self._ticker_canvas.winfo_height() // 2
+        )
+        self._ticker_text_w = text_w
+
+        if not self._ticker_active:
+            self._ticker_active = True
+            self._tick_ticker()
+
+    def _tick_ticker(self):
+        """Animatie-loop: verschuif de ticker-tekst elke 30 ms."""
+        if not hasattr(self, "_ticker_canvas"):
+            return
+        try:
+            canvas_w  = max(self._ticker_canvas.winfo_width(), 1)
+            text_w    = getattr(self, "_ticker_text_w", 800)
+            self._ticker_x -= self._ticker_speed
+            # Zodra de tekst volledig links buiten beeld is, start opnieuw rechts
+            if self._ticker_x < -text_w:
+                self._ticker_x = canvas_w
+            self._ticker_canvas.coords(
+                self._ticker_text_id,
+                self._ticker_x,
+                self._ticker_canvas.winfo_height() // 2
+            )
+            self.root.after(30, self._tick_ticker)
+        except tk.TclError:
+            self._ticker_active = False
 
     def _update_band_cond_panel(self, band_pct_day, band_pct_ngt):
         def _cond(pct):
@@ -2719,6 +3395,8 @@ class HAMIOSApp:
             self._solar_vars["muf"].set(f"{muf}")
         if "luf" in self._solar_vars:
             self._solar_vars["luf"].set(f"{luf}")
+        # Model foF2 (dagtijd): wordt gebruikt voor vergelijking met ionosonde
+        self._last_fof2_model: float = round(muf / 3.8, 2)
         self._draw_prop_bars(band_pct)
 
         # Bandconditie panel: altijd zowel dag als nacht berekenen
@@ -2762,7 +3440,8 @@ class HAMIOSApp:
                        self._show_cs_var.get(),
                        self._hist_range_var.get(),
                        self._hist_sel,
-                       self._k_alert_var.get())
+                       self._k_alert_var.get(),
+                       self._lang_var.get())
 
     # ── Refresh interval ──────────────────────────────────────────────────────
     # ── Systeem-tray ─────────────────────────────────────────────────────────
@@ -2843,6 +3522,12 @@ class HAMIOSApp:
     # ── Solar data ────────────────────────────────────────────────────────────
     def _refresh_solar(self):
         data = _fetch_solar()
+        # Ionosonde: kies dichtstbijzijnde station o.b.v. QTH
+        station = _nearest_iono_station(self._qth_lat, self._qth_lon)
+        iono = _fetch_ionosonde(station[0])
+        data["iono_fof2"]    = iono["fof2"]
+        data["iono_time"]    = iono["time"]
+        data["iono_station"] = iono["station"]
         self.root.after(0, lambda: self._update_solar(data))
 
     def _schedule_solar(self):
@@ -2903,12 +3588,67 @@ class HAMIOSApp:
         except (ValueError, TypeError):
             pass
 
+        # Proton flux kleur: paars kleurschema (S1→S5 schaal)
+        try:
+            pf_val = float(data.get("proton_flux", "0").replace("—", "0"))
+            if pf_val >= 1000:
+                pf_color = "#EA80FC"   # felpaars — S5
+            elif pf_val >= 100:
+                pf_color = "#CE93D8"   # middel-paars — S3/S4
+            elif pf_val >= 10:
+                pf_color = "#BA68C8"   # licht-paars — S1/S2
+            else:
+                pf_color = TEXT_H1
+            if hasattr(self, "_solar_val_lbls") and "proton_flux" in self._solar_val_lbls:
+                self._solar_val_lbls["proton_flux"].config(fg=pf_color)
+        except (ValueError, TypeError):
+            pf_val = 0.0
+
+        # Ionosonde foF2: gemeten vs model — kleur op basis van overeenkomst
+        iono_fof2_str  = data.get("iono_fof2",    "—")
+        iono_time_str  = data.get("iono_time",    "—")
+        iono_station   = data.get("iono_station", "—")
+        fof2_model     = getattr(self, "_last_fof2_model", 0.0)
+        if iono_fof2_str != "—" and fof2_model > 0:
+            try:
+                fof2_meas = float(iono_fof2_str)
+                diff = abs(fof2_meas - fof2_model)
+                if diff <= 0.8:
+                    iono_color = "#66BB6A"    # groen — goede overeenkomst
+                elif diff <= 2.0:
+                    iono_color = "#FFA726"    # oranje — matige afwijking
+                else:
+                    iono_color = "#EF5350"    # rood — grote afwijking
+                display_val = f"{fof2_meas:.1f}/{fof2_model:.1f}"
+            except (ValueError, TypeError):
+                iono_color  = TEXT_DIM
+                display_val = f"—/{fof2_model:.1f}"
+        elif fof2_model > 0:
+            iono_color  = TEXT_DIM
+            display_val = f"—/{fof2_model:.1f}"
+        else:
+            iono_color  = TEXT_DIM
+            display_val = "—"
+        if "iono_fof2" in self._solar_vars:
+            self._solar_vars["iono_fof2"].set(display_val)
+        if hasattr(self, "_solar_val_lbls") and "iono_fof2" in self._solar_val_lbls:
+            self._solar_val_lbls["iono_fof2"].config(fg=iono_color)
+        # Update het label-tekst met stationsnaam (bijv. "foF2 DB/md MHz")
+        # via een apart StringVar voor het label zelf is niet beschikbaar; gebruik tooltip
+        if hasattr(self, "_iono_station_var") and iono_station != "—":
+            # Verkorte naam voor smal label (max 15 tekens incl. dubbele punt)
+            short = iono_station[:13]
+            self._iono_station_var.set(f"foF2 {short}:")
+
         # Bijgewerkt: toon QTH-lokale tijd
         local_now = datetime.datetime.now().strftime("%H:%M")
         self._updated_var.set(f"Bijgewerkt: {local_now}")
 
         # ── X-flare detectie ──────────────────────────────────────────────────
         self._check_xflare(data.get("xray", ""))
+
+        # ── PCA detectie ──────────────────────────────────────────────────────
+        self._check_pca(data.get("proton_flux", "—"))
 
         self._recalc_prop(auto_daynight=True)
         self.root.after(0, self._draw_map)
@@ -2940,6 +3680,47 @@ class HAMIOSApp:
         self._xflare_var.set("")
         self._last_xflare = ""
 
+    def _check_pca(self, proton_flux_str: str):
+        """Detecteer proton event en toon PCA-waarschuwing (paars)."""
+        if not hasattr(self, "_pca_var"):
+            return
+        try:
+            pf = float(proton_flux_str.replace("—", "0"))
+        except (ValueError, TypeError):
+            pf = 0.0
+
+        # NOAA S-schaal voor solare straling (proton events)
+        if pf >= 1000:
+            s_level, s_color = 5, "#EA80FC"
+            dur = "3–7 dagen"
+        elif pf >= 100:
+            s_level, s_color = 3, "#CE93D8"
+            dur = "2–4 dagen"
+        elif pf >= 10:
+            s_level, s_color = 1, "#BA68C8"
+            dur = "1–2 dagen"
+        else:
+            s_level = 0
+            s_color = TEXT_H1
+            dur = ""
+
+        if s_level >= 1:
+            msg = (f"☢  PCA-waarschuwing S{s_level}: proton flux {pf:.1f} pfu — "
+                   f"poolroutes geblokkeerd (~{dur}). "
+                   "160m–40m poolpaden onbruikbaar.")
+            self._pca_var.set(msg)
+            self._pca_lbl.config(fg=s_color)
+            # Tray-notificatie alleen bij nieuw of escalerend event
+            if s_level > self._last_pca_level:
+                self._tray_notify(
+                    f"☢ Proton event S{s_level}",
+                    f"Proton flux: {pf:.1f} pfu. "
+                    f"Polar Cap Absorption — poolroutes geblokkeerd (~{dur}).")
+            self._last_pca_level = s_level
+        else:
+            self._pca_var.set("")
+            self._last_pca_level = 0
+
     # ── Venster centreren ─────────────────────────────────────────────────────
     def _center_window(self, w_hint: int, *_):
         # update() zodat canvas-widgets correct gemeten worden (resize-events vuren)
@@ -2950,8 +3731,8 @@ class HAMIOSApp:
         usable_h = scr_h - 60   # reserveer ruimte voor taakbalk
         # Breedte: gebruik hint, begrensd aan scherm
         w = min(w_hint, usable_w)
-        # Hoogte: 920px streefwaarde; nooit meer dan scherm toelaat
-        h = min(usable_h, 920)
+        # Hoogte: fit exact aan inhoud, nooit meer dan scherm toelaat
+        h = min(usable_h, self.root.winfo_reqheight())
         x = max(0, (scr_w - w) // 2)
         y = max(0, (scr_h - h) // 2)
         self.root.geometry(f"{w}x{h}+{x}+{y}")
