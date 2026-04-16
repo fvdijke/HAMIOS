@@ -1,10 +1,10 @@
-<img width="1725" height="1327" alt="HAMIOS v2.1" src="https://github.com/user-attachments/assets/580cad59-ff2d-4bdd-a81a-6fc4c3610417" />
+<img width="1725" height="1327" alt="HAMIOS v2.2" src="https://github.com/user-attachments/assets/580cad59-ff2d-4bdd-a81a-6fc4c3610417" />
 
-# 📡 HAMIOS v2.1
+# 📡 HAMIOS v2.2
 
 **HAM-radio propagatie- en DX-monitor voor Windows**
 
-> v2.1 — gele stip per advieskaartje bij nieuwe inhoud · ticker aan/uit-toggle · advies-paneel vaste hoogte bij startup
+> v2.2 — solar-panel timestamp naar header · PCA-label altijd zichtbaar · MIN_WINDOW_H(1042px) correct berekend
 
 *Bedacht door Frank van Dijke · Ontwikkeld met Claude AI*
 

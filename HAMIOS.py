@@ -1,5 +1,5 @@
 """
-HAMIOS v2.1
+HAMIOS v2.2
 by Frank van Dijke
 
 HAM radio propagation en DX tool met donkere GUI.
@@ -55,9 +55,18 @@ Todo
     Bij het opstarten moet dit paneel al de juiste grote hebben zodat, en de titel, en de 4 rijen en de ticker zichtbaar zijn.
 
 ─────────────────────────────────────────────────────────────────────
-Change Log (2.1)
+Change Log (2.2)
 ─────────────────────────────────────────────────────────────────────
 
+· 2026-04-16 12:51 — "Bijgewerkt"-timestamp verplaatst van solar-panel footer naar
+               solar-panel header (consistent met andere panelen). Footer-
+               separator verwijderd → ruimte vrij voor X-flare + PCA-label.
+               SOLAR_MIN_H verlaagd naar 620px, MIN_WINDOW_H naar 1042px.
+· 2026-04-16 12:45 — MIN_WINDOW_H (1072px) berekend uit alle vaste componenten:
+               APP_HDR_H(42) + SOLAR_MIN_H(650) + ADV_SECTION_H(348) +
+               TICKER_H(22) + padding. solar_col krijgt height=SOLAR_MIN_H
+               zodat PCA-label altijd zichtbaar is. _center_window gebruikt
+               MIN_WINDOW_H als standaard minimum.
 · 2026-04-16 12:30 — Advies-paneel krijgt vaste hoogte (ADV_SECTION_H) via
                pack_propagate(False) zodat winfo_reqheight() al bij startup
                de juiste waarde rapporteert. _center_window gebruikt nu
@@ -114,11 +123,23 @@ ADV_CARD_H   = 74    # vaste hoogte per advieskaart (pixels)
 ADV_CARD_GAP = 4    # verticale ruimte tussen rijen
 ADV_ROWS     = 4    # zichtbare rijen bij opstarten
 
-# Afleiding van de totale hoogte van het advies-sectie (wordt gebruikt voor fixed-height outer frame):
-#   accent-balk (2) + header-rij (pady_top 4 + label ~22) + kaartgebied + ondermarge adv_wrap (8)
-TICKER_H       = 22   # hoogte ticker-balk (ook gebruikt in _build_ticker)
-ADV_HDR_STRIP  = 28   # accent (2) + adv_hdr met padding (~26)
+# ── Vaste hoogte-constanten (gebruikt voor fixed-height frames en _center_window) ──
+TICKER_H      = 22   # hoogte ticker-balk
+APP_HDR_H     = 42   # hoogte app-header balk
+
+# Advies-sectie: accent (2) + header-rij pady+label (~26) + kaartgebied + ondermarge (8)
+ADV_HDR_STRIP  = 28
 ADV_SECTION_H  = ADV_HDR_STRIP + ADV_ROWS * (ADV_CARD_H + ADV_CARD_GAP) + 8
+
+# Solar-paneel minimum: header(38) + 11 param-rijen+K-alert(288) + separator(13) +
+#   band-tabel header(20) + 11 HF-banden(198) + x-flare lbl(22) + PCA-lbl(20) = 599
+#   → afgerond met marge (timestamp zit nu in header, footer-separator verwijderd)
+SOLAR_MIN_H   = 620
+
+# Minimale venster-hoogte zodat alles zichtbaar is bij opstarten:
+#   app-header + solar-paneel (bepaalt top_row hoogte) + outer-pady(6) +
+#   advies-sectie + body-ondermarge(4) + ticker
+MIN_WINDOW_H  = APP_HDR_H + SOLAR_MIN_H + 6 + ADV_SECTION_H + 4 + TICKER_H
 
 BG_ROOT    = "#1A1C1F"
 BG_PANEL   = "#22252A"
@@ -1144,7 +1165,7 @@ class _Tooltip:
 class HAMIOSApp:
     def __init__(self, root: tk.Tk):
         self.root = root
-        self.root.title("HAMIOS v2.1")
+        self.root.title("HAMIOS v2.2")
         self.root.configure(bg=BG_ROOT)
         self.root.minsize(800, 500)
 
@@ -1308,7 +1329,7 @@ class HAMIOSApp:
         hdr = tk.Frame(self.root, bg=BG_PANEL, height=42)
         hdr.pack(fill=tk.X)
         tk.Frame(hdr, bg=ACCENT, width=4).pack(side=tk.LEFT, fill=tk.Y)
-        tk.Label(hdr, text="📡  HAMIOS v2.1",
+        tk.Label(hdr, text="📡  HAMIOS v2.2",
                  font=_font(13, "bold"), bg=BG_PANEL, fg=ACCENT,
                  pady=8).pack(side=tk.LEFT, padx=10)
 
@@ -1434,14 +1455,18 @@ class HAMIOSApp:
         top_row.pack(fill=tk.BOTH, expand=True)
 
         # Solar rechts (eerst pack zodat hij niet wordt verdrongen)
-        solar_col = tk.Frame(top_row, bg=BG_PANEL, width=210)
+        solar_col = tk.Frame(top_row, bg=BG_PANEL, width=210, height=SOLAR_MIN_H)
         solar_col.pack(side=tk.RIGHT, fill=tk.Y, padx=(10, 0))
         solar_col.pack_propagate(False)
 
         tk.Frame(solar_col, bg=ACCENT, height=2).pack(fill=tk.X)
-        tk.Label(solar_col, text="☀  Solar / Ionosfeer",
-                 font=_font(10, "bold"), bg=BG_PANEL, fg=ACCENT,
-                 pady=8).pack(anchor='w', padx=10)
+        solar_hdr = tk.Frame(solar_col, bg=BG_PANEL)
+        solar_hdr.pack(fill=tk.X, padx=10, pady=(6, 4))
+        tk.Label(solar_hdr, text="☀  Solar / Ionosfeer",
+                 font=_font(10, "bold"), bg=BG_PANEL, fg=ACCENT).pack(side=tk.LEFT)
+        self._updated_var = tk.StringVar(value="")
+        tk.Label(solar_hdr, textvariable=self._updated_var,
+                 font=_font(8), bg=BG_PANEL, fg=TEXT_DIM).pack(side=tk.RIGHT)
 
         self._solar_frame = tk.Frame(solar_col, bg=BG_PANEL)
         self._solar_frame.pack(fill=tk.BOTH, expand=True, padx=10)
@@ -1584,12 +1609,6 @@ class HAMIOSApp:
                                bg=BG_PANEL, fg=TEXT_DIM, width=6, anchor='w')
             ngt_lbl.pack(side=tk.LEFT)
             self._band_cond_labels[name] = (day_lbl, ngt_lbl, is_hf)
-
-        tk.Frame(self._solar_frame, bg=BORDER, height=1).pack(fill=tk.X, pady=6)
-        self._updated_var = tk.StringVar(value="")
-        tk.Label(self._solar_frame, textvariable=self._updated_var,
-                 font=_font(8), bg=BG_PANEL, fg=TEXT_DIM,
-                 wraplength=200, justify='left').pack(anchor='w')
 
         # X-flare waarschuwing
         self._xflare_lbl = tk.Label(self._solar_frame, textvariable=self._xflare_var,
@@ -3464,7 +3483,7 @@ class HAMIOSApp:
             pystray.Menu.SEPARATOR,
             pystray.MenuItem("Afsluiten", self._tray_quit),
         )
-        self._tray_icon = pystray.Icon("HAMIOS", tray_img, "HAMIOS v2.1", menu)
+        self._tray_icon = pystray.Icon("HAMIOS", tray_img, "HAMIOS v2.2", menu)
         threading.Thread(target=self._tray_icon.run, daemon=True).start()
 
     def _tray_show(self, icon=None, item=None):
@@ -3727,7 +3746,7 @@ class HAMIOSApp:
             self._last_pca_level = 0
 
     # ── Venster centreren ─────────────────────────────────────────────────────
-    def _center_window(self, w_hint: int, h_hint: int = 960):
+    def _center_window(self, w_hint: int, h_hint: int = MIN_WINDOW_H):
         # update() zodat canvas-widgets correct gemeten worden (resize-events vuren)
         self.root.update()
         scr_w = self.root.winfo_screenwidth()
@@ -3736,7 +3755,7 @@ class HAMIOSApp:
         usable_h = scr_h - 60   # reserveer ruimte voor taakbalk
         # Breedte: gebruik hint, begrensd aan scherm
         w = min(w_hint, usable_w)
-        # Hoogte: minstens h_hint zodat advies-paneel + ticker altijd zichtbaar zijn
+        # Hoogte: minstens MIN_WINDOW_H (app-header + solar + advies + ticker)
         h = min(usable_h, max(h_hint, self.root.winfo_reqheight()))
         x = max(0, (scr_w - w) // 2)
         y = max(0, (scr_h - h) // 2)
