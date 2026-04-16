@@ -1,5 +1,5 @@
 """
-HAMIOS v2.0
+HAMIOS v2.1
 by Frank van Dijke
 
 HAM radio propagation en DX tool met donkere GUI.
@@ -14,34 +14,23 @@ Dependencies:
 Todo
 ─────────────────────────────────────────────────────────────────────
 
-[ ] WSPR/PSKReporter spots op kaart
+[ ] WSPR/PSKReporter spots op kaart, selecteerbaar
     Haal live gemeten propagatiepaden op van wspr.rocks (WSPR) of
     pskreporter.info (FT8/FT4). Teken verbindingslijnen op de wereldkaart
     (kleur = band, dikte = SNR). Selecteerbaar via checkbox in kaart-header.
     Geeft echte gemeten propagatie i.p.v. alleen modelwaarden.
 
-[ ] Aurora-ring overlay op kaart
+[ ] Aurora-ring overlay op kaart, selecteerbaar
     Teken de magnetische aurora-ovaal op de kaart op basis van de K-index
     (hogere K → ring schuift equatorwaarts). Gebruik de empirische formule
     van Feldstein/Holzworth. Geeft direct inzicht in geblokkeerde poolroutes.
     Kleur: groen/geel/rood afhankelijk van K-niveau.
 
-[ ] DX-spot markers op de kaart
+[ ] DX-spot markers op de kaart, selecteerbaar
     Teken de actieve DX-cluster spots als lijnen op de kaart: stip op de
     DX-locatie (DXCC-centroid) en lijn naar de spotter. Kleur per band.
     Toggle via "Spots"-checkbox in de kaart-header. Klikken op een stip
     toont de callsign, frequentie en comment als pop-up.
-
-[ ] Meerdere QTH-profielen
-    Sla meerdere locaties op in HAMIOS.ini (Thuis, Portable, Vakantie, …)
-    en schakel snel tussen profielen via een dropdown in de header.
-    Bij wisselen: alle kaarten, propagatieberekening en groot-cirkel
-    actualiseren automatisch voor de nieuwe locatie.
-
-[ ] Maidenhead-locator invoer
-    Naast Lat/Lon ook een QTH-locator invoerveld (bijv. JO22ip).
-    Conversie locator ↔ lat/lon in beide richtingen. Toon de berekende
-    locator ook als info-label naast de coördinaten.
 
 [ ] CAT-interface via rigctld (Hamlib)
     Verbinding met transceiver via rigctld TCP (localhost:4532).
@@ -49,83 +38,39 @@ Todo
     HF-betrouwbaarheidspaneel. Optioneel: stuur frequentie naar de radio
     via klikken op een band in het schema.
 
-[ ] Contest-kalender
-    Toon welke grote HF-contesten dit weekend of de komende 7 dagen actief
-    zijn (CQWW, CQWPX, PACC, WAE, IOTA, ARRL DX, …). Statische jaarkalender
-    aangevuld met een JSON-feed van contest-calendar.com. Weergave als
-    compacte lijst of badge in de header.
+[x] Nieuw bericht aanduiding
+    Zet in de analyse/advies kaart een gele stip rechts boven zodat je kan zien
+    dat er bericht ververst is. Verwijder de stip bij de eerst volgende refresh tenzij
+    er een nieuw bericht is.
 
-[ ] Simpele QSO-logger
-    Tab of uitklapbaar paneel met snellog-formulier: datum/tijd (auto),
-    callsign, band, modus, RST. Opslaan naar ADIF-bestand (standaard
-    HAM-logformaat). Toon het aantal QSO's van die dag als teller in
-    de header. Export-knop voor ADIF.
+[ ] Vertaal de app
+    Vertaal alle teksten in NL,UK,DE,FR, IT
+    Ook de analyses, helpteksten en interface teksten.
 
-[ ] Exporteren / screenshot
-    Knop "Exporteer rapport" die de huidige propagatiestaat opslaat als
-    PNG-screenshot van het hoofdvenster (tkinter canvas → PIL → bestand)
-    en/of als HTML-rapport met alle solarwaarden, bandtabel en adviezen.
-    Tijdstempel in bestandsnaam.
+[x] Maak de ticker selecteerbaar
+    Zet een selectievakje in de header die de ticker selecteerbaar maakt.
+
+[x] Pas grote van de analyse en advies paneel aan
+    Maak het analyse en advies paneel net zo groot voor de header en de 4 rijen kaarten plus te ticker.
+    Bij het opstarten moet dit paneel al de juiste grote hebben zodat, en de titel, en de 4 rijen en de ticker zichtbaar zijn.
 
 ─────────────────────────────────────────────────────────────────────
-Change Log (2.0)
+Change Log (2.1)
 ─────────────────────────────────────────────────────────────────────
 
-· 2026-04-14   Scrollende ticker onderaan het venster: toont een gecumuleerde
-               samenvatting van alle propagatie-adviezen (tips-lijst). Canvas-
-               animatie verschuift de tekst met 2 px/30 ms van rechts naar links;
-               reset automatisch zodra de tekst volledig verdwijnt. Wordt ververst
-               bij elke _update_advice()-aanroep. Pakket voor body (side=BOTTOM).
-· 2026-04-14   Ionosonde foF2 live data: rij "foF2 <station>:" in Solar-paneel toont
-               gemeten/model (bijv. "4.5/4.2"). Dichtstbijzijnde Europese ionosonde
-               automatisch gekozen o.b.v. QTH (Dourbes BE, Juliusruh DE, Ebro ES,
-               Průhonice CZ, Rome IT, Athene GR). Bron: GIRO/LGDC DIDBase. Kleur:
-               groen (≤0.8 MHz afwijking) / oranje (≤2.0) / rood (>2.0). Label-tekst
-               toont stationsnaam na eerste fetch. _last_fof2_model opgeslagen in
-               _recalc_prop (= MUF/3.8); ionosonde parallel opgehaald in _refresh_solar.
-· 2026-04-14   Proton flux / PCA-indicator: nieuwe rij "Proton >10MeV (pfu)" in het
-               Solar-paneel (paars kleurschema S1–S5). Primaire bron: HamQSL XML
-               protonflux-veld; backup: NOAA GOES integral-protons JSON. PCA-
-               waarschuwingslabel (paars) en tray-notificatie bij event (S1+).
-               Advies item #5 toont altijd proton flux status met PCA-tekst bij event.
-· 2026-04-14   Advies-paneel: alle kaarten zichtbaar (vaste hoogte 74px per kaart,
-               geen height-cap op wrapper). 3 gelijke kolommen; wraplength past
-               zich dynamisch aan bij venstergrootte (<Configure>-binding).
-· 2026-04-14   Propagatie Advies uitgebreid: 6 nieuwe analyses (items 10–15):
-               Sporadic-E kans (seizoen + piekuren), TEP-venster (equinox),
-               propagatie trend (delta SFI/K/banden vs ~2u geleden uit history),
-               zonnecyclus fase (SSN positie cyclus 25), storm-herstelprognose
-               (A-index gebaseerde normaliseringstijd bij K≥5), DX-cluster
-               continent-verdeling, beste DX-routes op basis van UTC-uur + MUF.
-· 2026-04-14   Exit knop (rood, links in header) sluit programma netjes af.
-               Taalkeuzelijst (NL/EN/DE/FR) in header: vertaalt header-labels,
-               paneltitels en kaart-checkboxes live. QTH Lat/Lon invoer verplaatst
-               van kaart-header naar hoofd-header.
-· 2026-04-13 09:15 CEST — Fix solarwind fetch: NOAA SWPC retourneert lijst van dicts
-               ipv een dict; sleutelnamen zijn 'proton_speed' en 'bz_gsm'.
-· 2026-04-13 09:08 CEST — Zoomen en pannen van de wereldkaart: muiswiel zoom
-               (1×–8×, cursor-gecentreerd), click+drag pant, rechter muisklik
-               reset zoom/pan (of wist groot-cirkel als zoom=1). Alle overlays
-               (nacht, zon, maan, ITU, locator, aurora, CS, groot-cirkel) worden
-               correct getekend op de virtuele VW×VH kaart en gecropped naar
-               de viewport. Cache invalide bij zoom-wijziging.
-· 2026-04-13 09:01 CEST — Callsign-prefix laag op wereldkaart: checkbox "CS" in
-               kaart-header toont ~110 DXCC-entiteiten als gele stip + prefix-
-               label (PA, G, DL, JA, W, VK enz.). Laag opgeslagen in INI.
-· 2026-04-12 17:33 CEST — Tooltips verbeterd: _Tooltip krijgt 350ms vertraging voor
-               tonen, schermrand-detectie (tooltip klapt om als hij buiten scherm
-               valt), wraplength 380px voor lange tekst, 1px rand voor betere
-               zichtbaarheid. Hover-tooltip op Bandopenings-schema (band, uur,
-               kwaliteit, FT8-freq, modi). Hover-tooltip op Band Verloop
-               (tijdstip + alle band%-waarden gesorteerd op kwaliteit).
-· 2026-04-12 17:30 CEST — Alle panelen voorzien van 'bijgewerkt HH:MM' timestamp:
-               Wereldkaart, HF Betrouwbaarheid, Band Verloop, Bandopenings-schema,
-               DX Spots (tijd toegevoegd aan statusregel) en Advies.
-               Solar/Ionosfeer had al een bijgewerkt-label.
-· 2026-04-12 17:20 CEST — Solarwind toegevoegd aan Solar/Ionosfeer paneel:
-               snelheid (km/s) en Bz (nT) opgehaald van NOAA SWPC. Bz negatief
-               kleurt oranje (≤−10 nT) of rood (≤−20 nT). Tooltips voor beide
-               velden toegevoegd.
+· 2026-04-16 12:30 — Advies-paneel krijgt vaste hoogte (ADV_SECTION_H) via
+               pack_propagate(False) zodat winfo_reqheight() al bij startup
+               de juiste waarde rapporteert. _center_window gebruikt nu
+               h_hint (960) als minimum hoogte, zodat titel, 4 kaart-rijen
+               en ticker altijd zichtbaar zijn bij opstarten.
+· 2026-04-16 12:21 — Ticker aan/uit-selectievakje in de header toegevoegd; instelling
+               wordt opgeslagen in HAMIOS.ini. Animatie stopt netjes wanneer
+               de ticker verborgen wordt en herstart bij het inschakelen.
+· 2026-04-16 12:10 — Gele stip per advieskaartje rechts boven: verschijnt wanneer
+               de inhoud van dat kaartje gewijzigd is t.o.v. de vorige refresh;
+               verdwijnt automatisch als de volgende refresh dezelfde inhoud
+               oplevert. Zo is direct zichtbaar welke kaartjes actuele nieuwe
+               informatie bevatten.
 
 """
 
@@ -165,9 +110,15 @@ MAP_URL       = ("https://eoimages.gsfc.nasa.gov/images/imagerecords/"
                  "57000/57752/land_shallow_topo_2048.jpg")
 
 # ── Thema ──────────────────────────────────────────────────────────────────────
-ADV_CARD_H  = 74    # vaste hoogte per advieskaart (pixels)
-ADV_CARD_GAP = 4   # verticale ruimte tussen rijen
-ADV_ROWS     = 4   # zichtbare rijen bij opstarten
+ADV_CARD_H   = 74    # vaste hoogte per advieskaart (pixels)
+ADV_CARD_GAP = 4    # verticale ruimte tussen rijen
+ADV_ROWS     = 4    # zichtbare rijen bij opstarten
+
+# Afleiding van de totale hoogte van het advies-sectie (wordt gebruikt voor fixed-height outer frame):
+#   accent-balk (2) + header-rij (pady_top 4 + label ~22) + kaartgebied + ondermarge adv_wrap (8)
+TICKER_H       = 22   # hoogte ticker-balk (ook gebruikt in _build_ticker)
+ADV_HDR_STRIP  = 28   # accent (2) + adv_hdr met padding (~26)
+ADV_SECTION_H  = ADV_HDR_STRIP + ADV_ROWS * (ADV_CARD_H + ADV_CARD_GAP) + 8
 
 BG_ROOT    = "#1A1C1F"
 BG_PANEL   = "#22252A"
@@ -419,6 +370,7 @@ def _load_settings() -> dict:
         "antenna":       cfg.get       ("App",   "antenna",        fallback="Isotropic 0dBi"),
         "dst":           cfg.getboolean("App",   "dst",            fallback=True),
         "show_tips":     cfg.getboolean("App",   "show_tips",      fallback=True),
+        "show_ticker":   cfg.getboolean("App",   "show_ticker",    fallback=True),
         "language":      cfg.get       ("App",   "language",       fallback="Nederlands"),
         "show_sun":      cfg.getboolean("Map",   "show_sun",       fallback=True),
         "show_moon":     cfg.getboolean("Map",   "show_moon",      fallback=True),
@@ -435,6 +387,7 @@ def _save_settings(lat: float, lon: float, refresh: str,
                    mode: str = "SSB", power: str = "100W",
                    antenna: str = "Isotropic 0dBi",
                    dst: bool = True, show_tips: bool = True,
+                   show_ticker: bool = True,
                    show_sun: bool = True, show_moon: bool = True,
                    show_locator: bool = False,
                    show_graylijn: bool = True,
@@ -448,7 +401,8 @@ def _save_settings(lat: float, lon: float, refresh: str,
     cfg["QTH"]   = {"lat": str(lat), "lon": str(lon)}
     cfg["App"]   = {"refresh": refresh, "mode": mode, "power": power,
                     "antenna": antenna, "dst": str(dst),
-                    "show_tips": str(show_tips), "language": language}
+                    "show_tips": str(show_tips), "show_ticker": str(show_ticker),
+                    "language": language}
     cfg["Map"]   = {"show_sun": str(show_sun), "show_moon": str(show_moon),
                     "show_locator": str(show_locator),
                     "show_graylijn": str(show_graylijn),
@@ -793,6 +747,7 @@ _T: dict[str, dict[str, str]] = {
     "exit":        {"nl": "Afsluiten",   "en": "Exit",          "de": "Beenden",     "fr": "Quitter"},
     "summer_time": {"nl": "Zomertijd",   "en": "Summer time",   "de": "Sommerzeit",  "fr": "Heure d'été"},
     "tooltips":    {"nl": "Tooltips",    "en": "Tooltips",      "de": "Tooltips",    "fr": "Infobulles"},
+    "ticker":      {"nl": "Ticker",     "en": "Ticker",        "de": "Laufband",    "fr": "Défilant"},
     "auto_lbl":    {"nl": "Auto:",       "en": "Auto:",         "de": "Auto:",       "fr": "Auto:"},
     "lang_lbl":    {"nl": "Taal:",       "en": "Lang:",         "de": "Sprache:",    "fr": "Langue:"},
     "qth_lat_lbl": {"nl": "QTH  Lat:",   "en": "QTH  Lat:",     "de": "QTH  Br:",    "fr": "QTH  Lat:"},
@@ -1189,7 +1144,7 @@ class _Tooltip:
 class HAMIOSApp:
     def __init__(self, root: tk.Tk):
         self.root = root
-        self.root.title("HAMIOS v2.0")
+        self.root.title("HAMIOS v2.1")
         self.root.configure(bg=BG_ROOT)
         self.root.minsize(800, 500)
 
@@ -1212,7 +1167,8 @@ class HAMIOSApp:
         self._history:    list = _load_history()
         self._hist_range_var = tk.StringVar(value=s["hist_range"])
         self._hist_sel: set  = s["hist_sel"]
-        self._show_tips_var  = tk.BooleanVar(value=s["show_tips"])
+        self._show_tips_var    = tk.BooleanVar(value=s["show_tips"])
+        self._ticker_enabled_var = tk.BooleanVar(value=s["show_ticker"])
         self._show_sun_var      = tk.BooleanVar(value=s["show_sun"])
         self._show_moon_var     = tk.BooleanVar(value=s["show_moon"])
         self._show_locator_var  = tk.BooleanVar(value=s["show_locator"])
@@ -1244,6 +1200,7 @@ class HAMIOSApp:
         self._dx_after_id           = None
         self._dx_next_at: datetime.datetime | None = None
         self._dx_own_cont_var       = tk.BooleanVar(value=True)
+        self._advice_card_hashes: dict = {}   # kaart-index → hash, voor nieuw-stip per kaartje
 
         self._build_ui()
         # Herstel legenda-selectie visueel na opbouw UI
@@ -1351,7 +1308,7 @@ class HAMIOSApp:
         hdr = tk.Frame(self.root, bg=BG_PANEL, height=42)
         hdr.pack(fill=tk.X)
         tk.Frame(hdr, bg=ACCENT, width=4).pack(side=tk.LEFT, fill=tk.Y)
-        tk.Label(hdr, text="📡  HAMIOS v2.0",
+        tk.Label(hdr, text="📡  HAMIOS v2.1",
                  font=_font(13, "bold"), bg=BG_PANEL, fg=ACCENT,
                  pady=8).pack(side=tk.LEFT, padx=10)
 
@@ -1389,6 +1346,14 @@ class HAMIOSApp:
                                  font=_font(9))
         cb_tips.pack(side=tk.RIGHT, padx=(0, 4))
         self._tr_widgets["tooltips"] = cb_tips
+        cb_ticker = tk.Checkbutton(hdr, text=self._tr("ticker"),
+                                   variable=self._ticker_enabled_var,
+                                   command=self._toggle_ticker,
+                                   bg=BG_PANEL, fg=TEXT_DIM, selectcolor=BG_SURFACE,
+                                   activebackground=BG_PANEL, activeforeground=TEXT_BODY,
+                                   font=_font(9))
+        cb_ticker.pack(side=tk.RIGHT, padx=(0, 4))
+        self._tr_widgets["ticker"] = cb_ticker
 
         # QTH Lat/Lon invoer
         tk.Frame(hdr, bg=BORDER, width=1).pack(side=tk.RIGHT, fill=tk.Y, pady=8)
@@ -2783,8 +2748,10 @@ class HAMIOSApp:
 
     # ── Advies panel ─────────────────────────────────────────────────────────
     def _build_advice_panel(self, parent):
-        outer = tk.Frame(parent, bg=BG_PANEL)
+        # Vaste hoogte op basis van constanten zodat winfo_reqheight() bij startup klopt
+        outer = tk.Frame(parent, bg=BG_PANEL, height=ADV_SECTION_H)
         outer.pack(fill=tk.X, pady=(6, 0))
+        outer.pack_propagate(False)
         tk.Frame(outer, bg=ACCENT, height=2).pack(fill=tk.X)
         adv_hdr = tk.Frame(outer, bg=BG_PANEL)
         adv_hdr.pack(fill=tk.X, padx=10, pady=(4, 0))
@@ -3227,6 +3194,9 @@ class HAMIOSApp:
 
         adv_labels: list = []   # bewaar label-refs voor wraplength-update
 
+        _DOT = 8   # diameter gele stip per kaartje
+        new_hashes: dict = {}
+
         for i, (icon, tekst, kleur) in enumerate(tips):
             col = i % COLS
             row = i // COLS
@@ -3244,6 +3214,21 @@ class HAMIOSApp:
                            anchor='nw', wraplength=400, justify='left')
             lbl.pack(fill=tk.BOTH, expand=True)
             adv_labels.append(lbl)
+
+            # Gele stip rechts boven in de kaart als inhoud gewijzigd is
+            card_hash = hash((icon, tekst))
+            new_hashes[i] = card_hash
+            dot_fill = ("#FFCC00"
+                        if (i not in self._advice_card_hashes or
+                            self._advice_card_hashes[i] != card_hash)
+                        else BG_SURFACE)
+            dot_cv = tk.Canvas(cell, width=_DOT, height=_DOT,
+                               bg=BG_SURFACE, highlightthickness=0, bd=0)
+            dot_cv.place(relx=1.0, rely=0.0, anchor='ne', x=-3, y=4)
+            dot_cv.create_oval(1, 1, _DOT - 1, _DOT - 1,
+                               fill=dot_fill, outline="")
+
+        self._advice_card_hashes = new_hashes
 
         # Pas wraplength dynamisch aan op kolombreedte bij resize
         def _on_adv_resize(event, _labels=adv_labels, _cols=COLS,
@@ -3269,10 +3254,11 @@ class HAMIOSApp:
 
     def _build_ticker(self):
         """Bouw de scrollende ticker-balk onderaan self.root."""
-        TICKER_H = 22
-        outer = tk.Frame(self.root, bg=BG_PANEL, height=TICKER_H)
-        outer.pack(side=tk.BOTTOM, fill=tk.X)
-        outer.pack_propagate(False)
+        self._ticker_outer = tk.Frame(self.root, bg=BG_PANEL, height=TICKER_H)
+        if self._ticker_enabled_var.get():
+            self._ticker_outer.pack(side=tk.BOTTOM, fill=tk.X)
+        self._ticker_outer.pack_propagate(False)
+        outer = self._ticker_outer
         tk.Frame(outer, bg=ACCENT, height=1).pack(side=tk.TOP, fill=tk.X)
 
         self._ticker_canvas = tk.Canvas(
@@ -3324,9 +3310,27 @@ class HAMIOSApp:
             self._ticker_active = True
             self._tick_ticker()
 
+    def _toggle_ticker(self):
+        """Toon of verberg de ticker-balk en sla de instelling op."""
+        if not hasattr(self, "_ticker_outer"):
+            return
+        if self._ticker_enabled_var.get():
+            self._ticker_outer.pack(side=tk.BOTTOM, fill=tk.X)
+            # Herstart animatie als er tekst is
+            if self._ticker_msg and not self._ticker_active:
+                self._ticker_active = True
+                self._tick_ticker()
+        else:
+            self._ticker_outer.pack_forget()
+            self._ticker_active = False
+        self._save_cur_settings()
+
     def _tick_ticker(self):
         """Animatie-loop: verschuif de ticker-tekst elke 30 ms."""
         if not hasattr(self, "_ticker_canvas"):
+            return
+        if not self._ticker_enabled_var.get():
+            self._ticker_active = False
             return
         try:
             canvas_w  = max(self._ticker_canvas.winfo_width(), 1)
@@ -3432,6 +3436,7 @@ class HAMIOSApp:
                        self._ant_var.get(),
                        self._dst_var.get(),
                        self._show_tips_var.get(),
+                       self._ticker_enabled_var.get(),
                        self._show_sun_var.get(),
                        self._show_moon_var.get(),
                        self._show_locator_var.get(),
@@ -3459,7 +3464,7 @@ class HAMIOSApp:
             pystray.Menu.SEPARATOR,
             pystray.MenuItem("Afsluiten", self._tray_quit),
         )
-        self._tray_icon = pystray.Icon("HAMIOS", tray_img, "HAMIOS v2.0", menu)
+        self._tray_icon = pystray.Icon("HAMIOS", tray_img, "HAMIOS v2.1", menu)
         threading.Thread(target=self._tray_icon.run, daemon=True).start()
 
     def _tray_show(self, icon=None, item=None):
@@ -3722,7 +3727,7 @@ class HAMIOSApp:
             self._last_pca_level = 0
 
     # ── Venster centreren ─────────────────────────────────────────────────────
-    def _center_window(self, w_hint: int, *_):
+    def _center_window(self, w_hint: int, h_hint: int = 960):
         # update() zodat canvas-widgets correct gemeten worden (resize-events vuren)
         self.root.update()
         scr_w = self.root.winfo_screenwidth()
@@ -3731,8 +3736,8 @@ class HAMIOSApp:
         usable_h = scr_h - 60   # reserveer ruimte voor taakbalk
         # Breedte: gebruik hint, begrensd aan scherm
         w = min(w_hint, usable_w)
-        # Hoogte: fit exact aan inhoud, nooit meer dan scherm toelaat
-        h = min(usable_h, self.root.winfo_reqheight())
+        # Hoogte: minstens h_hint zodat advies-paneel + ticker altijd zichtbaar zijn
+        h = min(usable_h, max(h_hint, self.root.winfo_reqheight()))
         x = max(0, (scr_w - w) // 2)
         y = max(0, (scr_h - h) // 2)
         self.root.geometry(f"{w}x{h}+{x}+{y}")
