@@ -1,4 +1,4 @@
-<img width="1725" height="1327" alt="HAMIOS v2.2" src="https://github.com/user-attachments/assets/580cad59-ff2d-4bdd-a81a-6fc4c3610417" />
+<img width="1743" height="1416" alt="HAMIOS v2 3" src="https://github.com/user-attachments/assets/3045d73a-9008-43d8-9dea-3d3fd5102792" />
 
 # 📡 HAMIOS v2.3
 
