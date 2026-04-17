@@ -1,10 +1,10 @@
 <img width="1725" height="1327" alt="HAMIOS v2.2" src="https://github.com/user-attachments/assets/580cad59-ff2d-4bdd-a81a-6fc4c3610417" />
 
-# 📡 HAMIOS v2.2
+# 📡 HAMIOS v2.3
 
 **HAM-radio propagatie- en DX-monitor voor Windows**
 
-> v2.2 — solar-panel timestamp naar header · PCA-label altijd zichtbaar · MIN_WINDOW_H(1042px) correct berekend
+> v2.3 — timestamp weg uit solar-paneel · twee scheidingslijnen in solar (params/band, band/waarschuwingen) · X-flare en PCA volledig zichtbaar · advieskaarten 4 rijen altijd volledig zichtbaar
 
 *Bedacht door Frank van Dijke · Ontwikkeld met Claude AI*
 

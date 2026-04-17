@@ -1,5 +1,5 @@
 """
-HAMIOS v2.2
+HAMIOS v2.3
 by Frank van Dijke
 
 HAM radio propagation en DX tool met donkere GUI.
@@ -43,7 +43,7 @@ Todo
     dat er bericht ververst is. Verwijder de stip bij de eerst volgende refresh tenzij
     er een nieuw bericht is.
 
-[ ] Vertaal de app
+[x] Vertaal de app
     Vertaal alle teksten in NL,UK,DE,FR, IT
     Ook de analyses, helpteksten en interface teksten.
 
@@ -55,9 +55,37 @@ Todo
     Bij het opstarten moet dit paneel al de juiste grote hebben zodat, en de titel, en de 4 rijen en de ticker zichtbaar zijn.
 
 ─────────────────────────────────────────────────────────────────────
-Change Log (2.2)
+Change Log (2.3)
 ─────────────────────────────────────────────────────────────────────
 
+· 2026-04-16 — Volledige meertalige ondersteuning toegevoegd: NL/EN/DE/FR/IT voor
+               alle UI-elementen, adviesteksten, solar-tooltips en dynamische
+               meldingen. Taal-selector in header; instelling opgeslagen in INI.
+· 2026-04-17 08:21 — X-flare/PCA labels: vaste height= verwijderd zodat tekst altijd
+               volledig zichtbaar is; wraplength 185 → 190px. Beide separatoren
+               pady=(6,4) → pady=(4,2): waarschuwingen direct onder de lijn.
+· 2026-04-17 08:15 — SOLAR_MIN_H 580 → 700px (royale buffer, geen 1080p-restrictie).
+               _center_window: hoogte-cap min(usable_h, ...) verwijderd; venster
+               krijgt nu altijd zijn volledige benodigde hoogte via
+               max(h_hint, winfo_reqheight()). minsize hoogte verhoogd naar 700.
+· 2026-04-17 08:08 — _center_window(1400, 960) → _center_window(1400): hardcoded
+               960px werd genegeerd door MIN_WINDOW_H, waardoor venster te
+               klein bleef (960 < 1014). Nu gebruikt _center_window altijd
+               MIN_WINDOW_H als ondergrens. Hierdoor zijn header, alle 4 rijen
+               advieskaarten én ticker altijd volledig zichtbaar op 1080p.
+· 2026-04-17 08:00 — ADV_HDR_STRIP verhoogd van 28 → 40px zodat de 4e rij advies-
+               kaarten niet meer wordt afgesneden op Windows (fontmetrieken
+               iets groter dan strak berekend). ADV_SECTION_H → 360px,
+               MIN_WINDOW_H → 1014px (6px marge op 1080p).
+· 2026-04-16 13:28 — Bandtabel staat weer vóór de waarschuwingen (originele
+               positie). Scheidingslijn toegevoegd ónder de bandtabel, direct
+               boven X-flare/PCA. SOLAR_MIN_H herberekend naar 580px
+               (content past in 529px + buffer), MIN_WINDOW_H → 1002px
+               (past op 1080p, 18px marge).
+· 2026-04-16 13:20 — Timestamp volledig verwijderd uit solar-paneel. X-flare-
+               melding uitgebreid naar 3 regels (height=3) en PCA naar 2 regels
+               (height=2); scheidingslijn direct boven de warnings-sectie.
+               Volgorde tijdelijk omgedraaid (teruggedraaid in 13:28-entry).
 · 2026-04-16 12:51 — "Bijgewerkt"-timestamp verplaatst van solar-panel footer naar
                solar-panel header (consistent met andere panelen). Footer-
                separator verwijderd → ruimte vrij voor X-flare + PCA-label.
@@ -127,14 +155,15 @@ ADV_ROWS     = 4    # zichtbare rijen bij opstarten
 TICKER_H      = 22   # hoogte ticker-balk
 APP_HDR_H     = 42   # hoogte app-header balk
 
-# Advies-sectie: accent (2) + header-rij pady+label (~26) + kaartgebied + ondermarge (8)
-ADV_HDR_STRIP  = 28
+# Advies-sectie: accent (2) + header-rij pady+label (28–32px, afhankelijk van fontschaling)
+# + kaartgebied + ondermarge (8). ADV_HDR_STRIP=40 geeft ~10px buffer voor fontmetrieken.
+ADV_HDR_STRIP  = 40
 ADV_SECTION_H  = ADV_HDR_STRIP + ADV_ROWS * (ADV_CARD_H + ADV_CARD_GAP) + 8
 
-# Solar-paneel minimum: header(38) + 11 param-rijen+K-alert(288) + separator(13) +
-#   band-tabel header(20) + 11 HF-banden(198) + x-flare lbl(22) + PCA-lbl(20) = 599
-#   → afgerond met marge (timestamp zit nu in header, footer-separator verwijderd)
-SOLAR_MIN_H   = 620
+# Solar-paneel minimum: solar_col-header(32) + param-rijen+K-alert(214) +
+#   band-tabel header+11bands(196) + sep(11) + x-flare h=3(44) + PCA h=2(32) = 529
+#   → royale buffer → 700px zodat alles ruim zichtbaar is.
+SOLAR_MIN_H   = 700
 
 # Minimale venster-hoogte zodat alles zichtbaar is bij opstarten:
 #   app-header + solar-paneel (bepaalt top_row hoogte) + outer-pady(6) +
@@ -760,34 +789,423 @@ _REFRESH_OPTIONS = {
 }
 
 # ── Taal / Language ────────────────────────────────────────────────────────────
-_LANG_NAMES = ["Nederlands", "English", "Deutsch", "Français"]
-_LANG_CODES = {"Nederlands": "nl", "English": "en", "Deutsch": "de", "Français": "fr"}
+_LANG_NAMES = ["Nederlands", "English", "Deutsch", "Français", "Italiano"]
+_LANG_CODES = {"Nederlands": "nl", "English": "en", "Deutsch": "de",
+               "Français": "fr", "Italiano": "it"}
 
 _T: dict[str, dict[str, str]] = {
-    # Header
-    "exit":        {"nl": "Afsluiten",   "en": "Exit",          "de": "Beenden",     "fr": "Quitter"},
-    "summer_time": {"nl": "Zomertijd",   "en": "Summer time",   "de": "Sommerzeit",  "fr": "Heure d'été"},
-    "tooltips":    {"nl": "Tooltips",    "en": "Tooltips",      "de": "Tooltips",    "fr": "Infobulles"},
-    "ticker":      {"nl": "Ticker",     "en": "Ticker",        "de": "Laufband",    "fr": "Défilant"},
-    "auto_lbl":    {"nl": "Auto:",       "en": "Auto:",         "de": "Auto:",       "fr": "Auto:"},
-    "lang_lbl":    {"nl": "Taal:",       "en": "Lang:",         "de": "Sprache:",    "fr": "Langue:"},
-    "qth_lat_lbl": {"nl": "QTH  Lat:",   "en": "QTH  Lat:",     "de": "QTH  Br:",    "fr": "QTH  Lat:"},
-    "lon_lbl":     {"nl": "Lon:",        "en": "Lon:",          "de": "Lg:",         "fr": "Lon:"},
-    # Panel titels
-    "worldmap":    {"nl": "🌍  Wereldkaart",          "en": "🌍  World Map",             "de": "🌍  Weltkarte",           "fr": "🌍  Carte du monde"},
-    "solar":       {"nl": "☀  Solar / Ionosfeer",     "en": "☀  Solar / Ionosphere",    "de": "☀  Solar / Ionosphäre",  "fr": "☀  Solaire / Ionosphère"},
-    "reliability": {"nl": "📻  HF Betrouwbaarheid",   "en": "📻  HF Reliability",        "de": "📻  KW-Zuverlässigkeit", "fr": "📻  Fiabilité HF"},
-    "schedule":    {"nl": "📅  Bandopenings-schema",  "en": "📅  Band Opening Schedule", "de": "📅  Bandöffnungsplan",   "fr": "📅  Planning des ouvertures"},
-    "history":     {"nl": "📈  Band Verloop",          "en": "📈  Band History",          "de": "📈  Bandverlauf",        "fr": "📈  Historique des bandes"},
-    "dx_spots":    {"nl": "📡  DX Spots",              "en": "📡  DX Spots",              "de": "📡  DX-Spots",           "fr": "📡  DX Spots"},
-    "advice":      {"nl": "💡  Propagatie Advies",     "en": "💡  Propagation Advice",    "de": "💡  Ausbreitungshinweise","fr": "💡  Conseils de propagation"},
-    # Kaart checkboxes
-    "sun":         {"nl": "Zon",       "en": "Sun",        "de": "Sonne",     "fr": "Soleil"},
-    "moon":        {"nl": "Maan",      "en": "Moon",       "de": "Mond",      "fr": "Lune"},
-    "graylijn":    {"nl": "Graylijn",  "en": "Gray line",  "de": "Grauzone",  "fr": "Ligne grise"},
-    "locator":     {"nl": "Locator",   "en": "Locator",    "de": "Locator",   "fr": "Locator"},
-    # Solar veld labels
-    "updated_lbl": {"nl": "Bijgewerkt",   "en": "Updated",     "de": "Aktualisiert", "fr": "Mis à jour"},
+    # ── Header ────────────────────────────────────────────────────────────────
+    "exit":        {"nl": "Afsluiten",   "en": "Exit",          "de": "Beenden",     "fr": "Quitter",       "it": "Esci"},
+    "summer_time": {"nl": "Zomertijd",   "en": "Summer time",   "de": "Sommerzeit",  "fr": "Heure d'été",   "it": "Ora legale"},
+    "tooltips":    {"nl": "Tooltips",    "en": "Tooltips",      "de": "Tooltips",    "fr": "Infobulles",    "it": "Suggerimenti"},
+    "ticker":      {"nl": "Ticker",      "en": "Ticker",        "de": "Laufband",    "fr": "Défilant",      "it": "Ticker"},
+    "auto_lbl":    {"nl": "Auto:",       "en": "Auto:",         "de": "Auto:",       "fr": "Auto:",         "it": "Auto:"},
+    "lang_lbl":    {"nl": "Taal:",       "en": "Lang:",         "de": "Sprache:",    "fr": "Langue:",       "it": "Lingua:"},
+    "qth_lat_lbl": {"nl": "QTH  Lat:",   "en": "QTH  Lat:",     "de": "QTH  Br:",    "fr": "QTH  Lat:",     "it": "QTH  Lat:"},
+    "lon_lbl":     {"nl": "Lon:",        "en": "Lon:",          "de": "Lg:",         "fr": "Lon:",          "it": "Lon:"},
+    # ── Panel titels ──────────────────────────────────────────────────────────
+    "worldmap":    {"nl": "🌍  Wereldkaart",         "en": "🌍  World Map",             "de": "🌍  Weltkarte",           "fr": "🌍  Carte du monde",          "it": "🌍  Planisfero"},
+    "solar":       {"nl": "☀  Solar / Ionosfeer",    "en": "☀  Solar / Ionosphere",    "de": "☀  Solar / Ionosphäre",  "fr": "☀  Solaire / Ionosphère",    "it": "☀  Solare / Ionosfera"},
+    "reliability": {"nl": "📻  HF Betrouwbaarheid",  "en": "📻  HF Reliability",        "de": "📻  KW-Zuverlässigkeit", "fr": "📻  Fiabilité HF",            "it": "📻  Affidabilità HF"},
+    "schedule":    {"nl": "📅  Bandopenings-schema", "en": "📅  Band Opening Schedule", "de": "📅  Bandöffnungsplan",   "fr": "📅  Planning des ouvertures", "it": "📅  Aperture di banda"},
+    "history":     {"nl": "📈  Band Verloop",         "en": "📈  Band History",          "de": "📈  Bandverlauf",        "fr": "📈  Historique des bandes",   "it": "📈  Storico bande"},
+    "dx_spots":    {"nl": "📡  DX Spots",             "en": "📡  DX Spots",              "de": "📡  DX-Spots",           "fr": "📡  DX Spots",                "it": "📡  DX Spots"},
+    "advice":      {"nl": "💡  Propagatie Advies",    "en": "💡  Propagation Advice",    "de": "💡  Ausbreitungshinweise","fr": "💡  Conseils de propagation", "it": "💡  Consigli propagazione"},
+    # Panel titels (uitgebreid)
+    "prop_header":  {"nl": "📶  HF Band Betrouwbaarheid",                "en": "📶  HF Band Reliability",                   "de": "📶  KW-Band-Zuverlässigkeit",             "fr": "📶  Fiabilité des bandes HF",              "it": "📶  Affidabilità bande HF"},
+    "hist_header":  {"nl": "📈  Band Verloop",                           "en": "📈  Band History",                           "de": "📈  Bandverlauf",                         "fr": "📈  Historique des bandes",                "it": "📈  Storico bande"},
+    "sched_header": {"nl": "🕐  Bandopenings-schema (lokale tijd, vandaag)", "en": "🕐  Band Opening Schedule (local time, today)", "de": "🕐  Bandöffnungsplan (Lokalzeit, heute)", "fr": "🕐  Ouvertures (heure locale, auj.)",      "it": "🕐  Aperture banda (ora locale, oggi)"},
+    "dx_header":    {"nl": "📡  Live DX Spots (HF)",                    "en": "📡  Live DX Spots (HF)",                    "de": "📡  Live DX-Spots (KW)",                 "fr": "📡  DX Spots en direct (HF)",              "it": "📡  DX Spots in diretta (HF)"},
+    "adv_header":   {"nl": "💡  Propagatie-analyse & Advies",            "en": "💡  Propagation Analysis & Advice",         "de": "💡  Ausbreitungsanalyse & Hinweise",     "fr": "💡  Analyse & Conseils de propagation",   "it": "💡  Analisi & Consigli propagazione"},
+    # ── Kaart checkboxes ──────────────────────────────────────────────────────
+    "sun":         {"nl": "Zon",       "en": "Sun",        "de": "Sonne",     "fr": "Soleil",     "it": "Sole"},
+    "moon":        {"nl": "Maan",      "en": "Moon",       "de": "Mond",      "fr": "Lune",       "it": "Luna"},
+    "graylijn":    {"nl": "Graylijn",  "en": "Gray line",  "de": "Grauzone",  "fr": "Ligne grise","it": "Linea grigia"},
+    "locator":     {"nl": "Locator",   "en": "Locator",    "de": "Locator",   "fr": "Locator",    "it": "Locator"},
+    # ── Solar veld labels ─────────────────────────────────────────────────────
+    "updated_lbl":  {"nl": "Bijgewerkt",  "en": "Updated",   "de": "Aktualisiert", "fr": "Mis à jour",  "it": "Aggiornato"},
+    "k_alert_lbl":  {"nl": "Melding K ≥", "en": "Alert K ≥", "de": "Alarm K ≥",   "fr": "Alerte K ≥", "it": "Avviso K ≥"},
+    "day_hdr":      {"nl": "Dag",         "en": "Day",       "de": "Tag",          "fr": "Jour",        "it": "Giorno"},
+    "night_hdr":    {"nl": "Nacht",       "en": "Night",     "de": "Nacht",        "fr": "Nuit",        "it": "Notte"},
+    "band_hdr":     {"nl": "Band",        "en": "Band",      "de": "Band",         "fr": "Bande",       "it": "Banda"},
+    # ── Prop panel labels ─────────────────────────────────────────────────────
+    "mode_lbl":         {"nl": "Mode:",     "en": "Mode:",    "de": "Modus:",     "fr": "Mode:",      "it": "Modo:"},
+    "power_lbl":        {"nl": "Vermogen:", "en": "Power:",   "de": "Leistung:",  "fr": "Puissance:", "it": "Potenza:"},
+    "ant_lbl":          {"nl": "Antenne:",  "en": "Antenna:", "de": "Antenne:",   "fr": "Antenne:",   "it": "Antenna:"},
+    "day_auto":         {"nl": "Dag (auto)","en": "Day (auto)","de": "Tag (auto)","fr": "Jour (auto)","it": "Giorno (auto)"},
+    "closed":           {"nl": "Gesloten",  "en": "Closed",   "de": "Geschlossen","fr": "Fermée",     "it": "Chiusa"},
+    "cond_good":        {"nl": "Goed",      "en": "Good",     "de": "Gut",        "fr": "Bon",        "it": "Buono"},
+    "cond_fair":        {"nl": "Redelijk",  "en": "Fair",     "de": "Mäßig",      "fr": "Correct",    "it": "Discreto"},
+    "cond_poor":        {"nl": "Arm",       "en": "Poor",     "de": "Schlecht",   "fr": "Mauvais",    "it": "Scarso"},
+    "cond_closed":      {"nl": "Dicht",     "en": "Closed",   "de": "Geschlossen","fr": "Fermée",     "it": "Chiusa"},
+    "status_lbl":       {"nl": "Status:",         "en": "Status:",        "de": "Status:",      "fr": "État:",         "it": "Stato:"},
+    "reason_lbl":       {"nl": "Reden:",           "en": "Reason:",        "de": "Grund:",       "fr": "Raison:",       "it": "Motivo:"},
+    "reason_muf_luf":   {"nl": "Boven MUF of onder LUF", "en": "Above MUF or below LUF", "de": "Über MUF oder unter LUF", "fr": "Au-dessus MUF ou sous LUF", "it": "Sopra MUF o sotto LUF"},
+    "reliability_lbl":  {"nl": "Betrouwbaarheid:", "en": "Reliability:",   "de": "Zuverlässigkeit:", "fr": "Fiabilité:",  "it": "Affidabilità:"},
+    "modes_lbl":        {"nl": "Modi:",            "en": "Modes:",         "de": "Modi:",        "fr": "Modes:",        "it": "Modi:"},
+    "total_snr":        {"nl": "Totaal:",          "en": "Total:",         "de": "Gesamt:",      "fr": "Total:",        "it": "Totale:"},
+    "quality_lbl":      {"nl": "Kwaliteit:",       "en": "Quality:",       "de": "Qualität:",    "fr": "Qualité:",      "it": "Qualità:"},
+    "local_lbl":        {"nl": "lokaal",           "en": "local",          "de": "lokal",        "fr": "local",         "it": "locale"},
+    # ── Hist panel ────────────────────────────────────────────────────────────
+    "hist_range_h": {"nl": "Uren",    "en": "Hours",   "de": "Stunden",  "fr": "Heures",   "it": "Ore"},
+    "hist_range_d": {"nl": "Dagen",   "en": "Days",    "de": "Tage",     "fr": "Jours",    "it": "Giorni"},
+    "hist_range_w": {"nl": "Weken",   "en": "Weeks",   "de": "Wochen",   "fr": "Semaines", "it": "Settimane"},
+    "hist_range_m": {"nl": "Maanden", "en": "Months",  "de": "Monate",   "fr": "Mois",     "it": "Mesi"},
+    "no_hist_data": {"nl": "Nog geen historische data beschikbaar",
+                     "en": "No historical data available yet",
+                     "de": "Noch keine historischen Daten verfügbar",
+                     "fr": "Pas encore de données historiques",
+                     "it": "Nessun dato storico disponibile"},
+    "hist_tooltip_hdr": {"nl": "Band Verloop  —  {ts}",  "en": "Band History  —  {ts}",  "de": "Bandverlauf  —  {ts}",  "fr": "Historique  —  {ts}",  "it": "Storico  —  {ts}"},
+    # ── DX panel ──────────────────────────────────────────────────────────────
+    "own_cont_lbl":  {"nl": "Eigen continent",          "en": "Own continent",        "de": "Eigener Kontinent",    "fr": "Continent propre",       "it": "Continente proprio"},
+    "dx_loading":    {"nl": "Laden…",                   "en": "Loading…",             "de": "Laden…",               "fr": "Chargement…",            "it": "Caricamento…"},
+    "no_dx_spots":   {"nl": "Geen HF-spots beschikbaar","en": "No HF spots available","de": "Keine KW-Spots verfügbar","fr": "Aucun spot HF disponible","it": "Nessun spot HF disponibile"},
+    "dx_of":         {"nl": "van",                      "en": "of",                   "de": "von",                  "fr": "sur",                    "it": "di"},
+    "dx_own_cont_filter": {"nl": " · eigen continent",  "en": " · own continent",     "de": " · eigener Kontinent", "fr": " · continent propre",    "it": " · continente proprio"},
+    "no_spots_ts":   {"nl": "Geen spots beschikbaar  ·  {ts}", "en": "No spots available  ·  {ts}", "de": "Keine Spots verfügbar  ·  {ts}", "fr": "Aucun spot disponible  ·  {ts}", "it": "Nessun spot disponibile  ·  {ts}"},
+    "dx_status_fmt": {"nl": "{n} van {total} spots  (HF{filt})  ·  {ts}", "en": "{n} of {total} spots  (HF{filt})  ·  {ts}", "de": "{n} von {total} Spots  (KW{filt})  ·  {ts}", "fr": "{n} sur {total} spots  (HF{filt})  ·  {ts}", "it": "{n} di {total} spot  (HF{filt})  ·  {ts}"},
+    # ── Map panel ─────────────────────────────────────────────────────────────
+    "map_nolib":       {"nl": "pip install pillow  voor kaartweergave",  "en": "pip install pillow  for map display",      "de": "pip install pillow  für Kartenanzeige",    "fr": "pip install pillow  pour afficher la carte", "it": "pip install pillow  per visualizzare la mappa"},
+    "map_downloading": {"nl": "⬇ NASA-kaart wordt gedownload…",         "en": "⬇ Downloading NASA map…",                 "de": "⬇ NASA-Karte wird heruntergeladen…",      "fr": "⬇ Téléchargement carte NASA…",               "it": "⬇ Download mappa NASA…"},
+    "distance_lbl":    {"nl": "Afstand",  "en": "Distance",  "de": "Entfernung",  "fr": "Distance",   "it": "Distanza"},
+    "direction_lbl":   {"nl": "Richting", "en": "Direction", "de": "Richtung",    "fr": "Direction",  "it": "Direzione"},
+    "right_clk_clear": {"nl": "klik rechts om te wissen", "en": "right-click to clear", "de": "Rechtsklick zum Löschen", "fr": "clic droit pour effacer", "it": "clic destro per cancellare"},
+    # ── Tray ──────────────────────────────────────────────────────────────────
+    "tray_show": {"nl": "HAMIOS tonen",  "en": "Show HAMIOS",  "de": "HAMIOS anzeigen", "fr": "Afficher HAMIOS", "it": "Mostra HAMIOS"},
+    "tray_exit": {"nl": "Afsluiten",     "en": "Exit",         "de": "Beenden",         "fr": "Quitter",         "it": "Esci"},
+    # ── Xflare / PCA warnings ────────────────────────────────────────────────
+    "xflare_warning": {"nl": "☢  SWF-waarschuwing: {xray}-flare gedetecteerd. HF dag-zijde verstoord (~{dur} min).",
+                       "en": "☢  SWF warning: {xray} flare detected. HF dayside disrupted (~{dur} min).",
+                       "de": "☢  SWF-Warnung: {xray}-Flare erkannt. KW-Tagseite gestört (~{dur} min).",
+                       "fr": "☢  Alerte SWF: éruption {xray} détectée. HF côté jour perturbé (~{dur} min).",
+                       "it": "☢  Avviso SWF: brillamento {xray} rilevato. HF lato giorno disturbato (~{dur} min)."},
+    "xflare_notify_body": {"nl": "Short Wave Fadeout verwacht (~{dur} min). HF op dag-zijde tijdelijk verstoord.",
+                           "en": "Short Wave Fadeout expected (~{dur} min). HF dayside temporarily disrupted.",
+                           "de": "Short Wave Fadeout erwartet (~{dur} min). KW-Tagseite vorübergehend gestört.",
+                           "fr": "Short Wave Fadeout attendu (~{dur} min). HF côté jour temporairement perturbé.",
+                           "it": "Short Wave Fadeout atteso (~{dur} min). HF lato giorno temporaneamente disturbato."},
+    "pca_warning": {"nl": "☢  PCA-waarschuwing S{s}: proton flux {pf:.1f} pfu — poolroutes geblokkeerd (~{dur}). 160m–40m poolpaden onbruikbaar.",
+                    "en": "☢  PCA warning S{s}: proton flux {pf:.1f} pfu — polar routes blocked (~{dur}). 160m–40m polar paths unusable.",
+                    "de": "☢  PCA-Warnung S{s}: Protonenfluss {pf:.1f} pfu — Polarrouten gesperrt (~{dur}). 160m–40m Polarwege unbrauchbar.",
+                    "fr": "☢  Alerte PCA S{s}: flux proton {pf:.1f} pfu — routes polaires bloquées (~{dur}). 160m–40m inutilisables.",
+                    "it": "☢  Avviso PCA S{s}: flusso protoni {pf:.1f} pfu — rotte polari bloccate (~{dur}). 160m–40m inutilizzabili."},
+    "pca_dur_s5": {"nl": "3–7 dagen", "en": "3–7 days", "de": "3–7 Tage", "fr": "3–7 jours", "it": "3–7 giorni"},
+    "pca_dur_s3": {"nl": "2–4 dagen", "en": "2–4 days", "de": "2–4 Tage", "fr": "2–4 jours", "it": "2–4 giorni"},
+    "pca_dur_s1": {"nl": "1–2 dagen", "en": "1–2 days", "de": "1–2 Tage", "fr": "1–2 jours", "it": "1–2 giorni"},
+    "pca_notify_body": {"nl": "Proton flux: {pf:.1f} pfu. Polar Cap Absorption — poolroutes geblokkeerd (~{dur}).",
+                        "en": "Proton flux: {pf:.1f} pfu. Polar Cap Absorption — polar routes blocked (~{dur}).",
+                        "de": "Protonenfluss: {pf:.1f} pfu. Polar Cap Absorption — Polarrouten gesperrt (~{dur}).",
+                        "fr": "Flux proton: {pf:.1f} pfu. Polar Cap Absorption — routes polaires bloquées (~{dur}).",
+                        "it": "Flusso protoni: {pf:.1f} pfu. Polar Cap Absorption — rotte polari bloccate (~{dur})."},
+    # ── K-alert notification ──────────────────────────────────────────────────
+    "k_alert_notify_title": {"nl": "K-index {k} — geomagnetische activiteit",
+                              "en": "K-index {k} — geomagnetic activity",
+                              "de": "K-Index {k} — geomagnetische Aktivität",
+                              "fr": "Indice K {k} — activité géomagnétique",
+                              "it": "Indice K {k} — attività geomagnetica"},
+    "k_alert_notify_body":  {"nl": "K={k}, A={a} — HF-propagatie verstoord. Lagere banden gebruiken.",
+                              "en": "K={k}, A={a} — HF propagation disrupted. Use lower bands.",
+                              "de": "K={k}, A={a} — KW-Ausbreitung gestört. Niedrige Bänder nutzen.",
+                              "fr": "K={k}, A={a} — propagation HF perturbée. Utiliser les bandes basses.",
+                              "it": "K={k}, A={a} — propagazione HF disturbata. Usare le bande basse."},
+    # ── Geo-condities kwaliteitswoorden ──────────────────────────────────────
+    "geo_quiet":        {"nl": "rustig",        "en": "quiet",       "de": "ruhig",        "fr": "calme",        "it": "tranquillo"},
+    "geo_unsettled":    {"nl": "onrustig",       "en": "unsettled",   "de": "unruhig",      "fr": "agité",        "it": "agitato"},
+    "geo_storm":        {"nl": "storm",          "en": "storm",       "de": "Sturm",        "fr": "tempête",      "it": "tempesta"},
+    "geo_severe":       {"nl": "ernstige storm", "en": "severe storm","de": "schwerer Sturm","fr": "grave tempête","it": "grave tempesta"},
+    # ── Overall score labels ──────────────────────────────────────────────────
+    "score_excellent":  {"nl": "Uitstekend 🏆", "en": "Excellent 🏆", "de": "Ausgezeichnet 🏆", "fr": "Excellent 🏆",   "it": "Eccellente 🏆"},
+    "score_good":       {"nl": "Goed ✅",        "en": "Good ✅",      "de": "Gut ✅",            "fr": "Bon ✅",          "it": "Buono ✅"},
+    "score_fair":       {"nl": "Matig ⚡",       "en": "Fair ⚡",      "de": "Mäßig ⚡",          "fr": "Médiocre ⚡",     "it": "Mediocre ⚡"},
+    "score_poor":       {"nl": "Slecht ⚠️",      "en": "Poor ⚠️",     "de": "Schlecht ⚠️",       "fr": "Mauvais ⚠️",     "it": "Scarso ⚠️"},
+    "day_label":        {"nl": "Dag",            "en": "Day",          "de": "Tag",               "fr": "Jour",           "it": "Giorno"},
+    "night_label":      {"nl": "Nacht",          "en": "Night",        "de": "Nacht",             "fr": "Nuit",           "it": "Notte"},
+    # ── Trend direction ───────────────────────────────────────────────────────
+    "trend_improving":    {"nl": "verbeterend",    "en": "improving",    "de": "verbessernd",    "fr": "en amélioration", "it": "in miglioramento"},
+    "trend_worsening":    {"nl": "verslechterend", "en": "deteriorating","de": "verschlechternd","fr": "en dégradation",  "it": "in deterioramento"},
+    "avg_band_quality":   {"nl": "gemid. bandkwaliteit", "en": "avg. band quality", "de": "mittl. Bandqualität", "fr": "qual. moy. des bandes", "it": "qual. media bande"},
+    # ── Advice texts ──────────────────────────────────────────────────────────
+    "adv_best_bands":   {"nl": "Beste banden nu:  {bstr}{extra}",
+                         "en": "Best bands now:  {bstr}{extra}",
+                         "de": "Beste Bänder jetzt:  {bstr}{extra}",
+                         "fr": "Meilleures bandes:  {bstr}{extra}",
+                         "it": "Migliori bande ora:  {bstr}{extra}"},
+    "adv_best_extra":   {"nl": "  ({n} banden open)",  "en": "  ({n} bands open)",  "de": "  ({n} Bänder offen)", "fr": "  ({n} bandes ouvertes)", "it": "  ({n} bande aperte)"},
+    "adv_no_bands":     {"nl": "Alle HF-banden zijn momenteel gesloten.",
+                         "en": "All HF bands are currently closed.",
+                         "de": "Alle KW-Bänder sind derzeit geschlossen.",
+                         "fr": "Toutes les bandes HF sont actuellement fermées.",
+                         "it": "Tutte le bande HF sono attualmente chiuse."},
+    "adv_geo_severe":   {"nl": "Zware geomagnetische storm  K={k}, A={a} ({kwal}) — HF vrijwel onbruikbaar, auroraal absorptie op alle routes. Wacht op herstel (normaal binnen 12–24u).",
+                         "en": "Severe geomagnetic storm  K={k}, A={a} ({kwal}) — HF almost unusable, auroral absorption on all routes. Wait for recovery (normally within 12–24h).",
+                         "de": "Schwerer geomagnetischer Sturm  K={k}, A={a} ({kwal}) — KW kaum nutzbar, Polarlichtabsorption auf allen Routen. Auf Erholung warten (norm. innerhalb 12–24h).",
+                         "fr": "Tempête géomagnétique sévère  K={k}, A={a} ({kwal}) — HF quasi inutilisable, absorption aurorale sur toutes les routes. Attendre la récupération (norm. 12–24h).",
+                         "it": "Grave tempesta geomagnetica  K={k}, A={a} ({kwal}) — HF quasi inutilizzabile, assorbimento aurorale su tutte le rotte. Attendere il ripristino (norm. entro 12–24h)."},
+    "adv_geo_storm":    {"nl": "Geomagnetische storm  K={k}, A={a} ({kwal}) — poolroutes geblokkeerd, 40m/80m meest betrouwbaar. Hoge banden en DX sterk verstoord.",
+                         "en": "Geomagnetic storm  K={k}, A={a} ({kwal}) — polar routes blocked, 40m/80m most reliable. High bands and DX strongly disturbed.",
+                         "de": "Geomagnetischer Sturm  K={k}, A={a} ({kwal}) — Polarrouten gesperrt, 40m/80m am zuverlässigsten. Hohe Bänder und DX stark gestört.",
+                         "fr": "Tempête géomagnétique  K={k}, A={a} ({kwal}) — routes polaires bloquées, 40m/80m les plus fiables. Hautes bandes et DX fortement perturbés.",
+                         "it": "Tempesta geomagnetica  K={k}, A={a} ({kwal}) — rotte polari bloccate, 40m/80m più affidabili. Bande alte e DX fortemente disturbati."},
+    "adv_geo_elevated": {"nl": "Verhoogde geo-activiteit  K={k}, A={a} ({kwal}) — lagere banden stabieler; vermijd trans-polair DX. Overweeg 40m/80m voor betrouwbare verbindingen.",
+                         "en": "Elevated geo-activity  K={k}, A={a} ({kwal}) — lower bands more stable; avoid trans-polar DX. Consider 40m/80m for reliable contacts.",
+                         "de": "Erhöhte Geoaktivität  K={k}, A={a} ({kwal}) — niedrigere Bänder stabiler; Trans-Polar-DX meiden. 40m/80m für zuverlässige Verbindungen erwägen.",
+                         "fr": "Activité géo élevée  K={k}, A={a} ({kwal}) — bandes basses plus stables; éviter le DX trans-polaire. Envisager 40m/80m pour des liaisons fiables.",
+                         "it": "Attività geo elevata  K={k}, A={a} ({kwal}) — bande basse più stabili; evitare DX trans-polare. Considerare 40m/80m per collegamenti affidabili."},
+    "adv_geo_quiet":    {"nl": "Rustige geo-condities  K={k}, A={a} — optimaal voor alle routes incl. poolpaden en DX.",
+                         "en": "Quiet geo conditions  K={k}, A={a} — optimal for all routes incl. polar paths and DX.",
+                         "de": "Ruhige Geobedingungen  K={k}, A={a} — optimal für alle Routen inkl. Polarwege und DX.",
+                         "fr": "Conditions géo calmes  K={k}, A={a} — optimal pour toutes les routes incl. chemins polaires et DX.",
+                         "it": "Condizioni geo tranquille  K={k}, A={a} — ottimale per tutte le rotte incl. percorsi polari e DX."},
+    "adv_sol_exceptional": {"nl": "Exceptionele zonactiviteit  SFI={sfi}, SSN={ssn} — zonnecyclus-maximum. 10m/12m/15m open voor wereldwijd DX; kans op Es-versterking en TEP.",
+                             "en": "Exceptional solar activity  SFI={sfi}, SSN={ssn} — solar cycle maximum. 10m/12m/15m open for worldwide DX; chance of Es enhancement and TEP.",
+                             "de": "Außergewöhnliche Sonnenaktivität  SFI={sfi}, SSN={ssn} — Sonnenzyklusmaximum. 10m/12m/15m offen für weltweites DX; Es-Verstärkung und TEP möglich.",
+                             "fr": "Activité solaire exceptionnelle  SFI={sfi}, SSN={ssn} — maximum du cycle solaire. 10m/12m/15m ouverts pour DX mondial; chance d'Es et TEP.",
+                             "it": "Attività solare eccezionale  SFI={sfi}, SSN={ssn} — massimo del ciclo solare. 10m/12m/15m aperti per DX mondiale; possibilità di Es e TEP."},
+    "adv_sol_high":     {"nl": "Hoge zonactiviteit  SFI={sfi}, SSN={ssn} — uitstekend voor 10m t/m 17m DX. F2-propagatie sterk; MUF hoog, lange skips mogelijk.",
+                         "en": "High solar activity  SFI={sfi}, SSN={ssn} — excellent for 10m to 17m DX. F2 propagation strong; MUF high, long skips possible.",
+                         "de": "Hohe Sonnenaktivität  SFI={sfi}, SSN={ssn} — ausgezeichnet für 10m bis 17m DX. F2-Ausbreitung stark; MUF hoch, lange Sprünge möglich.",
+                         "fr": "Forte activité solaire  SFI={sfi}, SSN={ssn} — excellent pour DX 10m à 17m. Propagation F2 forte; MUF élevée, longs sauts possibles.",
+                         "it": "Alta attività solare  SFI={sfi}, SSN={ssn} — eccellente per DX 10m-17m. Propagazione F2 forte; MUF alta, salti lunghi possibili."},
+    "adv_sol_good":     {"nl": "Goede zonactiviteit  SFI={sfi}, SSN={ssn} — 20m en 17m zijn primaire DX-banden; 15m kan open zijn. Verwacht betrouwbare F2-propagatie overdag.",
+                         "en": "Good solar activity  SFI={sfi}, SSN={ssn} — 20m and 17m are primary DX bands; 15m may be open. Expect reliable F2 propagation during the day.",
+                         "de": "Gute Sonnenaktivität  SFI={sfi}, SSN={ssn} — 20m und 17m sind primäre DX-Bänder; 15m kann offen sein. Zuverlässige F2-Ausbreitung tagsüber.",
+                         "fr": "Bonne activité solaire  SFI={sfi}, SSN={ssn} — 20m et 17m sont les bandes DX primaires; 15m peut être ouverte. Propagation F2 fiable la journée.",
+                         "it": "Buona attività solare  SFI={sfi}, SSN={ssn} — 20m e 17m sono le bande DX primarie; 15m potrebbe essere aperta. Propagazione F2 affidabile di giorno."},
+    "adv_sol_moderate": {"nl": "Matige zonactiviteit  SFI={sfi}, SSN={ssn} — 20m/40m meest betrouwbaar. Hoge banden onzeker; 80m goed voor regionaal verkeer.",
+                         "en": "Moderate solar activity  SFI={sfi}, SSN={ssn} — 20m/40m most reliable. High bands uncertain; 80m good for regional traffic.",
+                         "de": "Mäßige Sonnenaktivität  SFI={sfi}, SSN={ssn} — 20m/40m am zuverlässigsten. Hohe Bänder unsicher; 80m gut für regionalen Verkehr.",
+                         "fr": "Activité solaire modérée  SFI={sfi}, SSN={ssn} — 20m/40m les plus fiables. Hautes bandes incertaines; 80m bon pour trafic régional.",
+                         "it": "Attività solare moderata  SFI={sfi}, SSN={ssn} — 20m/40m più affidabili. Bande alte incerte; 80m buono per traffico regionale."},
+    "adv_sol_low":      {"nl": "Lage zonactiviteit  SFI={sfi}, SSN={ssn} — 40m en 80m bieden meeste kans op verbindingen. Banden ≥15m grotendeels dicht; 160m voor nacht-DX.",
+                         "en": "Low solar activity  SFI={sfi}, SSN={ssn} — 40m and 80m offer most chances. Bands ≥15m mostly closed; 160m for night DX.",
+                         "de": "Niedrige Sonnenaktivität  SFI={sfi}, SSN={ssn} — 40m und 80m bieten die meisten Chancen. Bänder ≥15m größtenteils geschlossen; 160m für Nacht-DX.",
+                         "fr": "Faible activité solaire  SFI={sfi}, SSN={ssn} — 40m et 80m offrent le plus de chances. Bandes ≥15m surtout fermées; 160m pour DX nocturne.",
+                         "it": "Bassa attività solare  SFI={sfi}, SSN={ssn} — 40m e 80m offrono più possibilità. Bande ≥15m per lo più chiuse; 160m per DX notturno."},
+    "adv_sw_stormy":    {"nl": "Stormachtige solarwind  v={spd} km/s, Bz={bz} nT — verhoogde kans op CME-impact; K-index kan snel stijgen. Monitor condities actief.",
+                         "en": "Stormy solar wind  v={spd} km/s, Bz={bz} nT — increased chance of CME impact; K-index may rise quickly. Monitor conditions actively.",
+                         "de": "Stürmischer Sonnenwind  v={spd} km/s, Bz={bz} nT — erhöhte CME-Einschlagsgefahr; K-Index kann schnell steigen. Bedingungen aktiv überwachen.",
+                         "fr": "Vent solaire tempétueux  v={spd} km/s, Bz={bz} nT — risque CME accru; K-index peut monter vite. Surveiller activement.",
+                         "it": "Vento solare tempestoso  v={spd} km/s, Bz={bz} nT — aumento rischio CME; K-index può salire rapidamente. Monitorare le condizioni."},
+    "adv_sw_elevated":  {"nl": "Verhoogde solarwind  v={spd} km/s, Bz={bz} nT — Bz negatief koppelt aan aardveld → K-stijging mogelijk. Lagere banden aanhouden.",
+                         "en": "Elevated solar wind  v={spd} km/s, Bz={bz} nT — negative Bz couples to Earth's field → K-index rise possible. Stick to lower bands.",
+                         "de": "Erhöhter Sonnenwind  v={spd} km/s, Bz={bz} nT — negatives Bz koppelt an Erdfeld → K-Anstieg möglich. Niedrigere Bänder bevorzugen.",
+                         "fr": "Vent solaire élevé  v={spd} km/s, Bz={bz} nT — Bz négatif couplé au champ terrestre → hausse K possible. Rester sur les bandes basses.",
+                         "it": "Vento solare elevato  v={spd} km/s, Bz={bz} nT — Bz negativo si accoppia al campo terrestre → possibile aumento K. Preferire le bande basse."},
+    "adv_sw_calm":      {"nl": "Rustige solarwind  v={spd} km/s, Bz={bz} nT — positieve Bz beschermt aardveld. Stabiele condities.",
+                         "en": "Calm solar wind  v={spd} km/s, Bz={bz} nT — positive Bz shields Earth's field. Stable conditions.",
+                         "de": "Ruhiger Sonnenwind  v={spd} km/s, Bz={bz} nT — positives Bz schützt Erdfeld. Stabile Bedingungen.",
+                         "fr": "Vent solaire calme  v={spd} km/s, Bz={bz} nT — Bz positif protège le champ terrestre. Conditions stables.",
+                         "it": "Vento solare calmo  v={spd} km/s, Bz={bz} nT — Bz positivo protegge il campo terrestre. Condizioni stabili."},
+    "adv_sw_normal":    {"nl": "Normale solarwind  v={spd} km/s, Bz={bz} nT — geen direct effect op propagatie verwacht.",
+                         "en": "Normal solar wind  v={spd} km/s, Bz={bz} nT — no direct effect on propagation expected.",
+                         "de": "Normaler Sonnenwind  v={spd} km/s, Bz={bz} nT — kein direkter Einfluss auf die Ausbreitung erwartet.",
+                         "fr": "Vent solaire normal  v={spd} km/s, Bz={bz} nT — aucun effet direct sur la propagation attendu.",
+                         "it": "Vento solare normale  v={spd} km/s, Bz={bz} nT — nessun effetto diretto sulla propagazione atteso."},
+    "adv_pf_s5":        {"nl": "ERNSTIG proton event S5  ({pf} pfu) — Polar Cap Absorption actief. Alle poolroutes volledig geblokkeerd 3–7 dagen. Gebruik equatoriale paden (20m/17m).",
+                         "en": "SEVERE proton event S5  ({pf} pfu) — Polar Cap Absorption active. All polar routes fully blocked 3–7 days. Use equatorial paths (20m/17m).",
+                         "de": "SCHWERES Proton-Event S5  ({pf} pfu) — Polar Cap Absorption aktiv. Alle Polarrouten 3–7 Tage vollständig gesperrt. Äquatorialwege nutzen (20m/17m).",
+                         "fr": "Événement proton GRAVE S5  ({pf} pfu) — Absorption Polaire active. Toutes les routes polaires bloquées 3–7 jours. Utiliser les chemins équatoriaux (20m/17m).",
+                         "it": "Evento protonico GRAVE S5  ({pf} pfu) — Polar Cap Absorption attiva. Tutte le rotte polari bloccate 3–7 giorni. Usare percorsi equatoriali (20m/17m)."},
+    "adv_pf_s3":        {"nl": "Proton event S3  ({pf} pfu) — PCA actief: poolroutes (EU→JA/W via pool) geblokkeerd 2–4 dagen. 160m/80m/40m poolpaden onbruikbaar.",
+                         "en": "Proton event S3  ({pf} pfu) — PCA active: polar routes (EU→JA/W via pole) blocked 2–4 days. 160m/80m/40m polar paths unusable.",
+                         "de": "Proton-Event S3  ({pf} pfu) — PCA aktiv: Polarrouten (EU→JA/W via Pol) 2–4 Tage gesperrt. 160m/80m/40m Polarwege unbrauchbar.",
+                         "fr": "Événement proton S3  ({pf} pfu) — PCA actif: routes polaires (EU→JA/W via pôle) bloquées 2–4 jours. 160m/80m/40m inutilisables.",
+                         "it": "Evento protonico S3  ({pf} pfu) — PCA attiva: rotte polari (EU→JA/W via polo) bloccate 2–4 giorni. 160m/80m/40m percorsi polari inutilizzabili."},
+    "adv_pf_s1":        {"nl": "Verhoogde proton flux S1  ({pf} pfu) — PCA begint mogelijk. Monitor poolroutes op 40m. Kans op verdere escalatie bij actieve vlammenactiviteit.",
+                         "en": "Elevated proton flux S1  ({pf} pfu) — PCA may begin. Monitor polar routes on 40m. Chance of further escalation with active flare activity.",
+                         "de": "Erhöhter Protonenfluss S1  ({pf} pfu) — PCA kann beginnen. Polarrouten auf 40m überwachen. Chance auf weitere Eskalation bei Flares.",
+                         "fr": "Flux proton élevé S1  ({pf} pfu) — PCA peut commencer. Surveiller les routes polaires sur 40m. Risque d'escalade en cas d'éruptions.",
+                         "it": "Flusso protonico elevato S1  ({pf} pfu) — PCA può iniziare. Monitorare le rotte polari su 40m. Possibilità di escalation con brillamenti attivi."},
+    "adv_pf_normal":    {"nl": "Proton flux normaal  ({pf} pfu) — geen Polar Cap Absorption. Poolroutes niet door proton flux beïnvloed.",
+                         "en": "Proton flux normal  ({pf} pfu) — no Polar Cap Absorption. Polar routes unaffected by proton flux.",
+                         "de": "Protonenfluss normal  ({pf} pfu) — keine Polar Cap Absorption. Polarrouten nicht durch Protonenfluss beeinflusst.",
+                         "fr": "Flux proton normal  ({pf} pfu) — pas d'absorption polaire. Routes polaires non affectées par le flux proton.",
+                         "it": "Flusso protonico normale  ({pf} pfu) — nessuna Polar Cap Absorption. Rotte polari non influenzate dal flusso protonico."},
+    "adv_xflare_x":     {"nl": "X-flare gedetecteerd  ({xray}) — Short Wave Fadeout (SWF) mogelijk op dag-zijde; HF tijdelijk geblokkeerd. Herstel verwacht binnen 15–60 min.",
+                         "en": "X-flare detected  ({xray}) — Short Wave Fadeout (SWF) possible on dayside; HF temporarily blocked. Recovery expected within 15–60 min.",
+                         "de": "X-Flare erkannt  ({xray}) — Short Wave Fadeout (SWF) auf der Tagseite möglich; KW vorübergehend blockiert. Erholung in 15–60 min erwartet.",
+                         "fr": "Éruption X détectée  ({xray}) — Short Wave Fadeout (SWF) possible côté jour; HF temporairement bloqué. Rétablissement dans 15–60 min.",
+                         "it": "Brillamento X rilevato  ({xray}) — Short Wave Fadeout (SWF) possibile sul lato giorno; HF temporaneamente bloccato. Ripristino entro 15–60 min."},
+    "adv_xflare_m":     {"nl": "M-flare actief  ({xray}) — lichte SWF mogelijk op lagere HF. Verhoogde kans op Proton Event (PCA) bij M5+.",
+                         "en": "M-flare active  ({xray}) — minor SWF possible on lower HF. Increased chance of Proton Event (PCA) at M5+.",
+                         "de": "M-Flare aktiv  ({xray}) — leichter SWF auf niedrigem KW möglich. Erhöhte Chance auf Proton-Event (PCA) bei M5+.",
+                         "fr": "Éruption M active  ({xray}) — SWF léger possible sur HF bas. Risque accru d'événement proton (PCA) à M5+.",
+                         "it": "Brillamento M attivo  ({xray}) — SWF lieve possibile sulle HF basse. Aumento rischio Proton Event (PCA) a M5+."},
+    "adv_muf_28":       {"nl": "MUF={muf} MHz — 10m t/m 20m alle open; F2-laag optimaal",
+                         "en": "MUF={muf} MHz — 10m through 20m all open; F2 layer optimal",
+                         "de": "MUF={muf} MHz — 10m bis 20m alle offen; F2-Schicht optimal",
+                         "fr": "MUF={muf} MHz — 10m à 20m toutes ouvertes; couche F2 optimale",
+                         "it": "MUF={muf} MHz — da 10m a 20m tutte aperte; strato F2 ottimale"},
+    "adv_muf_14":       {"nl": "MUF={muf} MHz — 20m open; banden > {muf0} MHz dicht",
+                         "en": "MUF={muf} MHz — 20m open; bands > {muf0} MHz closed",
+                         "de": "MUF={muf} MHz — 20m offen; Bänder > {muf0} MHz geschlossen",
+                         "fr": "MUF={muf} MHz — 20m ouverte; bandes > {muf0} MHz fermées",
+                         "it": "MUF={muf} MHz — 20m aperta; bande > {muf0} MHz chiuse"},
+    "adv_muf_7":        {"nl": "MUF={muf} MHz — alleen 40m–80m bruikbaar",
+                         "en": "MUF={muf} MHz — only 40m–80m usable",
+                         "de": "MUF={muf} MHz — nur 40m–80m nutzbar",
+                         "fr": "MUF={muf} MHz — seulement 40m–80m utilisables",
+                         "it": "MUF={muf} MHz — solo 40m–80m utilizzabili"},
+    "adv_muf_low":      {"nl": "MUF={muf} MHz — ionosfeer zwak; alleen 80m/160m",
+                         "en": "MUF={muf} MHz — ionosphere weak; only 80m/160m",
+                         "de": "MUF={muf} MHz — Ionosphäre schwach; nur 80m/160m",
+                         "fr": "MUF={muf} MHz — ionosphère faible; seulement 80m/160m",
+                         "it": "MUF={muf} MHz — ionosfera debole; solo 80m/160m"},
+    "adv_iono_fmt":     {"nl": "Ionosfeer: {muf_txt}. Geschatte LUF ≈ {luf} MHz ({luf_note}).",
+                         "en": "Ionosphere: {muf_txt}. Estimated LUF ≈ {luf} MHz ({luf_note}).",
+                         "de": "Ionosphäre: {muf_txt}. Geschätzte LUF ≈ {luf} MHz ({luf_note}).",
+                         "fr": "Ionosphère: {muf_txt}. LUF estimée ≈ {luf} MHz ({luf_note}).",
+                         "it": "Ionosfera: {muf_txt}. LUF stimata ≈ {luf} MHz ({luf_note})."},
+    "adv_luf_elevated": {"nl": "verhoogd door K-index", "en": "elevated by K-index", "de": "durch K-Index erhöht", "fr": "élevée par K-index", "it": "elevata dall'indice K"},
+    "adv_luf_normal":   {"nl": "normaal",               "en": "normal",              "de": "normal",               "fr": "normal",              "it": "normale"},
+    "adv_morning":      {"nl": "Ochtend ({h}:xx lokaal) — F2-laag bouwt op; 20m wordt snel bruikbaar. Grey-line kansen voor DX-paden richting Amerika en Azië.",
+                         "en": "Morning ({h}:xx local) — F2 layer building up; 20m becoming usable quickly. Grey-line chances for DX paths towards America and Asia.",
+                         "de": "Morgen ({h}:xx lokal) — F2-Schicht baut sich auf; 20m wird schnell nutzbar. Grauzonenchancen für DX-Wege in Richtung Amerika und Asien.",
+                         "fr": "Matin ({h}:xx local) — couche F2 en formation; 20m bientôt utilisable. Opportunités grey-line vers l'Amérique et l'Asie.",
+                         "it": "Mattino ({h}:xx locale) — strato F2 in formazione; 20m presto utilizzabile. Opportunità grey-line verso America e Asia."},
+    "adv_midday":       {"nl": "Middag ({h}:xx lokaal) — F2 op maximale hoogte; beste window voor 15m/17m/20m DX. Probeer SSB of FT8 voor trans-Atlantische verbindingen.",
+                         "en": "Midday ({h}:xx local) — F2 at maximum height; best window for 15m/17m/20m DX. Try SSB or FT8 for trans-Atlantic contacts.",
+                         "de": "Mittag ({h}:xx lokal) — F2 auf maximaler Höhe; bestes Fenster für 15m/17m/20m DX. SSB oder FT8 für Transatlantik-Verbindungen.",
+                         "fr": "Midi ({h}:xx local) — F2 à son maximum; meilleure fenêtre pour DX 15m/17m/20m. Essayer SSB ou FT8 pour liaisons transatlantiques.",
+                         "it": "Mezzogiorno ({h}:xx locale) — F2 al massimo; miglior finestra per DX 15m/17m/20m. Prova SSB o FT8 per collegamenti transatlantici."},
+    "adv_afternoon":    {"nl": "Namiddag ({h}:xx lokaal) — Grey-line nadert; uitstekend voor DX richting Azië en Pacific. 15m en 17m vaak prachtig in deze uren.",
+                         "en": "Afternoon ({h}:xx local) — Grey-line approaching; excellent for DX towards Asia and Pacific. 15m and 17m often excellent at this time.",
+                         "de": "Nachmittag ({h}:xx lokal) — Grauzone nähert sich; ausgezeichnet für DX in Richtung Asien und Pazifik. 15m und 17m oft hervorragend.",
+                         "fr": "Après-midi ({h}:xx local) — Grey-line approche; excellent pour DX vers l'Asie et le Pacifique. 15m et 17m souvent superbes.",
+                         "it": "Pomeriggio ({h}:xx locale) — Grey-line in avvicinamento; eccellente per DX verso Asia e Pacifico. 15m e 17m spesso ottimi."},
+    "adv_early_night":  {"nl": "Vroege nacht ({h}:xx lokaal) — 40m en 80m open voor regionaal Europa-verkeer. F2-laag daalt; LUF stijgt op korte paden.",
+                         "en": "Early night ({h}:xx local) — 40m and 80m open for regional European traffic. F2 layer falling; LUF rising on short paths.",
+                         "de": "Frühe Nacht ({h}:xx lokal) — 40m und 80m offen für regionalen Europa-Verkehr. F2-Schicht sinkt; LUF steigt auf kurzen Wegen.",
+                         "fr": "Début de nuit ({h}:xx local) — 40m et 80m ouverts pour trafic régional européen. Couche F2 en baisse; LUF monte sur courts trajets.",
+                         "it": "Prima notte ({h}:xx locale) — 40m e 80m aperti per traffico regionale europeo. Strato F2 in discesa; LUF in aumento su percorsi brevi."},
+    "adv_night":        {"nl": "Nacht ({h}:xx lokaal) — 160m en 80m actief voor trans-Atlantisch DX. 40m goed voor Noord-Amerika. FT8 op lage banden voor DX-afstanden > 5000 km.",
+                         "en": "Night ({h}:xx local) — 160m and 80m active for trans-Atlantic DX. 40m good for North America. FT8 on low bands for DX distances > 5000 km.",
+                         "de": "Nacht ({h}:xx lokal) — 160m und 80m aktiv für transatlantisches DX. 40m gut für Nordamerika. FT8 auf niedrigen Bändern für DX > 5000 km.",
+                         "fr": "Nuit ({h}:xx local) — 160m et 80m actifs pour DX transatlantique. 40m bon pour l'Amérique du Nord. FT8 sur bandes basses pour DX > 5000 km.",
+                         "it": "Notte ({h}:xx locale) — 160m e 80m attivi per DX transatlantico. 40m buono per il Nord America. FT8 sulle bande basse per DX > 5000 km."},
+    "adv_pre_morning":  {"nl": "Voor de ochtend ({h}:xx lokaal) — Grey-line nadert; 80m/40m DX-window naar Azië/Pacific. 20m begint te openen richting Amerika.",
+                         "en": "Pre-dawn ({h}:xx local) — Grey-line approaching; 80m/40m DX window towards Asia/Pacific. 20m starting to open towards America.",
+                         "de": "Vor dem Morgen ({h}:xx lokal) — Grauzone nähert sich; 80m/40m DX-Fenster nach Asien/Pazifik. 20m beginnt sich in Richtung Amerika zu öffnen.",
+                         "fr": "Avant l'aube ({h}:xx local) — Grey-line approche; fenêtre DX 80m/40m vers Asie/Pacifique. 20m commence à s'ouvrir vers l'Amérique.",
+                         "it": "Prima dell'alba ({h}:xx locale) — Grey-line in avvicinamento; finestra DX 80m/40m verso Asia/Pacifico. 20m inizia ad aprirsi verso l'America."},
+    "adv_mode_weak":    {"nl": "Modus-advies: condities zwak ({pct}% op {band}) — overweeg FT8 (+25 dB winst t.o.v. SSB) of CW (+10 dB). Huidig SNR-budget: {snr} dB.",
+                         "en": "Mode advice: conditions weak ({pct}% on {band}) — consider FT8 (+25 dB gain over SSB) or CW (+10 dB). Current SNR budget: {snr} dB.",
+                         "de": "Modusempfehlung: Bedingungen schwach ({pct}% auf {band}) — FT8 (+25 dB gegenüber SSB) oder CW (+10 dB) erwägen. Aktuelles SNR-Budget: {snr} dB.",
+                         "fr": "Conseil de mode: conditions faibles ({pct}% sur {band}) — envisager FT8 (+25 dB gain vs SSB) ou CW (+10 dB). Budget SNR actuel: {snr} dB.",
+                         "it": "Consiglio modo: condizioni deboli ({pct}% su {band}) — considerare FT8 (+25 dB guadagno su SSB) o CW (+10 dB). Budget SNR attuale: {snr} dB."},
+    "adv_mode_good":    {"nl": "Modus-advies: goede condities ({pct}% op {band}) — SSB goed bruikbaar. SNR-budget {snr} dB; verhoog vermogen of verbeter antenne voor meer bereik.",
+                         "en": "Mode advice: good conditions ({pct}% on {band}) — SSB well usable. SNR budget {snr} dB; increase power or improve antenna for more range.",
+                         "de": "Modusempfehlung: gute Bedingungen ({pct}% auf {band}) — SSB gut nutzbar. SNR-Budget {snr} dB; Leistung erhöhen oder Antenne verbessern.",
+                         "fr": "Conseil de mode: bonnes conditions ({pct}% sur {band}) — SSB bien utilisable. Budget SNR {snr} dB; augmenter la puissance ou améliorer l'antenne.",
+                         "it": "Consiglio modo: buone condizioni ({pct}% su {band}) — SSB ben utilizzabile. Budget SNR {snr} dB; aumentare potenza o migliorare antenna."},
+    "adv_mode_default": {"nl": "Modus-advies: {mode} passend bij huidig {pct}% op {band}. SNR-budget: {snr} dB. FT8 geeft altijd +25 dB extra marge.",
+                         "en": "Mode advice: {mode} suitable for current {pct}% on {band}. SNR budget: {snr} dB. FT8 always gives +25 dB extra margin.",
+                         "de": "Modusempfehlung: {mode} passend für aktuelle {pct}% auf {band}. SNR-Budget: {snr} dB. FT8 gibt immer +25 dB extra Marge.",
+                         "fr": "Conseil de mode: {mode} adapté aux {pct}% actuels sur {band}. Budget SNR: {snr} dB. FT8 donne toujours +25 dB de marge supplémentaire.",
+                         "it": "Consiglio modo: {mode} adatto all'attuale {pct}% su {band}. Budget SNR: {snr} dB. FT8 dà sempre +25 dB di margine extra."},
+    "adv_abs_high":     {"nl": "Auroraal absorptie verhoogd (K={k}, QTH {lat}°) — trans-polaire paden (Europa→Canada, Europa→Japan via pool) sterk verzwakt. Gebruik equatoriale routes via 20m/17m.",
+                         "en": "Auroral absorption elevated (K={k}, QTH {lat}°) — trans-polar paths (Europe→Canada, Europe→Japan via pole) strongly attenuated. Use equatorial routes via 20m/17m.",
+                         "de": "Polare Absorption erhöht (K={k}, QTH {lat}°) — transpolare Wege (Europa→Kanada, Europa→Japan via Pol) stark gedämpft. Äquatorialrouten über 20m/17m nutzen.",
+                         "fr": "Absorption aurorale élevée (K={k}, QTH {lat}°) — chemins trans-polaires (Europe→Canada, Europe→Japon via pôle) fortement atténués. Utiliser routes équatoriales via 20m/17m.",
+                         "it": "Assorbimento aurorale elevato (K={k}, QTH {lat}°) — percorsi trans-polari (Europa→Canada, Europa→Giappone via polo) fortemente attenuati. Usare rotte equatoriali via 20m/17m."},
+    "adv_abs_low":      {"nl": "Lichte absorptie mogelijk (K={k}, QTH {lat}°) — poolpaden kunnen sporadisch verstoord zijn. Monitor 40m voor bruikbaarheid.",
+                         "en": "Minor absorption possible (K={k}, QTH {lat}°) — polar paths may be sporadically disturbed. Monitor 40m for usability.",
+                         "de": "Leichte Absorption möglich (K={k}, QTH {lat}°) — Polarwege können sporadisch gestört sein. 40m auf Nutzbarkeit überwachen.",
+                         "fr": "Légère absorption possible (K={k}, QTH {lat}°) — chemins polaires peuvent être sporadiquement perturbés. Surveiller 40m.",
+                         "it": "Assorbimento lieve possibile (K={k}, QTH {lat}°) — percorsi polari possono essere sporadicamente disturbati. Monitorare 40m."},
+    "adv_es_high":      {"nl": "Sporadic-E kans HOOG (maand {month}, {h}:xx lok.) — 6m/4m/2m kunnen onverwacht opengaan voor afstanden van 700–2500 km. Monitor 50.313 (FT8) en 50.150 (SSB). Typisch 15–90 min durend.",
+                         "en": "Sporadic-E chance HIGH (month {month}, {h}:xx local) — 6m/4m/2m may unexpectedly open for distances of 700–2500 km. Monitor 50.313 (FT8) and 50.150 (SSB). Typically 15–90 min duration.",
+                         "de": "Sporadic-E Chance HOCH (Monat {month}, {h}:xx lokal) — 6m/4m/2m können unerwartet für 700–2500 km öffnen. 50.313 (FT8) und 50.150 (SSB) überwachen. Typisch 15–90 min.",
+                         "fr": "Chance Sporadic-E ÉLEVÉE (mois {month}, {h}:xx local) — 6m/4m/2m peuvent s'ouvrir inopinément sur 700–2500 km. Surveiller 50.313 (FT8) et 50.150 (SSB). Typiquement 15–90 min.",
+                         "it": "Probabilità Sporadic-E ALTA (mese {month}, {h}:xx locale) — 6m/4m/2m possono aprirsi inaspettatamente per distanze 700–2500 km. Monitorare 50.313 (FT8) e 50.150 (SSB). Tipicamente 15–90 min."},
+    "adv_es_seasonal":  {"nl": "Sporadic-E seizoen actief (maand {month}) maar buiten piekuren — kans op 6m/4m opens is laag; meest actief 09–14h en 17–22h lokaal.",
+                         "en": "Sporadic-E season active (month {month}) but outside peak hours — chance of 6m/4m openings low; most active 09–14h and 17–22h local.",
+                         "de": "Sporadic-E-Saison aktiv (Monat {month}), aber außerhalb der Spitzenstunden — Chance auf 6m/4m-Öffnungen gering; am aktivsten 09–14h und 17–22h lokal.",
+                         "fr": "Saison Sporadic-E active (mois {month}) mais hors heures de pointe — probabilité d'ouvertures 6m/4m faible; plus actif 09–14h et 17–22h local.",
+                         "it": "Stagione Sporadic-E attiva (mese {month}) ma fuori dalle ore di punta — probabilità di aperture 6m/4m bassa; più attiva 09–14h e 17–22h locale."},
+    "adv_es_winter":    {"nl": "Winter-Es mogelijk (maand {month}, {h}:xx lok.) — zeldzame maar plotselinge openingen op 6m; monitor 50.313 MHz.",
+                         "en": "Winter-Es possible (month {month}, {h}:xx local) — rare but sudden openings on 6m; monitor 50.313 MHz.",
+                         "de": "Winter-Es möglich (Monat {month}, {h}:xx lokal) — seltene aber plötzliche Öffnungen auf 6m; 50.313 MHz überwachen.",
+                         "fr": "Es hivernal possible (mois {month}, {h}:xx local) — ouvertures rares mais soudaines sur 6m; surveiller 50.313 MHz.",
+                         "it": "Es invernale possibile (mese {month}, {h}:xx locale) — aperture rare ma improvvise su 6m; monitorare 50.313 MHz."},
+    "adv_tep":          {"nl": "TEP-venster (dag {doy}, {h}:xx lok.) — trans-equatoriale propagatie mogelijk. Paden richting Centraal-Afrika en Latijns-Amerika op 50 MHz en 144 MHz kunnen open zijn. Meest kansrijk 13–17h lokaal.",
+                         "en": "TEP window (day {doy}, {h}:xx local) — trans-equatorial propagation possible. Paths towards Central Africa and Latin America on 50 MHz and 144 MHz may be open. Most likely 13–17h local.",
+                         "de": "TEP-Fenster (Tag {doy}, {h}:xx lokal) — trans-äquatoriale Ausbreitung möglich. Wege nach Zentralafrika und Lateinamerika auf 50 MHz und 144 MHz können offen sein. Wahrscheinlichster Zeitraum 13–17h lokal.",
+                         "fr": "Fenêtre TEP (jour {doy}, {h}:xx local) — propagation trans-équatoriale possible. Chemins vers l'Afrique centrale et l'Amérique latine sur 50 MHz et 144 MHz peuvent être ouverts. Plus probable 13–17h local.",
+                         "it": "Finestra TEP (giorno {doy}, {h}:xx locale) — propagazione trans-equatoriale possibile. Percorsi verso l'Africa centrale e l'America Latina su 50 MHz e 144 MHz possono essere aperti. Più probabile 13–17h locale."},
+    "adv_trend_change": {"nl": "Propagatie {direction} (afgelopen {age}u): {parts}.",
+                         "en": "Propagation {direction} (last {age}h): {parts}.",
+                         "de": "Ausbreitung {direction} (letzte {age}h): {parts}.",
+                         "fr": "Propagation {direction} (dernières {age}h): {parts}.",
+                         "it": "Propagazione {direction} (ultime {age}h): {parts}."},
+    "adv_trend_stable": {"nl": "Propagatie stabiel (laatste {age}u geen significante wijziging).",
+                         "en": "Propagation stable (last {age}h no significant change).",
+                         "de": "Ausbreitung stabil (letzte {age}h keine signifikante Änderung).",
+                         "fr": "Propagation stable (dernières {age}h aucun changement significatif).",
+                         "it": "Propagazione stabile (ultime {age}h nessun cambiamento significativo)."},
+    "adv_sc_max":       {"nl": "Zonnecyclus 25 MAXIMUM — SSN={ssn} (hoogtepunt verwacht 2025–2026). Optimale F2-propagatie op hoge banden; geniet van 10m–15m DX terwijl de cyclus op zijn best is.",
+                         "en": "Solar Cycle 25 MAXIMUM — SSN={ssn} (peak expected 2025–2026). Optimal F2 propagation on high bands; enjoy 10m–15m DX while the cycle is at its best.",
+                         "de": "Sonnenzyklus 25 MAXIMUM — SSN={ssn} (Spitze erwartet 2025–2026). Optimale F2-Ausbreitung auf hohen Bändern; 10m–15m DX genießen während der Zyklus am besten ist.",
+                         "fr": "Cycle Solaire 25 MAXIMUM — SSN={ssn} (pic attendu 2025–2026). Propagation F2 optimale sur les hautes bandes; profitez du DX 10m–15m pendant que le cycle est au mieux.",
+                         "it": "Ciclo Solare 25 MASSIMO — SSN={ssn} (picco atteso 2025–2026). Propagazione F2 ottimale sulle bande alte; goditi il DX 10m–15m mentre il ciclo è al massimo."},
+    "adv_sc_high":      {"nl": "Zonnecyclus 25 hoog/maximumfase — SSN={ssn}. Hoge banden (10m–17m) regelmatig open voor DX. Verwacht verdere toename richting cycluspiek.",
+                         "en": "Solar Cycle 25 high/peak phase — SSN={ssn}. High bands (10m–17m) regularly open for DX. Expect further increase towards cycle peak.",
+                         "de": "Sonnenzyklus 25 hoch/Spitzenphase — SSN={ssn}. Hohe Bänder (10m–17m) regelmäßig offen für DX. Weiterer Anstieg Richtung Zyklusspitze erwartet.",
+                         "fr": "Cycle Solaire 25 phase haute/maximum — SSN={ssn}. Hautes bandes (10m–17m) régulièrement ouvertes pour DX. Augmentation attendue vers le pic du cycle.",
+                         "it": "Ciclo Solare 25 fase alta/massimo — SSN={ssn}. Bande alte (10m–17m) regolarmente aperte per DX. Atteso ulteriore aumento verso il picco del ciclo."},
+    "adv_sc_rising":    {"nl": "Zonnecyclus 25 opkomende fase — SSN={ssn}. Cyclus in opbouw; 20m–17m betrouwbaar, hogere banden variabel. Positieve trend verwacht.",
+                         "en": "Solar Cycle 25 rising phase — SSN={ssn}. Cycle building up; 20m–17m reliable, higher bands variable. Positive trend expected.",
+                         "de": "Sonnenzyklus 25 aufsteigende Phase — SSN={ssn}. Zyklus im Aufbau; 20m–17m zuverlässig, höhere Bänder variabel. Positiver Trend erwartet.",
+                         "fr": "Cycle Solaire 25 phase montante — SSN={ssn}. Cycle en développement; 20m–17m fiables, hautes bandes variables. Tendance positive attendue.",
+                         "it": "Ciclo Solare 25 fase ascendente — SSN={ssn}. Ciclo in costruzione; 20m–17m affidabili, bande alte variabili. Tendenza positiva attesa."},
+    "adv_sc_transition":{"nl": "Zonnecyclus in overgangsperiode — SSN={ssn}. Afhankelijk van trend: controleer of SSN stijgt of daalt. 20m/40m vormen ruggengraat.",
+                         "en": "Solar cycle in transition — SSN={ssn}. Depending on trend: check whether SSN is rising or falling. 20m/40m form the backbone.",
+                         "de": "Sonnenzyklus im Übergang — SSN={ssn}. Je nach Trend: prüfen ob SSN steigt oder fällt. 20m/40m bilden das Rückgrat.",
+                         "fr": "Cycle solaire en transition — SSN={ssn}. Selon la tendance: vérifier si SSN monte ou descend. 20m/40m forment l'épine dorsale.",
+                         "it": "Ciclo solare in transizione — SSN={ssn}. In base alla tendenza: verificare se SSN sale o scende. 20m/40m formano la spina dorsale."},
+    "adv_sc_low":       {"nl": "Zonnecyclus laag — SSN={ssn}. Cyclus mogelijk in minimum of vroeg stadium; 40m/80m/160m zijn de meest betrouwbare banden.",
+                         "en": "Solar cycle low — SSN={ssn}. Cycle possibly at minimum or early stage; 40m/80m/160m are the most reliable bands.",
+                         "de": "Sonnenzyklus tief — SSN={ssn}. Zyklus möglicherweise im Minimum oder frühen Stadium; 40m/80m/160m sind die zuverlässigsten Bänder.",
+                         "fr": "Cycle solaire bas — SSN={ssn}. Cycle possiblement au minimum ou en début; 40m/80m/160m sont les bandes les plus fiables.",
+                         "it": "Ciclo solare basso — SSN={ssn}. Ciclo forse al minimo o in fase iniziale; 40m/80m/160m sono le bande più affidabili."},
+    "adv_storm_recovery": {"nl": "Storm-herstelprognose: A={a}, K={k} — geschatte normaliseringstijd ≈{rh}u na piek. HF herstel verloopt van laag naar hoog (40m eerst, daarna 20m/15m). Monitor K-index voor herstel onder 3.",
+                           "en": "Storm recovery forecast: A={a}, K={k} — estimated normalisation time ≈{rh}h after peak. HF recovery proceeds low-to-high (40m first, then 20m/15m). Monitor K-index for recovery below 3.",
+                           "de": "Sturmerholungsprognose: A={a}, K={k} — geschätzte Normalisierungszeit ≈{rh}h nach dem Höhepunkt. KW-Erholung von unten nach oben (40m zuerst, dann 20m/15m). K-Index auf Erholung unter 3 überwachen.",
+                           "fr": "Prévision de récupération: A={a}, K={k} — temps de normalisation estimé ≈{rh}h après le pic. Récupération HF du bas vers le haut (40m d'abord, puis 20m/15m). Surveiller K-index pour retour sous 3.",
+                           "it": "Previsione recupero tempesta: A={a}, K={k} — tempo di normalizzazione stimato ≈{rh}h dopo il picco. Recupero HF dal basso verso l'alto (prima 40m, poi 20m/15m). Monitorare K-index per recupero sotto 3."},
+    "adv_dx_cluster":   {"nl": "DX-cluster: {n} spots actief — top continenten: {top}. ",
+                         "en": "DX cluster: {n} spots active — top continents: {top}. ",
+                         "de": "DX-Cluster: {n} Spots aktiv — Top-Kontinente: {top}. ",
+                         "fr": "DX cluster: {n} spots actifs — principaux continents: {top}. ",
+                         "it": "DX cluster: {n} spot attivi — principali continenti: {top}. "},
+    "adv_dx_oceania":   {"nl": "Oceanië ({n}×) actief → goede Oost-kans. ",
+                         "en": "Oceania ({n}×) active → good East opportunity. ",
+                         "de": "Ozeanien ({n}×) aktiv → gute Ostchance. ",
+                         "fr": "Océanie ({n}×) active → bonne opportunité Est. ",
+                         "it": "Oceania ({n}×) attiva → buona opportunità Est. "},
+    "adv_dx_asia":      {"nl": "Azië ({n}×) goed vertegenwoordigd. ",
+                         "en": "Asia ({n}×) well represented. ",
+                         "de": "Asien ({n}×) gut vertreten. ",
+                         "fr": "Asie ({n}×) bien représentée. ",
+                         "it": "Asia ({n}×) ben rappresentata. "},
+    "adv_dx_routes":    {"nl": "Optimale DX-routes nu: {routes}.",
+                         "en": "Optimal DX routes now: {routes}.",
+                         "de": "Optimale DX-Routen jetzt: {routes}.",
+                         "fr": "Meilleures routes DX maintenant: {routes}.",
+                         "it": "Rotte DX ottimali ora: {routes}."},
+    "adv_overall_score":{"nl": "Algehele propagatie-score: {overall}  (SFI {sfi} · K {k} · {open} banden open). {daynight}condities, QTH {lat}°N.",
+                         "en": "Overall propagation score: {overall}  (SFI {sfi} · K {k} · {open} bands open). {daynight} conditions, QTH {lat}°N.",
+                         "de": "Gesamtausbreitungswert: {overall}  (SFI {sfi} · K {k} · {open} Bänder offen). {daynight}bedingungen, QTH {lat}°N.",
+                         "fr": "Score de propagation global: {overall}  (SFI {sfi} · K {k} · {open} bandes ouvertes). Conditions {daynight}, QTH {lat}°N.",
+                         "it": "Punteggio propagazione globale: {overall}  (SFI {sfi} · K {k} · {open} bande aperte). Condizioni {daynight}, QTH {lat}°N."},
+    # ── DX routes (teksten) ───────────────────────────────────────────────────
+    "dx_route_eu_ja_day":   {"nl": "EU→JA (Azië) via long path, 14–21 MHz",       "en": "EU→JA (Asia) via long path, 14–21 MHz",         "de": "EU→JA (Asien) via Long Path, 14–21 MHz",           "fr": "EU→JA (Asie) via long path, 14–21 MHz",           "it": "EU→JA (Asia) via long path, 14–21 MHz"},
+    "dx_route_eu_w_day":    {"nl": "EU→W (Noord-Amerika) short path, 14–21 MHz",  "en": "EU→W (North America) short path, 14–21 MHz",   "de": "EU→W (Nordamerika) Short Path, 14–21 MHz",         "fr": "EU→W (Amérique du Nord) short path, 14–21 MHz",   "it": "EU→W (Nord America) short path, 14–21 MHz"},
+    "dx_route_eu_af_day":   {"nl": "EU→Afrika short path, 14–28 MHz",             "en": "EU→Africa short path, 14–28 MHz",               "de": "EU→Afrika Short Path, 14–28 MHz",                  "fr": "EU→Afrique short path, 14–28 MHz",                "it": "EU→Africa short path, 14–28 MHz"},
+    "dx_route_eu_oc_day":   {"nl": "EU→VK/ZL (Pacific) long path, 14–21 MHz",    "en": "EU→VK/ZL (Pacific) long path, 14–21 MHz",      "de": "EU→VK/ZL (Pazifik) Long Path, 14–21 MHz",          "fr": "EU→VK/ZL (Pacifique) long path, 14–21 MHz",       "it": "EU→VK/ZL (Pacifico) long path, 14–21 MHz"},
+    "dx_route_eu_w_night":  {"nl": "EU→W (Noord-Amerika) 40m–80m nacht-DX",      "en": "EU→W (North America) 40m–80m night DX",        "de": "EU→W (Nordamerika) 40m–80m Nacht-DX",              "fr": "EU→W (Amérique du Nord) 40m–80m DX nocturne",     "it": "EU→W (Nord America) 40m–80m DX notturno"},
+    "dx_route_eu_ja_night": {"nl": "EU→JA (Azië) 40m–20m via pool night path",   "en": "EU→JA (Asia) 40m–20m via polar night path",    "de": "EU→JA (Asien) 40m–20m via Polar Night Path",       "fr": "EU→JA (Asie) 40m–20m via chemin polaire nocturne","it": "EU→JA (Asia) 40m–20m via percorso polare notturno"},
 }
 
 _HIST_KEEP_DAYS  = 90   # hoeveel dagen geschiedenis bewaren
@@ -1165,7 +1583,7 @@ class _Tooltip:
 class HAMIOSApp:
     def __init__(self, root: tk.Tk):
         self.root = root
-        self.root.title("HAMIOS v2.2")
+        self.root.title("HAMIOS v2.3")
         self.root.configure(bg=BG_ROOT)
         self.root.minsize(800, 500)
 
@@ -1232,7 +1650,7 @@ class HAMIOSApp:
                 lbl_d.config(fg=color     if active else TEXT_DIM)
                 lbl_n.config(fg=TEXT_BODY if active else TEXT_DIM,
                              font=_font(8, "bold") if active else _font(8))
-        self._center_window(1400, 960)
+        self._center_window(1400)   # h_hint = MIN_WINDOW_H (default)
         self._tick_clock()
         self._start_tray()
         self.root.protocol("WM_DELETE_WINDOW", self._on_close)
@@ -1291,6 +1709,14 @@ class HAMIOSApp:
                     w.config(text=text)
                 except tk.TclError:
                     pass
+        # Hist-range radiobuttons (value ≠ display text)
+        for rb, tr_key in getattr(self, "_hist_range_rbs", []):
+            try:
+                rb.config(text=self._tr(tr_key))
+            except tk.TclError:
+                pass
+        # Refresh + advice opnieuw renderen bij taalwissel
+        self._update_advice()
 
     def _on_lang_change(self, *_):
         self._apply_translations()
@@ -1329,7 +1755,7 @@ class HAMIOSApp:
         hdr = tk.Frame(self.root, bg=BG_PANEL, height=42)
         hdr.pack(fill=tk.X)
         tk.Frame(hdr, bg=ACCENT, width=4).pack(side=tk.LEFT, fill=tk.Y)
-        tk.Label(hdr, text="📡  HAMIOS v2.2",
+        tk.Label(hdr, text="📡  HAMIOS v2.3",
                  font=_font(13, "bold"), bg=BG_PANEL, fg=ACCENT,
                  pady=8).pack(side=tk.LEFT, padx=10)
 
@@ -1460,76 +1886,281 @@ class HAMIOSApp:
         solar_col.pack_propagate(False)
 
         tk.Frame(solar_col, bg=ACCENT, height=2).pack(fill=tk.X)
-        solar_hdr = tk.Frame(solar_col, bg=BG_PANEL)
-        solar_hdr.pack(fill=tk.X, padx=10, pady=(6, 4))
-        tk.Label(solar_hdr, text="☀  Solar / Ionosfeer",
-                 font=_font(10, "bold"), bg=BG_PANEL, fg=ACCENT).pack(side=tk.LEFT)
-        self._updated_var = tk.StringVar(value="")
-        tk.Label(solar_hdr, textvariable=self._updated_var,
-                 font=_font(8), bg=BG_PANEL, fg=TEXT_DIM).pack(side=tk.RIGHT)
+        _solar_hdr_lbl = tk.Label(solar_col, text=self._tr("solar"),
+                                  font=_font(10, "bold"), bg=BG_PANEL, fg=ACCENT,
+                                  pady=8)
+        _solar_hdr_lbl.pack(anchor='w', padx=10)
+        self._tr_widgets["solar"] = _solar_hdr_lbl
 
         self._solar_frame = tk.Frame(solar_col, bg=BG_PANEL)
         self._solar_frame.pack(fill=tk.BOTH, expand=True, padx=10)
 
-        _SOLAR_TIPS = {
-            "sfi":     ("Solar Flux Index (SFI)",
-                        "Maat voor de radioactiviteit van de zon op 10,7 cm.\n"
-                        "< 80: laag  |  80–120: matig  |  > 150: hoog\n"
-                        "Hogere SFI → betere ionisatie → hogere MUF."),
-            "ssn":     ("Sunspot Number (SSN)",
-                        "Aantal zonneplekken. Hoog SSN correleert met hogere SFI\n"
-                        "en betere HF-propagatie, vooral op de hogere banden."),
-            "a_index": ("A-index (dagelijks)",
-                        "Dagelijkse maat voor geomagnetische activiteit (0–400).\n"
-                        "< 10: rustig  |  10–29: onrustig  |  ≥ 30: storm\n"
-                        "Hoge waarden verstoren de ionosfeer (verhoogde LUF)."),
-            "k_index": ("K-index (3-uurs)",
-                        "3-uurs geomagnetische activiteit (0–9).\n"
-                        "0–2: rustig  |  3–4: onrustig  |  5+: storm\n"
-                        "Direct effect op HF-absorptie en poolroutes."),
-            "xray":    ("X-ray flux (GOES)",
-                        "Röntgenflux van de zon. Klasse A/B/C/M/X.\n"
-                        "X-flares kunnen de ionosfeer op dag-zijde plotseling\n"
-                        "blokkeren (SWF – Short Wave Fadeout)."),
-            "muf":     ("Maximum Usable Frequency (MUF)",
-                        "Hoogste frequentie die op een bepaald pad weerkaatst\n"
-                        "wordt door de F2-laag. Banden boven de MUF zijn dicht.\n"
-                        "Berekend via foF2 × oblique factor 3,8."),
-            "luf":     ("Lowest Usable Frequency (LUF)",
-                        "Laagste frequentie die bruikbaar is door D-laag absorptie.\n"
-                        "Banden onder de LUF worden te sterk geabsorbeerd.\n"
-                        "Stijgt met hogere K-index en aurorale activiteit."),
-            "sw_speed": ("Solarwindsnelheid (km/s)",
-                         "Snelheid van de solarwind gemeten door DSCOVR/ACE (NOAA).\n"
-                         "< 400: rustig  |  400–600: verhoogd  |  > 600: stormachtig\n"
-                         "Hogere snelheid kan geomagnetische activiteit verhogen."),
-            "sw_bz":    ("Bz — interplanetair magneetveld (nT)",
-                         "Noordwaartse (positief) of zuidwaartse (negatief) component\n"
-                         "van het interplanetair magneetveld (IMF).\n"
-                         "Bz < −10 nT: kans op geomagnetische storm neemt sterk toe.\n"
-                         "Negatieve Bz koppelt aan het aardveld → verhoogde K-index."),
-            "iono_fof2":  ("Ionosonde foF2 — gemeten vs model (MHz)",
-                           "foF2 = kritische frequentie van de F2-laag (ionosonde-meting).\n"
-                           "Gemeten: actuele waarde van de dichtstbijzijnde Europese\n"
-                           "ionosonde (GIRO/LGDC DIDBase, interval ≈15 min).\n"
-                           "Model: HAMIOS-berekening op basis van SFI en SSN.\n"
-                           "Verschil > 1 MHz: ionosfeer wijkt af van model — gebruik\n"
-                           "gemeten waarde voor nauwkeurigere MUF-schatting.\n"
-                           "Groen = goede overeenkomst  |  Oranje = matige afwijking\n"
-                           "Rood = grote afwijking (storm of ongewone activiteit)."),
-            "proton_flux": ("Proton flux >10 MeV (pfu)",
-                            "Hoog-energetische protonen afkomstig van zonne-uitbarstingen.\n"
-                            "Eenheid: pfu (particles/cm²/s/sr).\n"
-                            "< 10 pfu  : normaal\n"
-                            "≥ 10 pfu  : S1-event — begin PCA mogelijk\n"
-                            "≥ 100 pfu : S3-event — poolroutes geblokkeerd\n"
-                            "≥ 1000 pfu: S5-event — ernstige PCA, alle poolpaden dicht\n"
-                            "PCA (Polar Cap Absorption) blokkeert poolroutes 1–7 dagen."),
+        _SOLAR_TIPS_LANG = {
+            "nl": {
+                "sfi":        ("Solar Flux Index (SFI)",
+                               "Maat voor de radioactiviteit van de zon op 10,7 cm.\n"
+                               "< 80: laag  |  80–120: matig  |  > 150: hoog\n"
+                               "Hogere SFI → betere ionisatie → hogere MUF."),
+                "ssn":        ("Sunspot Number (SSN)",
+                               "Aantal zonneplekken. Hoog SSN correleert met hogere SFI\n"
+                               "en betere HF-propagatie, vooral op de hogere banden."),
+                "a_index":    ("A-index (dagelijks)",
+                               "Dagelijkse maat voor geomagnetische activiteit (0–400).\n"
+                               "< 10: rustig  |  10–29: onrustig  |  ≥ 30: storm\n"
+                               "Hoge waarden verstoren de ionosfeer (verhoogde LUF)."),
+                "k_index":    ("K-index (3-uurs)",
+                               "3-uurs geomagnetische activiteit (0–9).\n"
+                               "0–2: rustig  |  3–4: onrustig  |  5+: storm\n"
+                               "Direct effect op HF-absorptie en poolroutes."),
+                "xray":       ("X-ray flux (GOES)",
+                               "Röntgenflux van de zon. Klasse A/B/C/M/X.\n"
+                               "X-flares kunnen de ionosfeer op dag-zijde plotseling\n"
+                               "blokkeren (SWF – Short Wave Fadeout)."),
+                "muf":        ("Maximum Usable Frequency (MUF)",
+                               "Hoogste frequentie die op een bepaald pad weerkaatst\n"
+                               "wordt door de F2-laag. Banden boven de MUF zijn dicht.\n"
+                               "Berekend via foF2 × oblique factor 3,8."),
+                "luf":        ("Lowest Usable Frequency (LUF)",
+                               "Laagste frequentie die bruikbaar is door D-laag absorptie.\n"
+                               "Banden onder de LUF worden te sterk geabsorbeerd.\n"
+                               "Stijgt met hogere K-index en aurorale activiteit."),
+                "sw_speed":   ("Solarwindsnelheid (km/s)",
+                               "Snelheid van de solarwind gemeten door DSCOVR/ACE (NOAA).\n"
+                               "< 400: rustig  |  400–600: verhoogd  |  > 600: stormachtig\n"
+                               "Hogere snelheid kan geomagnetische activiteit verhogen."),
+                "sw_bz":      ("Bz — interplanetair magneetveld (nT)",
+                               "Noordwaartse (positief) of zuidwaartse (negatief) component\n"
+                               "van het interplanetair magneetveld (IMF).\n"
+                               "Bz < −10 nT: kans op geomagnetische storm neemt sterk toe.\n"
+                               "Negatieve Bz koppelt aan het aardveld → verhoogde K-index."),
+                "iono_fof2":  ("Ionosonde foF2 — gemeten vs model (MHz)",
+                               "foF2 = kritische frequentie van de F2-laag (ionosonde-meting).\n"
+                               "Gemeten: actuele waarde van de dichtstbijzijnde Europese\n"
+                               "ionosonde (GIRO/LGDC DIDBase, interval ≈15 min).\n"
+                               "Model: HAMIOS-berekening op basis van SFI en SSN.\n"
+                               "Groen = goede overeenkomst  |  Oranje = matige afwijking\n"
+                               "Rood = grote afwijking (storm of ongewone activiteit)."),
+                "proton_flux":("Proton flux >10 MeV (pfu)",
+                               "Hoog-energetische protonen van zonne-uitbarstingen.\n"
+                               "< 10 pfu: normaal  |  ≥ 10: S1 (PCA mogelijk)\n"
+                               "≥ 100 pfu: S3 — poolroutes geblokkeerd\n"
+                               "≥ 1000 pfu: S5 — ernstige PCA, alle poolpaden dicht\n"
+                               "PCA blokkeert poolroutes 1–7 dagen."),
+            },
+            "en": {
+                "sfi":        ("Solar Flux Index (SFI)",
+                               "Measure of solar radio activity at 10.7 cm.\n"
+                               "< 80: low  |  80–120: moderate  |  > 150: high\n"
+                               "Higher SFI → better ionisation → higher MUF."),
+                "ssn":        ("Sunspot Number (SSN)",
+                               "Number of sunspots. High SSN correlates with higher SFI\n"
+                               "and better HF propagation, especially on higher bands."),
+                "a_index":    ("A-index (daily)",
+                               "Daily measure of geomagnetic activity (0–400).\n"
+                               "< 10: quiet  |  10–29: unsettled  |  ≥ 30: storm\n"
+                               "High values disturb the ionosphere (elevated LUF)."),
+                "k_index":    ("K-index (3-hourly)",
+                               "3-hourly geomagnetic activity (0–9).\n"
+                               "0–2: quiet  |  3–4: unsettled  |  5+: storm\n"
+                               "Direct effect on HF absorption and polar routes."),
+                "xray":       ("X-ray flux (GOES)",
+                               "Solar X-ray flux. Class A/B/C/M/X.\n"
+                               "X-flares can suddenly block the dayside ionosphere\n"
+                               "(SWF – Short Wave Fadeout)."),
+                "muf":        ("Maximum Usable Frequency (MUF)",
+                               "Highest frequency reflected by the F2 layer on a given path.\n"
+                               "Bands above the MUF are closed.\n"
+                               "Calculated via foF2 × oblique factor 3.8."),
+                "luf":        ("Lowest Usable Frequency (LUF)",
+                               "Lowest usable frequency due to D-layer absorption.\n"
+                               "Bands below the LUF are too strongly absorbed.\n"
+                               "Rises with higher K-index and auroral activity."),
+                "sw_speed":   ("Solar wind speed (km/s)",
+                               "Solar wind speed measured by DSCOVR/ACE (NOAA).\n"
+                               "< 400: quiet  |  400–600: elevated  |  > 600: stormy\n"
+                               "Higher speed can increase geomagnetic activity."),
+                "sw_bz":      ("Bz — interplanetary magnetic field (nT)",
+                               "Northward (positive) or southward (negative) component\n"
+                               "of the interplanetary magnetic field (IMF).\n"
+                               "Bz < −10 nT: geomagnetic storm risk increases strongly.\n"
+                               "Negative Bz couples to Earth's field → elevated K-index."),
+                "iono_fof2":  ("Ionosonde foF2 — measured vs model (MHz)",
+                               "foF2 = critical frequency of the F2 layer (ionosonde measurement).\n"
+                               "Measured: current value from the nearest European\n"
+                               "ionosonde (GIRO/LGDC DIDBase, interval ≈15 min).\n"
+                               "Model: HAMIOS calculation based on SFI and SSN.\n"
+                               "Green = good match  |  Orange = moderate deviation\n"
+                               "Red = large deviation (storm or unusual activity)."),
+                "proton_flux":("Proton flux >10 MeV (pfu)",
+                               "High-energy protons from solar eruptions.\n"
+                               "< 10 pfu: normal  |  ≥ 10: S1 (PCA possible)\n"
+                               "≥ 100 pfu: S3 — polar routes blocked\n"
+                               "≥ 1000 pfu: S5 — severe PCA, all polar paths closed\n"
+                               "PCA blocks polar routes 1–7 days."),
+            },
+            "de": {
+                "sfi":        ("Solarfluxindex (SFI)",
+                               "Maß für die Radioaktivität der Sonne bei 10,7 cm.\n"
+                               "< 80: niedrig  |  80–120: mäßig  |  > 150: hoch\n"
+                               "Höherer SFI → bessere Ionisation → höhere MUF."),
+                "ssn":        ("Sonnenfleckenanzahl (SSN)",
+                               "Anzahl der Sonnenflecken. Hohe SSN korreliert mit höherem SFI\n"
+                               "und besserer KW-Ausbreitung, besonders auf hohen Bändern."),
+                "a_index":    ("A-Index (täglich)",
+                               "Tägliches Maß für geomagnetische Aktivität (0–400).\n"
+                               "< 10: ruhig  |  10–29: unruhig  |  ≥ 30: Sturm\n"
+                               "Hohe Werte stören die Ionosphäre (erhöhte LUF)."),
+                "k_index":    ("K-Index (3-stündlich)",
+                               "3-stündliche geomagnetische Aktivität (0–9).\n"
+                               "0–2: ruhig  |  3–4: unruhig  |  5+: Sturm\n"
+                               "Direkter Einfluss auf KW-Absorption und Polarrouten."),
+                "xray":       ("Röntgenfluss (GOES)",
+                               "Solarer Röntgenfluss. Klasse A/B/C/M/X.\n"
+                               "X-Flares können die Tagseite der Ionosphäre plötzlich\n"
+                               "blockieren (SWF – Short Wave Fadeout)."),
+                "muf":        ("Maximal nutzbare Frequenz (MUF)",
+                               "Höchste an der F2-Schicht reflektierte Frequenz.\n"
+                               "Bänder oberhalb der MUF sind geschlossen.\n"
+                               "Berechnet via foF2 × Schrägfaktor 3,8."),
+                "luf":        ("Niedrigste nutzbare Frequenz (LUF)",
+                               "Niedrigste nutzbare Frequenz durch D-Schicht-Absorption.\n"
+                               "Bänder unterhalb der LUF werden zu stark absorbiert.\n"
+                               "Steigt mit höherem K-Index und Polarlichtaktivität."),
+                "sw_speed":   ("Sonnenwindgeschwindigkeit (km/s)",
+                               "Sonnenwindgeschwindigkeit gemessen von DSCOVR/ACE (NOAA).\n"
+                               "< 400: ruhig  |  400–600: erhöht  |  > 600: stürmisch\n"
+                               "Höhere Geschwindigkeit kann geomagnetische Aktivität erhöhen."),
+                "sw_bz":      ("Bz — Interplanetares Magnetfeld (nT)",
+                               "Nordwärts (positiv) oder südwärts (negativ) Komponente\n"
+                               "des interplanetaren Magnetfelds (IMF).\n"
+                               "Bz < −10 nT: Geomagnetsturmrisiko steigt stark.\n"
+                               "Negatives Bz koppelt an Erdfeld → erhöhter K-Index."),
+                "iono_fof2":  ("Ionosonde foF2 — gemessen vs Modell (MHz)",
+                               "foF2 = kritische Frequenz der F2-Schicht (Ionosonden-Messung).\n"
+                               "Gemessen: aktueller Wert der nächsten europäischen\n"
+                               "Ionosonde (GIRO/LGDC DIDBase, Intervall ≈15 min).\n"
+                               "Modell: HAMIOS-Berechnung auf Basis von SFI und SSN.\n"
+                               "Grün = gute Übereinstimmung  |  Orange = mäßige Abweichung\n"
+                               "Rot = große Abweichung (Sturm oder ungewöhnliche Aktivität)."),
+                "proton_flux":("Protonenfluss >10 MeV (pfu)",
+                               "Hochenergetische Protonen aus Sonneneruptionen.\n"
+                               "< 10 pfu: normal  |  ≥ 10: S1 (PCA möglich)\n"
+                               "≥ 100 pfu: S3 — Polarrouten gesperrt\n"
+                               "≥ 1000 pfu: S5 — schwere PCA, alle Polarwege geschlossen\n"
+                               "PCA sperrt Polarrouten 1–7 Tage."),
+            },
+            "fr": {
+                "sfi":        ("Indice de flux solaire (SFI)",
+                               "Mesure de l'activité radio solaire à 10,7 cm.\n"
+                               "< 80: faible  |  80–120: modéré  |  > 150: élevé\n"
+                               "SFI plus élevé → meilleure ionisation → MUF plus haute."),
+                "ssn":        ("Nombre de taches solaires (SSN)",
+                               "Nombre de taches solaires. SSN élevé corrèle avec SFI plus haut\n"
+                               "et meilleure propagation HF, surtout sur les bandes hautes."),
+                "a_index":    ("Indice A (quotidien)",
+                               "Mesure quotidienne de l'activité géomagnétique (0–400).\n"
+                               "< 10: calme  |  10–29: agité  |  ≥ 30: tempête\n"
+                               "Valeurs élevées perturbent l'ionosphère (LUF élevée)."),
+                "k_index":    ("Indice K (3-horaire)",
+                               "Activité géomagnétique sur 3 heures (0–9).\n"
+                               "0–2: calme  |  3–4: agité  |  5+: tempête\n"
+                               "Effet direct sur l'absorption HF et les routes polaires."),
+                "xray":       ("Flux X (GOES)",
+                               "Flux de rayons X solaires. Classe A/B/C/M/X.\n"
+                               "Les éruptions X peuvent soudainement bloquer l'ionosphère\n"
+                               "côté jour (SWF – Short Wave Fadeout)."),
+                "muf":        ("Fréquence Maximale Utilisable (MUF)",
+                               "Fréquence la plus haute réfléchie par la couche F2.\n"
+                               "Les bandes au-dessus de la MUF sont fermées.\n"
+                               "Calculée via foF2 × facteur oblique 3,8."),
+                "luf":        ("Fréquence Minimale Utilisable (LUF)",
+                               "Fréquence la plus basse utilisable malgré l'absorption couche D.\n"
+                               "Les bandes sous la LUF sont trop absorbées.\n"
+                               "Augmente avec un K-index élevé et l'activité aurorale."),
+                "sw_speed":   ("Vitesse du vent solaire (km/s)",
+                               "Vitesse du vent solaire mesurée par DSCOVR/ACE (NOAA).\n"
+                               "< 400: calme  |  400–600: élevé  |  > 600: tempétueux\n"
+                               "Une vitesse plus élevée peut augmenter l'activité géomagnétique."),
+                "sw_bz":      ("Bz — champ magnétique interplanétaire (nT)",
+                               "Composante vers le nord (positif) ou le sud (négatif)\n"
+                               "du champ magnétique interplanétaire (IMF).\n"
+                               "Bz < −10 nT: risque de tempête géomagnétique fortement accru.\n"
+                               "Bz négatif se couple au champ terrestre → K-index élevé."),
+                "iono_fof2":  ("Ionosonde foF2 — mesuré vs modèle (MHz)",
+                               "foF2 = fréquence critique de la couche F2 (mesure ionosonde).\n"
+                               "Mesuré: valeur actuelle de l'ionosonde européenne la plus proche\n"
+                               "(GIRO/LGDC DIDBase, intervalle ≈15 min).\n"
+                               "Modèle: calcul HAMIOS basé sur SFI et SSN.\n"
+                               "Vert = bonne correspondance  |  Orange = déviation modérée\n"
+                               "Rouge = grande déviation (tempête ou activité inhabituelle)."),
+                "proton_flux":("Flux de protons >10 MeV (pfu)",
+                               "Protons de haute énergie provenant d'éruptions solaires.\n"
+                               "< 10 pfu: normal  |  ≥ 10: S1 (PCA possible)\n"
+                               "≥ 100 pfu: S3 — routes polaires bloquées\n"
+                               "≥ 1000 pfu: S5 — PCA sévère, tous les chemins polaires fermés\n"
+                               "La PCA bloque les routes polaires 1–7 jours."),
+            },
+            "it": {
+                "sfi":        ("Indice di flusso solare (SFI)",
+                               "Misura dell'attività radio solare a 10,7 cm.\n"
+                               "< 80: basso  |  80–120: moderato  |  > 150: alto\n"
+                               "SFI più alto → migliore ionizzazione → MUF più alta."),
+                "ssn":        ("Numero di macchie solari (SSN)",
+                               "Numero di macchie solari. SSN alto correla con SFI più alto\n"
+                               "e migliore propagazione HF, specialmente sulle bande alte."),
+                "a_index":    ("Indice A (giornaliero)",
+                               "Misura giornaliera dell'attività geomagnetica (0–400).\n"
+                               "< 10: tranquillo  |  10–29: agitato  |  ≥ 30: tempesta\n"
+                               "Valori alti disturbano l'ionosfera (LUF elevata)."),
+                "k_index":    ("Indice K (ogni 3 ore)",
+                               "Attività geomagnetica ogni 3 ore (0–9).\n"
+                               "0–2: tranquillo  |  3–4: agitato  |  5+: tempesta\n"
+                               "Effetto diretto sull'assorbimento HF e le rotte polari."),
+                "xray":       ("Flusso X (GOES)",
+                               "Flusso di raggi X solari. Classe A/B/C/M/X.\n"
+                               "Le eruzioni X possono bloccare improvvisamente l'ionosfera\n"
+                               "sul lato giorno (SWF – Short Wave Fadeout)."),
+                "muf":        ("Frequenza Massima Utilizzabile (MUF)",
+                               "Frequenza più alta riflessa dallo strato F2.\n"
+                               "Le bande sopra la MUF sono chiuse.\n"
+                               "Calcolata tramite foF2 × fattore obliquo 3,8."),
+                "luf":        ("Frequenza Minima Utilizzabile (LUF)",
+                               "Frequenza più bassa utilizzabile nonostante l'assorbimento strato D.\n"
+                               "Le bande sotto la LUF sono troppo assorbite.\n"
+                               "Aumenta con K-index più alto e attività aurorale."),
+                "sw_speed":   ("Velocità del vento solare (km/s)",
+                               "Velocità del vento solare misurata da DSCOVR/ACE (NOAA).\n"
+                               "< 400: tranquillo  |  400–600: elevato  |  > 600: tempestoso\n"
+                               "Velocità più alta può aumentare l'attività geomagnetica."),
+                "sw_bz":      ("Bz — campo magnetico interplanetario (nT)",
+                               "Componente verso nord (positivo) o sud (negativo)\n"
+                               "del campo magnetico interplanetario (IMF).\n"
+                               "Bz < −10 nT: rischio tempesta geomagnetica fortemente aumentato.\n"
+                               "Bz negativo si accoppia al campo terrestre → K-index elevato."),
+                "iono_fof2":  ("Ionosonda foF2 — misurato vs modello (MHz)",
+                               "foF2 = frequenza critica dello strato F2 (misurazione ionosonda).\n"
+                               "Misurato: valore attuale dell'ionosonda europea più vicina\n"
+                               "(GIRO/LGDC DIDBase, intervallo ≈15 min).\n"
+                               "Modello: calcolo HAMIOS basato su SFI e SSN.\n"
+                               "Verde = buona corrispondenza  |  Arancione = deviazione moderata\n"
+                               "Rosso = grande deviazione (tempesta o attività insolita)."),
+                "proton_flux":("Flusso protonico >10 MeV (pfu)",
+                               "Protoni ad alta energia da eruzioni solari.\n"
+                               "< 10 pfu: normale  |  ≥ 10: S1 (PCA possibile)\n"
+                               "≥ 100 pfu: S3 — rotte polari bloccate\n"
+                               "≥ 1000 pfu: S5 — PCA grave, tutti i percorsi polari chiusi\n"
+                               "PCA blocca le rotte polari 1–7 giorni."),
+            },
         }
+
+        def _get_solar_tips(lang: str) -> dict:
+            return _SOLAR_TIPS_LANG.get(lang, _SOLAR_TIPS_LANG["en"])
 
         def _bind_tip(widget, key):
             tt = _Tooltip(widget)
-            title, body = _SOLAR_TIPS.get(key, ("", ""))
+            lang = _LANG_CODES.get(self._lang_var.get(), "nl")
+            tips_dict = _get_solar_tips(lang)
+            title, body = tips_dict.get(key, ("", ""))
             text = f"{title}\n{'─' * len(title)}\n{body}" if title else ""
             widget.bind("<Enter>", lambda e, t=tt, tx=text:
                         t.show(e.widget.winfo_rootx() + e.x,
@@ -1578,21 +2209,32 @@ class HAMIOSApp:
             if key == "k_index":
                 alert_row = tk.Frame(self._solar_frame, bg=BG_PANEL)
                 alert_row.pack(fill=tk.X, pady=(0, 2))
-                tk.Label(alert_row, text="Melding K ≥", font=_font(9), bg=BG_PANEL,
-                         fg=TEXT_DIM, anchor='w', width=16).pack(side=tk.LEFT)
+                _k_alert_lbl = tk.Label(alert_row, text=self._tr("k_alert_lbl"),
+                                        font=_font(9), bg=BG_PANEL,
+                                        fg=TEXT_DIM, anchor='w', width=16)
+                _k_alert_lbl.pack(side=tk.LEFT)
+                self._tr_widgets["k_alert_lbl"] = _k_alert_lbl
                 tk.Spinbox(alert_row, from_=1, to=9, width=3,
                            textvariable=self._k_alert_var,
                            command=self._save_cur_settings,
                            bg=BG_SURFACE, fg=TEXT_H1, buttonbackground=BG_SURFACE,
                            relief=tk.FLAT, font=_font(9, "bold")).pack(side=tk.LEFT)
 
-        tk.Frame(self._solar_frame, bg=BORDER, height=1).pack(fill=tk.X, pady=6)
+        # Scheidingslijn tussen params en bandentabel
+        tk.Frame(self._solar_frame, bg=BORDER, height=1).pack(fill=tk.X, pady=(4, 2))
 
+        # Bandentabel
         hdr_row = tk.Frame(self._solar_frame, bg=BG_PANEL)
-        hdr_row.pack(fill=tk.X)
-        for txt, w in [("Band", 6), ("Dag", 6), ("Nacht", 6)]:
-            tk.Label(hdr_row, text=txt, font=_font(9, "bold"), bg=BG_PANEL,
-                     fg=ACCENT, width=w, anchor='w').pack(side=tk.LEFT)
+        hdr_row.pack(fill=tk.X, pady=(0, 0))
+        for key, w in [("band_hdr", 6), ("day_hdr", 6), ("night_hdr", 6)]:
+            lbl = tk.Label(hdr_row, text=self._tr(key), font=_font(9, "bold"),
+                           bg=BG_PANEL, fg=ACCENT, width=w, anchor='w')
+            lbl.pack(side=tk.LEFT)
+            self._tr_widgets.setdefault(key, [])
+            self._tr_widgets[key] = (self._tr_widgets[key]
+                                     if isinstance(self._tr_widgets[key], list)
+                                     else [self._tr_widgets[key]])
+            self._tr_widgets[key].append(lbl)
 
         self._band_cond_labels: dict = {}   # band → (day_lbl, ngt_lbl, is_hf)
         for name, _, is_hf in _BANDS:
@@ -1610,18 +2252,21 @@ class HAMIOSApp:
             ngt_lbl.pack(side=tk.LEFT)
             self._band_cond_labels[name] = (day_lbl, ngt_lbl, is_hf)
 
-        # X-flare waarschuwing
+        # Scheidingslijn + waarschuwingen direct ónder de bandentabel
+        tk.Frame(self._solar_frame, bg=BORDER, height=1).pack(fill=tk.X, pady=(4, 2))
+
+        # X-flare waarschuwing — natuurlijke hoogte (geen vaste height=)
         self._xflare_lbl = tk.Label(self._solar_frame, textvariable=self._xflare_var,
                                     font=_font(8, "bold"), bg=BG_PANEL, fg="#FF7043",
-                                    wraplength=200, justify='left')
-        self._xflare_lbl.pack(anchor='w', pady=(4, 0))
+                                    wraplength=190, justify='left', anchor='nw')
+        self._xflare_lbl.pack(fill=tk.X, pady=(0, 2))
 
-        # PCA-waarschuwing (proton event — paars)
+        # PCA-waarschuwing (proton event — paars) — natuurlijke hoogte
         self._pca_var = tk.StringVar(value="")
         self._pca_lbl = tk.Label(self._solar_frame, textvariable=self._pca_var,
                                  font=_font(8, "bold"), bg=BG_PANEL, fg="#CE93D8",
-                                 wraplength=200, justify='left')
-        self._pca_lbl.pack(anchor='w', pady=(2, 0))
+                                 wraplength=190, justify='left', anchor='nw')
+        self._pca_lbl.pack(fill=tk.X, pady=(0, 4))
 
         # ── Gecombineerde linker+midden zone ──────────────────────────────────
         combined = tk.Frame(top_row, bg=BG_ROOT)
@@ -1741,8 +2386,8 @@ class HAMIOSApp:
         dist = _haversine_km(self._qth_lat, self._qth_lon, lat, lon)
         hdg  = _bearing_deg(self._qth_lat, self._qth_lon, lat, lon)
         self._gc_info_var.set(
-            f"→  {lat:+.1f}°, {lon:+.1f}°  |  Afstand: {dist:,.0f} km  "
-            f"|  Richting: {hdg:.0f}°  (klik rechts om te wissen)")
+            f"→  {lat:+.1f}°, {lon:+.1f}°  |  {self._tr('distance_lbl')}: {dist:,.0f} km  "
+            f"|  {self._tr('direction_lbl')}: {hdg:.0f}°  ({self._tr('right_clk_clear')})")
         self._draw_map()
 
     def _on_map_btn1_press(self, event):
@@ -1839,7 +2484,7 @@ class HAMIOSApp:
             c.delete("all")
             c.create_rectangle(0, 0, W, H, fill="#1B3A5C", outline="")
             c.create_text(W // 2, H // 2,
-                          text="pip install pillow  voor kaartweergave",
+                          text=self._tr("map_nolib"),
                           fill=TEXT_DIM, font=("Segoe UI", 9))
             return
 
@@ -1859,7 +2504,7 @@ class HAMIOSApp:
                 # Fallback: oceaan-achtergrond tijdens download
                 src = Image.new("RGB", (VW, VH), MAP_OCEAN)
                 ImageDraw.Draw(src).text(
-                    (6, 4), "⬇ NASA-kaart wordt gedownload…", fill=MAP_GRID)
+                    (6, 4), self._tr("map_downloading"), fill=MAP_GRID)
 
             # Graticule + graden-labels
             d   = ImageDraw.Draw(src)
@@ -2140,8 +2785,10 @@ class HAMIOSApp:
         tk.Frame(outer, bg=ACCENT, height=2).pack(fill=tk.X)
         prop_hdr = tk.Frame(outer, bg=BG_PANEL)
         prop_hdr.pack(fill=tk.X, padx=10, pady=(2, 0))
-        tk.Label(prop_hdr, text="📶  HF Band Betrouwbaarheid",
-                 font=_font(10, "bold"), bg=BG_PANEL, fg=ACCENT).pack(side=tk.LEFT)
+        _prop_title = tk.Label(prop_hdr, text=self._tr("prop_header"),
+                               font=_font(10, "bold"), bg=BG_PANEL, fg=ACCENT)
+        _prop_title.pack(side=tk.LEFT)
+        self._tr_widgets["prop_header"] = _prop_title
         self._prop_updated_var = tk.StringVar(value="")
         tk.Label(prop_hdr, textvariable=self._prop_updated_var,
                  font=_font(8), bg=BG_PANEL, fg=TEXT_DIM).pack(side=tk.RIGHT)
@@ -2165,14 +2812,17 @@ class HAMIOSApp:
             mb2["menu"] = menu2
             mb2.pack(side=tk.LEFT, padx=(0, 12))
 
-        _menubutton(ctrl, self._mode_var,  list(_MODE_DB.keys()),  "Mode:",     width=5)
-        _menubutton(ctrl, self._power_var, list(_POWER_DB.keys()), "Vermogen:", width=5)
-        _menubutton(ctrl, self._ant_var,   list(_ANT_DB.keys()),   "Antenne:",  width=18)
+        _menubutton(ctrl, self._mode_var,  list(_MODE_DB.keys()),  self._tr("mode_lbl"),  width=5)
+        _menubutton(ctrl, self._power_var, list(_POWER_DB.keys()), self._tr("power_lbl"), width=5)
+        _menubutton(ctrl, self._ant_var,   list(_ANT_DB.keys()),   self._tr("ant_lbl"),   width=18)
 
-        tk.Checkbutton(ctrl, text="Dag (auto)", variable=self._day_var,
-                       command=self._recalc_prop,
-                       bg=BG_PANEL, fg=TEXT_BODY, selectcolor=BG_SURFACE,
-                       activebackground=BG_PANEL, font=_font(9)).pack(side=tk.LEFT, padx=(4, 0))
+        _day_auto_cb = tk.Checkbutton(ctrl, text=self._tr("day_auto"),
+                                      variable=self._day_var,
+                                      command=self._recalc_prop,
+                                      bg=BG_PANEL, fg=TEXT_BODY, selectcolor=BG_SURFACE,
+                                      activebackground=BG_PANEL, font=_font(9))
+        _day_auto_cb.pack(side=tk.LEFT, padx=(4, 0))
+        self._tr_widgets["day_auto"] = _day_auto_cb
 
         info = tk.Frame(outer, bg=BG_PANEL)
         info.pack(fill=tk.X, padx=10, pady=(0, 4))
@@ -2252,7 +2902,7 @@ class HAMIOSApp:
                 c.create_rectangle(BAR_X, y, BAR_X + BAR_MAX, y + BAR_H,
                                    fill=BG_SURFACE, outline=BORDER, width=1)
                 c.create_text(BAR_X + BAR_MAX // 2, y + BAR_H // 2,
-                              text="Gesloten", font=("Segoe UI", 8),
+                              text=self._tr("closed"), font=("Segoe UI", 8),
                               fill=TEXT_DIM, anchor='center')
                 c.create_text(BAR_X + BAR_MAX + PCT_W // 2, y + BAR_H // 2,
                               text="0%", font=("Segoe UI", 9, "bold"),
@@ -2260,17 +2910,18 @@ class HAMIOSApp:
                 tip = [
                     (f"{name}  ·  {freq_str}", None),
                     None,
-                    ("Status:",  "Gesloten"),
-                    ("Reden:",   "Boven MUF of onder LUF"),
-                    ("Modi:",    _BAND_MODES.get(name, "—")),
-                    ("FT8:",     _BAND_FT8.get(name, "—") + " MHz"),
+                    (self._tr("status_lbl"),   self._tr("closed")),
+                    (self._tr("reason_lbl"),   self._tr("reason_muf_luf")),
+                    (self._tr("modes_lbl"),    _BAND_MODES.get(name, "—")),
+                    ("FT8:",                   _BAND_FT8.get(name, "—") + " MHz"),
                 ]
             else:
                 # HF: kleurenbalk
                 c.create_rectangle(BAR_X, y, BAR_X + BAR_MAX, y + BAR_H,
                                    fill=BG_SURFACE, outline=BORDER, width=1)
                 color = "#4CAF50" if pct >= 60 else ("#FFC107" if pct >= 30 else "#F44336")
-                cond  = "Goed" if pct >= 60 else ("Redelijk" if pct >= 30 else "Arm")
+                cond  = (self._tr("cond_good") if pct >= 60 else
+                         (self._tr("cond_fair") if pct >= 30 else self._tr("cond_poor")))
                 fill_w = int(BAR_MAX * pct / 100)
                 if fill_w > 2:
                     c.create_rectangle(BAR_X + 1, y + 1, BAR_X + fill_w, y + BAR_H - 1,
@@ -2281,9 +2932,9 @@ class HAMIOSApp:
                 tip = [
                     (f"{name}  ·  {freq_str}", None),
                     None,
-                    ("Betrouwbaarheid:", f"{pct}%  –  {cond}"),
-                    ("Modi:",            _BAND_MODES.get(name, "—")),
-                    ("FT8:",             _BAND_FT8.get(name, "—") + " MHz"),
+                    (self._tr("reliability_lbl"), f"{pct}%  –  {cond}"),
+                    (self._tr("modes_lbl"),        _BAND_MODES.get(name, "—")),
+                    ("FT8:",                       _BAND_FT8.get(name, "—") + " MHz"),
                 ]
 
             # Frequentie (kort, rechts van balk)
@@ -2326,15 +2977,25 @@ class HAMIOSApp:
 
         hdr = tk.Frame(outer, bg=BG_PANEL)
         hdr.pack(fill=tk.X, padx=10, pady=(4, 2))
-        tk.Label(hdr, text="📈  Band Verloop",
-                 font=_font(10, "bold"), bg=BG_PANEL, fg=ACCENT).pack(side=tk.LEFT)
+        _hist_title = tk.Label(hdr, text=self._tr("hist_header"),
+                               font=_font(10, "bold"), bg=BG_PANEL, fg=ACCENT)
+        _hist_title.pack(side=tk.LEFT)
+        self._tr_widgets["hist_header"] = _hist_title
 
-        for opt in ("Uren", "Dagen", "Weken", "Maanden"):
-            tk.Radiobutton(hdr, text=opt, variable=self._hist_range_var,
-                           value=opt, command=lambda: (self._save_cur_settings(), self._draw_hist_graph()),
-                           bg=BG_PANEL, fg=TEXT_BODY, selectcolor=BG_SURFACE,
-                           activebackground=BG_PANEL, activeforeground=TEXT_H1,
-                           font=_font(9)).pack(side=tk.LEFT, padx=(8, 0))
+        # Radiobuttons: value = interne NL-sleutel (opgeslagen in INI), text = vertaald
+        _HIST_RANGE_KEYS = [("Uren", "hist_range_h"), ("Dagen", "hist_range_d"),
+                            ("Weken", "hist_range_w"), ("Maanden", "hist_range_m")]
+        self._hist_range_rbs: list = []   # [(rb_widget, tr_key), …] voor live-vertaling
+        for val, tr_key in _HIST_RANGE_KEYS:
+            rb = tk.Radiobutton(hdr, text=self._tr(tr_key),
+                                variable=self._hist_range_var,
+                                value=val,
+                                command=lambda: (self._save_cur_settings(), self._draw_hist_graph()),
+                                bg=BG_PANEL, fg=TEXT_BODY, selectcolor=BG_SURFACE,
+                                activebackground=BG_PANEL, activeforeground=TEXT_H1,
+                                font=_font(9))
+            rb.pack(side=tk.LEFT, padx=(8, 0))
+            self._hist_range_rbs.append((rb, tr_key))
 
         self._hist_updated_var = tk.StringVar(value="")
         tk.Label(hdr, textvariable=self._hist_updated_var,
@@ -2417,7 +3078,7 @@ class HAMIOSApp:
 
         if len(data) < 2:
             c.create_text(W // 2, PAD_T + gh // 2,
-                          text="Nog geen historische data beschikbaar",
+                          text=self._tr("no_hist_data"),
                           fill=TEXT_DIM, font=("Segoe UI", 9), anchor='center')
             self._hist_layout = {}
             return
@@ -2462,8 +3123,10 @@ class HAMIOSApp:
 
         hdr = tk.Frame(outer, bg=BG_PANEL)
         hdr.pack(fill=tk.X, padx=10, pady=(4, 2))
-        tk.Label(hdr, text="🕐  Bandopenings-schema (lokale tijd, vandaag)",
-                 font=_font(10, "bold"), bg=BG_PANEL, fg=ACCENT).pack(side=tk.LEFT)
+        _sched_title = tk.Label(hdr, text=self._tr("sched_header"),
+                                font=_font(10, "bold"), bg=BG_PANEL, fg=ACCENT)
+        _sched_title.pack(side=tk.LEFT)
+        self._tr_widgets["sched_header"] = _sched_title
         self._sched_updated_var = tk.StringVar(value="")
         tk.Label(hdr, textvariable=self._sched_updated_var,
                  font=_font(8), bg=BG_PANEL, fg=TEXT_DIM).pack(side=tk.RIGHT)
@@ -2594,7 +3257,7 @@ class HAMIOSApp:
         target_t = lay["t0"] + x_frac * lay["dt"]
         ts, bp, _ = min(data, key=lambda d: abs(d[0].timestamp() - target_t))
         local_ts = ts.astimezone().strftime("%d %b %H:%M")
-        tip = [(f"Band Verloop  —  {local_ts}", None), None]
+        tip = [(self._tr("hist_tooltip_hdr").format(ts=local_ts), None), None]
         # HF-banden gesorteerd op openingspercentage
         hf = [(n, max(0, bp.get(n, 0))) for n, _, hf in _BANDS if hf]
         hf.sort(key=lambda x: -x[1])
@@ -2624,20 +3287,20 @@ class HAMIOSApp:
         local_h   = col
         local_str = f"{local_h:02d}:00–{(local_h + 1) % 24:02d}:00"
         if pct >= 60:
-            kwal = "Goed"
+            kwal = self._tr("cond_good")
         elif pct >= 30:
-            kwal = "Fair"
+            kwal = self._tr("cond_fair")
         elif pct >= 1:
-            kwal = "Zwak"
+            kwal = self._tr("cond_poor")
         else:
-            kwal = "Gesloten"
+            kwal = self._tr("cond_closed")
         tip = [
-            (f"{bname}  —  {local_str} (lokaal)", None),
+            (f"{bname}  —  {local_str} ({self._tr('local_lbl')})", None),
             None,
-            ("Kwaliteit:",      kwal),
-            ("Betrouwbaarheid:", f"{pct}%"),
-            ("FT8:",             _BAND_FT8.get(bname, "—") + " MHz"),
-            ("Modi:",            _BAND_MODES.get(bname, "—")),
+            (self._tr("quality_lbl"),     kwal),
+            (self._tr("reliability_lbl"), f"{pct}%"),
+            ("FT8:",                      _BAND_FT8.get(bname, "—") + " MHz"),
+            (self._tr("modes_lbl"),       _BAND_MODES.get(bname, "—")),
         ]
         rx = self._sched_canvas.winfo_rootx() + event.x
         ry = self._sched_canvas.winfo_rooty() + event.y
@@ -2651,17 +3314,22 @@ class HAMIOSApp:
 
         hdr = tk.Frame(outer, bg=BG_PANEL)
         hdr.pack(fill=tk.X, padx=10, pady=(4, 2))
-        tk.Label(hdr, text="📡  Live DX Spots (HF)",
-                 font=_font(10, "bold"), bg=BG_PANEL, fg=ACCENT).pack(side=tk.LEFT)
-        tk.Checkbutton(hdr, text="Eigen continent", variable=self._dx_own_cont_var,
-                       command=self._filter_dx_spots,
-                       bg=BG_PANEL, fg=TEXT_DIM, selectcolor=BG_SURFACE,
-                       activebackground=BG_PANEL, activeforeground=TEXT_BODY,
-                       font=_font(9)).pack(side=tk.RIGHT, padx=(0, 4))
+        _dx_title = tk.Label(hdr, text=self._tr("dx_header"),
+                             font=_font(10, "bold"), bg=BG_PANEL, fg=ACCENT)
+        _dx_title.pack(side=tk.LEFT)
+        self._tr_widgets["dx_header"] = _dx_title
+        _dx_own_cb = tk.Checkbutton(hdr, text=self._tr("own_cont_lbl"),
+                                    variable=self._dx_own_cont_var,
+                                    command=self._filter_dx_spots,
+                                    bg=BG_PANEL, fg=TEXT_DIM, selectcolor=BG_SURFACE,
+                                    activebackground=BG_PANEL, activeforeground=TEXT_BODY,
+                                    font=_font(9))
+        _dx_own_cb.pack(side=tk.RIGHT, padx=(0, 4))
+        self._tr_widgets["own_cont_lbl"] = _dx_own_cb
 
         status_row = tk.Frame(outer, bg=BG_PANEL)
         status_row.pack(fill=tk.X, padx=10)
-        self._dx_status_var    = tk.StringVar(value="Laden…")
+        self._dx_status_var    = tk.StringVar(value=self._tr("dx_loading"))
         self._dx_countdown_var = tk.StringVar(value="")
         tk.Label(status_row, textvariable=self._dx_status_var,
                  font=_font(8), bg=BG_PANEL, fg=TEXT_DIM).pack(side=tk.LEFT)
@@ -2691,11 +3359,14 @@ class HAMIOSApp:
         self._dx_filtered = spots
         self._draw_dx_panel()
         n     = len(spots)
-        filt  = " · eigen continent" if self._dx_own_cont_var.get() else ""
+        filt  = self._tr("dx_own_cont_filter") if self._dx_own_cont_var.get() else ""
         total = len(self._dx_all_spots)
         ts    = datetime.datetime.now().strftime("%H:%M")
-        self._dx_status_var.set(
-            f"{n} van {total} spots  (HF{filt})  ·  {ts}" if total else f"Geen spots beschikbaar  ·  {ts}")
+        if total:
+            self._dx_status_var.set(
+                self._tr("dx_status_fmt").format(n=n, total=total, filt=filt, ts=ts))
+        else:
+            self._dx_status_var.set(self._tr("no_spots_ts").format(ts=ts))
 
     def _draw_dx_panel(self):
         if not hasattr(self, "_dx_canvas"):
@@ -2724,7 +3395,7 @@ class HAMIOSApp:
 
         if not spots:
             c.create_text(W // 2, H // 2,
-                          text="Geen HF-spots beschikbaar",
+                          text=self._tr("no_dx_spots"),
                           fill=TEXT_DIM, font=("Segoe UI", 9), anchor='center')
             c.configure(scrollregion=(0, 0, W, H))
             return
@@ -2774,8 +3445,10 @@ class HAMIOSApp:
         tk.Frame(outer, bg=ACCENT, height=2).pack(fill=tk.X)
         adv_hdr = tk.Frame(outer, bg=BG_PANEL)
         adv_hdr.pack(fill=tk.X, padx=10, pady=(4, 0))
-        tk.Label(adv_hdr, text="💡  Propagatie-analyse & Advies",
-                 font=_font(10, "bold"), bg=BG_PANEL, fg=ACCENT).pack(side=tk.LEFT)
+        _adv_title = tk.Label(adv_hdr, text=self._tr("adv_header"),
+                              font=_font(10, "bold"), bg=BG_PANEL, fg=ACCENT)
+        _adv_title.pack(side=tk.LEFT)
+        self._tr_widgets["adv_header"] = _adv_title
         self._advice_updated_var = tk.StringVar(value="")
         tk.Label(adv_hdr, textvariable=self._advice_updated_var,
                  font=_font(8), bg=BG_PANEL, fg=TEXT_DIM).pack(side=tk.RIGHT)
@@ -2812,73 +3485,55 @@ class HAMIOSApp:
 
         # ── 1. Beste banden ───────────────────────────────────────────────
         if hf_open:
-            best = hf_open[:5]
-            bstr = "  ·  ".join(f"{n} {p}%" for n, p in best)
-            extra = f"  ({len(hf_open)} banden open)" if len(hf_open) > 5 else ""
-            tips.append(("📡", f"Beste banden nu:  {bstr}{extra}", "#4CAF50"))
+            best  = hf_open[:5]
+            bstr  = "  ·  ".join(f"{n} {p}%" for n, p in best)
+            extra = self._tr("adv_best_extra").format(n=len(hf_open)) if len(hf_open) > 5 else ""
+            tips.append(("📡", self._tr("adv_best_bands").format(bstr=bstr, extra=extra), "#4CAF50"))
         else:
-            tips.append(("📡", "Alle HF-banden zijn momenteel gesloten.", TEXT_DIM))
+            tips.append(("📡", self._tr("adv_no_bands"), TEXT_DIM))
 
         # ── 2. Geomagnetische condities (K + A) ────────────────────────────
-        a_kwal = ("rustig" if a_index < 10 else
-                  "onrustig" if a_index < 30 else
-                  "storm" if a_index < 100 else "ernstige storm")
+        a_kwal = (self._tr("geo_quiet")    if a_index < 10 else
+                  self._tr("geo_unsettled") if a_index < 30 else
+                  self._tr("geo_storm")    if a_index < 100 else
+                  self._tr("geo_severe"))
+        k_i, a_i = int(k_index), int(a_index)
         if k_index >= 7:
-            tips.append(("🚨", f"Zware geomagnetische storm  K={int(k_index)}, A={int(a_index)} ({a_kwal}) — "
-                                "HF vrijwel onbruikbaar, auroraal absorptie op alle routes. "
-                                "Wacht op herstel (normaal binnen 12–24u).", "#F44336"))
+            tips.append(("🚨", self._tr("adv_geo_severe").format(k=k_i, a=a_i, kwal=a_kwal),   "#F44336"))
         elif k_index >= 5:
-            tips.append(("⚠️", f"Geomagnetische storm  K={int(k_index)}, A={int(a_index)} ({a_kwal}) — "
-                                "poolroutes geblokkeerd, 40m/80m meest betrouwbaar. "
-                                "Hoge banden en DX sterk verstoord.", "#F44336"))
+            tips.append(("⚠️", self._tr("adv_geo_storm").format(k=k_i, a=a_i, kwal=a_kwal),    "#F44336"))
         elif k_index >= 3:
-            tips.append(("⚡", f"Verhoogde geo-activiteit  K={int(k_index)}, A={int(a_index)} ({a_kwal}) — "
-                                "lagere banden stabieler; vermijd trans-polair DX. "
-                                "Overweeg 40m/80m voor betrouwbare verbindingen.", "#FFC107"))
+            tips.append(("⚡", self._tr("adv_geo_elevated").format(k=k_i, a=a_i, kwal=a_kwal), "#FFC107"))
         else:
-            tips.append(("✅", f"Rustige geo-condities  K={int(k_index)}, A={int(a_index)} — "
-                                "optimaal voor alle routes incl. poolpaden en DX.", "#4CAF50"))
+            tips.append(("✅", self._tr("adv_geo_quiet").format(k=k_i, a=a_i),                  "#4CAF50"))
 
         # ── 3. Zonactiviteit / zonnecyclus ─────────────────────────────────
+        s_i, ss_i = int(sfi), int(ssn)
         if sfi >= 200:
-            tips.append(("🌟", f"Exceptionele zonactiviteit  SFI={int(sfi)}, SSN={int(ssn)} — "
-                                "zonnecyclus-maximum. 10m/12m/15m open voor wereldwijd DX; "
-                                "kans op Es-versterking en TEP.", ACCENT))
+            tips.append(("🌟", self._tr("adv_sol_exceptional").format(sfi=s_i, ssn=ss_i), ACCENT))
         elif sfi >= 150:
-            tips.append(("☀️", f"Hoge zonactiviteit  SFI={int(sfi)}, SSN={int(ssn)} — "
-                                "uitstekend voor 10m t/m 17m DX. F2-propagatie sterk; "
-                                "MUF hoog, lange skips mogelijk.", ACCENT))
+            tips.append(("☀️", self._tr("adv_sol_high").format(sfi=s_i, ssn=ss_i),        ACCENT))
         elif sfi >= 100:
-            tips.append(("🌤", f"Goede zonactiviteit  SFI={int(sfi)}, SSN={int(ssn)} — "
-                                "20m en 17m zijn primaire DX-banden; 15m kan open zijn. "
-                                "Verwacht betrouwbare F2-propagatie overdag.", ACCENT))
+            tips.append(("🌤", self._tr("adv_sol_good").format(sfi=s_i, ssn=ss_i),        ACCENT))
         elif sfi >= 80:
-            tips.append(("🌥", f"Matige zonactiviteit  SFI={int(sfi)}, SSN={int(ssn)} — "
-                                "20m/40m meest betrouwbaar. Hoge banden onzeker; "
-                                "80m goed voor regionaal verkeer.", TEXT_BODY))
+            tips.append(("🌥", self._tr("adv_sol_moderate").format(sfi=s_i, ssn=ss_i),    TEXT_BODY))
         else:
-            tips.append(("🌧", f"Lage zonactiviteit  SFI={int(sfi)}, SSN={int(ssn)} — "
-                                "40m en 80m bieden meeste kans op verbindingen. "
-                                "Banden ≥15m grotendeels dicht; 160m voor nacht-DX.", TEXT_DIM))
+            tips.append(("🌧", self._tr("adv_sol_low").format(sfi=s_i, ssn=ss_i),         TEXT_DIM))
 
         # ── 4. Solarwind en Bz ─────────────────────────────────────────────
         try:
             spd = float(sw_spd)
             bz  = float(sw_bz)
+            spd_s = str(int(spd))
+            bz_s  = f"{bz:+.1f}"
             if spd > 700 or bz <= -20:
-                tips.append(("🌪", f"Stormachtige solarwind  v={int(spd)} km/s, Bz={bz:+.1f} nT — "
-                                    "verhoogde kans op CME-impact; K-index kan snel stijgen. "
-                                    "Monitor condities actief.", "#F44336"))
+                tips.append(("🌪", self._tr("adv_sw_stormy").format(spd=spd_s, bz=bz_s),   "#F44336"))
             elif spd > 500 or bz <= -10:
-                tips.append(("💨", f"Verhoogde solarwind  v={int(spd)} km/s, Bz={bz:+.1f} nT — "
-                                    "Bz negatief koppelt aan aardveld → K-stijging mogelijk. "
-                                    "Lagere banden aanhouden.", "#FFC107"))
+                tips.append(("💨", self._tr("adv_sw_elevated").format(spd=spd_s, bz=bz_s), "#FFC107"))
             elif bz > 5:
-                tips.append(("🛡", f"Rustige solarwind  v={int(spd)} km/s, Bz={bz:+.1f} nT — "
-                                   "positieve Bz beschermt aardveld. Stabiele condities.", "#4CAF50"))
+                tips.append(("🛡", self._tr("adv_sw_calm").format(spd=spd_s, bz=bz_s),     "#4CAF50"))
             else:
-                tips.append(("💫", f"Normale solarwind  v={int(spd)} km/s, Bz={bz:+.1f} nT — "
-                                   "geen direct effect op propagatie verwacht.", TEXT_BODY))
+                tips.append(("💫", self._tr("adv_sw_normal").format(spd=spd_s, bz=bz_s),   TEXT_BODY))
         except (ValueError, TypeError):
             pass   # solarwind nog niet beschikbaar
 
@@ -2888,177 +3543,143 @@ class HAMIOSApp:
         except (ValueError, TypeError):
             pf_adv = 0.0
         if pf_adv >= 1000:
-            tips.append(("☢", f"ERNSTIG proton event S5  ({pf_adv:.0f} pfu) — "
-                               "Polar Cap Absorption actief. Alle poolroutes volledig "
-                               "geblokkeerd 3–7 dagen. Gebruik equatoriale paden (20m/17m).",
-                         "#EA80FC"))
+            tips.append(("☢", self._tr("adv_pf_s5").format(pf=f"{pf_adv:.0f}"), "#EA80FC"))
         elif pf_adv >= 100:
-            tips.append(("☢", f"Proton event S3  ({pf_adv:.0f} pfu) — "
-                               "PCA actief: poolroutes (EU→JA/W via pool) geblokkeerd 2–4 dagen. "
-                               "160m/80m/40m poolpaden onbruikbaar.", "#CE93D8"))
+            tips.append(("☢", self._tr("adv_pf_s3").format(pf=f"{pf_adv:.0f}"), "#CE93D8"))
         elif pf_adv >= 10:
-            tips.append(("⚛", f"Verhoogde proton flux S1  ({pf_adv:.1f} pfu) — "
-                               "PCA begint mogelijk. Monitor poolroutes op 40m. "
-                               "Kans op verdere escalatie bij actieve vlammenactiviteit.", "#BA68C8"))
+            tips.append(("⚛", self._tr("adv_pf_s1").format(pf=f"{pf_adv:.1f}"), "#BA68C8"))
         else:
-            tips.append(("⚛", f"Proton flux normaal  ({pf_adv:.2f} pfu) — "
-                               "geen Polar Cap Absorption. Poolroutes niet door proton "
-                               "flux beïnvloed.", TEXT_DIM))
+            tips.append(("⚛", self._tr("adv_pf_normal").format(pf=f"{pf_adv:.2f}"), TEXT_DIM))
 
         # ── 6. X-ray / flares ─────────────────────────────────────────────
         xclass = xray[:1].upper() if xray else ""
-        if xclass in ("X",):
-            tips.append(("☢", f"X-flare gedetecteerd  ({xray}) — Short Wave Fadeout (SWF) "
-                               "mogelijk op dag-zijde; HF tijdelijk geblokkeerd. "
-                               "Herstel verwacht binnen 15–60 min.", "#F44336"))
+        if xclass == "X":
+            tips.append(("☢", self._tr("adv_xflare_x").format(xray=xray), "#F44336"))
         elif xclass == "M":
-            tips.append(("⚡", f"M-flare actief  ({xray}) — lichte SWF mogelijk op lagere HF. "
-                               "Verhoogde kans op Proton Event (PCA) bij M5+.", "#FFC107"))
-        # C en lager: geen melding nodig
+            tips.append(("⚡", self._tr("adv_xflare_m").format(xray=xray), "#FFC107"))
 
-        # ── 6. Ionosfeer / MUF / LUF ──────────────────────────────────────
+        # ── 7. Ionosfeer / MUF / LUF ──────────────────────────────────────
         try:
             muf = float(data.get("muf", "0").replace("—", "0"))
             if muf > 0:
                 if muf >= 28:
-                    muf_txt = f"MUF={muf:.1f} MHz — 10m t/m 20m alle open; F2-laag optimaal"
+                    muf_txt = self._tr("adv_muf_28").format(muf=f"{muf:.1f}")
                 elif muf >= 14:
-                    muf_txt = f"MUF={muf:.1f} MHz — 20m open; banden > {muf:.0f} MHz dicht"
+                    muf_txt = self._tr("adv_muf_14").format(muf=f"{muf:.1f}", muf0=f"{muf:.0f}")
                 elif muf >= 7:
-                    muf_txt = f"MUF={muf:.1f} MHz — alleen 40m–80m bruikbaar"
+                    muf_txt = self._tr("adv_muf_7").format(muf=f"{muf:.1f}")
                 else:
-                    muf_txt = f"MUF={muf:.1f} MHz — ionosfeer zwak; alleen 80m/160m"
-                luf_est = 3.5 + k_index * 0.8
-                tips.append(("📶", f"Ionosfeer: {muf_txt}. "
-                                   f"Geschatte LUF ≈ {luf_est:.1f} MHz "
-                                   f"({'verhoogd door K-index' if k_index >= 3 else 'normaal'}).",
+                    muf_txt = self._tr("adv_muf_low").format(muf=f"{muf:.1f}")
+                luf_est  = 3.5 + k_index * 0.8
+                luf_note = (self._tr("adv_luf_elevated") if k_index >= 3
+                            else self._tr("adv_luf_normal"))
+                tips.append(("📶",
+                             self._tr("adv_iono_fmt").format(
+                                 muf_txt=muf_txt, luf=f"{luf_est:.1f}", luf_note=luf_note),
                              TEXT_BODY))
         except (ValueError, TypeError):
             pass
 
-        # ── 7. Dag/nacht + transitievensters ──────────────────────────────
+        # ── 8. Dag/nacht + transitievensters ──────────────────────────────
         utc_h = datetime.datetime.now(datetime.timezone.utc).hour
         tz_off = 2 if self._dst_var.get() else 1
         lok_h  = (utc_h + tz_off) % 24
+        h_s    = f"{lok_h:02d}"
         if is_day:
             if 6 <= lok_h < 10:
-                tips.append(("🌅", f"Ochtend ({lok_h:02d}:xx lokaal) — F2-laag bouwt op; "
-                                   "20m wordt snel bruikbaar. Grey-line kansen voor DX-paden "
-                                   "richting Amerika en Azië.", TEXT_BODY))
+                tips.append(("🌅", self._tr("adv_morning").format(h=h_s),   TEXT_BODY))
             elif 10 <= lok_h < 16:
-                tips.append(("🌞", f"Middag ({lok_h:02d}:xx lokaal) — F2 op maximale hoogte; "
-                                   "beste window voor 15m/17m/20m DX. "
-                                   "Probeer SSB of FT8 voor trans-Atlantische verbindingen.", TEXT_BODY))
+                tips.append(("🌞", self._tr("adv_midday").format(h=h_s),    TEXT_BODY))
             else:
-                tips.append(("🌇", f"Namiddag ({lok_h:02d}:xx lokaal) — Grey-line nadert; "
-                                   "uitstekend voor DX richting Azië en Pacific. "
-                                   "15m en 17m vaak prachtig in deze uren.", TEXT_BODY))
+                tips.append(("🌇", self._tr("adv_afternoon").format(h=h_s), TEXT_BODY))
         else:
             if 22 <= lok_h or lok_h < 2:
-                tips.append(("🌃", f"Vroege nacht ({lok_h:02d}:xx lokaal) — 40m en 80m open "
-                                   "voor regionaal Europa-verkeer. F2-laag daalt; "
-                                   "LUF stijgt op korte paden.", TEXT_BODY))
+                tips.append(("🌃", self._tr("adv_early_night").format(h=h_s),  TEXT_BODY))
             elif 2 <= lok_h < 6:
-                tips.append(("🌌", f"Nacht ({lok_h:02d}:xx lokaal) — 160m en 80m actief voor "
-                                   "trans-Atlantisch DX. 40m goed voor Noord-Amerika. "
-                                   "FT8 op lage banden voor DX-afstanden > 5000 km.", TEXT_BODY))
+                tips.append(("🌌", self._tr("adv_night").format(h=h_s),        TEXT_BODY))
             else:
-                tips.append(("🌄", f"Voor de ochtend ({lok_h:02d}:xx lokaal) — Grey-line "
-                                   "nadert; 80m/40m DX-window naar Azië/Pacific. "
-                                   "20m begint te openen richting Amerika.", TEXT_BODY))
+                tips.append(("🌄", self._tr("adv_pre_morning").format(h=h_s),  TEXT_BODY))
 
-        # ── 8. Modus / vermogen advies ────────────────────────────────────
-        mode  = self._mode_var.get()
-        power = self._power_var.get()
+        # ── 9. Modus / vermogen advies ────────────────────────────────────
+        mode   = self._mode_var.get()
+        power  = self._power_var.get()
         snr_db = (_MODE_DB.get(mode, 0) + _POWER_DB.get(power, 0) +
                   _ANT_DB.get(self._ant_var.get(), 0))
         if hf_open:
-            best_pct = hf_open[0][1]
+            best_pct  = hf_open[0][1]
+            best_band = hf_open[0][0]
+            snr_s     = f"{snr_db:+d}"
             if best_pct < 30 and mode == "SSB":
-                tips.append(("🔧", f"Modus-advies: condities zwak ({best_pct}% op {hf_open[0][0]}) — "
-                                   "overweeg FT8 (+25 dB winst t.o.v. SSB) of CW (+10 dB). "
-                                   f"Huidig SNR-budget: {snr_db:+d} dB.", "#FFC107"))
+                tips.append(("🔧",
+                             self._tr("adv_mode_weak").format(pct=best_pct, band=best_band, snr=snr_s),
+                             "#FFC107"))
             elif best_pct >= 60 and snr_db < -5:
-                tips.append(("🔧", f"Modus-advies: goede condities ({best_pct}% op {hf_open[0][0]}) — "
-                                   f"SSB goed bruikbaar. SNR-budget {snr_db:+d} dB; "
-                                   "verhoog vermogen of verbeter antenne voor meer bereik.", TEXT_BODY))
+                tips.append(("🔧",
+                             self._tr("adv_mode_good").format(pct=best_pct, band=best_band, snr=snr_s),
+                             TEXT_BODY))
             else:
-                tips.append(("🔧", f"Modus-advies: {mode} passend bij huidig {best_pct}% op {hf_open[0][0]}. "
-                                   f"SNR-budget: {snr_db:+d} dB. "
-                                   "FT8 geeft altijd +25 dB extra marge.", TEXT_BODY))
+                tips.append(("🔧",
+                             self._tr("adv_mode_default").format(
+                                 mode=mode, pct=best_pct, band=best_band, snr=snr_s),
+                             TEXT_BODY))
 
-        # ── 9. Absorptie & poolroutes ─────────────────────────────────────
+        # ── 10. Absorptie & poolroutes ────────────────────────────────────
         lat = abs(self._qth_lat)
         if lat > 50 and k_index >= 4:
-            tips.append(("🧲", f"Auroraal absorptie verhoogd (K={int(k_index)}, QTH {lat:.0f}°) — "
-                               "trans-polaire paden (Europa→Canada, Europa→Japan via pool) "
-                               "sterk verzwakt. Gebruik equatoriale routes via 20m/17m.", "#FFC107"))
+            tips.append(("🧲",
+                         self._tr("adv_abs_high").format(k=k_i, lat=f"{lat:.0f}"),
+                         "#FFC107"))
         elif lat > 45 and k_index >= 3:
-            tips.append(("🧲", f"Lichte absorptie mogelijk (K={int(k_index)}, QTH {lat:.0f}°) — "
-                               "poolpaden kunnen sporadisch verstoord zijn. "
-                               "Monitor 40m voor bruikbaarheid.", TEXT_BODY))
+            tips.append(("🧲",
+                         self._tr("adv_abs_low").format(k=k_i, lat=f"{lat:.0f}"),
+                         TEXT_BODY))
 
-        # ── 10. Sporadic-E kans ───────────────────────────────────────────
+        # ── 11. Sporadic-E kans ───────────────────────────────────────────
         now_dt = datetime.datetime.now()
         month  = now_dt.month
         doy    = now_dt.timetuple().tm_yday
-        # Europese Es: hoofdseizoen mei–aug, piek half-juni (doy ~160–200)
-        # Secundaire piek december–januari. Tijdstip: 09–14h en 18–22h lokaal.
         es_score = 0
         if 5 <= month <= 8:
-            if month in (6, 7):
-                es_score = 3    # piekmaanden
-            else:
-                es_score = 2    # mei / augustus
+            es_score = 3 if month in (6, 7) else 2
         elif month in (12, 1):
-            es_score = 1        # secundaire winter-Es
+            es_score = 1
         es_time_ok = (9 <= lok_h < 14) or (17 <= lok_h < 22)
         if es_score >= 2 and es_time_ok:
             tips.append(("⚡",
-                         f"Sporadic-E kans HOOG (maand {month}, {lok_h:02d}:xx lok.) — "
-                         "6m/4m/2m kunnen onverwacht opengaan voor afstanden van 700–2500 km. "
-                         "Monitor 50.313 (FT8) en 50.150 (SSB). Typisch 15–90 min durend.",
+                         self._tr("adv_es_high").format(month=month, h=h_s),
                          "#66BB6A"))
         elif es_score >= 2:
             tips.append(("⚡",
-                         f"Sporadic-E seizoen actief (maand {month}) maar buiten piekuren — "
-                         "kans op 6m/4m opens is laag; meest actief 09–14h en 17–22h lokaal.",
+                         self._tr("adv_es_seasonal").format(month=month),
                          TEXT_DIM))
         elif es_score == 1 and es_time_ok:
             tips.append(("⚡",
-                         f"Winter-Es mogelijk (maand {month}, {lok_h:02d}:xx lok.) — "
-                         "zeldzame maar plotselinge openingen op 6m; monitor 50.313 MHz.",
+                         self._tr("adv_es_winter").format(month=month, h=h_s),
                          TEXT_DIM))
-        # TEP (Trans-Equatorial Propagation): equinox ± 45 dg, middag lok.
         if (75 <= doy <= 120 or 265 <= doy <= 310) and 12 <= lok_h <= 18:
             tips.append(("🌐",
-                         f"TEP-venster (dag {doy}, {lok_h:02d}:xx lok.) — trans-equatoriale "
-                         "propagatie mogelijk. Paden richting Centraal-Afrika en "
-                         "Latijns-Amerika op 50 MHz en 144 MHz kunnen open zijn. "
-                         "Meest kansrijk 13–17h lokaal.", "#4FC3F7"))
+                         self._tr("adv_tep").format(doy=doy, h=h_s),
+                         "#4FC3F7"))
 
-        # ── 11. Propagatie trend (historische data) ───────────────────────
+        # ── 12. Propagatie trend (historische data) ───────────────────────
         if len(self._history) >= 4:
-            # Vergelijk laatste meting met meting ~2u geleden (of eerder beschikbaar)
             latest_ts, latest_bp, latest_sol = self._history[-1]
             target_ts = latest_ts - datetime.timedelta(hours=2)
-            # Zoek het dichtstbijzijnde historische punt ≥2u oud
             ref = None
             for ts, bp_h, sol_h in reversed(self._history[:-1]):
                 if ts <= target_ts:
                     ref = (ts, bp_h, sol_h)
                     break
             if ref is None:
-                ref = self._history[0]   # neem oudste beschikbaar
+                ref = self._history[0]
             ref_ts, ref_bp, ref_sol = ref
             age_h = (latest_ts - ref_ts).total_seconds() / 3600
 
-            sfi_delta = latest_sol.get("sfi", sfi) - ref_sol.get("sfi", sfi)
-            k_delta   = latest_sol.get("k_index", k_index) - ref_sol.get("k_index", k_index)
-            # Gemiddeld % geopende banden
-            hf_band_names = [n for n, _, hf in _BANDS if hf]
-            avg_now = sum(latest_bp.get(n, 0) for n in hf_band_names) / max(len(hf_band_names), 1)
-            avg_ref = sum(ref_bp.get(n, 0)    for n in hf_band_names) / max(len(hf_band_names), 1)
+            sfi_delta  = latest_sol.get("sfi", sfi)     - ref_sol.get("sfi", sfi)
+            k_delta    = latest_sol.get("k_index", k_index) - ref_sol.get("k_index", k_index)
+            hf_names   = [n for n, _, hf in _BANDS if hf]
+            avg_now    = sum(latest_bp.get(n, 0) for n in hf_names) / max(len(hf_names), 1)
+            avg_ref    = sum(ref_bp.get(n, 0)    for n in hf_names) / max(len(hf_names), 1)
             band_delta = avg_now - avg_ref
 
             trend_parts = []
@@ -3067,116 +3688,89 @@ class HAMIOSApp:
             if abs(k_delta) >= 1:
                 trend_parts.append(f"K-index {k_delta:+.0f}")
             if abs(band_delta) >= 5:
-                trend_parts.append(f"gemid. bandkwaliteit {band_delta:+.0f}%")
+                trend_parts.append(
+                    f"{self._tr('avg_band_quality')} {band_delta:+.0f}%")
 
             if trend_parts:
-                direction = "verbeterend" if band_delta > 0 else "verslechterend"
+                direction = (self._tr("trend_improving") if band_delta > 0
+                             else self._tr("trend_worsening"))
                 trend_clr = "#66BB6A" if band_delta > 0 else "#FF7043"
                 tips.append(("📈" if band_delta > 0 else "📉",
-                             f"Propagatie {direction} (afgelopen {age_h:.0f}u): "
-                             + "  ·  ".join(trend_parts) + ".",
+                             self._tr("adv_trend_change").format(
+                                 direction=direction, age=f"{age_h:.0f}",
+                                 parts="  ·  ".join(trend_parts)),
                              trend_clr))
             else:
                 tips.append(("📊",
-                             f"Propagatie stabiel (laatste {age_h:.0f}u geen significante wijziging).",
+                             self._tr("adv_trend_stable").format(age=f"{age_h:.0f}"),
                              TEXT_DIM))
 
-        # ── 12. Zonnecyclus fase ──────────────────────────────────────────
-        # Cyclus 25 startte ~dec 2019; verwacht maximum ~2025–2026 (SSN ≈ 115–140)
-        # Simpele fase-schatting op basis van SSN
+        # ── 13. Zonnecyclus fase ──────────────────────────────────────────
         if ssn >= 130:
-            tips.append(("☀",
-                         f"Zonnecyclus 25 MAXIMUM — SSN={int(ssn)} (hoogtepunt verwacht 2025–2026). "
-                         "Optimale F2-propagatie op hoge banden; geniet van 10m–15m DX "
-                         "terwijl de cyclus op zijn best is.", ACCENT))
+            tips.append(("☀",  self._tr("adv_sc_max").format(ssn=ss_i),        ACCENT))
         elif ssn >= 90:
-            tips.append(("🌤",
-                         f"Zonnecyclus 25 hoog/maximumfase — SSN={int(ssn)}. "
-                         "Hoge banden (10m–17m) regelmatig open voor DX. "
-                         "Verwacht verdere toename richting cycluspiek.", ACCENT))
+            tips.append(("🌤", self._tr("adv_sc_high").format(ssn=ss_i),       ACCENT))
         elif ssn >= 50:
-            tips.append(("🌥",
-                         f"Zonnecyclus 25 opkomende fase — SSN={int(ssn)}. "
-                         "Cyclus in opbouw; 20m–17m betrouwbaar, hogere banden variabel. "
-                         "Positieve trend verwacht.", TEXT_BODY))
+            tips.append(("🌥", self._tr("adv_sc_rising").format(ssn=ss_i),     TEXT_BODY))
         elif ssn >= 20:
-            tips.append(("🌦",
-                         f"Zonnecyclus in overgangsperiode — SSN={int(ssn)}. "
-                         "Afhankelijk van trend: controleer of SSN stijgt of daalt. "
-                         "20m/40m vormen ruggengraat.", TEXT_DIM))
+            tips.append(("🌦", self._tr("adv_sc_transition").format(ssn=ss_i), TEXT_DIM))
         else:
-            tips.append(("🌧",
-                         f"Zonnecyclus laag — SSN={int(ssn)}. "
-                         "Cyclus mogelijk in minimum of vroeg stadium; "
-                         "40m/80m/160m zijn de meest betrouwbare banden.", TEXT_DIM))
+            tips.append(("🌧", self._tr("adv_sc_low").format(ssn=ss_i),        TEXT_DIM))
 
-        # ── 13. Herstelprognose bij K-storm ──────────────────────────────
+        # ── 14. Herstelprognose bij K-storm ──────────────────────────────
         if k_index >= 5:
-            # Ruwe hersteltijd: A-index gerelateerd. A > 50 → 24h+; A > 20 → 12h
             recovery_h = (36 if a_index >= 50 else
                           24 if a_index >= 30 else
-                          12 if a_index >= 20 else
-                          6)
+                          12 if a_index >= 20 else 6)
             tips.append(("🕐",
-                         f"Storm-herstelprognose: A={int(a_index)}, K={int(k_index)} — "
-                         f"geschatte normaliseringstijd ≈{recovery_h}u na piek. "
-                         "HF herstel verloopt van laag naar hoog (40m eerst, daarna 20m/15m). "
-                         "Monitor K-index voor herstel onder 3.", "#FF7043"))
+                         self._tr("adv_storm_recovery").format(
+                             a=a_i, k=k_i, rh=recovery_h),
+                         "#FF7043"))
 
-        # ── 14. DX-cluster activiteitsanalyse ────────────────────────────
+        # ── 15. DX-cluster activiteitsanalyse ────────────────────────────
         all_spots = getattr(self, "_dx_all_spots", [])
         if all_spots:
             cont_count: dict = {}
-            rare_calls: list = []
             for s in all_spots:
                 dx_cont = s.get("dx_cont", "??")
                 cont_count[dx_cont] = cont_count.get(dx_cont, 0) + 1
-                # Merk "zeldzame" calls: prefix ≤3 tekens en weinig spots
-                call = s.get("dx_call", "")
-                if call and len(call) <= 4 and cont_count.get(dx_cont, 0) == 1:
-                    rare_calls.append(call)
             top_conts = sorted(cont_count.items(), key=lambda x: -x[1])[:4]
-            top_str = "  ·  ".join(f"{c}: {n}" for c, n in top_conts)
-            n_eu = cont_count.get("EU", 0)
+            top_str   = "  ·  ".join(f"{c}: {n}" for c, n in top_conts)
             n_as = cont_count.get("AS", 0)
-            n_na = cont_count.get("NA", 0)
             n_oc = cont_count.get("OC", 0)
-            tip_txt = (f"DX-cluster: {len(all_spots)} spots actief — "
-                       f"top continenten: {top_str}. ")
+            tip_txt = self._tr("adv_dx_cluster").format(n=len(all_spots), top=top_str)
             if n_oc >= 2:
-                tip_txt += f"Oceanië ({n_oc}×) actief → goede Oost-kans. "
+                tip_txt += self._tr("adv_dx_oceania").format(n=n_oc)
             if n_as >= 3:
-                tip_txt += f"Azië ({n_as}×) goed vertegenwoordigd. "
+                tip_txt += self._tr("adv_dx_asia").format(n=n_as)
             tips.append(("📡", tip_txt.strip(), TEXT_BODY))
 
-        # ── 15. Beste DX-routes nu ────────────────────────────────────────
+        # ── 16. Beste DX-routes nu ────────────────────────────────────────
         try:
             muf_dx = float(data.get("muf", "0").replace("—", "0"))
         except (ValueError, TypeError):
             muf_dx = 0.0
-        qth_lat_abs = abs(self._qth_lat)
-        # Klassieke EU (≈50°N) DX-paden en hun optimale vensters (UTC)
         dx_routes = []
         if is_day:
             if 5 <= utc_h < 10 and muf_dx >= 14:
-                dx_routes.append("EU→JA (Azië) via long path, 14–21 MHz")
+                dx_routes.append(self._tr("dx_route_eu_ja_day"))
             if 12 <= utc_h < 18 and muf_dx >= 14:
-                dx_routes.append("EU→W (Noord-Amerika) short path, 14–21 MHz")
+                dx_routes.append(self._tr("dx_route_eu_w_day"))
             if 8 <= utc_h < 14 and muf_dx >= 14:
-                dx_routes.append("EU→Afrika short path, 14–28 MHz")
+                dx_routes.append(self._tr("dx_route_eu_af_day"))
             if 14 <= utc_h < 20 and muf_dx >= 14:
-                dx_routes.append("EU→VK/ZL (Pacific) long path, 14–21 MHz")
+                dx_routes.append(self._tr("dx_route_eu_oc_day"))
         else:
             if 22 <= utc_h or utc_h < 4:
-                dx_routes.append("EU→W (Noord-Amerika) 40m–80m nacht-DX")
+                dx_routes.append(self._tr("dx_route_eu_w_night"))
             if 2 <= utc_h < 8:
-                dx_routes.append("EU→JA (Azië) 40m–20m via pool night path")
+                dx_routes.append(self._tr("dx_route_eu_ja_night"))
         if dx_routes:
             tips.append(("🌍",
-                         "Optimale DX-routes nu: " + "  ·  ".join(dx_routes) + ".",
+                         self._tr("adv_dx_routes").format(routes="  ·  ".join(dx_routes)),
                          "#4FC3F7"))
 
-        # ── 16. Algehele beoordeling ──────────────────────────────────────
+        # ── 17. Algehele beoordeling ──────────────────────────────────────
         score = 0
         if sfi >= 150: score += 3
         elif sfi >= 100: score += 2
@@ -3189,17 +3783,20 @@ class HAMIOSApp:
             if float(sw_bz) < -10: score -= 1
         except (ValueError, TypeError):
             pass
-        overall = ("Uitstekend 🏆" if score >= 6 else
-                   "Goed ✅" if score >= 4 else
-                   "Matig ⚡" if score >= 2 else
-                   "Slecht ⚠️")
+        overall = (self._tr("score_excellent") if score >= 6 else
+                   self._tr("score_good")       if score >= 4 else
+                   self._tr("score_fair")        if score >= 2 else
+                   self._tr("score_poor"))
         overall_clr = ("#4CAF50" if score >= 6 else
                        "#8BC34A" if score >= 4 else
                        "#FFC107" if score >= 2 else "#F44336")
-        open_cnt = len(hf_open)
-        tips.append(("📊", f"Algehele propagatie-score: {overall}  "
-                           f"(SFI {int(sfi)} · K {int(k_index)} · {open_cnt} banden open). "
-                           f"{'Dag' if is_day else 'Nacht'}condities, QTH {self._qth_lat:.1f}°N.",
+        open_cnt  = len(hf_open)
+        dn_label  = self._tr("day_label") if is_day else self._tr("night_label")
+        tips.append(("📊",
+                     self._tr("adv_overall_score").format(
+                         overall=overall, sfi=s_i, k=k_i,
+                         open=open_cnt, daynight=dn_label,
+                         lat=f"{self._qth_lat:.1f}"),
                      overall_clr))
 
         # ── Weergave: 3 gelijke kolommen, vaste kaartengrootte ───────────
@@ -3369,11 +3966,11 @@ class HAMIOSApp:
 
     def _update_band_cond_panel(self, band_pct_day, band_pct_ngt):
         def _cond(pct):
-            if pct == -1:  return "LOS",    TEXT_DIM
-            if pct >= 60:  return "Goed",   "#4CAF50"
-            if pct >= 30:  return "Fair",   "#FFC107"
-            if pct >= 1:   return "Arm",    "#F44336"
-            return               "Dicht",  TEXT_DIM
+            if pct == -1:  return "LOS",                        TEXT_DIM
+            if pct >= 60:  return self._tr("cond_good"),        "#4CAF50"
+            if pct >= 30:  return self._tr("cond_fair"),        "#FFC107"
+            if pct >= 1:   return self._tr("cond_poor"),        "#F44336"
+            return               self._tr("cond_closed"),       TEXT_DIM
 
         pct_day = {name: pct for name, _, pct in band_pct_day}
         pct_ngt = {name: pct for name, _, pct in band_pct_ngt}
@@ -3403,7 +4000,7 @@ class HAMIOSApp:
         snr_db = (_MODE_DB.get(self._mode_var.get(), 0) +
                   _POWER_DB.get(self._power_var.get(), 0) +
                   _ANT_DB.get(self._ant_var.get(), 0))
-        self._db_var.set(f"Totaal: {snr_db:+d} dB")
+        self._db_var.set(f"{self._tr('total_snr')} {snr_db:+d} dB")
         self._save_cur_settings()
 
         band_pct, muf, luf = _calc_propagation(
@@ -3479,11 +4076,11 @@ class HAMIOSApp:
         else:
             tray_img = Image.new("RGBA", (64, 64), (26, 28, 31, 255))
         menu = pystray.Menu(
-            pystray.MenuItem("HAMIOS tonen", self._tray_show, default=True),
+            pystray.MenuItem(self._tr("tray_show"), self._tray_show, default=True),
             pystray.Menu.SEPARATOR,
-            pystray.MenuItem("Afsluiten", self._tray_quit),
+            pystray.MenuItem(self._tr("tray_exit"), self._tray_quit),
         )
-        self._tray_icon = pystray.Icon("HAMIOS", tray_img, "HAMIOS v2.2", menu)
+        self._tray_icon = pystray.Icon("HAMIOS", tray_img, "HAMIOS v2.3", menu)
         threading.Thread(target=self._tray_icon.run, daemon=True).start()
 
     def _tray_show(self, icon=None, item=None):
@@ -3569,7 +4166,7 @@ class HAMIOSApp:
     def _update_solar(self, data: dict):
         self._solar_data = data
         if "error" in data:
-            self._updated_var.set(f"Fout: {data['error']}")
+            pass  # foutmelding via tray-notificatie, geen solar-label meer
             self._schedule_solar()
             return
 
@@ -3664,9 +4261,6 @@ class HAMIOSApp:
             short = iono_station[:13]
             self._iono_station_var.set(f"foF2 {short}:")
 
-        # Bijgewerkt: toon QTH-lokale tijd
-        local_now = datetime.datetime.now().strftime("%H:%M")
-        self._updated_var.set(f"Bijgewerkt: {local_now}")
 
         # ── X-flare detectie ──────────────────────────────────────────────────
         self._check_xflare(data.get("xray", ""))
@@ -3689,16 +4283,13 @@ class HAMIOSApp:
             level = float(m.group(2))
             if cls == "X" or (cls == "M" and level >= 1.0):
                 dur_min = 60 if cls == "X" else 30
-                msg = (f"☢  SWF-waarschuwing: {xray}-flare gedetecteerd. "
-                       f"HF dag-zijde verstoord (~{dur_min} min).")
+                msg = self._tr("xflare_warning").format(xray=xray, dur=dur_min)
                 self._xflare_var.set(msg)
                 self._xflare_lbl.config(fg="#FF7043")
-                # Tray-notificatie (alleen als dit een nieuwe flare is)
                 if xray != self._last_xflare:
                     self._tray_notify(
                         f"☢ {xray}-flare",
-                        f"Short Wave Fadeout verwacht (~{dur_min} min). "
-                        "HF op dag-zijde tijdelijk verstoord.")
+                        self._tr("xflare_notify_body").format(dur=dur_min))
                     self._last_xflare = xray
                 return
         self._xflare_var.set("")
@@ -3716,30 +4307,26 @@ class HAMIOSApp:
         # NOAA S-schaal voor solare straling (proton events)
         if pf >= 1000:
             s_level, s_color = 5, "#EA80FC"
-            dur = "3–7 dagen"
+            dur = self._tr("pca_dur_s5")
         elif pf >= 100:
             s_level, s_color = 3, "#CE93D8"
-            dur = "2–4 dagen"
+            dur = self._tr("pca_dur_s3")
         elif pf >= 10:
             s_level, s_color = 1, "#BA68C8"
-            dur = "1–2 dagen"
+            dur = self._tr("pca_dur_s1")
         else:
             s_level = 0
             s_color = TEXT_H1
             dur = ""
 
         if s_level >= 1:
-            msg = (f"☢  PCA-waarschuwing S{s_level}: proton flux {pf:.1f} pfu — "
-                   f"poolroutes geblokkeerd (~{dur}). "
-                   "160m–40m poolpaden onbruikbaar.")
+            msg = self._tr("pca_warning").format(s=s_level, pf=pf, dur=dur)
             self._pca_var.set(msg)
             self._pca_lbl.config(fg=s_color)
-            # Tray-notificatie alleen bij nieuw of escalerend event
             if s_level > self._last_pca_level:
                 self._tray_notify(
                     f"☢ Proton event S{s_level}",
-                    f"Proton flux: {pf:.1f} pfu. "
-                    f"Polar Cap Absorption — poolroutes geblokkeerd (~{dur}).")
+                    self._tr("pca_notify_body").format(pf=pf, dur=dur))
             self._last_pca_level = s_level
         else:
             self._pca_var.set("")
@@ -3752,16 +4339,15 @@ class HAMIOSApp:
         scr_w = self.root.winfo_screenwidth()
         scr_h = self.root.winfo_screenheight()
         usable_w = scr_w - 60
-        usable_h = scr_h - 60   # reserveer ruimte voor taakbalk
         # Breedte: gebruik hint, begrensd aan scherm
         w = min(w_hint, usable_w)
-        # Hoogte: minstens MIN_WINDOW_H (app-header + solar + advies + ticker)
-        h = min(usable_h, max(h_hint, self.root.winfo_reqheight()))
+        # Hoogte: minstens h_hint (= MIN_WINDOW_H), geen scherm-cap zodat alles past
+        h = max(h_hint, self.root.winfo_reqheight())
         x = max(0, (scr_w - w) // 2)
         y = max(0, (scr_h - h) // 2)
         self.root.geometry(f"{w}x{h}+{x}+{y}")
         # Stel minsize in zodat verkleinen niet onder bruikbare grens gaat
-        self.root.minsize(min(900, usable_w), min(600, usable_h))
+        self.root.minsize(min(900, usable_w), min(700, scr_h))
 
 
 # ── Entrypoint ─────────────────────────────────────────────────────────────────
