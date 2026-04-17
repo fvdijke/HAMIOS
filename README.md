@@ -1,7 +1,7 @@
 # 📡 HAMIOS v2.3
 <img width="1743" height="1416" alt="HAMIOS v2 3" src="https://github.com/user-attachments/assets/3045d73a-9008-43d8-9dea-3d3fd5102792" />
 
-Multilingual + Multi overlay
+**Multilingual + Multi overlay**
 <img width="1743" height="1416" alt="HAMIOS-ALL v2 3" src="https://github.com/user-attachments/assets/4250a620-1bac-4867-9d78-0ac172a26e89" />
 
 **HAM-radio propagatie- en DX-monitor voor Windows**
