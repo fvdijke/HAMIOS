@@ -18,55 +18,50 @@ Dependencies:
 Todo
 ─────────────────────────────────────────────────────────────────────
 
-[x] WSPR/PSKReporter spots op kaart, selecteerbaar
-    Haal live gemeten propagatiepaden op van wspr.rocks (WSPR) of
-    pskreporter.info (FT8/FT4). Teken verbindingslijnen op de wereldkaart
-    (kleur = band, dikte = SNR). Selecteerbaar via checkbox in kaart-header.
-    Geeft echte gemeten propagatie i.p.v. alleen modelwaarden.
+[x] 1. Propagatiepadkaart
+    Klik QTH + bestemming → kleurgecodeerde balk naast het groot-cirkelpad.
+    Bereken MUF/LUF voor de specifieke afstand (QTH→bestemming) en toon
+    welke band nu het best is voor juist die route. Kleur per band,
+    score in %, tooltip met details.
 
-[x] Aurora-ring overlay op kaart, selecteerbaar
-    Teken de magnetische aurora-ovaal op de kaart op basis van de K-index
-    (hogere K → ring schuift equatorwaarts). Gebruik de empirische formule
-    van Feldstein/Holzworth. Geeft direct inzicht in geblokkeerde poolroutes.
-    Kleur: groen/geel/rood afhankelijk van K-niveau.
+[x] 2. Band-openings-notificatie
+    Systeemtray-melding als een band van "gesloten" naar ≥ 40% springt.
+    Drempelwaarde instelbaar (spinbox in header, naast K-alert).
+    Melding: "20m open — 78%". Geen melding als band al open was bij
+    vorige refresh. Eventueel ook een geluidssignaal.
 
-[x] DX-spot markers op de kaart, selecteerbaar
-    Teken de actieve DX-cluster spots als lijnen op de kaart: stip op de
-    DX-locatie (DXCC-centroid) en lijn naar de spotter. Kleur per band.
-    Toggle via "Spots"-checkbox in de kaart-header. Klikken op een stip
-    toont de callsign, frequentie en comment als pop-up.
-
-[x] CAT-interface via Yaesu CAT (serieel USB)
-    Lees actieve frequentie/band uit en markeer die band visueel in het
-    HF-betrouwbaarheidspaneel. Optioneel: stuur frequentie naar de radio
-    via klikken op een band in het schema.
-
-[x] CAT terminal venster: "Terminal" checkbox naast VFO-A/B label.
-    Geel = verzonden (▶ FA;FB;, ▶ VS0;FA…;), Blauw = ontvangen (◀ FA…;FB…;).
-    Gebruik terminal om exact te zien wat verzonden wordt naar de Yaesu
-    (formaat: VS0;FA00027000000; — 11 cijfers met voorloopnullen, per FT-950 spec).
-    VFO-B waarde wordt getoond naast VFO-A zodra radio reageert op FB;.
-
-
-[x] Nieuw bericht aanduiding
-    Zet in de analyse/advies kaart een gele stip rechts boven zodat je kan zien
-    dat er bericht ververst is. Verwijder de stip bij de eerst volgende refresh tenzij
-    er een nieuw bericht is.
-
-[x] Vertaal de app
-    Vertaal alle teksten in NL,UK,DE,FR, IT
-    Ook de analyses, helpteksten en interface teksten.
-
-[x] Maak de ticker selecteerbaar
-    Zet een selectievakje in de header die de ticker selecteerbaar maakt.
-
-[x] Pas grote van de analyse en advies paneel aan
-    Maak het analyse en advies paneel net zo groot voor de header en de 4 rijen kaarten plus te ticker.
-    Bij het opstarten moet dit paneel al de juiste grote hebben zodat, en de titel, en de 4 rijen en de ticker zichtbaar zijn.
+[x] 3. Bz-tijdgrafiek
+    Mini-tijdgrafiek van Bz (en optioneel solarwindsnelheid) in het
+    solar-paneel — laatste 24u van NOAA SWPC real-time data.
+    Ophalen via https://services.swpc.noaa.gov/products/solar-wind/mag-1-day.json
+    en https://services.swpc.noaa.gov/products/solar-wind/plasma-1-day.json.
+    Zelfde donkere stijl als de band-historiekgrafiek. Bz-lijn blauw/rood
+    (negatief=rood), nul-as gestippeld.
 
 ─────────────────────────────────────────────────────────────────────
 Change Log (2.3)
 ─────────────────────────────────────────────────────────────────────
+
+2026-04-18  Bz 24-uurs mini-grafiek in solar-paneel
+    - Canvas (60px) onderaan het solar-paneel; blauw=positief Bz, rood=negatief
+    - Data: NOAA SWPC mag-1-day.json, downsampled naar 240 punten
+    - Nul-as gestippeld, Y-labels -20/0/+20 nT, tijdlabels "24h" / "nu"
+    - Actuele Bz-waarde rechtsbovenin grafiek met kleurcode
+    - Opgehaald tegelijk met solar data, via _refresh_solar thread
+
+2026-04-18  Band-openings-notificatie: instelbare drempel
+    - "Band open ≥" spinbox in solar-paneel (10–90%, stap 5, standaard 40%)
+    - Tray-melding bij overgang gesloten→open per band (bijv. "20m (78%)")
+    - Drempel opgeslagen in HAMIOS.ini [Alerts] band_alert
+    - Oude hardcoded 20%-drempel vervangen door instelbare waarde
+
+2026-04-18  Propagatiepadkaart: band-kwaliteit voor QTH→bestemming
+    - Klik op kaart → label toont top-5 open banden voor dat specifieke traject
+    - Midpunt van het groot-cirkelpad gebruikt voor ionosferische berekening
+    - Dag/nacht op het midpunt bepaalt de juiste SFI/SSN/K-correctie
+    - Aantal hops berekend (≈ dist / 3500 km per hop)
+    - Groot-cirkel lijn kleurt mee met de beste band (groen=20m, rood=10m, enz.)
+    - Label toont ook MUF op het midpunt; vertaald in 6 talen
 
 2026-04-18  Aurora-ring overlay op kaart
     - "Aurora" checkbox in kaart-header (selecteerbaar, opgeslagen in INI)
@@ -440,6 +435,7 @@ def _load_settings() -> dict:
         "hist_range":    cfg.get       ("Graph", "hist_range",     fallback="Uren"),
         "hist_sel":      set(hist_sel_raw.split(",")) - {""} if hist_sel_raw else set(),
         "k_alert":       cfg.getint   ("Alerts","k_alert",        fallback=4),
+        "band_alert":    cfg.getint   ("Alerts","band_alert",     fallback=40),
         # CAT interface
         "cat_port":      cfg.get      ("CAT",   "port",           fallback=""),
         "cat_baud":      cfg.get      ("CAT",   "baud",           fallback="9600"),
@@ -470,6 +466,7 @@ def _save_settings(lat: float, lon: float, refresh: str,
                    hist_range: str = "Uren",
                    hist_sel: set = None,
                    k_alert: int = 4,
+                   band_alert: int = 40,
                    language: str = "Nederlands",
                    cat_port: str = "", cat_baud: str = "9600",
                    cat_bits: str = "8", cat_parity: str = "N",
@@ -494,7 +491,7 @@ def _save_settings(lat: float, lon: float, refresh: str,
                     "show_aurora": str(show_aurora)}
     cfg["Graph"]  = {"hist_range": hist_range,
                      "selected_bands": ",".join(sorted(hist_sel)) if hist_sel else ""}
-    cfg["Alerts"] = {"k_alert": str(k_alert)}
+    cfg["Alerts"] = {"k_alert": str(k_alert), "band_alert": str(band_alert)}
     cfg["CAT"]    = {"port": cat_port, "baud": cat_baud, "bits": cat_bits,
                      "parity": cat_parity, "stopbits": cat_stopbits,
                      "flow": cat_flow, "dtr": str(cat_dtr), "rts": str(cat_rts),
@@ -505,8 +502,10 @@ def _save_settings(lat: float, lon: float, refresh: str,
 
 # ── Solar data ophalen ─────────────────────────────────────────────────────────
 SOLAR_URL    = "https://www.hamqsl.com/solarxml.php"
-SW_SPEED_URL = "https://services.swpc.noaa.gov/products/summary/solar-wind-speed.json"
-SW_MAG_URL   = "https://services.swpc.noaa.gov/products/summary/solar-wind-mag-field.json"
+SW_SPEED_URL   = "https://services.swpc.noaa.gov/products/summary/solar-wind-speed.json"
+SW_MAG_URL     = "https://services.swpc.noaa.gov/products/summary/solar-wind-mag-field.json"
+BZ_1DAY_URL    = "https://services.swpc.noaa.gov/products/solar-wind/mag-1-day.json"
+SPEED_1DAY_URL = "https://services.swpc.noaa.gov/products/solar-wind/plasma-1-day.json"
 # GOES >10 MeV integraalproton flux — meest recente meting (laatste element in array)
 # Formaat: [{time_tag, satellite, flux, channel}, ...] — channel "P5" = >10 MeV
 PROTON_URL   = "https://services.swpc.noaa.gov/json/goes/primary/integral-protons-1-day.json"
@@ -612,6 +611,46 @@ def _band_cond(sd, band: str, time_of_day: str) -> str:
         if item.get("name") == band and item.get("time") == time_of_day:
             return (item.text or "—").strip()
     return "—"
+
+
+# ── Bz / solarwind 24-uurs geschiedenis ──────────────────────────────────────
+def _fetch_bz_24h() -> list[tuple[float, float]]:
+    """Haal laatste 24u Bz-waarden op van NOAA SWPC (downsampled naar ~120 pts).
+
+    Geeft lijst van (uren_geleden, bz_nT); meest recente punt last.
+    """
+    try:
+        with urllib.request.urlopen(BZ_1DAY_URL, timeout=8) as r:
+            rows = json.loads(r.read().decode())
+    except Exception:
+        return []
+    # Eerste rij is header: ["time_tag","bx_gsm","by_gsm","bz_gsm",...]
+    if not rows or len(rows) < 2:
+        return []
+    data_rows = rows[1:]
+    now_ts = None
+    pts = []
+    for row in data_rows:
+        try:
+            ts_str = row[0]
+            bz_val = float(row[3]) if row[3] not in (None, "null", "") else None
+            if bz_val is None:
+                continue
+            # Parse timestamp: "2024-01-01 00:00:00.000"
+            ts = datetime.datetime.strptime(ts_str[:19], "%Y-%m-%d %H:%M:%S")
+            ts = ts.replace(tzinfo=datetime.timezone.utc)
+            if now_ts is None:
+                now_ts = datetime.datetime.now(datetime.timezone.utc)
+            hours_ago = (now_ts - ts).total_seconds() / 3600
+            pts.append((hours_ago, bz_val))
+        except Exception:
+            continue
+    pts.reverse()  # chronologisch (oudste → nieuwste)
+    # Downsample naar max 240 punten
+    if len(pts) > 240:
+        step = len(pts) // 240
+        pts = pts[::step]
+    return pts
 
 
 # ── Ionosonde helpers ─────────────────────────────────────────────────────────
@@ -883,7 +922,8 @@ _T: dict[str, dict[str, str]] = {
     "locator":     {"nl": "Locator",   "en": "Locator",    "de": "Locator",   "fr": "Locator",    "it": "Locator",       "es": "Locator"},
     # ── Solar veld labels ─────────────────────────────────────────────────────
     "updated_lbl":  {"nl": "Bijgewerkt",  "en": "Updated",   "de": "Aktualisiert", "fr": "Mis à jour",  "it": "Aggiornato",  "es": "Actualizado"},
-    "k_alert_lbl":  {"nl": "Melding K ≥", "en": "Alert K ≥", "de": "Alarm K ≥",   "fr": "Alerte K ≥", "it": "Avviso K ≥",  "es": "Alerta K ≥"},
+    "k_alert_lbl":    {"nl": "Melding K ≥",    "en": "Alert K ≥",    "de": "Alarm K ≥",     "fr": "Alerte K ≥",    "it": "Avviso K ≥",    "es": "Alerta K ≥"},
+    "band_alert_lbl": {"nl": "Band open ≥",   "en": "Band open ≥",  "de": "Band offen ≥",  "fr": "Bande ouverte ≥","it": "Banda aperta ≥", "es": "Banda abierta ≥"},
     "day_hdr":      {"nl": "Dag",         "en": "Day",       "de": "Tag",          "fr": "Jour",        "it": "Giorno",      "es": "Día"},
     "night_hdr":    {"nl": "Nacht",       "en": "Night",     "de": "Nacht",        "fr": "Nuit",        "it": "Notte",       "es": "Noche"},
     "band_hdr":     {"nl": "Band",        "en": "Band",      "de": "Band",         "fr": "Bande",       "it": "Banda",       "es": "Banda"},
@@ -931,6 +971,10 @@ _T: dict[str, dict[str, str]] = {
     "distance_lbl":    {"nl": "Afstand",  "en": "Distance",  "de": "Entfernung",  "fr": "Distance",   "it": "Distanza",   "es": "Distancia"},
     "direction_lbl":   {"nl": "Richting", "en": "Direction", "de": "Richtung",    "fr": "Direction",  "it": "Direzione",  "es": "Dirección"},
     "right_clk_clear": {"nl": "klik rechts om te wissen", "en": "right-click to clear", "de": "Rechtsklick zum Löschen", "fr": "clic droit pour effacer", "it": "clic destro per cancellare", "es": "clic derecho para borrar"},
+    "path_day":    {"nl": "dag",    "en": "day",    "de": "Tag",    "fr": "jour",  "it": "giorno", "es": "día"},
+    "path_night":  {"nl": "nacht",  "en": "night",  "de": "Nacht",  "fr": "nuit",  "it": "notte",  "es": "noche"},
+    "path_hops":   {"nl": "hop",    "en": "hop",    "de": "Hop",    "fr": "hop",   "it": "hop",    "es": "salto"},
+    "path_closed": {"nl": "geen open banden", "en": "no open bands", "de": "keine offenen Bänder", "fr": "aucune bande ouverte", "it": "nessuna banda aperta", "es": "ninguna banda abierta"},
     # ── Tray ──────────────────────────────────────────────────────────────────
     "tray_show": {"nl": "HAMIOS tonen",  "en": "Show HAMIOS",  "de": "HAMIOS anzeigen", "fr": "Afficher HAMIOS", "it": "Mostra HAMIOS",  "es": "Mostrar HAMIOS"},
     "tray_exit": {"nl": "Afsluiten",     "en": "Exit",         "de": "Beenden",         "fr": "Quitter",         "it": "Esci",           "es": "Salir"},
@@ -1900,6 +1944,7 @@ class HAMIOSApp:
         self._dst_var           = tk.BooleanVar(value=s["dst"])
         self._next_refresh_at: datetime.datetime | None = None
         self._k_alert_var       = tk.IntVar(value=s["k_alert"])
+        self._band_alert_var    = tk.IntVar(value=s["band_alert"])
         self._prev_band_open: dict = {}   # name → bool, voor band-opening detectie
         self._prev_k_above: bool   = False
         self._tray_icon             = None
@@ -3027,6 +3072,21 @@ class HAMIOSApp:
                            command=self._save_cur_settings,
                            bg=BG_SURFACE, fg=TEXT_H1, buttonbackground=BG_SURFACE,
                            relief=tk.FLAT, font=_font(9, "bold")).pack(side=tk.LEFT)
+                # Band-opening drempel
+                band_alert_row = tk.Frame(self._solar_frame, bg=BG_PANEL)
+                band_alert_row.pack(fill=tk.X, pady=(0, 2))
+                _band_alert_lbl = tk.Label(band_alert_row, text=self._tr("band_alert_lbl"),
+                                           font=_font(9), bg=BG_PANEL,
+                                           fg=TEXT_DIM, anchor='w', width=16)
+                _band_alert_lbl.pack(side=tk.LEFT)
+                self._tr_widgets["band_alert_lbl"] = _band_alert_lbl
+                tk.Spinbox(band_alert_row, from_=10, to=90, increment=5, width=4,
+                           textvariable=self._band_alert_var,
+                           command=self._save_cur_settings,
+                           bg=BG_SURFACE, fg=TEXT_H1, buttonbackground=BG_SURFACE,
+                           relief=tk.FLAT, font=_font(9, "bold")).pack(side=tk.LEFT)
+                tk.Label(band_alert_row, text="%", font=_font(9),
+                         bg=BG_PANEL, fg=TEXT_DIM).pack(side=tk.LEFT, padx=(2, 0))
 
         # Scheidingslijn tussen params en bandentabel
         tk.Frame(self._solar_frame, bg=BORDER, height=1).pack(fill=tk.X, pady=(4, 2))
@@ -3074,7 +3134,16 @@ class HAMIOSApp:
         self._pca_lbl = tk.Label(self._solar_frame, textvariable=self._pca_var,
                                  font=_font(8, "bold"), bg=BG_PANEL, fg="#CE93D8",
                                  wraplength=190, justify='left', anchor='nw')
-        self._pca_lbl.pack(fill=tk.X, pady=(0, 4))
+        self._pca_lbl.pack(fill=tk.X, pady=(0, 2))
+
+        # ── Bz 24-uurs mini-grafiek ───────────────────────────────────────────
+        tk.Frame(self._solar_frame, bg=BORDER, height=1).pack(fill=tk.X, pady=(2, 2))
+        _bz_hdr = tk.Label(self._solar_frame, text="Bz  24h (nT)",
+                           font=_font(8), bg=BG_PANEL, fg=TEXT_DIM, anchor='w')
+        _bz_hdr.pack(fill=tk.X)
+        self._bz_canvas = tk.Canvas(self._solar_frame, height=60, bg=BG_SURFACE,
+                                    bd=0, highlightthickness=0)
+        self._bz_canvas.pack(fill=tk.X, pady=(0, 4))
 
         # ── Gecombineerde linker+midden zone ──────────────────────────────────
         combined = tk.Frame(top_row, bg=BG_ROOT)
@@ -3154,11 +3223,18 @@ class HAMIOSApp:
         self._map_canvas.bind("<Button-4>",       self._on_map_scroll)   # Linux
         self._map_canvas.bind("<Button-5>",       self._on_map_scroll)   # Linux
 
-        # Info-label voor groot-cirkel (rechtsonder in canvas)
+        # Info-label voor groot-cirkel (richting/afstand)
         self._gc_info_var = tk.StringVar(value="")
         tk.Label(outer, textvariable=self._gc_info_var,
                  font=_font(9), bg=BG_PANEL, fg=ACCENT,
-                 anchor='w').pack(fill=tk.X, padx=10, pady=(0, 4))
+                 anchor='w').pack(fill=tk.X, padx=10, pady=(0, 1))
+        # Band-kwaliteit voor het specifieke propagatiepad
+        self._gc_path_var = tk.StringVar(value="")
+        self._gc_path_best_color = _BAND_COLORS.get("20m", ACCENT)
+        self._gc_path_lbl = tk.Label(outer, textvariable=self._gc_path_var,
+                                     font=_font(9), bg=BG_PANEL, fg=TEXT_BODY,
+                                     anchor='w')
+        self._gc_path_lbl.pack(fill=tk.X, padx=10, pady=(0, 4))
 
     def _on_map_resize(self, event):
         """Stel canvas hoogte in; rendering gebruikt altijd 2:1 ratio."""
@@ -3186,6 +3262,38 @@ class HAMIOSApp:
         lat = 90 - wy / VH * 180
         return lat, lon
 
+    def _calc_path_propagation(self, dest_lat: float, dest_lon: float):
+        """Band-kwaliteit voor het pad QTH → bestemming op basis van midpunt-ionosfeer."""
+        # Midpunt van het groot-cirkelpad (helft van de weg)
+        mid_pts = _great_circle_pts(self._qth_lat, self._qth_lon,
+                                    dest_lat, dest_lon, n=2)
+        mid_lat = mid_pts[1][0] if len(mid_pts) > 1 else (self._qth_lat + dest_lat) / 2
+        mid_lon = mid_pts[1][1] if len(mid_pts) > 1 else (self._qth_lon + dest_lon) / 2
+
+        # Dag/nacht op het midpunt
+        sun_lat, sun_lon = _subsolar_point()
+        sl = math.radians(sun_lat);  ml = math.radians(mid_lat)
+        dln = math.radians(mid_lon - sun_lon)
+        daytime = (math.sin(sl) * math.sin(ml) +
+                   math.cos(sl) * math.cos(ml) * math.cos(dln)) > 0
+
+        data = self._solar_data
+        try:
+            sfi     = float(data.get("sfi",     "90").replace("—", "90"))
+            ssn     = float(data.get("ssn",     "50").replace("—", "50"))
+            k_index = float(data.get("k_index", "2" ).replace("—", "2"))
+        except (ValueError, TypeError):
+            sfi, ssn, k_index = 90.0, 50.0, 2.0
+        snr_db = (_MODE_DB.get(self._mode_var.get(), 0) +
+                  _POWER_DB.get(self._power_var.get(), 0) +
+                  _ANT_DB.get(self._ant_var.get(), 0))
+        band_pct, muf, luf = _calc_propagation(
+            sfi, ssn, k_index,
+            qth_lat=mid_lat,
+            snr_bonus_db=snr_db,
+            daytime=daytime)
+        return band_pct, muf, luf, daytime
+
     def _on_map_click(self, vx: int, vy: int):
         """Klik op kaart: DX-spot popup als Spots aan staat, anders groot-cirkel."""
         # Controleer eerst of er een DX-spot stip is geraakt
@@ -3206,6 +3314,30 @@ class HAMIOSApp:
         self._gc_info_var.set(
             f"→  {lat:+.1f}°, {lon:+.1f}°  |  {self._tr('distance_lbl')}: {dist:,.0f} km  "
             f"|  {self._tr('direction_lbl')}: {hdg:.0f}°  ({self._tr('right_clk_clear')})")
+
+        # ── Propagatiepad: band-kwaliteit op dit specifieke traject ───────────
+        band_pct, muf, luf, daytime = self._calc_path_propagation(lat, lon)
+        hops = max(1, round(dist / 3500))
+        hop_s = self._tr("path_hops") + ("s" if hops > 1 else "")
+        dn = self._tr("path_day") if daytime else self._tr("path_night")
+        open_bands = sorted(
+            [(n, p, _BAND_COLORS.get(n, ACCENT)) for n, _, p in band_pct
+             if 0 < p and p != -1],
+            key=lambda x: -x[1])
+        if open_bands:
+            self._gc_path_best_color = open_bands[0][2]
+            self._gc_path_lbl.config(fg=open_bands[0][2])
+            parts = "  ·  ".join(
+                f"{n} {p}%" for n, p, _ in open_bands[:5])
+            self._gc_path_var.set(
+                f"  ↳  {dist:,.0f} km / {hops} {hop_s} / {dn}  ▸  {parts}"
+                f"  (MUF {muf} MHz)")
+        else:
+            self._gc_path_best_color = TEXT_DIM
+            self._gc_path_lbl.config(fg=TEXT_DIM)
+            self._gc_path_var.set(
+                f"  ↳  {dist:,.0f} km / {hops} {hop_s} / {dn}  ▸  {self._tr('path_closed')}")
+
         self._draw_map()
 
     def _on_map_btn1_press(self, event):
@@ -3287,6 +3419,7 @@ class HAMIOSApp:
         else:
             self._gc_dest = None
             self._gc_info_var.set("")
+            self._gc_path_var.set("")
             self._draw_map()
 
     def _draw_map(self):
@@ -3575,22 +3708,30 @@ class HAMIOSApp:
                 img = Image.alpha_composite(img.convert("RGBA"), aurora_img).convert("RGB")
                 draw = ImageDraw.Draw(img)
 
-            # ── Groot-cirkel pad ──────────────────────────────────────────────
+            # ── Groot-cirkel pad (kleur = beste band voor dit traject) ──────────
             if self._gc_dest:
                 dlat, dlon = self._gc_dest
                 pts = _great_circle_pts(self._qth_lat, self._qth_lon, dlat, dlon)
                 gc_img = Image.new("RGBA", (VW, VH), (0, 0, 0, 0))
                 gd     = ImageDraw.Draw(gc_img)
                 xy     = [_ll_to_xy(la, lo, VW, VH) for la, lo in pts]
+                # Lijnkleur van beste band (hex → RGB)
+                clr_hex = getattr(self, "_gc_path_best_color", "#FFDC32")
+                try:
+                    cr = int(clr_hex[1:3], 16)
+                    cg = int(clr_hex[3:5], 16)
+                    cb = int(clr_hex[5:7], 16)
+                except Exception:
+                    cr, cg, cb = 255, 220, 50
                 # Splits op anti-meridian (|Δx| > VW/2) om wraparound te vermijden
                 seg_start = 0
                 for i in range(1, len(xy)):
                     if abs(xy[i][0] - xy[i-1][0]) > VW // 2:
                         if i - seg_start > 1:
-                            gd.line(xy[seg_start:i], fill=(255, 220, 50, 220), width=2)
+                            gd.line(xy[seg_start:i], fill=(cr, cg, cb, 220), width=2)
                         seg_start = i
                 if len(xy) - seg_start > 1:
-                    gd.line(xy[seg_start:], fill=(255, 220, 50, 220), width=2)
+                    gd.line(xy[seg_start:], fill=(cr, cg, cb, 220), width=2)
                 # Bestemmingsmarkering
                 dx, dy = _ll_to_xy(dlat, dlon, VW, VH)
                 gd.ellipse([(dx-5, dy-5), (dx+5, dy+5)], fill=(255, 220, 50, 220))
@@ -5111,6 +5252,7 @@ class HAMIOSApp:
                        self._hist_range_var.get(),
                        self._hist_sel,
                        self._k_alert_var.get(),
+                       self._band_alert_var.get(),
                        self._lang_var.get(),
                        self._cat_port_var.get(),
                        self._cat_baud_var.get(),
@@ -5160,29 +5302,32 @@ class HAMIOSApp:
 
     def _check_alerts(self, bp: dict, k_index: float):
         """Stuur tray-notificaties bij band-opening of K-index drempel-overschrijding."""
-        threshold = self._k_alert_var.get()
+        k_threshold    = self._k_alert_var.get()
+        band_threshold = self._band_alert_var.get()
 
         # ── K-index drempel ──────────────────────────────────────────────
-        k_above = k_index >= threshold
+        k_above = k_index >= k_threshold
         if k_above and not self._prev_k_above:
             self._tray_notify(
                 "⚠️ Geomagnetische storm",
-                f"K-index is gestegen naar {int(k_index)} (drempel: {threshold}). "
+                f"K-index is gestegen naar {int(k_index)} (drempel: {k_threshold}). "
                 "HF-propagatie kan verstoord zijn.")
         self._prev_k_above = k_above
 
-        # ── Band-opening detectie ────────────────────────────────────────
+        # ── Band-opening detectie (drempel instelbaar) ───────────────────
         newly_open = []
         for name, pct in bp.items():
             was_open = self._prev_band_open.get(name, False)
-            is_open  = pct >= 20
+            is_open  = pct >= band_threshold
             if is_open and not was_open:
                 newly_open.append(f"{name} ({pct}%)")
             self._prev_band_open[name] = is_open
 
         if newly_open:
             bands_str = ",  ".join(newly_open)
-            self._tray_notify("📡 Band geopend", f"{bands_str} is nu open.")
+            self._tray_notify(
+                "📡 Band geopend",
+                f"{bands_str} — kwaliteit ≥ {band_threshold}%.")
 
     def _tray_notify(self, title: str, message: str):
         """Stuur een tray-notificatie (alleen als tray actief is)."""
@@ -5209,6 +5354,8 @@ class HAMIOSApp:
         data["iono_fof2"]    = iono["fof2"]
         data["iono_time"]    = iono["time"]
         data["iono_station"] = iono["station"]
+        # Bz 24-uurs geschiedenis
+        data["bz_history"]   = _fetch_bz_24h()
         self.root.after(0, lambda: self._update_solar(data))
 
     def _schedule_solar(self):
@@ -5328,9 +5475,93 @@ class HAMIOSApp:
         # ── PCA detectie ──────────────────────────────────────────────────────
         self._check_pca(data.get("proton_flux", "—"))
 
+        # ── Bz 24-uurs grafiek ────────────────────────────────────────────────
+        if "bz_history" in data:
+            self._draw_bz_graph(data["bz_history"])
+
         self._recalc_prop(auto_daynight=True)
         self.root.after(0, self._draw_map)
         self._schedule_solar()
+
+    def _draw_bz_graph(self, pts: list):
+        """Teken Bz 24-uurs mini-grafiek op self._bz_canvas."""
+        if not hasattr(self, "_bz_canvas"):
+            return
+        c = self._bz_canvas
+        c.update_idletasks()
+        W = c.winfo_width() or 200
+        H = 60
+        c.delete("all")
+        c.config(height=H)
+
+        # Achtergrond
+        c.create_rectangle(0, 0, W, H, fill=BG_SURFACE, outline="")
+
+        if not pts:
+            c.create_text(W // 2, H // 2, text="—", fill=TEXT_DIM,
+                          font=("Consolas", 9))
+            return
+
+        BZ_MAX = 40.0   # clip bereik
+        PAD_L, PAD_R, PAD_T, PAD_B = 26, 4, 4, 12
+
+        gW = W - PAD_L - PAD_R
+        gH = H - PAD_T - PAD_B
+
+        def bz_to_y(bz):
+            return PAD_T + gH / 2 - (max(-BZ_MAX, min(BZ_MAX, bz)) / BZ_MAX) * (gH / 2)
+
+        def t_to_x(hours_ago):
+            return PAD_L + gW * (1.0 - min(hours_ago, 24) / 24)
+
+        # Nul-as (gestippeld)
+        y0 = bz_to_y(0)
+        for xi in range(PAD_L, W - PAD_R, 6):
+            c.create_line(xi, y0, xi + 3, y0, fill=TEXT_DIM, width=1)
+
+        # Y-as labels
+        for bz_ref, lbl in [(-20, "-20"), (0, "0"), (20, "+20")]:
+            yr = bz_to_y(bz_ref)
+            c.create_text(PAD_L - 2, yr, text=lbl, fill=TEXT_DIM,
+                          font=("Consolas", 7), anchor='e')
+
+        # Tijdlabel "24h"
+        c.create_text(PAD_L, H - PAD_B + 2, text="24h",
+                      fill=TEXT_DIM, font=("Consolas", 7), anchor='nw')
+        c.create_text(W - PAD_R, H - PAD_B + 2, text="nu",
+                      fill=TEXT_DIM, font=("Consolas", 7), anchor='ne')
+
+        # Bz-lijn: blauw (positief) of rood (negatief) per segment
+        xy_pos, xy_neg = [], []
+        for hours_ago, bz in pts:
+            x = t_to_x(hours_ago)
+            y = bz_to_y(bz)
+            if bz >= 0:
+                xy_pos.append((x, y));  xy_neg.append(None)
+            else:
+                xy_neg.append((x, y));  xy_pos.append(None)
+
+        def _draw_segments(xy_list, color):
+            seg = []
+            for pt in xy_list + [None]:
+                if pt is not None:
+                    seg.append(pt)
+                else:
+                    if len(seg) >= 2:
+                        flat = [v for p in seg for v in p]
+                        c.create_line(flat, fill=color, width=1, smooth=True)
+                    seg = []
+
+        _draw_segments(xy_pos, "#4FC3F7")   # blauw = positief (noordwaarts)
+        _draw_segments(xy_neg, "#EF5350")   # rood  = negatief (zuidwaarts)
+
+        # Huidige Bz-waarde rechts in de grafiek
+        if pts:
+            last_bz = pts[-1][1]
+            clr = "#EF5350" if last_bz < -10 else ("#FFA726" if last_bz < 0 else "#4FC3F7")
+            c.create_text(W - PAD_R - 2, PAD_T,
+                          text=f"{last_bz:+.1f}", fill=clr,
+                          font=("Consolas", 7, "bold"), anchor='ne')
 
     def _check_xflare(self, xray: str):
         """Detecteer M/X-flare in het xray-veld en toon SWF-waarschuwing."""
