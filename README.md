@@ -6,7 +6,7 @@
 
 **HAM-radio propagatie- en DX-monitor voor Windows**
 
-> v2.3 — CAT-interface (Yaesu/Kenwood/Elecraft/Icom) · VFO-A/B polling · CAT terminal venster · WSPR/PSKReporter spots op kaart · DX-spot markers · Aurora-ring overlay · 6 talen (NL/EN/DE/FR/IT/ES) · nieuw-bericht indicator · ticker toggle
+> v2.3 — Propagatiepadkaart · Bz 24h-grafiek · Band-openings-notificatie · CAT-interface · Aurora-ring overlay · WSPR/PSKReporter spots · DX-spot markers · 6 talen
 
 *Bedacht door Frank van Dijke · Ontwikkeld met Claude AI*
 
@@ -23,20 +23,27 @@ HAMIOS geeft radioamateurs realtime inzicht in HF-propagatie, zonne-activiteit e
 - **Graylijn** (amber band, ~1000 km breed)
 - **Zon- en maanpositie** (geocentrisch berekend)
 - **QTH-markering** (blauw kruisje) — lat/lon instelbaar in header
-- **Groot-cirkelpad**: klik op kaart → afstand + richting; rechtsmuisklik wist
-- **Auroraal absorptie-ovaal** bij K-index ≥ 4
+- **Groot-cirkelpad**: klik op kaart → afstand + richting + **band-kwaliteit voor dat traject**
 - **ITU-regio overlay** R1/R2/R3 (officieel ITU RR Art. 5)
 - **Maidenhead-locatorraster** (20° × 10°, labels AA–RR)
 - **Callsign-prefix laag** (~110 DXCC-entiteiten)
 - **Zoom/pan**: muiswiel 1×–8×, klik+sleep om te pannen, rechts om te resetten
 - Render-cache met low-res maskers voor vloeiende zoom en pan
 
+### 🛰️ Propagatiepadkaart
+Klik op een bestemming op de kaart voor een directe padanalyse:
+- **Band-kwaliteit** berekend op het midpunt van het groot-cirkelpad
+- Dag/nacht correctie op het midpunt (juiste ionosferische condities)
+- Aantal hops geschat (≈ afstand / 3500 km)
+- Top-5 open banden getoond: `↳  8.847 km / 3 hops / dag  ▸  20m 87%  ·  17m 72%  ·  15m 54%  (MUF 24.1 MHz)`
+- **Groot-cirkel lijn kleurt naar de beste band** (groen = 20m, geel = 17m, rood = 10m, …)
+
 ### 🌌 Aurora-ring overlay
 - Magnetische aurora-ovaal op de kaart op basis van de K-index
 - Berekend via **Feldstein/Holzworth** sferische trigonometrie op de geomagnetische dipool-pool (IGRF-2025: Noord 80.65°N/287.35°E, Zuid 80.65°S/107.35°E)
-- Beide hemisferen getekend als ovaal (niet als simpele breedteband)
-- **Kleurcodering K-index**: groen (K < 3) · geel (K 3–5) · rood (K ≥ 6)
-- K=0 → ovaal bij ~67° geomagnetische breedte · K=9 → ~44° (equatorwaarts)
+- Beide hemisferen als echte ovaal (niet als simpele breedteband)
+- **Kleur op K-index**: groen (K < 3) · geel (K 3–5) · rood (K ≥ 6)
+- K=0 → ovaal bij ~67° geomag. breedte · K=9 → ~44° (equatorwaarts)
 - Selecteerbaar via **"Aurora"**-checkbox in de kaart-header
 
 ### 🔵 WSPR / PSKReporter spots op kaart
@@ -67,8 +74,17 @@ HAMIOS geeft radioamateurs realtime inzicht in HF-propagatie, zonne-activiteit e
 
 - K-index kleurt **oranje** (K 3–4) of **rood** (K 5+)
 - Bz kleurt **oranje** (≤ −10 nT) of **rood** (≤ −20 nT)
-- Melding bij K ≥ instelbare drempel (spinbox naast K-index)
+- K-index melding bij instelbare drempel (spinbox)
+- Band-openings-notificatie bij instelbare kwaliteitsdrempel
 - X-flare detectie → SWF-waarschuwing in paneel en systeemtray
+
+### 📊 Bz 24-uurs mini-grafiek
+Mini-tijdgrafiek onderaan het solar-paneel:
+- **Blauw** = positief Bz (noordwaarts, gunstig)
+- **Rood** = negatief Bz (zuidwaarts, geoeffectief)
+- Nul-as gestippeld, Y-labels −20 / 0 / +20 nT
+- Actuele Bz-waarde rechtsbovenin met kleurcode
+- Data van **NOAA SWPC** `mag-1-day.json`, 240 punten over 24 uur
 
 ### 📶 HF Band Betrouwbaarheid
 - Intern MUF/LUF-model op basis van SFI, SSN, K-index en QTH-breedtegraad
@@ -80,6 +96,15 @@ HAMIOS geeft radioamateurs realtime inzicht in HF-propagatie, zonne-activiteit e
 - FT8-frequentie en aanbevolen modi per band
 - **CAT-integratie**: klik op een bandbalk → stuurt startfrequentie naar de radio
 - **VFO-A/B markers** op de bandbalken (wit = VFO-A, blauw = VFO-B)
+
+### 🔔 Notificaties & Alarmen
+- **K-index alarm**: tray-melding bij overschrijden van instelbare drempel (spinbox 1–9)
+- **Band-openings-notificatie**: melding als een band opengaat boven instelbare drempel
+  - Spinbox "Band open ≥" (10–90%, stap 5%, standaard 40%)
+  - Voorbeeld: `📡 Band geopend — 20m (78%) — kwaliteit ≥ 40%`
+- **X-flare waarschuwing**: detectie van M/X-klasse flares met herstelschatting
+- **PCA-melding**: Polar Cap Absorption bij verhoogde protonflux
+- Alle drempelwaarden opgeslagen in `HAMIOS.ini`
 
 ### 🔌 CAT Interface
 Directe besturing van de transceiver via serieel USB, instelbaar via de **CAT**-knop in de header.
@@ -95,7 +120,6 @@ Directe besturing van de transceiver via serieel USB, instelbaar via de **CAT**-
 - **CAT terminal venster**: schakel "Terminal" in naast de VFO-weergave
   - 🟡 Geel `▶` = verzonden commando's
   - 🔵 Blauw `◀` = ontvangen data van de radio
-  - Handig voor het debuggen van de seriële verbinding
 - Poll-lock voorkomt conflicten tussen polling-thread en klik-naar-afstemmen
 
 ### 🕐 Bandopenings-schema
@@ -203,15 +227,17 @@ LUF = (3.5 + K × 0.8) × auroraal-factor / 10^(SNR/20)
 
 **Bandkwaliteit**: optimum rond 55 % van het MUF/LUF-venster → 100 %.
 
+**Propagatiepad**: midpunt van het groot-cirkelpad gebruikt voor MUF/LUF-berekening, met dag/nacht correctie op dat midpunt.
+
 ---
 
-## ⌨️ Muisinteractie & sneltoetsen
+## ⌨️ Muisinteractie
 
 | Actie | Effect |
 |-------|--------|
 | Muiswiel op kaart | Zoom 1×–8× (cursor-gecentreerd) |
 | Klik + sleep op kaart | Pan viewport |
-| Linkermuisklik op kaart | Groot-cirkelbestemming instellen |
+| Linkermuisklik op kaart | Groot-cirkelpad + padpropagatie instellen |
 | Rechtermuisklik op kaart | Reset zoom/pan · wis groot-cirkelpad |
 | Muiswiel op DX-paneel | Scroll door spotlijst |
 | Hover op kaart/banden/grafiek | Gedetailleerde tooltip |
