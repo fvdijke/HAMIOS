@@ -6,7 +6,7 @@
 
 **HAM-radio propagatie- en DX-monitor voor Windows**
 
-> v2.3 — CAT-interface (Yaesu/Kenwood/Elecraft/Icom) · VFO-A/B polling · CAT terminal venster · WSPR/PSKReporter spots op kaart · DX-spot markers · 6 talen (NL/EN/DE/FR/IT/ES) · nieuw-bericht indicator · ticker toggle
+> v2.3 — CAT-interface (Yaesu/Kenwood/Elecraft/Icom) · VFO-A/B polling · CAT terminal venster · WSPR/PSKReporter spots op kaart · DX-spot markers · Aurora-ring overlay · 6 talen (NL/EN/DE/FR/IT/ES) · nieuw-bericht indicator · ticker toggle
 
 *Bedacht door Frank van Dijke · Ontwikkeld met Claude AI*
 
@@ -30,6 +30,14 @@ HAMIOS geeft radioamateurs realtime inzicht in HF-propagatie, zonne-activiteit e
 - **Callsign-prefix laag** (~110 DXCC-entiteiten)
 - **Zoom/pan**: muiswiel 1×–8×, klik+sleep om te pannen, rechts om te resetten
 - Render-cache met low-res maskers voor vloeiende zoom en pan
+
+### 🌌 Aurora-ring overlay
+- Magnetische aurora-ovaal op de kaart op basis van de K-index
+- Berekend via **Feldstein/Holzworth** sferische trigonometrie op de geomagnetische dipool-pool (IGRF-2025: Noord 80.65°N/287.35°E, Zuid 80.65°S/107.35°E)
+- Beide hemisferen getekend als ovaal (niet als simpele breedteband)
+- **Kleurcodering K-index**: groen (K < 3) · geel (K 3–5) · rood (K ≥ 6)
+- K=0 → ovaal bij ~67° geomagnetische breedte · K=9 → ~44° (equatorwaarts)
+- Selecteerbaar via **"Aurora"**-checkbox in de kaart-header
 
 ### 🔵 WSPR / PSKReporter spots op kaart
 - Live propagatiepaden van **wspr.rocks** (WSPR) en **pskreporter.info** (FT8/FT4)
@@ -225,7 +233,6 @@ LUF = (3.5 + K × 0.8) × auroraal-factor / 10^(SNR/20)
 
 ## 🔧 Toekomstige ideeën
 
-- Aurora-ring overlay op kaart (K-index gebaseerde poolovaal)
 - SDR-integratie
 - Logging-koppeling (ADIF/WSJTX)
 - Satelliet tracking

@@ -24,7 +24,7 @@ Todo
     (kleur = band, dikte = SNR). Selecteerbaar via checkbox in kaart-header.
     Geeft echte gemeten propagatie i.p.v. alleen modelwaarden.
 
-[ ] Aurora-ring overlay op kaart, selecteerbaar
+[x] Aurora-ring overlay op kaart, selecteerbaar
     Teken de magnetische aurora-ovaal op de kaart op basis van de K-index
     (hogere K → ring schuift equatorwaarts). Gebruik de empirische formule
     van Feldstein/Holzworth. Geeft direct inzicht in geblokkeerde poolroutes.
@@ -67,6 +67,14 @@ Todo
 ─────────────────────────────────────────────────────────────────────
 Change Log (2.3)
 ─────────────────────────────────────────────────────────────────────
+
+2026-04-18  Aurora-ring overlay op kaart
+    - "Aurora" checkbox in kaart-header (selecteerbaar, opgeslagen in INI)
+    - Feldstein/Holzworth geomagnetisch ovaal: sferische trig. op dipool-pool
+      (Noord 80.65°N/287.35°E · Zuid 80.65°S/107.35°E, IGRF-2025)
+    - Beide hemisferen getekend als dikke polyline, gesplitst op anti-meridiaan
+    - Kleur: groen K<3 · geel K 3–5 · rood K≥6; lijndikte schaalt met K
+    - K=0 → ovaal op ~67° geomag. lat · K=9 → ~44° (equatorwaarts)
 
 2026-04-18  CAT terminal venster toegevoegd
     - "Terminal" checkbox naast VFO-A/B label in het propagatie-paneel
@@ -428,6 +436,7 @@ def _load_settings() -> dict:
         "show_cs":       cfg.getboolean("Map",   "show_cs",        fallback=False),
         "show_spots":    cfg.getboolean("Map",   "show_spots",     fallback=False),
         "show_wspr":     cfg.getboolean("Map",   "show_wspr",      fallback=False),
+        "show_aurora":   cfg.getboolean("Map",   "show_aurora",    fallback=True),
         "hist_range":    cfg.get       ("Graph", "hist_range",     fallback="Uren"),
         "hist_sel":      set(hist_sel_raw.split(",")) - {""} if hist_sel_raw else set(),
         "k_alert":       cfg.getint   ("Alerts","k_alert",        fallback=4),
@@ -457,6 +466,7 @@ def _save_settings(lat: float, lon: float, refresh: str,
                    show_cs: bool = False,
                    show_spots: bool = False,
                    show_wspr: bool = False,
+                   show_aurora: bool = True,
                    hist_range: str = "Uren",
                    hist_sel: set = None,
                    k_alert: int = 4,
@@ -480,7 +490,8 @@ def _save_settings(lat: float, lon: float, refresh: str,
                     "show_iaru": str(show_iaru),
                     "show_cs": str(show_cs),
                     "show_spots": str(show_spots),
-                    "show_wspr": str(show_wspr)}
+                    "show_wspr": str(show_wspr),
+                    "show_aurora": str(show_aurora)}
     cfg["Graph"]  = {"hist_range": hist_range,
                      "selected_bands": ",".join(sorted(hist_sel)) if hist_sel else ""}
     cfg["Alerts"] = {"k_alert": str(k_alert)}
@@ -1869,6 +1880,7 @@ class HAMIOSApp:
         self._show_graylijn_var = tk.BooleanVar(value=s["show_graylijn"])
         self._show_iaru_var     = tk.BooleanVar(value=s["show_iaru"])
         self._show_cs_var       = tk.BooleanVar(value=s["show_cs"])
+        self._show_aurora_var   = tk.BooleanVar(value=s["show_aurora"])
         self._show_spots_var    = tk.BooleanVar(value=s["show_spots"])
         self._spot_hit_areas:   list = []   # [{x, y, r, spot}, ...] voor klik-detectie
         self._show_wspr_var     = tk.BooleanVar(value=s["show_wspr"])
@@ -3124,6 +3136,7 @@ class HAMIOSApp:
         _cb(None,       self._show_iaru_var,      "ITU")
         _cb(None,       self._show_spots_var,    "Spots")
         _cb(None,       self._show_wspr_var,     "WSPR")
+        _cb(None,       self._show_aurora_var,   "Aurora")
         _cb("graylijn", self._show_graylijn_var)
         _cb("moon",     self._show_moon_var)
         _cb("sun",      self._show_sun_var)
@@ -3343,6 +3356,7 @@ class HAMIOSApp:
             bool(self._show_iaru_var.get()),
             bool(self._show_locator_var.get()),
             bool(self._show_cs_var.get()),
+            bool(self._show_aurora_var.get()),
             int(k_val),
             round(self._qth_lat, 2), round(self._qth_lon, 2),
             self._gc_dest,
@@ -3492,23 +3506,72 @@ class HAMIOSApp:
                 img = Image.alpha_composite(img.convert("RGBA"), loc_img).convert("RGB")
                 draw = ImageDraw.Draw(img)
 
-            # ── Auroraal absorptie-ovaal (K≥4) ───────────────────────────────
-            if k_val >= 4:
-                # Equatorwaartse grens van het auroraal ovaal ≈ 75 − K×2.5 graden
-                aurora_lat = max(50.0, 75.0 - k_val * 2.5)
+            # ── Aurora-ring overlay (Feldstein/Holzworth geomagnetisch ovaal) ──
+            if self._show_aurora_var.get():
+                import math as _math
                 aurora_img = Image.new("RGBA", (VW, VH), (0, 0, 0, 0))
                 ad = ImageDraw.Draw(aurora_img)
-                # Trek een horizontale band als proxy voor het ovaal (beide hemisferen)
-                thickness = max(4, int(k_val * 1.5))
-                alpha = min(200, int(80 + k_val * 15))
-                for sign in (1, -1):
-                    lat_c = sign * aurora_lat
-                    _, y_c = _ll_to_xy(lat_c, 0, VW, VH)
-                    y_top = max(0, y_c - thickness)
-                    y_bot = min(VH, y_c + thickness)
-                    # Rood/oranje ovaal
-                    ad.rectangle([(0, y_top), (VW, y_bot)],
-                                  fill=(220, 80, 20, alpha))
+
+                # Kleur op basis van K-index
+                if k_val < 3:
+                    ar, ag, ab = 60, 200, 60      # groen  — rustig
+                elif k_val < 6:
+                    ar, ag, ab = 255, 200, 0      # geel   — matig
+                else:
+                    ar, ag, ab = 220, 60, 20      # rood   — storm
+                alpha = min(210, int(110 + k_val * 11))
+                line_w = max(3, int(3 + k_val * 0.8))
+
+                # Geomagnetische dipool-polen (IGRF-2025 benadering)
+                #   Noord: 80.65°N, 287.35°E   Zuid: 80.65°S, 107.35°E
+                _POLES = [(80.65, -72.65), (-80.65, 107.35)]
+
+                # Colatitude van het ovaal (graden vanuit magnetische pool)
+                #   K=0 → ~23° (geomag lat 67°), K=9 → ~45.5° (geomag lat 44.5°)
+                theta_deg = 23.0 + k_val * 2.5
+
+                def _geomag_to_geo(phi_p, lam_p, theta, psi):
+                    """Geomagnetisch → geografisch (sferische trig.)."""
+                    geo_lat = _math.asin(
+                        _math.sin(phi_p) * _math.cos(theta)
+                        + _math.cos(phi_p) * _math.sin(theta) * _math.cos(psi)
+                    )
+                    geo_lon = lam_p + _math.atan2(
+                        _math.sin(theta) * _math.sin(psi),
+                        _math.cos(phi_p) * _math.cos(theta)
+                        - _math.sin(phi_p) * _math.sin(theta) * _math.cos(psi)
+                    )
+                    lat_d = _math.degrees(geo_lat)
+                    lon_d = _math.degrees(geo_lon)
+                    while lon_d > 180:  lon_d -= 360
+                    while lon_d < -180: lon_d += 360
+                    return lat_d, lon_d
+
+                N = 360
+                for pole_lat, pole_lon in _POLES:
+                    phi_p = _math.radians(pole_lat)
+                    lam_p = _math.radians(pole_lon)
+                    theta = _math.radians(theta_deg)
+
+                    # Genereer ovaal-punten
+                    pts = []
+                    for i in range(N + 1):
+                        psi = 2 * _math.pi * i / N
+                        lat_d, lon_d = _geomag_to_geo(phi_p, lam_p, theta, psi)
+                        pts.append(_ll_to_xy(lat_d, lon_d, VW, VH))
+
+                    # Teken als dikke polyline, splits op anti-meridiaan
+                    seg = [pts[0]]
+                    for i in range(1, len(pts)):
+                        if abs(pts[i][0] - pts[i - 1][0]) > VW // 2:
+                            if len(seg) > 1:
+                                ad.line(seg, fill=(ar, ag, ab, alpha), width=line_w)
+                            seg = [pts[i]]
+                        else:
+                            seg.append(pts[i])
+                    if len(seg) > 1:
+                        ad.line(seg, fill=(ar, ag, ab, alpha), width=line_w)
+
                 img = Image.alpha_composite(img.convert("RGBA"), aurora_img).convert("RGB")
                 draw = ImageDraw.Draw(img)
 
@@ -5044,6 +5107,7 @@ class HAMIOSApp:
                        self._show_cs_var.get(),
                        self._show_spots_var.get(),
                        self._show_wspr_var.get(),
+                       self._show_aurora_var.get(),
                        self._hist_range_var.get(),
                        self._hist_sel,
                        self._k_alert_var.get(),
