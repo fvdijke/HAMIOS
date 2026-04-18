@@ -6,7 +6,7 @@
 
 **HAM-radio propagatie- en DX-monitor voor Windows**
 
-> v2.3 — timestamp weg uit solar-paneel · twee scheidingslijnen in solar (params/band, band/waarschuwingen) · X-flare en PCA volledig zichtbaar · advieskaarten 4 rijen altijd volledig zichtbaar
+> v2.3 — CAT-interface (Yaesu/Kenwood/Elecraft/Icom) · VFO-A/B polling · CAT terminal venster · WSPR/PSKReporter spots op kaart · DX-spot markers · 6 talen (NL/EN/DE/FR/IT/ES) · nieuw-bericht indicator · ticker toggle
 
 *Bedacht door Frank van Dijke · Ontwikkeld met Claude AI*
 
@@ -30,6 +30,18 @@ HAMIOS geeft radioamateurs realtime inzicht in HF-propagatie, zonne-activiteit e
 - **Callsign-prefix laag** (~110 DXCC-entiteiten)
 - **Zoom/pan**: muiswiel 1×–8×, klik+sleep om te pannen, rechts om te resetten
 - Render-cache met low-res maskers voor vloeiende zoom en pan
+
+### 🔵 WSPR / PSKReporter spots op kaart
+- Live propagatiepaden van **wspr.rocks** (WSPR) en **pskreporter.info** (FT8/FT4)
+- Verbindingslijnen op de wereldkaart: **kleur = band**, **dikte = SNR**
+- Selecteerbaar via checkbox in de kaart-header
+- Geeft echte gemeten propagatie in plaats van alleen modelwaarden
+
+### 📍 DX-spot markers op kaart
+- Actieve DX-cluster spots als lijnen: stip op DX-locatie (DXCC-centroid) + lijn naar spotter
+- Kleurcodering per band
+- Toggle via **"Spots"**-checkbox in de kaart-header
+- Klikken op een stip toont callsign, frequentie en comment als pop-up
 
 ### 🌞 Solar & Ionosfeer Data
 
@@ -58,7 +70,25 @@ HAMIOS geeft radioamateurs realtime inzicht in HF-propagatie, zonne-activiteit e
 - Kleurbalken: groen ≥ 60 % · geel 30–59 % · rood 1–29 % · grijs gesloten
 - Licentieklasse per band (N = Novice/Basis · F = Full/HAREC)
 - FT8-frequentie en aanbevolen modi per band
-- Alleen HF-banden (160 m – 6 m)
+- **CAT-integratie**: klik op een bandbalk → stuurt startfrequentie naar de radio
+- **VFO-A/B markers** op de bandbalken (wit = VFO-A, blauw = VFO-B)
+
+### 🔌 CAT Interface
+Directe besturing van de transceiver via serieel USB, instelbaar via de **CAT**-knop in de header.
+
+| Radio type | Protocol | Commando |
+|------------|----------|----------|
+| Yaesu FT-950 e.a. | Yaesu CAT | `VS0;FA{11 digits};` |
+| Kenwood / Elecraft | Kenwood CAT | `FA{11 digits};` |
+| Icom | CI-V binair BCD | instelbaar adres (0x70 standaard) |
+
+- **VFO-A en VFO-B** worden elke 2 seconden uitgelezen via `FA;FB;`
+- VFO-A/B frequentie zichtbaar onder het HF-betrouwbaarheidspaneel
+- **CAT terminal venster**: schakel "Terminal" in naast de VFO-weergave
+  - 🟡 Geel `▶` = verzonden commando's
+  - 🔵 Blauw `◀` = ontvangen data van de radio
+  - Handig voor het debuggen van de seriële verbinding
+- Poll-lock voorkomt conflicten tussen polling-thread en klik-naar-afstemmen
 
 ### 🕐 Bandopenings-schema
 - 24-uur heatmap voor alle 11 HF-banden
@@ -77,7 +107,8 @@ HAMIOS geeft radioamateurs realtime inzicht in HF-propagatie, zonne-activiteit e
 - Scrollbaar met muiswiel
 
 ### 💡 Propagatie-analyse & Advies
-12 analyse-kaarten in 3 kolommen × 4 rijen, automatisch bijgewerkt:
+12 analyse-kaarten in 3 kolommen × 4 rijen, automatisch bijgewerkt.
+**Gele stip** rechtsbovenin kaart = nieuwe gegevens beschikbaar.
 
 | # | Kaart | Inhoud |
 |---|-------|--------|
@@ -92,11 +123,26 @@ HAMIOS geeft radioamateurs realtime inzicht in HF-propagatie, zonne-activiteit e
 | 9 | 🧲 Absorptie | Auroraal absorptie poolroutes (QTH-lat) |
 | 10 | 📊 Overall score | Samengesteld propagatie-oordeel |
 
+### 🌐 Meertalig
+Volledig vertaald in **6 talen** — te wisselen in de header:
+
+| Code | Taal |
+|------|------|
+| NL | Nederlands |
+| EN | English |
+| DE | Deutsch |
+| FR | Français |
+| IT | Italiano |
+| ES | Español |
+
+Alle interface-teksten, analyses, helpteksten en tooltips zijn vertaald.
+
 ### ⚙️ Overig
 - **Systeemtray**: minimaliseren naar tray, notificaties voor band-openings en K-index
 - **Tooltips** met uitleg per solar-parameter (350 ms vertraging, schermrand-detectie)
 - **Automatische refresh**: Uit / 30 s / 1 min / 5 min / 10 min / 30 min / 1 uur
-- **Scrollende ticker** onderaan met actuele propagatietips
+- **Scrollende ticker** onderaan met actuele propagatietips (aan/uit via checkbox)
+- **Nieuw-bericht indicator**: gele stip in advieskaart bij verse data
 - Alle instellingen opgeslagen in `HAMIOS.ini` — persistent tussen sessies
 - Venster past automatisch op schermgrootte bij opstarten
 
@@ -111,6 +157,10 @@ pip install pillow
 Optioneel (systeemtray):
 ```bash
 pip install pystray
+```
+Optioneel (CAT-interface):
+```bash
+pip install pyserial
 ```
 
 ### Starten
@@ -158,6 +208,7 @@ LUF = (3.5 + K × 0.8) × auroraal-factor / 10^(SNR/20)
 | Muiswiel op DX-paneel | Scroll door spotlijst |
 | Hover op kaart/banden/grafiek | Gedetailleerde tooltip |
 | Klik op legenda-label | Band aan/uitzetten in historiekgrafiek |
+| Klik op bandbalk (CAT aan) | Stuur startfrequentie naar radio |
 
 ---
 
@@ -174,7 +225,7 @@ LUF = (3.5 + K × 0.8) × auroraal-factor / 10^(SNR/20)
 
 ## 🔧 Toekomstige ideeën
 
-- Meerdere talen (NL / EN / DE / FR)
+- Aurora-ring overlay op kaart (K-index gebaseerde poolovaal)
 - SDR-integratie
 - Logging-koppeling (ADIF/WSJTX)
 - Satelliet tracking

@@ -2,19 +2,23 @@
 HAMIOS v2.3
 by Frank van Dijke
 
-HAM radio propagation en DX tool met donkere GUI.
-Features: solar/ionosfeer data (SFI, SSN, A/K-index),
+HAM radio propagatie- en DX-monitor met donkere GUI.
+Features: solar/ionosfeer data (SFI, SSN, A/K-index, Bz, solarwind),
           HF band betrouwbaarheid (MUF/LUF model, mode/vermogen/antenne),
-          instellingen in INI-bestand.
+          WSPR/PSKReporter spots op kaart, DX-spot markers,
+          CAT-interface (Yaesu/Kenwood/Elecraft/Icom CI-V),
+          6 talen (NL/EN/DE/FR/IT/ES), systeemtray, ticker.
 
 Dependencies:
   pip install pillow
+  pip install pyserial   # optioneel, voor CAT-interface
+  pip install pystray    # optioneel, voor systeemtray
 
 ─────────────────────────────────────────────────────────────────────
 Todo
 ─────────────────────────────────────────────────────────────────────
 
-[ ] WSPR/PSKReporter spots op kaart, selecteerbaar
+[x] WSPR/PSKReporter spots op kaart, selecteerbaar
     Haal live gemeten propagatiepaden op van wspr.rocks (WSPR) of
     pskreporter.info (FT8/FT4). Teken verbindingslijnen op de wereldkaart
     (kleur = band, dikte = SNR). Selecteerbaar via checkbox in kaart-header.
@@ -26,17 +30,23 @@ Todo
     van Feldstein/Holzworth. Geeft direct inzicht in geblokkeerde poolroutes.
     Kleur: groen/geel/rood afhankelijk van K-niveau.
 
-[ ] DX-spot markers op de kaart, selecteerbaar
+[x] DX-spot markers op de kaart, selecteerbaar
     Teken de actieve DX-cluster spots als lijnen op de kaart: stip op de
     DX-locatie (DXCC-centroid) en lijn naar de spotter. Kleur per band.
     Toggle via "Spots"-checkbox in de kaart-header. Klikken op een stip
     toont de callsign, frequentie en comment als pop-up.
 
-[ ] CAT-interface via rigctld (Hamlib)
-    Verbinding met transceiver via rigctld TCP (localhost:4532).
+[x] CAT-interface via Yaesu CAT (serieel USB)
     Lees actieve frequentie/band uit en markeer die band visueel in het
     HF-betrouwbaarheidspaneel. Optioneel: stuur frequentie naar de radio
     via klikken op een band in het schema.
+
+[x] CAT terminal venster: "Terminal" checkbox naast VFO-A/B label.
+    Geel = verzonden (▶ FA;FB;, ▶ VS0;FA…;), Blauw = ontvangen (◀ FA…;FB…;).
+    Gebruik terminal om exact te zien wat verzonden wordt naar de Yaesu
+    (formaat: VS0;FA00027000000; — 11 cijfers met voorloopnullen, per FT-950 spec).
+    VFO-B waarde wordt getoond naast VFO-A zodra radio reageert op FB;.
+
 
 [x] Nieuw bericht aanduiding
     Zet in de analyse/advies kaart een gele stip rechts boven zodat je kan zien
@@ -58,56 +68,36 @@ Todo
 Change Log (2.3)
 ─────────────────────────────────────────────────────────────────────
 
-· 2026-04-16 — Volledige meertalige ondersteuning toegevoegd: NL/EN/DE/FR/IT voor
-               alle UI-elementen, adviesteksten, solar-tooltips en dynamische
-               meldingen. Taal-selector in header; instelling opgeslagen in INI.
-· 2026-04-17 08:21 — X-flare/PCA labels: vaste height= verwijderd zodat tekst altijd
-               volledig zichtbaar is; wraplength 185 → 190px. Beide separatoren
-               pady=(6,4) → pady=(4,2): waarschuwingen direct onder de lijn.
-· 2026-04-17 08:15 — SOLAR_MIN_H 580 → 700px (royale buffer, geen 1080p-restrictie).
-               _center_window: hoogte-cap min(usable_h, ...) verwijderd; venster
-               krijgt nu altijd zijn volledige benodigde hoogte via
-               max(h_hint, winfo_reqheight()). minsize hoogte verhoogd naar 700.
-· 2026-04-17 08:08 — _center_window(1400, 960) → _center_window(1400): hardcoded
-               960px werd genegeerd door MIN_WINDOW_H, waardoor venster te
-               klein bleef (960 < 1014). Nu gebruikt _center_window altijd
-               MIN_WINDOW_H als ondergrens. Hierdoor zijn header, alle 4 rijen
-               advieskaarten én ticker altijd volledig zichtbaar op 1080p.
-· 2026-04-17 08:00 — ADV_HDR_STRIP verhoogd van 28 → 40px zodat de 4e rij advies-
-               kaarten niet meer wordt afgesneden op Windows (fontmetrieken
-               iets groter dan strak berekend). ADV_SECTION_H → 360px,
-               MIN_WINDOW_H → 1014px (6px marge op 1080p).
-· 2026-04-16 13:28 — Bandtabel staat weer vóór de waarschuwingen (originele
-               positie). Scheidingslijn toegevoegd ónder de bandtabel, direct
-               boven X-flare/PCA. SOLAR_MIN_H herberekend naar 580px
-               (content past in 529px + buffer), MIN_WINDOW_H → 1002px
-               (past op 1080p, 18px marge).
-· 2026-04-16 13:20 — Timestamp volledig verwijderd uit solar-paneel. X-flare-
-               melding uitgebreid naar 3 regels (height=3) en PCA naar 2 regels
-               (height=2); scheidingslijn direct boven de warnings-sectie.
-               Volgorde tijdelijk omgedraaid (teruggedraaid in 13:28-entry).
-· 2026-04-16 12:51 — "Bijgewerkt"-timestamp verplaatst van solar-panel footer naar
-               solar-panel header (consistent met andere panelen). Footer-
-               separator verwijderd → ruimte vrij voor X-flare + PCA-label.
-               SOLAR_MIN_H verlaagd naar 620px, MIN_WINDOW_H naar 1042px.
-· 2026-04-16 12:45 — MIN_WINDOW_H (1072px) berekend uit alle vaste componenten:
-               APP_HDR_H(42) + SOLAR_MIN_H(650) + ADV_SECTION_H(348) +
-               TICKER_H(22) + padding. solar_col krijgt height=SOLAR_MIN_H
-               zodat PCA-label altijd zichtbaar is. _center_window gebruikt
-               MIN_WINDOW_H als standaard minimum.
-· 2026-04-16 12:30 — Advies-paneel krijgt vaste hoogte (ADV_SECTION_H) via
-               pack_propagate(False) zodat winfo_reqheight() al bij startup
-               de juiste waarde rapporteert. _center_window gebruikt nu
-               h_hint (960) als minimum hoogte, zodat titel, 4 kaart-rijen
-               en ticker altijd zichtbaar zijn bij opstarten.
-· 2026-04-16 12:21 — Ticker aan/uit-selectievakje in de header toegevoegd; instelling
-               wordt opgeslagen in HAMIOS.ini. Animatie stopt netjes wanneer
-               de ticker verborgen wordt en herstart bij het inschakelen.
-· 2026-04-16 12:10 — Gele stip per advieskaartje rechts boven: verschijnt wanneer
-               de inhoud van dat kaartje gewijzigd is t.o.v. de vorige refresh;
-               verdwijnt automatisch als de volgende refresh dezelfde inhoud
-               oplevert. Zo is direct zichtbaar welke kaartjes actuele nieuwe
-               informatie bevatten.
+2026-04-18  CAT terminal venster toegevoegd
+    - "Terminal" checkbox naast VFO-A/B label in het propagatie-paneel
+    - Togglebaar: zichtbaar als CAT ingeschakeld én Terminal aangevinkt
+    - Geel (▶) = verzonden commando's (FA;FB; poll, VS0;FA…; set)
+    - Blauw (◀) = ontvangen data van de radio
+    - Max 200 regels (auto-trim); Consolas 8pt monospace weergave
+
+2026-04-18  CAT bugfix + VFO-A/B display in bandpaneel
+    - _yaesu_set_freq: 9→11 cijfers, VS0; prepend, DTR/RTS=False (FT-950 correctie)
+    - VFO-A/B label alleen zichtbaar als CAT ingeschakeld is in Setup
+    - CAT polling elke 2s via FA;FB; → VFO-A (wit) en VFO-B (blauw) markers op bandbalken
+    - _cat_poll_lock voorkomt conflict tussen poll-thread en klik-naar-afstemmen
+    - _cat_vfo_a_hz bijgewerkt bij klik op bandbalk
+
+2026-04-18  Spaans (Español) toegevoegd als zesde taal
+    - _LANG_NAMES en _LANG_CODES uitgebreid met "Español" / "es"
+    - Alle ~130 entries in _T vertaald naar het Spaans
+    - _SOLAR_TIPS_LANG uitgebreid met Spaanse tooltip-teksten
+
+2026-04-17 12:10  CAT-interface: klik-naar-afstemmen via serieel USB (Yaesu CAT)
+    - _yaesu_set_freq: stuurt VS0;FA<9 digits>; naar VFO-A (FT-950 e.a.)
+    - _kenwood_set_freq: FA<11 digits>; voor Kenwood/Elecraft
+    - _icom_set_freq: CI-V binair BCD, instelbaar adres
+    - CAT-dialoog: radio-type dropdown + CI-V adresveld; volledig vertaald (5 talen)
+    - Cursor verandert naar hand2 bij hover over bandbalken
+    - Klik op een bandbalk stuurt de startfrequentie naar de radio
+
+2026-04-17 12:35  CAT verbeteringen
+    - VS0; prepend fix voor FT-950 (radio bleef in geheugen/split-modus)
+    - Alle CAT-dialoogteksten vertaald in NL/EN/DE/FR/IT via _T-systeem
 
 """
 
@@ -126,7 +116,9 @@ except ImportError:
     _TRAY_OK = False
 from tkinter import font as tkfont
 import threading
+import queue as _queue
 import datetime
+import urllib.parse
 import urllib.request
 import xml.etree.ElementTree as ET
 try:
@@ -134,6 +126,12 @@ try:
     _PIL_OK = True
 except ImportError:
     _PIL_OK = False
+try:
+    import serial
+    import serial.tools.list_ports
+    _SERIAL_OK = True
+except ImportError:
+    _SERIAL_OK = False
 
 # ── Paden ──────────────────────────────────────────────────────────────────────
 APP_DIR       = (os.path.dirname(sys.executable)
@@ -428,9 +426,23 @@ def _load_settings() -> dict:
         "show_graylijn": cfg.getboolean("Map",   "show_graylijn",  fallback=True),
         "show_iaru":     cfg.getboolean("Map",   "show_iaru",      fallback=False),
         "show_cs":       cfg.getboolean("Map",   "show_cs",        fallback=False),
+        "show_spots":    cfg.getboolean("Map",   "show_spots",     fallback=False),
+        "show_wspr":     cfg.getboolean("Map",   "show_wspr",      fallback=False),
         "hist_range":    cfg.get       ("Graph", "hist_range",     fallback="Uren"),
         "hist_sel":      set(hist_sel_raw.split(",")) - {""} if hist_sel_raw else set(),
         "k_alert":       cfg.getint   ("Alerts","k_alert",        fallback=4),
+        # CAT interface
+        "cat_port":      cfg.get      ("CAT",   "port",           fallback=""),
+        "cat_baud":      cfg.get      ("CAT",   "baud",           fallback="9600"),
+        "cat_bits":      cfg.get      ("CAT",   "bits",           fallback="8"),
+        "cat_parity":    cfg.get      ("CAT",   "parity",         fallback="N"),
+        "cat_stopbits":  cfg.get      ("CAT",   "stopbits",       fallback="1"),
+        "cat_flow":      cfg.get      ("CAT",   "flow",           fallback="Geen"),
+        "cat_dtr":       cfg.getboolean("CAT",  "dtr",            fallback=False),
+        "cat_rts":       cfg.getboolean("CAT",  "rts",            fallback=False),
+        "cat_enabled":   cfg.getboolean("CAT",  "enabled",        fallback=False),
+        "cat_radio":     cfg.get       ("CAT",  "radio",          fallback="Yaesu CAT"),
+        "cat_civ_addr":  cfg.get       ("CAT",  "civ_addr",       fallback="0x70"),
     }
 
 def _save_settings(lat: float, lon: float, refresh: str,
@@ -443,10 +455,19 @@ def _save_settings(lat: float, lon: float, refresh: str,
                    show_graylijn: bool = True,
                    show_iaru: bool = False,
                    show_cs: bool = False,
+                   show_spots: bool = False,
+                   show_wspr: bool = False,
                    hist_range: str = "Uren",
                    hist_sel: set = None,
                    k_alert: int = 4,
-                   language: str = "Nederlands") -> None:
+                   language: str = "Nederlands",
+                   cat_port: str = "", cat_baud: str = "9600",
+                   cat_bits: str = "8", cat_parity: str = "N",
+                   cat_stopbits: str = "1", cat_flow: str = "Geen",
+                   cat_dtr: bool = False, cat_rts: bool = False,
+                   cat_enabled: bool = False,
+                   cat_radio: str = "Yaesu CAT",
+                   cat_civ_addr: str = "0x70") -> None:
     cfg = configparser.ConfigParser()
     cfg["QTH"]   = {"lat": str(lat), "lon": str(lon)}
     cfg["App"]   = {"refresh": refresh, "mode": mode, "power": power,
@@ -457,10 +478,17 @@ def _save_settings(lat: float, lon: float, refresh: str,
                     "show_locator": str(show_locator),
                     "show_graylijn": str(show_graylijn),
                     "show_iaru": str(show_iaru),
-                    "show_cs": str(show_cs)}
+                    "show_cs": str(show_cs),
+                    "show_spots": str(show_spots),
+                    "show_wspr": str(show_wspr)}
     cfg["Graph"]  = {"hist_range": hist_range,
                      "selected_bands": ",".join(sorted(hist_sel)) if hist_sel else ""}
     cfg["Alerts"] = {"k_alert": str(k_alert)}
+    cfg["CAT"]    = {"port": cat_port, "baud": cat_baud, "bits": cat_bits,
+                     "parity": cat_parity, "stopbits": cat_stopbits,
+                     "flow": cat_flow, "dtr": str(cat_dtr), "rts": str(cat_rts),
+                     "enabled": str(cat_enabled),
+                     "radio": cat_radio, "civ_addr": cat_civ_addr}
     with open(SETTINGS_FILE, "w", encoding="utf-8") as f:
         cfg.write(f)
 
@@ -783,429 +811,542 @@ _ANT_DB = {
     "Beam ~10dBi":      10,
 }
 
+# ── DX-spot kaartoverlay ──────────────────────────────────────────────────────
+_SPOT_BAND_CLR: dict[str, str] = {
+    "160m": "#FF4444", "80m": "#FF8800", "60m": "#FFDD00",
+    "40m":  "#88CC00", "30m": "#00CC44", "20m": "#00BBFF",
+    "17m":  "#0088FF", "15m": "#4466FF", "12m": "#9944FF",
+    "10m":  "#DD44FF", "6m":  "#FF44CC",
+}
+
+def _prefix_latlon(callsign: str) -> tuple[float, float] | None:
+    """Geef de DXCC-centroïde (lat, lon) voor een callsign, of None als onbekend."""
+    cs = callsign.upper().lstrip("/")
+    # Strip /P /M /MM suffix
+    if "/" in cs:
+        cs = cs.split("/")[0]
+    best_lat, best_lon, best_len = None, None, 0
+    for prefix, lat, lon in _CS_PREFIXES:
+        if cs.startswith(prefix) and len(prefix) > best_len:
+            best_lat, best_lon, best_len = lat, lon, len(prefix)
+    return (best_lat, best_lon) if best_len else None
+
 _REFRESH_OPTIONS = {
     "Uit": 0, "30s": 30, "1 min": 60, "5 min": 300,
     "10 min": 600, "30 min": 1800, "1 uur": 3600,
 }
 
 # ── Taal / Language ────────────────────────────────────────────────────────────
-_LANG_NAMES = ["Nederlands", "English", "Deutsch", "Français", "Italiano"]
+_LANG_NAMES = ["Nederlands", "English", "Deutsch", "Français", "Italiano", "Español"]
 _LANG_CODES = {"Nederlands": "nl", "English": "en", "Deutsch": "de",
-               "Français": "fr", "Italiano": "it"}
+               "Français": "fr", "Italiano": "it", "Español": "es"}
 
 _T: dict[str, dict[str, str]] = {
     # ── Header ────────────────────────────────────────────────────────────────
-    "exit":        {"nl": "Afsluiten",   "en": "Exit",          "de": "Beenden",     "fr": "Quitter",       "it": "Esci"},
-    "summer_time": {"nl": "Zomertijd",   "en": "Summer time",   "de": "Sommerzeit",  "fr": "Heure d'été",   "it": "Ora legale"},
-    "tooltips":    {"nl": "Tooltips",    "en": "Tooltips",      "de": "Tooltips",    "fr": "Infobulles",    "it": "Suggerimenti"},
-    "ticker":      {"nl": "Ticker",      "en": "Ticker",        "de": "Laufband",    "fr": "Défilant",      "it": "Ticker"},
-    "auto_lbl":    {"nl": "Auto:",       "en": "Auto:",         "de": "Auto:",       "fr": "Auto:",         "it": "Auto:"},
-    "lang_lbl":    {"nl": "Taal:",       "en": "Lang:",         "de": "Sprache:",    "fr": "Langue:",       "it": "Lingua:"},
-    "qth_lat_lbl": {"nl": "QTH  Lat:",   "en": "QTH  Lat:",     "de": "QTH  Br:",    "fr": "QTH  Lat:",     "it": "QTH  Lat:"},
-    "lon_lbl":     {"nl": "Lon:",        "en": "Lon:",          "de": "Lg:",         "fr": "Lon:",          "it": "Lon:"},
+    "exit":        {"nl": "Afsluiten",   "en": "Exit",          "de": "Beenden",     "fr": "Quitter",       "it": "Esci",           "es": "Salir"},
+    "summer_time": {"nl": "Zomertijd",   "en": "Summer time",   "de": "Sommerzeit",  "fr": "Heure d'été",   "it": "Ora legale",     "es": "Hora de verano"},
+    "tooltips":    {"nl": "Tooltips",    "en": "Tooltips",      "de": "Tooltips",    "fr": "Infobulles",    "it": "Suggerimenti",   "es": "Información"},
+    "ticker":      {"nl": "Ticker",      "en": "Ticker",        "de": "Laufband",    "fr": "Défilant",      "it": "Ticker",         "es": "Ticker"},
+    "auto_lbl":    {"nl": "Auto:",       "en": "Auto:",         "de": "Auto:",       "fr": "Auto:",         "it": "Auto:",          "es": "Auto:"},
+    "lang_lbl":    {"nl": "Taal:",       "en": "Lang:",         "de": "Sprache:",    "fr": "Langue:",       "it": "Lingua:",        "es": "Idioma:"},
+    "qth_lat_lbl": {"nl": "QTH  Lat:",   "en": "QTH  Lat:",     "de": "QTH  Br:",    "fr": "QTH  Lat:",     "it": "QTH  Lat:",      "es": "QTH  Lat:"},
+    "lon_lbl":     {"nl": "Lon:",        "en": "Lon:",          "de": "Lg:",         "fr": "Lon:",          "it": "Lon:",           "es": "Lon:"},
     # ── Panel titels ──────────────────────────────────────────────────────────
-    "worldmap":    {"nl": "🌍  Wereldkaart",         "en": "🌍  World Map",             "de": "🌍  Weltkarte",           "fr": "🌍  Carte du monde",          "it": "🌍  Planisfero"},
-    "solar":       {"nl": "☀  Solar / Ionosfeer",    "en": "☀  Solar / Ionosphere",    "de": "☀  Solar / Ionosphäre",  "fr": "☀  Solaire / Ionosphère",    "it": "☀  Solare / Ionosfera"},
-    "reliability": {"nl": "📻  HF Betrouwbaarheid",  "en": "📻  HF Reliability",        "de": "📻  KW-Zuverlässigkeit", "fr": "📻  Fiabilité HF",            "it": "📻  Affidabilità HF"},
-    "schedule":    {"nl": "📅  Bandopenings-schema", "en": "📅  Band Opening Schedule", "de": "📅  Bandöffnungsplan",   "fr": "📅  Planning des ouvertures", "it": "📅  Aperture di banda"},
-    "history":     {"nl": "📈  Band Verloop",         "en": "📈  Band History",          "de": "📈  Bandverlauf",        "fr": "📈  Historique des bandes",   "it": "📈  Storico bande"},
-    "dx_spots":    {"nl": "📡  DX Spots",             "en": "📡  DX Spots",              "de": "📡  DX-Spots",           "fr": "📡  DX Spots",                "it": "📡  DX Spots"},
-    "advice":      {"nl": "💡  Propagatie Advies",    "en": "💡  Propagation Advice",    "de": "💡  Ausbreitungshinweise","fr": "💡  Conseils de propagation", "it": "💡  Consigli propagazione"},
+    "worldmap":    {"nl": "🌍  Wereldkaart",         "en": "🌍  World Map",             "de": "🌍  Weltkarte",           "fr": "🌍  Carte du monde",          "it": "🌍  Planisfero",                "es": "🌍  Mapa mundial"},
+    "solar":       {"nl": "☀  Solar / Ionosfeer",    "en": "☀  Solar / Ionosphere",    "de": "☀  Solar / Ionosphäre",  "fr": "☀  Solaire / Ionosphère",    "it": "☀  Solare / Ionosfera",         "es": "☀  Solar / Ionosfera"},
+    "reliability": {"nl": "📻  HF Betrouwbaarheid",  "en": "📻  HF Reliability",        "de": "📻  KW-Zuverlässigkeit", "fr": "📻  Fiabilité HF",            "it": "📻  Affidabilità HF",           "es": "📻  Fiabilidad HF"},
+    "schedule":    {"nl": "📅  Bandopenings-schema", "en": "📅  Band Opening Schedule", "de": "📅  Bandöffnungsplan",   "fr": "📅  Planning des ouvertures", "it": "📅  Aperture di banda",         "es": "📅  Horario de bandas"},
+    "history":     {"nl": "📈  Band Verloop",         "en": "📈  Band History",          "de": "📈  Bandverlauf",        "fr": "📈  Historique des bandes",   "it": "📈  Storico bande",             "es": "📈  Historial de bandas"},
+    "dx_spots":    {"nl": "📡  DX Spots",             "en": "📡  DX Spots",              "de": "📡  DX-Spots",           "fr": "📡  DX Spots",                "it": "📡  DX Spots",                  "es": "📡  DX Spots"},
+    "advice":      {"nl": "💡  Propagatie Advies",    "en": "💡  Propagation Advice",    "de": "💡  Ausbreitungshinweise","fr": "💡  Conseils de propagation", "it": "💡  Consigli propagazione",     "es": "💡  Consejos de propagación"},
     # Panel titels (uitgebreid)
-    "prop_header":  {"nl": "📶  HF Band Betrouwbaarheid",                "en": "📶  HF Band Reliability",                   "de": "📶  KW-Band-Zuverlässigkeit",             "fr": "📶  Fiabilité des bandes HF",              "it": "📶  Affidabilità bande HF"},
-    "hist_header":  {"nl": "📈  Band Verloop",                           "en": "📈  Band History",                           "de": "📈  Bandverlauf",                         "fr": "📈  Historique des bandes",                "it": "📈  Storico bande"},
-    "sched_header": {"nl": "🕐  Bandopenings-schema (lokale tijd, vandaag)", "en": "🕐  Band Opening Schedule (local time, today)", "de": "🕐  Bandöffnungsplan (Lokalzeit, heute)", "fr": "🕐  Ouvertures (heure locale, auj.)",      "it": "🕐  Aperture banda (ora locale, oggi)"},
-    "dx_header":    {"nl": "📡  Live DX Spots (HF)",                    "en": "📡  Live DX Spots (HF)",                    "de": "📡  Live DX-Spots (KW)",                 "fr": "📡  DX Spots en direct (HF)",              "it": "📡  DX Spots in diretta (HF)"},
-    "adv_header":   {"nl": "💡  Propagatie-analyse & Advies",            "en": "💡  Propagation Analysis & Advice",         "de": "💡  Ausbreitungsanalyse & Hinweise",     "fr": "💡  Analyse & Conseils de propagation",   "it": "💡  Analisi & Consigli propagazione"},
+    "prop_header":  {"nl": "📶  HF Band Betrouwbaarheid",                "en": "📶  HF Band Reliability",                   "de": "📶  KW-Band-Zuverlässigkeit",             "fr": "📶  Fiabilité des bandes HF",              "it": "📶  Affidabilità bande HF",          "es": "📶  Fiabilidad de bandas HF"},
+    "hist_header":  {"nl": "📈  Band Verloop",                           "en": "📈  Band History",                           "de": "📈  Bandverlauf",                         "fr": "📈  Historique des bandes",                "it": "📈  Storico bande",                  "es": "📈  Historial de bandas"},
+    "sched_header": {"nl": "🕐  Bandopenings-schema (lokale tijd, vandaag)", "en": "🕐  Band Opening Schedule (local time, today)", "de": "🕐  Bandöffnungsplan (Lokalzeit, heute)", "fr": "🕐  Ouvertures (heure locale, auj.)",      "it": "🕐  Aperture banda (ora locale, oggi)", "es": "🕐  Horario de bandas (hora local, hoy)"},
+    "dx_header":    {"nl": "📡  Live DX Spots (HF)",                    "en": "📡  Live DX Spots (HF)",                    "de": "📡  Live DX-Spots (KW)",                 "fr": "📡  DX Spots en direct (HF)",              "it": "📡  DX Spots in diretta (HF)",       "es": "📡  DX Spots en vivo (HF)"},
+    "adv_header":   {"nl": "💡  Propagatie-analyse & Advies",            "en": "💡  Propagation Analysis & Advice",         "de": "💡  Ausbreitungsanalyse & Hinweise",     "fr": "💡  Analyse & Conseils de propagation",   "it": "💡  Analisi & Consigli propagazione", "es": "💡  Análisis y consejos de propagación"},
     # ── Kaart checkboxes ──────────────────────────────────────────────────────
-    "sun":         {"nl": "Zon",       "en": "Sun",        "de": "Sonne",     "fr": "Soleil",     "it": "Sole"},
-    "moon":        {"nl": "Maan",      "en": "Moon",       "de": "Mond",      "fr": "Lune",       "it": "Luna"},
-    "graylijn":    {"nl": "Graylijn",  "en": "Gray line",  "de": "Grauzone",  "fr": "Ligne grise","it": "Linea grigia"},
-    "locator":     {"nl": "Locator",   "en": "Locator",    "de": "Locator",   "fr": "Locator",    "it": "Locator"},
+    "sun":         {"nl": "Zon",       "en": "Sun",        "de": "Sonne",     "fr": "Soleil",     "it": "Sole",         "es": "Sol"},
+    "moon":        {"nl": "Maan",      "en": "Moon",       "de": "Mond",      "fr": "Lune",       "it": "Luna",         "es": "Luna"},
+    "graylijn":    {"nl": "Graylijn",  "en": "Gray line",  "de": "Grauzone",  "fr": "Ligne grise","it": "Linea grigia",  "es": "Línea gris"},
+    "locator":     {"nl": "Locator",   "en": "Locator",    "de": "Locator",   "fr": "Locator",    "it": "Locator",       "es": "Locator"},
     # ── Solar veld labels ─────────────────────────────────────────────────────
-    "updated_lbl":  {"nl": "Bijgewerkt",  "en": "Updated",   "de": "Aktualisiert", "fr": "Mis à jour",  "it": "Aggiornato"},
-    "k_alert_lbl":  {"nl": "Melding K ≥", "en": "Alert K ≥", "de": "Alarm K ≥",   "fr": "Alerte K ≥", "it": "Avviso K ≥"},
-    "day_hdr":      {"nl": "Dag",         "en": "Day",       "de": "Tag",          "fr": "Jour",        "it": "Giorno"},
-    "night_hdr":    {"nl": "Nacht",       "en": "Night",     "de": "Nacht",        "fr": "Nuit",        "it": "Notte"},
-    "band_hdr":     {"nl": "Band",        "en": "Band",      "de": "Band",         "fr": "Bande",       "it": "Banda"},
+    "updated_lbl":  {"nl": "Bijgewerkt",  "en": "Updated",   "de": "Aktualisiert", "fr": "Mis à jour",  "it": "Aggiornato",  "es": "Actualizado"},
+    "k_alert_lbl":  {"nl": "Melding K ≥", "en": "Alert K ≥", "de": "Alarm K ≥",   "fr": "Alerte K ≥", "it": "Avviso K ≥",  "es": "Alerta K ≥"},
+    "day_hdr":      {"nl": "Dag",         "en": "Day",       "de": "Tag",          "fr": "Jour",        "it": "Giorno",      "es": "Día"},
+    "night_hdr":    {"nl": "Nacht",       "en": "Night",     "de": "Nacht",        "fr": "Nuit",        "it": "Notte",       "es": "Noche"},
+    "band_hdr":     {"nl": "Band",        "en": "Band",      "de": "Band",         "fr": "Bande",       "it": "Banda",       "es": "Banda"},
     # ── Prop panel labels ─────────────────────────────────────────────────────
-    "mode_lbl":         {"nl": "Mode:",     "en": "Mode:",    "de": "Modus:",     "fr": "Mode:",      "it": "Modo:"},
-    "power_lbl":        {"nl": "Vermogen:", "en": "Power:",   "de": "Leistung:",  "fr": "Puissance:", "it": "Potenza:"},
-    "ant_lbl":          {"nl": "Antenne:",  "en": "Antenna:", "de": "Antenne:",   "fr": "Antenne:",   "it": "Antenna:"},
-    "day_auto":         {"nl": "Dag (auto)","en": "Day (auto)","de": "Tag (auto)","fr": "Jour (auto)","it": "Giorno (auto)"},
-    "closed":           {"nl": "Gesloten",  "en": "Closed",   "de": "Geschlossen","fr": "Fermée",     "it": "Chiusa"},
-    "cond_good":        {"nl": "Goed",      "en": "Good",     "de": "Gut",        "fr": "Bon",        "it": "Buono"},
-    "cond_fair":        {"nl": "Redelijk",  "en": "Fair",     "de": "Mäßig",      "fr": "Correct",    "it": "Discreto"},
-    "cond_poor":        {"nl": "Arm",       "en": "Poor",     "de": "Schlecht",   "fr": "Mauvais",    "it": "Scarso"},
-    "cond_closed":      {"nl": "Dicht",     "en": "Closed",   "de": "Geschlossen","fr": "Fermée",     "it": "Chiusa"},
-    "status_lbl":       {"nl": "Status:",         "en": "Status:",        "de": "Status:",      "fr": "État:",         "it": "Stato:"},
-    "reason_lbl":       {"nl": "Reden:",           "en": "Reason:",        "de": "Grund:",       "fr": "Raison:",       "it": "Motivo:"},
-    "reason_muf_luf":   {"nl": "Boven MUF of onder LUF", "en": "Above MUF or below LUF", "de": "Über MUF oder unter LUF", "fr": "Au-dessus MUF ou sous LUF", "it": "Sopra MUF o sotto LUF"},
-    "reliability_lbl":  {"nl": "Betrouwbaarheid:", "en": "Reliability:",   "de": "Zuverlässigkeit:", "fr": "Fiabilité:",  "it": "Affidabilità:"},
-    "modes_lbl":        {"nl": "Modi:",            "en": "Modes:",         "de": "Modi:",        "fr": "Modes:",        "it": "Modi:"},
-    "total_snr":        {"nl": "Totaal:",          "en": "Total:",         "de": "Gesamt:",      "fr": "Total:",        "it": "Totale:"},
-    "quality_lbl":      {"nl": "Kwaliteit:",       "en": "Quality:",       "de": "Qualität:",    "fr": "Qualité:",      "it": "Qualità:"},
-    "local_lbl":        {"nl": "lokaal",           "en": "local",          "de": "lokal",        "fr": "local",         "it": "locale"},
+    "mode_lbl":         {"nl": "Mode:",     "en": "Mode:",    "de": "Modus:",     "fr": "Mode:",      "it": "Modo:",             "es": "Modo:"},
+    "power_lbl":        {"nl": "Vermogen:", "en": "Power:",   "de": "Leistung:",  "fr": "Puissance:", "it": "Potenza:",          "es": "Potencia:"},
+    "ant_lbl":          {"nl": "Antenne:",  "en": "Antenna:", "de": "Antenne:",   "fr": "Antenne:",   "it": "Antenna:",          "es": "Antena:"},
+    "day_auto":         {"nl": "Dag (auto)","en": "Day (auto)","de": "Tag (auto)","fr": "Jour (auto)","it": "Giorno (auto)",     "es": "Día (auto)"},
+    "closed":           {"nl": "Gesloten",  "en": "Closed",   "de": "Geschlossen","fr": "Fermée",     "it": "Chiusa",            "es": "Cerrada"},
+    "cond_good":        {"nl": "Goed",      "en": "Good",     "de": "Gut",        "fr": "Bon",        "it": "Buono",             "es": "Bueno"},
+    "cond_fair":        {"nl": "Redelijk",  "en": "Fair",     "de": "Mäßig",      "fr": "Correct",    "it": "Discreto",          "es": "Regular"},
+    "cond_poor":        {"nl": "Arm",       "en": "Poor",     "de": "Schlecht",   "fr": "Mauvais",    "it": "Scarso",            "es": "Malo"},
+    "cond_closed":      {"nl": "Dicht",     "en": "Closed",   "de": "Geschlossen","fr": "Fermée",     "it": "Chiusa",            "es": "Cerrada"},
+    "status_lbl":       {"nl": "Status:",         "en": "Status:",        "de": "Status:",      "fr": "État:",         "it": "Stato:",            "es": "Estado:"},
+    "reason_lbl":       {"nl": "Reden:",           "en": "Reason:",        "de": "Grund:",       "fr": "Raison:",       "it": "Motivo:",           "es": "Motivo:"},
+    "reason_muf_luf":   {"nl": "Boven MUF of onder LUF", "en": "Above MUF or below LUF", "de": "Über MUF oder unter LUF", "fr": "Au-dessus MUF ou sous LUF", "it": "Sopra MUF o sotto LUF", "es": "Por encima de MUF o por debajo de LUF"},
+    "reliability_lbl":  {"nl": "Betrouwbaarheid:", "en": "Reliability:",   "de": "Zuverlässigkeit:", "fr": "Fiabilité:",  "it": "Affidabilità:",    "es": "Fiabilidad:"},
+    "modes_lbl":        {"nl": "Modi:",            "en": "Modes:",         "de": "Modi:",        "fr": "Modes:",        "it": "Modi:",             "es": "Modos:"},
+    "total_snr":        {"nl": "Totaal:",          "en": "Total:",         "de": "Gesamt:",      "fr": "Total:",        "it": "Totale:",           "es": "Total:"},
+    "quality_lbl":      {"nl": "Kwaliteit:",       "en": "Quality:",       "de": "Qualität:",    "fr": "Qualité:",      "it": "Qualità:",          "es": "Calidad:"},
+    "local_lbl":        {"nl": "lokaal",           "en": "local",          "de": "lokal",        "fr": "local",         "it": "locale",            "es": "local"},
     # ── Hist panel ────────────────────────────────────────────────────────────
-    "hist_range_h": {"nl": "Uren",    "en": "Hours",   "de": "Stunden",  "fr": "Heures",   "it": "Ore"},
-    "hist_range_d": {"nl": "Dagen",   "en": "Days",    "de": "Tage",     "fr": "Jours",    "it": "Giorni"},
-    "hist_range_w": {"nl": "Weken",   "en": "Weeks",   "de": "Wochen",   "fr": "Semaines", "it": "Settimane"},
-    "hist_range_m": {"nl": "Maanden", "en": "Months",  "de": "Monate",   "fr": "Mois",     "it": "Mesi"},
+    "hist_range_h": {"nl": "Uren",    "en": "Hours",   "de": "Stunden",  "fr": "Heures",   "it": "Ore",       "es": "Horas"},
+    "hist_range_d": {"nl": "Dagen",   "en": "Days",    "de": "Tage",     "fr": "Jours",    "it": "Giorni",    "es": "Días"},
+    "hist_range_w": {"nl": "Weken",   "en": "Weeks",   "de": "Wochen",   "fr": "Semaines", "it": "Settimane", "es": "Semanas"},
+    "hist_range_m": {"nl": "Maanden", "en": "Months",  "de": "Monate",   "fr": "Mois",     "it": "Mesi",      "es": "Meses"},
     "no_hist_data": {"nl": "Nog geen historische data beschikbaar",
                      "en": "No historical data available yet",
                      "de": "Noch keine historischen Daten verfügbar",
                      "fr": "Pas encore de données historiques",
-                     "it": "Nessun dato storico disponibile"},
-    "hist_tooltip_hdr": {"nl": "Band Verloop  —  {ts}",  "en": "Band History  —  {ts}",  "de": "Bandverlauf  —  {ts}",  "fr": "Historique  —  {ts}",  "it": "Storico  —  {ts}"},
+                     "it": "Nessun dato storico disponibile",
+                     "es": "Aún no hay datos históricos disponibles"},
+    "hist_tooltip_hdr": {"nl": "Band Verloop  —  {ts}",  "en": "Band History  —  {ts}",  "de": "Bandverlauf  —  {ts}",  "fr": "Historique  —  {ts}",  "it": "Storico  —  {ts}",  "es": "Historial de bandas  —  {ts}"},
     # ── DX panel ──────────────────────────────────────────────────────────────
-    "own_cont_lbl":  {"nl": "Eigen continent",          "en": "Own continent",        "de": "Eigener Kontinent",    "fr": "Continent propre",       "it": "Continente proprio"},
-    "dx_loading":    {"nl": "Laden…",                   "en": "Loading…",             "de": "Laden…",               "fr": "Chargement…",            "it": "Caricamento…"},
-    "no_dx_spots":   {"nl": "Geen HF-spots beschikbaar","en": "No HF spots available","de": "Keine KW-Spots verfügbar","fr": "Aucun spot HF disponible","it": "Nessun spot HF disponibile"},
-    "dx_of":         {"nl": "van",                      "en": "of",                   "de": "von",                  "fr": "sur",                    "it": "di"},
-    "dx_own_cont_filter": {"nl": " · eigen continent",  "en": " · own continent",     "de": " · eigener Kontinent", "fr": " · continent propre",    "it": " · continente proprio"},
-    "no_spots_ts":   {"nl": "Geen spots beschikbaar  ·  {ts}", "en": "No spots available  ·  {ts}", "de": "Keine Spots verfügbar  ·  {ts}", "fr": "Aucun spot disponible  ·  {ts}", "it": "Nessun spot disponibile  ·  {ts}"},
-    "dx_status_fmt": {"nl": "{n} van {total} spots  (HF{filt})  ·  {ts}", "en": "{n} of {total} spots  (HF{filt})  ·  {ts}", "de": "{n} von {total} Spots  (KW{filt})  ·  {ts}", "fr": "{n} sur {total} spots  (HF{filt})  ·  {ts}", "it": "{n} di {total} spot  (HF{filt})  ·  {ts}"},
+    "own_cont_lbl":  {"nl": "Eigen continent",          "en": "Own continent",        "de": "Eigener Kontinent",    "fr": "Continent propre",       "it": "Continente proprio",         "es": "Continente propio"},
+    "dx_loading":    {"nl": "Laden…",                   "en": "Loading…",             "de": "Laden…",               "fr": "Chargement…",            "it": "Caricamento…",               "es": "Cargando…"},
+    "no_dx_spots":   {"nl": "Geen HF-spots beschikbaar","en": "No HF spots available","de": "Keine KW-Spots verfügbar","fr": "Aucun spot HF disponible","it": "Nessun spot HF disponibile", "es": "No hay spots HF disponibles"},
+    "dx_of":         {"nl": "van",                      "en": "of",                   "de": "von",                  "fr": "sur",                    "it": "di",                         "es": "de"},
+    "dx_own_cont_filter": {"nl": " · eigen continent",  "en": " · own continent",     "de": " · eigener Kontinent", "fr": " · continent propre",    "it": " · continente proprio",      "es": " · continente propio"},
+    "no_spots_ts":   {"nl": "Geen spots beschikbaar  ·  {ts}", "en": "No spots available  ·  {ts}", "de": "Keine Spots verfügbar  ·  {ts}", "fr": "Aucun spot disponible  ·  {ts}", "it": "Nessun spot disponibile  ·  {ts}", "es": "Sin spots disponibles  ·  {ts}"},
+    "dx_status_fmt": {"nl": "{n} van {total} spots  (HF{filt})  ·  {ts}", "en": "{n} of {total} spots  (HF{filt})  ·  {ts}", "de": "{n} von {total} Spots  (KW{filt})  ·  {ts}", "fr": "{n} sur {total} spots  (HF{filt})  ·  {ts}", "it": "{n} di {total} spot  (HF{filt})  ·  {ts}", "es": "{n} de {total} spots  (HF{filt})  ·  {ts}"},
     # ── Map panel ─────────────────────────────────────────────────────────────
-    "map_nolib":       {"nl": "pip install pillow  voor kaartweergave",  "en": "pip install pillow  for map display",      "de": "pip install pillow  für Kartenanzeige",    "fr": "pip install pillow  pour afficher la carte", "it": "pip install pillow  per visualizzare la mappa"},
-    "map_downloading": {"nl": "⬇ NASA-kaart wordt gedownload…",         "en": "⬇ Downloading NASA map…",                 "de": "⬇ NASA-Karte wird heruntergeladen…",      "fr": "⬇ Téléchargement carte NASA…",               "it": "⬇ Download mappa NASA…"},
-    "distance_lbl":    {"nl": "Afstand",  "en": "Distance",  "de": "Entfernung",  "fr": "Distance",   "it": "Distanza"},
-    "direction_lbl":   {"nl": "Richting", "en": "Direction", "de": "Richtung",    "fr": "Direction",  "it": "Direzione"},
-    "right_clk_clear": {"nl": "klik rechts om te wissen", "en": "right-click to clear", "de": "Rechtsklick zum Löschen", "fr": "clic droit pour effacer", "it": "clic destro per cancellare"},
+    "map_nolib":       {"nl": "pip install pillow  voor kaartweergave",  "en": "pip install pillow  for map display",      "de": "pip install pillow  für Kartenanzeige",    "fr": "pip install pillow  pour afficher la carte", "it": "pip install pillow  per visualizzare la mappa", "es": "pip install pillow  para mostrar el mapa"},
+    "map_downloading": {"nl": "⬇ NASA-kaart wordt gedownload…",         "en": "⬇ Downloading NASA map…",                 "de": "⬇ NASA-Karte wird heruntergeladen…",      "fr": "⬇ Téléchargement carte NASA…",               "it": "⬇ Download mappa NASA…",                        "es": "⬇ Descargando mapa NASA…"},
+    "distance_lbl":    {"nl": "Afstand",  "en": "Distance",  "de": "Entfernung",  "fr": "Distance",   "it": "Distanza",   "es": "Distancia"},
+    "direction_lbl":   {"nl": "Richting", "en": "Direction", "de": "Richtung",    "fr": "Direction",  "it": "Direzione",  "es": "Dirección"},
+    "right_clk_clear": {"nl": "klik rechts om te wissen", "en": "right-click to clear", "de": "Rechtsklick zum Löschen", "fr": "clic droit pour effacer", "it": "clic destro per cancellare", "es": "clic derecho para borrar"},
     # ── Tray ──────────────────────────────────────────────────────────────────
-    "tray_show": {"nl": "HAMIOS tonen",  "en": "Show HAMIOS",  "de": "HAMIOS anzeigen", "fr": "Afficher HAMIOS", "it": "Mostra HAMIOS"},
-    "tray_exit": {"nl": "Afsluiten",     "en": "Exit",         "de": "Beenden",         "fr": "Quitter",         "it": "Esci"},
+    "tray_show": {"nl": "HAMIOS tonen",  "en": "Show HAMIOS",  "de": "HAMIOS anzeigen", "fr": "Afficher HAMIOS", "it": "Mostra HAMIOS",  "es": "Mostrar HAMIOS"},
+    "tray_exit": {"nl": "Afsluiten",     "en": "Exit",         "de": "Beenden",         "fr": "Quitter",         "it": "Esci",           "es": "Salir"},
     # ── Xflare / PCA warnings ────────────────────────────────────────────────
     "xflare_warning": {"nl": "☢  SWF-waarschuwing: {xray}-flare gedetecteerd. HF dag-zijde verstoord (~{dur} min).",
                        "en": "☢  SWF warning: {xray} flare detected. HF dayside disrupted (~{dur} min).",
                        "de": "☢  SWF-Warnung: {xray}-Flare erkannt. KW-Tagseite gestört (~{dur} min).",
                        "fr": "☢  Alerte SWF: éruption {xray} détectée. HF côté jour perturbé (~{dur} min).",
-                       "it": "☢  Avviso SWF: brillamento {xray} rilevato. HF lato giorno disturbato (~{dur} min)."},
+                       "it": "☢  Avviso SWF: brillamento {xray} rilevato. HF lato giorno disturbato (~{dur} min).",
+                       "es": "☢  Aviso SWF: destello {xray} detectado. HF lado diurno perturbado (~{dur} min)."},
     "xflare_notify_body": {"nl": "Short Wave Fadeout verwacht (~{dur} min). HF op dag-zijde tijdelijk verstoord.",
                            "en": "Short Wave Fadeout expected (~{dur} min). HF dayside temporarily disrupted.",
                            "de": "Short Wave Fadeout erwartet (~{dur} min). KW-Tagseite vorübergehend gestört.",
                            "fr": "Short Wave Fadeout attendu (~{dur} min). HF côté jour temporairement perturbé.",
-                           "it": "Short Wave Fadeout atteso (~{dur} min). HF lato giorno temporaneamente disturbato."},
+                           "it": "Short Wave Fadeout atteso (~{dur} min). HF lato giorno temporaneamente disturbato.",
+                           "es": "Short Wave Fadeout esperado (~{dur} min). HF lado diurno temporalmente perturbado."},
     "pca_warning": {"nl": "☢  PCA-waarschuwing S{s}: proton flux {pf:.1f} pfu — poolroutes geblokkeerd (~{dur}). 160m–40m poolpaden onbruikbaar.",
                     "en": "☢  PCA warning S{s}: proton flux {pf:.1f} pfu — polar routes blocked (~{dur}). 160m–40m polar paths unusable.",
                     "de": "☢  PCA-Warnung S{s}: Protonenfluss {pf:.1f} pfu — Polarrouten gesperrt (~{dur}). 160m–40m Polarwege unbrauchbar.",
                     "fr": "☢  Alerte PCA S{s}: flux proton {pf:.1f} pfu — routes polaires bloquées (~{dur}). 160m–40m inutilisables.",
-                    "it": "☢  Avviso PCA S{s}: flusso protoni {pf:.1f} pfu — rotte polari bloccate (~{dur}). 160m–40m inutilizzabili."},
-    "pca_dur_s5": {"nl": "3–7 dagen", "en": "3–7 days", "de": "3–7 Tage", "fr": "3–7 jours", "it": "3–7 giorni"},
-    "pca_dur_s3": {"nl": "2–4 dagen", "en": "2–4 days", "de": "2–4 Tage", "fr": "2–4 jours", "it": "2–4 giorni"},
-    "pca_dur_s1": {"nl": "1–2 dagen", "en": "1–2 days", "de": "1–2 Tage", "fr": "1–2 jours", "it": "1–2 giorni"},
+                    "it": "☢  Avviso PCA S{s}: flusso protoni {pf:.1f} pfu — rotte polari bloccate (~{dur}). 160m–40m inutilizzabili.",
+                    "es": "☢  Aviso PCA S{s}: flujo de protones {pf:.1f} pfu — rutas polares bloqueadas (~{dur}). 160m–40m rutas polares inutilizables."},
+    "pca_dur_s5": {"nl": "3–7 dagen", "en": "3–7 days", "de": "3–7 Tage", "fr": "3–7 jours", "it": "3–7 giorni", "es": "3–7 días"},
+    "pca_dur_s3": {"nl": "2–4 dagen", "en": "2–4 days", "de": "2–4 Tage", "fr": "2–4 jours", "it": "2–4 giorni", "es": "2–4 días"},
+    "pca_dur_s1": {"nl": "1–2 dagen", "en": "1–2 days", "de": "1–2 Tage", "fr": "1–2 jours", "it": "1–2 giorni", "es": "1–2 días"},
     "pca_notify_body": {"nl": "Proton flux: {pf:.1f} pfu. Polar Cap Absorption — poolroutes geblokkeerd (~{dur}).",
                         "en": "Proton flux: {pf:.1f} pfu. Polar Cap Absorption — polar routes blocked (~{dur}).",
                         "de": "Protonenfluss: {pf:.1f} pfu. Polar Cap Absorption — Polarrouten gesperrt (~{dur}).",
                         "fr": "Flux proton: {pf:.1f} pfu. Polar Cap Absorption — routes polaires bloquées (~{dur}).",
-                        "it": "Flusso protoni: {pf:.1f} pfu. Polar Cap Absorption — rotte polari bloccate (~{dur})."},
+                        "it": "Flusso protoni: {pf:.1f} pfu. Polar Cap Absorption — rotte polari bloccate (~{dur}).",
+                        "es": "Flujo de protones: {pf:.1f} pfu. Polar Cap Absorption — rutas polares bloqueadas (~{dur})."},
     # ── K-alert notification ──────────────────────────────────────────────────
     "k_alert_notify_title": {"nl": "K-index {k} — geomagnetische activiteit",
                               "en": "K-index {k} — geomagnetic activity",
                               "de": "K-Index {k} — geomagnetische Aktivität",
                               "fr": "Indice K {k} — activité géomagnétique",
-                              "it": "Indice K {k} — attività geomagnetica"},
+                              "it": "Indice K {k} — attività geomagnetica",
+                              "es": "Índice K {k} — actividad geomagnética"},
     "k_alert_notify_body":  {"nl": "K={k}, A={a} — HF-propagatie verstoord. Lagere banden gebruiken.",
                               "en": "K={k}, A={a} — HF propagation disrupted. Use lower bands.",
                               "de": "K={k}, A={a} — KW-Ausbreitung gestört. Niedrige Bänder nutzen.",
                               "fr": "K={k}, A={a} — propagation HF perturbée. Utiliser les bandes basses.",
-                              "it": "K={k}, A={a} — propagazione HF disturbata. Usare le bande basse."},
+                              "it": "K={k}, A={a} — propagazione HF disturbata. Usare le bande basse.",
+                              "es": "K={k}, A={a} — propagación HF perturbada. Usar bandas bajas."},
     # ── Geo-condities kwaliteitswoorden ──────────────────────────────────────
-    "geo_quiet":        {"nl": "rustig",        "en": "quiet",       "de": "ruhig",        "fr": "calme",        "it": "tranquillo"},
-    "geo_unsettled":    {"nl": "onrustig",       "en": "unsettled",   "de": "unruhig",      "fr": "agité",        "it": "agitato"},
-    "geo_storm":        {"nl": "storm",          "en": "storm",       "de": "Sturm",        "fr": "tempête",      "it": "tempesta"},
-    "geo_severe":       {"nl": "ernstige storm", "en": "severe storm","de": "schwerer Sturm","fr": "grave tempête","it": "grave tempesta"},
+    "geo_quiet":        {"nl": "rustig",        "en": "quiet",       "de": "ruhig",        "fr": "calme",        "it": "tranquillo",     "es": "tranquilo"},
+    "geo_unsettled":    {"nl": "onrustig",       "en": "unsettled",   "de": "unruhig",      "fr": "agité",        "it": "agitato",        "es": "agitado"},
+    "geo_storm":        {"nl": "storm",          "en": "storm",       "de": "Sturm",        "fr": "tempête",      "it": "tempesta",       "es": "tormenta"},
+    "geo_severe":       {"nl": "ernstige storm", "en": "severe storm","de": "schwerer Sturm","fr": "grave tempête","it": "grave tempesta", "es": "tormenta severa"},
     # ── Overall score labels ──────────────────────────────────────────────────
-    "score_excellent":  {"nl": "Uitstekend 🏆", "en": "Excellent 🏆", "de": "Ausgezeichnet 🏆", "fr": "Excellent 🏆",   "it": "Eccellente 🏆"},
-    "score_good":       {"nl": "Goed ✅",        "en": "Good ✅",      "de": "Gut ✅",            "fr": "Bon ✅",          "it": "Buono ✅"},
-    "score_fair":       {"nl": "Matig ⚡",       "en": "Fair ⚡",      "de": "Mäßig ⚡",          "fr": "Médiocre ⚡",     "it": "Mediocre ⚡"},
-    "score_poor":       {"nl": "Slecht ⚠️",      "en": "Poor ⚠️",     "de": "Schlecht ⚠️",       "fr": "Mauvais ⚠️",     "it": "Scarso ⚠️"},
-    "day_label":        {"nl": "Dag",            "en": "Day",          "de": "Tag",               "fr": "Jour",           "it": "Giorno"},
-    "night_label":      {"nl": "Nacht",          "en": "Night",        "de": "Nacht",             "fr": "Nuit",           "it": "Notte"},
+    "score_excellent":  {"nl": "Uitstekend 🏆", "en": "Excellent 🏆", "de": "Ausgezeichnet 🏆", "fr": "Excellent 🏆",   "it": "Eccellente 🏆",  "es": "Excelente 🏆"},
+    "score_good":       {"nl": "Goed ✅",        "en": "Good ✅",      "de": "Gut ✅",            "fr": "Bon ✅",          "it": "Buono ✅",        "es": "Bueno ✅"},
+    "score_fair":       {"nl": "Matig ⚡",       "en": "Fair ⚡",      "de": "Mäßig ⚡",          "fr": "Médiocre ⚡",     "it": "Mediocre ⚡",     "es": "Regular ⚡"},
+    "score_poor":       {"nl": "Slecht ⚠️",      "en": "Poor ⚠️",     "de": "Schlecht ⚠️",       "fr": "Mauvais ⚠️",     "it": "Scarso ⚠️",      "es": "Malo ⚠️"},
+    "day_label":        {"nl": "Dag",            "en": "Day",          "de": "Tag",               "fr": "Jour",           "it": "Giorno",          "es": "Día"},
+    "night_label":      {"nl": "Nacht",          "en": "Night",        "de": "Nacht",             "fr": "Nuit",           "it": "Notte",           "es": "Noche"},
     # ── Trend direction ───────────────────────────────────────────────────────
-    "trend_improving":    {"nl": "verbeterend",    "en": "improving",    "de": "verbessernd",    "fr": "en amélioration", "it": "in miglioramento"},
-    "trend_worsening":    {"nl": "verslechterend", "en": "deteriorating","de": "verschlechternd","fr": "en dégradation",  "it": "in deterioramento"},
-    "avg_band_quality":   {"nl": "gemid. bandkwaliteit", "en": "avg. band quality", "de": "mittl. Bandqualität", "fr": "qual. moy. des bandes", "it": "qual. media bande"},
+    "trend_improving":    {"nl": "verbeterend",    "en": "improving",    "de": "verbessernd",    "fr": "en amélioration", "it": "in miglioramento",  "es": "mejorando"},
+    "trend_worsening":    {"nl": "verslechterend", "en": "deteriorating","de": "verschlechternd","fr": "en dégradation",  "it": "in deterioramento", "es": "empeorando"},
+    "avg_band_quality":   {"nl": "gemid. bandkwaliteit", "en": "avg. band quality", "de": "mittl. Bandqualität", "fr": "qual. moy. des bandes", "it": "qual. media bande", "es": "cal. prom. de bandas"},
     # ── Advice texts ──────────────────────────────────────────────────────────
     "adv_best_bands":   {"nl": "Beste banden nu:  {bstr}{extra}",
                          "en": "Best bands now:  {bstr}{extra}",
                          "de": "Beste Bänder jetzt:  {bstr}{extra}",
                          "fr": "Meilleures bandes:  {bstr}{extra}",
-                         "it": "Migliori bande ora:  {bstr}{extra}"},
-    "adv_best_extra":   {"nl": "  ({n} banden open)",  "en": "  ({n} bands open)",  "de": "  ({n} Bänder offen)", "fr": "  ({n} bandes ouvertes)", "it": "  ({n} bande aperte)"},
+                         "it": "Migliori bande ora:  {bstr}{extra}",
+                         "es": "Mejores bandas ahora:  {bstr}{extra}"},
+    "adv_best_extra":   {"nl": "  ({n} banden open)",  "en": "  ({n} bands open)",  "de": "  ({n} Bänder offen)", "fr": "  ({n} bandes ouvertes)", "it": "  ({n} bande aperte)", "es": "  ({n} bandas abiertas)"},
     "adv_no_bands":     {"nl": "Alle HF-banden zijn momenteel gesloten.",
                          "en": "All HF bands are currently closed.",
                          "de": "Alle KW-Bänder sind derzeit geschlossen.",
                          "fr": "Toutes les bandes HF sont actuellement fermées.",
-                         "it": "Tutte le bande HF sono attualmente chiuse."},
+                         "it": "Tutte le bande HF sono attualmente chiuse.",
+                         "es": "Todas las bandas HF están actualmente cerradas."},
     "adv_geo_severe":   {"nl": "Zware geomagnetische storm  K={k}, A={a} ({kwal}) — HF vrijwel onbruikbaar, auroraal absorptie op alle routes. Wacht op herstel (normaal binnen 12–24u).",
                          "en": "Severe geomagnetic storm  K={k}, A={a} ({kwal}) — HF almost unusable, auroral absorption on all routes. Wait for recovery (normally within 12–24h).",
                          "de": "Schwerer geomagnetischer Sturm  K={k}, A={a} ({kwal}) — KW kaum nutzbar, Polarlichtabsorption auf allen Routen. Auf Erholung warten (norm. innerhalb 12–24h).",
                          "fr": "Tempête géomagnétique sévère  K={k}, A={a} ({kwal}) — HF quasi inutilisable, absorption aurorale sur toutes les routes. Attendre la récupération (norm. 12–24h).",
-                         "it": "Grave tempesta geomagnetica  K={k}, A={a} ({kwal}) — HF quasi inutilizzabile, assorbimento aurorale su tutte le rotte. Attendere il ripristino (norm. entro 12–24h)."},
+                         "it": "Grave tempesta geomagnetica  K={k}, A={a} ({kwal}) — HF quasi inutilizzabile, assorbimento aurorale su tutte le rotte. Attendere il ripristino (norm. entro 12–24h).",
+                         "es": "Tormenta geomagnética severa  K={k}, A={a} ({kwal}) — HF casi inutilizable, absorción auroral en todas las rutas. Esperar recuperación (normalmente en 12–24h)."},
     "adv_geo_storm":    {"nl": "Geomagnetische storm  K={k}, A={a} ({kwal}) — poolroutes geblokkeerd, 40m/80m meest betrouwbaar. Hoge banden en DX sterk verstoord.",
                          "en": "Geomagnetic storm  K={k}, A={a} ({kwal}) — polar routes blocked, 40m/80m most reliable. High bands and DX strongly disturbed.",
                          "de": "Geomagnetischer Sturm  K={k}, A={a} ({kwal}) — Polarrouten gesperrt, 40m/80m am zuverlässigsten. Hohe Bänder und DX stark gestört.",
                          "fr": "Tempête géomagnétique  K={k}, A={a} ({kwal}) — routes polaires bloquées, 40m/80m les plus fiables. Hautes bandes et DX fortement perturbés.",
-                         "it": "Tempesta geomagnetica  K={k}, A={a} ({kwal}) — rotte polari bloccate, 40m/80m più affidabili. Bande alte e DX fortemente disturbati."},
+                         "it": "Tempesta geomagnetica  K={k}, A={a} ({kwal}) — rotte polari bloccate, 40m/80m più affidabili. Bande alte e DX fortemente disturbati.",
+                         "es": "Tormenta geomagnética  K={k}, A={a} ({kwal}) — rutas polares bloqueadas, 40m/80m más fiables. Bandas altas y DX muy perturbadas."},
     "adv_geo_elevated": {"nl": "Verhoogde geo-activiteit  K={k}, A={a} ({kwal}) — lagere banden stabieler; vermijd trans-polair DX. Overweeg 40m/80m voor betrouwbare verbindingen.",
                          "en": "Elevated geo-activity  K={k}, A={a} ({kwal}) — lower bands more stable; avoid trans-polar DX. Consider 40m/80m for reliable contacts.",
                          "de": "Erhöhte Geoaktivität  K={k}, A={a} ({kwal}) — niedrigere Bänder stabiler; Trans-Polar-DX meiden. 40m/80m für zuverlässige Verbindungen erwägen.",
                          "fr": "Activité géo élevée  K={k}, A={a} ({kwal}) — bandes basses plus stables; éviter le DX trans-polaire. Envisager 40m/80m pour des liaisons fiables.",
-                         "it": "Attività geo elevata  K={k}, A={a} ({kwal}) — bande basse più stabili; evitare DX trans-polare. Considerare 40m/80m per collegamenti affidabili."},
+                         "it": "Attività geo elevata  K={k}, A={a} ({kwal}) — bande basse più stabili; evitare DX trans-polare. Considerare 40m/80m per collegamenti affidabili.",
+                         "es": "Actividad geo elevada  K={k}, A={a} ({kwal}) — bandas bajas más estables; evitar DX trans-polar. Considerar 40m/80m para contactos fiables."},
     "adv_geo_quiet":    {"nl": "Rustige geo-condities  K={k}, A={a} — optimaal voor alle routes incl. poolpaden en DX.",
                          "en": "Quiet geo conditions  K={k}, A={a} — optimal for all routes incl. polar paths and DX.",
                          "de": "Ruhige Geobedingungen  K={k}, A={a} — optimal für alle Routen inkl. Polarwege und DX.",
                          "fr": "Conditions géo calmes  K={k}, A={a} — optimal pour toutes les routes incl. chemins polaires et DX.",
-                         "it": "Condizioni geo tranquille  K={k}, A={a} — ottimale per tutte le rotte incl. percorsi polari e DX."},
+                         "it": "Condizioni geo tranquille  K={k}, A={a} — ottimale per tutte le rotte incl. percorsi polari e DX.",
+                         "es": "Condiciones geo tranquilas  K={k}, A={a} — óptimo para todas las rutas incl. rutas polares y DX."},
     "adv_sol_exceptional": {"nl": "Exceptionele zonactiviteit  SFI={sfi}, SSN={ssn} — zonnecyclus-maximum. 10m/12m/15m open voor wereldwijd DX; kans op Es-versterking en TEP.",
                              "en": "Exceptional solar activity  SFI={sfi}, SSN={ssn} — solar cycle maximum. 10m/12m/15m open for worldwide DX; chance of Es enhancement and TEP.",
                              "de": "Außergewöhnliche Sonnenaktivität  SFI={sfi}, SSN={ssn} — Sonnenzyklusmaximum. 10m/12m/15m offen für weltweites DX; Es-Verstärkung und TEP möglich.",
                              "fr": "Activité solaire exceptionnelle  SFI={sfi}, SSN={ssn} — maximum du cycle solaire. 10m/12m/15m ouverts pour DX mondial; chance d'Es et TEP.",
-                             "it": "Attività solare eccezionale  SFI={sfi}, SSN={ssn} — massimo del ciclo solare. 10m/12m/15m aperti per DX mondiale; possibilità di Es e TEP."},
+                             "it": "Attività solare eccezionale  SFI={sfi}, SSN={ssn} — massimo del ciclo solare. 10m/12m/15m aperti per DX mondiale; possibilità di Es e TEP.",
+                             "es": "Actividad solar excepcional  SFI={sfi}, SSN={ssn} — máximo del ciclo solar. 10m/12m/15m abiertos para DX mundial; posibilidad de Es y TEP."},
     "adv_sol_high":     {"nl": "Hoge zonactiviteit  SFI={sfi}, SSN={ssn} — uitstekend voor 10m t/m 17m DX. F2-propagatie sterk; MUF hoog, lange skips mogelijk.",
                          "en": "High solar activity  SFI={sfi}, SSN={ssn} — excellent for 10m to 17m DX. F2 propagation strong; MUF high, long skips possible.",
                          "de": "Hohe Sonnenaktivität  SFI={sfi}, SSN={ssn} — ausgezeichnet für 10m bis 17m DX. F2-Ausbreitung stark; MUF hoch, lange Sprünge möglich.",
                          "fr": "Forte activité solaire  SFI={sfi}, SSN={ssn} — excellent pour DX 10m à 17m. Propagation F2 forte; MUF élevée, longs sauts possibles.",
-                         "it": "Alta attività solare  SFI={sfi}, SSN={ssn} — eccellente per DX 10m-17m. Propagazione F2 forte; MUF alta, salti lunghi possibili."},
+                         "it": "Alta attività solare  SFI={sfi}, SSN={ssn} — eccellente per DX 10m-17m. Propagazione F2 forte; MUF alta, salti lunghi possibili.",
+                         "es": "Alta actividad solar  SFI={sfi}, SSN={ssn} — excelente para DX 10m a 17m. Propagación F2 fuerte; MUF alta, saltos largos posibles."},
     "adv_sol_good":     {"nl": "Goede zonactiviteit  SFI={sfi}, SSN={ssn} — 20m en 17m zijn primaire DX-banden; 15m kan open zijn. Verwacht betrouwbare F2-propagatie overdag.",
                          "en": "Good solar activity  SFI={sfi}, SSN={ssn} — 20m and 17m are primary DX bands; 15m may be open. Expect reliable F2 propagation during the day.",
                          "de": "Gute Sonnenaktivität  SFI={sfi}, SSN={ssn} — 20m und 17m sind primäre DX-Bänder; 15m kann offen sein. Zuverlässige F2-Ausbreitung tagsüber.",
                          "fr": "Bonne activité solaire  SFI={sfi}, SSN={ssn} — 20m et 17m sont les bandes DX primaires; 15m peut être ouverte. Propagation F2 fiable la journée.",
-                         "it": "Buona attività solare  SFI={sfi}, SSN={ssn} — 20m e 17m sono le bande DX primarie; 15m potrebbe essere aperta. Propagazione F2 affidabile di giorno."},
+                         "it": "Buona attività solare  SFI={sfi}, SSN={ssn} — 20m e 17m sono le bande DX primarie; 15m potrebbe essere aperta. Propagazione F2 affidabile di giorno.",
+                         "es": "Buena actividad solar  SFI={sfi}, SSN={ssn} — 20m y 17m son las bandas DX principales; 15m puede estar abierta. Propagación F2 fiable durante el día."},
     "adv_sol_moderate": {"nl": "Matige zonactiviteit  SFI={sfi}, SSN={ssn} — 20m/40m meest betrouwbaar. Hoge banden onzeker; 80m goed voor regionaal verkeer.",
                          "en": "Moderate solar activity  SFI={sfi}, SSN={ssn} — 20m/40m most reliable. High bands uncertain; 80m good for regional traffic.",
                          "de": "Mäßige Sonnenaktivität  SFI={sfi}, SSN={ssn} — 20m/40m am zuverlässigsten. Hohe Bänder unsicher; 80m gut für regionalen Verkehr.",
                          "fr": "Activité solaire modérée  SFI={sfi}, SSN={ssn} — 20m/40m les plus fiables. Hautes bandes incertaines; 80m bon pour trafic régional.",
-                         "it": "Attività solare moderata  SFI={sfi}, SSN={ssn} — 20m/40m più affidabili. Bande alte incerte; 80m buono per traffico regionale."},
+                         "it": "Attività solare moderata  SFI={sfi}, SSN={ssn} — 20m/40m più affidabili. Bande alte incerte; 80m buono per traffico regionale.",
+                         "es": "Actividad solar moderada  SFI={sfi}, SSN={ssn} — 20m/40m más fiables. Bandas altas inciertas; 80m buena para tráfico regional."},
     "adv_sol_low":      {"nl": "Lage zonactiviteit  SFI={sfi}, SSN={ssn} — 40m en 80m bieden meeste kans op verbindingen. Banden ≥15m grotendeels dicht; 160m voor nacht-DX.",
                          "en": "Low solar activity  SFI={sfi}, SSN={ssn} — 40m and 80m offer most chances. Bands ≥15m mostly closed; 160m for night DX.",
                          "de": "Niedrige Sonnenaktivität  SFI={sfi}, SSN={ssn} — 40m und 80m bieten die meisten Chancen. Bänder ≥15m größtenteils geschlossen; 160m für Nacht-DX.",
                          "fr": "Faible activité solaire  SFI={sfi}, SSN={ssn} — 40m et 80m offrent le plus de chances. Bandes ≥15m surtout fermées; 160m pour DX nocturne.",
-                         "it": "Bassa attività solare  SFI={sfi}, SSN={ssn} — 40m e 80m offrono più possibilità. Bande ≥15m per lo più chiuse; 160m per DX notturno."},
+                         "it": "Bassa attività solare  SFI={sfi}, SSN={ssn} — 40m e 80m offrono più possibilità. Bande ≥15m per lo più chiuse; 160m per DX notturno.",
+                         "es": "Baja actividad solar  SFI={sfi}, SSN={ssn} — 40m y 80m ofrecen más posibilidades. Bandas ≥15m mayormente cerradas; 160m para DX nocturno."},
     "adv_sw_stormy":    {"nl": "Stormachtige solarwind  v={spd} km/s, Bz={bz} nT — verhoogde kans op CME-impact; K-index kan snel stijgen. Monitor condities actief.",
                          "en": "Stormy solar wind  v={spd} km/s, Bz={bz} nT — increased chance of CME impact; K-index may rise quickly. Monitor conditions actively.",
                          "de": "Stürmischer Sonnenwind  v={spd} km/s, Bz={bz} nT — erhöhte CME-Einschlagsgefahr; K-Index kann schnell steigen. Bedingungen aktiv überwachen.",
                          "fr": "Vent solaire tempétueux  v={spd} km/s, Bz={bz} nT — risque CME accru; K-index peut monter vite. Surveiller activement.",
-                         "it": "Vento solare tempestoso  v={spd} km/s, Bz={bz} nT — aumento rischio CME; K-index può salire rapidamente. Monitorare le condizioni."},
+                         "it": "Vento solare tempestoso  v={spd} km/s, Bz={bz} nT — aumento rischio CME; K-index può salire rapidamente. Monitorare le condizioni.",
+                         "es": "Viento solar tormentoso  v={spd} km/s, Bz={bz} nT — mayor riesgo de impacto CME; índice K puede subir rápido. Monitorear condiciones activamente."},
     "adv_sw_elevated":  {"nl": "Verhoogde solarwind  v={spd} km/s, Bz={bz} nT — Bz negatief koppelt aan aardveld → K-stijging mogelijk. Lagere banden aanhouden.",
                          "en": "Elevated solar wind  v={spd} km/s, Bz={bz} nT — negative Bz couples to Earth's field → K-index rise possible. Stick to lower bands.",
                          "de": "Erhöhter Sonnenwind  v={spd} km/s, Bz={bz} nT — negatives Bz koppelt an Erdfeld → K-Anstieg möglich. Niedrigere Bänder bevorzugen.",
                          "fr": "Vent solaire élevé  v={spd} km/s, Bz={bz} nT — Bz négatif couplé au champ terrestre → hausse K possible. Rester sur les bandes basses.",
-                         "it": "Vento solare elevato  v={spd} km/s, Bz={bz} nT — Bz negativo si accoppia al campo terrestre → possibile aumento K. Preferire le bande basse."},
+                         "it": "Vento solare elevato  v={spd} km/s, Bz={bz} nT — Bz negativo si accoppia al campo terrestre → possibile aumento K. Preferire le bande basse.",
+                         "es": "Viento solar elevado  v={spd} km/s, Bz={bz} nT — Bz negativo se acopla al campo terrestre → posible aumento de K. Mantener bandas bajas."},
     "adv_sw_calm":      {"nl": "Rustige solarwind  v={spd} km/s, Bz={bz} nT — positieve Bz beschermt aardveld. Stabiele condities.",
                          "en": "Calm solar wind  v={spd} km/s, Bz={bz} nT — positive Bz shields Earth's field. Stable conditions.",
                          "de": "Ruhiger Sonnenwind  v={spd} km/s, Bz={bz} nT — positives Bz schützt Erdfeld. Stabile Bedingungen.",
                          "fr": "Vent solaire calme  v={spd} km/s, Bz={bz} nT — Bz positif protège le champ terrestre. Conditions stables.",
-                         "it": "Vento solare calmo  v={spd} km/s, Bz={bz} nT — Bz positivo protegge il campo terrestre. Condizioni stabili."},
+                         "it": "Vento solare calmo  v={spd} km/s, Bz={bz} nT — Bz positivo protegge il campo terrestre. Condizioni stabili.",
+                         "es": "Viento solar tranquilo  v={spd} km/s, Bz={bz} nT — Bz positivo protege el campo terrestre. Condiciones estables."},
     "adv_sw_normal":    {"nl": "Normale solarwind  v={spd} km/s, Bz={bz} nT — geen direct effect op propagatie verwacht.",
                          "en": "Normal solar wind  v={spd} km/s, Bz={bz} nT — no direct effect on propagation expected.",
                          "de": "Normaler Sonnenwind  v={spd} km/s, Bz={bz} nT — kein direkter Einfluss auf die Ausbreitung erwartet.",
                          "fr": "Vent solaire normal  v={spd} km/s, Bz={bz} nT — aucun effet direct sur la propagation attendu.",
-                         "it": "Vento solare normale  v={spd} km/s, Bz={bz} nT — nessun effetto diretto sulla propagazione atteso."},
+                         "it": "Vento solare normale  v={spd} km/s, Bz={bz} nT — nessun effetto diretto sulla propagazione atteso.",
+                         "es": "Viento solar normal  v={spd} km/s, Bz={bz} nT — sin efecto directo en la propagación esperado."},
     "adv_pf_s5":        {"nl": "ERNSTIG proton event S5  ({pf} pfu) — Polar Cap Absorption actief. Alle poolroutes volledig geblokkeerd 3–7 dagen. Gebruik equatoriale paden (20m/17m).",
                          "en": "SEVERE proton event S5  ({pf} pfu) — Polar Cap Absorption active. All polar routes fully blocked 3–7 days. Use equatorial paths (20m/17m).",
                          "de": "SCHWERES Proton-Event S5  ({pf} pfu) — Polar Cap Absorption aktiv. Alle Polarrouten 3–7 Tage vollständig gesperrt. Äquatorialwege nutzen (20m/17m).",
                          "fr": "Événement proton GRAVE S5  ({pf} pfu) — Absorption Polaire active. Toutes les routes polaires bloquées 3–7 jours. Utiliser les chemins équatoriaux (20m/17m).",
-                         "it": "Evento protonico GRAVE S5  ({pf} pfu) — Polar Cap Absorption attiva. Tutte le rotte polari bloccate 3–7 giorni. Usare percorsi equatoriali (20m/17m)."},
+                         "it": "Evento protonico GRAVE S5  ({pf} pfu) — Polar Cap Absorption attiva. Tutte le rotte polari bloccate 3–7 giorni. Usare percorsi equatoriali (20m/17m).",
+                         "es": "Evento de protones GRAVE S5  ({pf} pfu) — Polar Cap Absorption activa. Todas las rutas polares bloqueadas 3–7 días. Usar rutas ecuatoriales (20m/17m)."},
     "adv_pf_s3":        {"nl": "Proton event S3  ({pf} pfu) — PCA actief: poolroutes (EU→JA/W via pool) geblokkeerd 2–4 dagen. 160m/80m/40m poolpaden onbruikbaar.",
                          "en": "Proton event S3  ({pf} pfu) — PCA active: polar routes (EU→JA/W via pole) blocked 2–4 days. 160m/80m/40m polar paths unusable.",
                          "de": "Proton-Event S3  ({pf} pfu) — PCA aktiv: Polarrouten (EU→JA/W via Pol) 2–4 Tage gesperrt. 160m/80m/40m Polarwege unbrauchbar.",
                          "fr": "Événement proton S3  ({pf} pfu) — PCA actif: routes polaires (EU→JA/W via pôle) bloquées 2–4 jours. 160m/80m/40m inutilisables.",
-                         "it": "Evento protonico S3  ({pf} pfu) — PCA attiva: rotte polari (EU→JA/W via polo) bloccate 2–4 giorni. 160m/80m/40m percorsi polari inutilizzabili."},
+                         "it": "Evento protonico S3  ({pf} pfu) — PCA attiva: rotte polari (EU→JA/W via polo) bloccate 2–4 giorni. 160m/80m/40m percorsi polari inutilizzabili.",
+                         "es": "Evento de protones S3  ({pf} pfu) — PCA activa: rutas polares (EU→JA/W via polo) bloqueadas 2–4 días. 160m/80m/40m rutas polares inutilizables."},
     "adv_pf_s1":        {"nl": "Verhoogde proton flux S1  ({pf} pfu) — PCA begint mogelijk. Monitor poolroutes op 40m. Kans op verdere escalatie bij actieve vlammenactiviteit.",
                          "en": "Elevated proton flux S1  ({pf} pfu) — PCA may begin. Monitor polar routes on 40m. Chance of further escalation with active flare activity.",
                          "de": "Erhöhter Protonenfluss S1  ({pf} pfu) — PCA kann beginnen. Polarrouten auf 40m überwachen. Chance auf weitere Eskalation bei Flares.",
                          "fr": "Flux proton élevé S1  ({pf} pfu) — PCA peut commencer. Surveiller les routes polaires sur 40m. Risque d'escalade en cas d'éruptions.",
-                         "it": "Flusso protonico elevato S1  ({pf} pfu) — PCA può iniziare. Monitorare le rotte polari su 40m. Possibilità di escalation con brillamenti attivi."},
+                         "it": "Flusso protonico elevato S1  ({pf} pfu) — PCA può iniziare. Monitorare le rotte polari su 40m. Possibilità di escalation con brillamenti attivi.",
+                         "es": "Flujo de protones elevado S1  ({pf} pfu) — PCA puede comenzar. Monitorear rutas polares en 40m. Posibilidad de escalada con actividad de destellos."},
     "adv_pf_normal":    {"nl": "Proton flux normaal  ({pf} pfu) — geen Polar Cap Absorption. Poolroutes niet door proton flux beïnvloed.",
                          "en": "Proton flux normal  ({pf} pfu) — no Polar Cap Absorption. Polar routes unaffected by proton flux.",
                          "de": "Protonenfluss normal  ({pf} pfu) — keine Polar Cap Absorption. Polarrouten nicht durch Protonenfluss beeinflusst.",
                          "fr": "Flux proton normal  ({pf} pfu) — pas d'absorption polaire. Routes polaires non affectées par le flux proton.",
-                         "it": "Flusso protonico normale  ({pf} pfu) — nessuna Polar Cap Absorption. Rotte polari non influenzate dal flusso protonico."},
+                         "it": "Flusso protonico normale  ({pf} pfu) — nessuna Polar Cap Absorption. Rotte polari non influenzate dal flusso protonico.",
+                         "es": "Flujo de protones normal  ({pf} pfu) — sin Polar Cap Absorption. Rutas polares no afectadas por flujo de protones."},
     "adv_xflare_x":     {"nl": "X-flare gedetecteerd  ({xray}) — Short Wave Fadeout (SWF) mogelijk op dag-zijde; HF tijdelijk geblokkeerd. Herstel verwacht binnen 15–60 min.",
                          "en": "X-flare detected  ({xray}) — Short Wave Fadeout (SWF) possible on dayside; HF temporarily blocked. Recovery expected within 15–60 min.",
                          "de": "X-Flare erkannt  ({xray}) — Short Wave Fadeout (SWF) auf der Tagseite möglich; KW vorübergehend blockiert. Erholung in 15–60 min erwartet.",
                          "fr": "Éruption X détectée  ({xray}) — Short Wave Fadeout (SWF) possible côté jour; HF temporairement bloqué. Rétablissement dans 15–60 min.",
-                         "it": "Brillamento X rilevato  ({xray}) — Short Wave Fadeout (SWF) possibile sul lato giorno; HF temporaneamente bloccato. Ripristino entro 15–60 min."},
+                         "it": "Brillamento X rilevato  ({xray}) — Short Wave Fadeout (SWF) possibile sul lato giorno; HF temporaneamente bloccato. Ripristino entro 15–60 min.",
+                         "es": "Destello X detectado  ({xray}) — Short Wave Fadeout (SWF) posible en el lado diurno; HF temporalmente bloqueado. Recuperación esperada en 15–60 min."},
     "adv_xflare_m":     {"nl": "M-flare actief  ({xray}) — lichte SWF mogelijk op lagere HF. Verhoogde kans op Proton Event (PCA) bij M5+.",
                          "en": "M-flare active  ({xray}) — minor SWF possible on lower HF. Increased chance of Proton Event (PCA) at M5+.",
                          "de": "M-Flare aktiv  ({xray}) — leichter SWF auf niedrigem KW möglich. Erhöhte Chance auf Proton-Event (PCA) bei M5+.",
                          "fr": "Éruption M active  ({xray}) — SWF léger possible sur HF bas. Risque accru d'événement proton (PCA) à M5+.",
-                         "it": "Brillamento M attivo  ({xray}) — SWF lieve possibile sulle HF basse. Aumento rischio Proton Event (PCA) a M5+."},
+                         "it": "Brillamento M attivo  ({xray}) — SWF lieve possibile sulle HF basse. Aumento rischio Proton Event (PCA) a M5+.",
+                         "es": "Destello M activo  ({xray}) — SWF leve posible en HF bajas. Mayor riesgo de Evento de Protones (PCA) en M5+."},
     "adv_muf_28":       {"nl": "MUF={muf} MHz — 10m t/m 20m alle open; F2-laag optimaal",
                          "en": "MUF={muf} MHz — 10m through 20m all open; F2 layer optimal",
                          "de": "MUF={muf} MHz — 10m bis 20m alle offen; F2-Schicht optimal",
                          "fr": "MUF={muf} MHz — 10m à 20m toutes ouvertes; couche F2 optimale",
-                         "it": "MUF={muf} MHz — da 10m a 20m tutte aperte; strato F2 ottimale"},
+                         "it": "MUF={muf} MHz — da 10m a 20m tutte aperte; strato F2 ottimale",
+                         "es": "MUF={muf} MHz — 10m a 20m todos abiertos; capa F2 óptima"},
     "adv_muf_14":       {"nl": "MUF={muf} MHz — 20m open; banden > {muf0} MHz dicht",
                          "en": "MUF={muf} MHz — 20m open; bands > {muf0} MHz closed",
                          "de": "MUF={muf} MHz — 20m offen; Bänder > {muf0} MHz geschlossen",
                          "fr": "MUF={muf} MHz — 20m ouverte; bandes > {muf0} MHz fermées",
-                         "it": "MUF={muf} MHz — 20m aperta; bande > {muf0} MHz chiuse"},
+                         "it": "MUF={muf} MHz — 20m aperta; bande > {muf0} MHz chiuse",
+                         "es": "MUF={muf} MHz — 20m abierta; bandas > {muf0} MHz cerradas"},
     "adv_muf_7":        {"nl": "MUF={muf} MHz — alleen 40m–80m bruikbaar",
                          "en": "MUF={muf} MHz — only 40m–80m usable",
                          "de": "MUF={muf} MHz — nur 40m–80m nutzbar",
                          "fr": "MUF={muf} MHz — seulement 40m–80m utilisables",
-                         "it": "MUF={muf} MHz — solo 40m–80m utilizzabili"},
+                         "it": "MUF={muf} MHz — solo 40m–80m utilizzabili",
+                         "es": "MUF={muf} MHz — solo 40m–80m utilizables"},
     "adv_muf_low":      {"nl": "MUF={muf} MHz — ionosfeer zwak; alleen 80m/160m",
                          "en": "MUF={muf} MHz — ionosphere weak; only 80m/160m",
                          "de": "MUF={muf} MHz — Ionosphäre schwach; nur 80m/160m",
                          "fr": "MUF={muf} MHz — ionosphère faible; seulement 80m/160m",
-                         "it": "MUF={muf} MHz — ionosfera debole; solo 80m/160m"},
+                         "it": "MUF={muf} MHz — ionosfera debole; solo 80m/160m",
+                         "es": "MUF={muf} MHz — ionosfera débil; solo 80m/160m"},
     "adv_iono_fmt":     {"nl": "Ionosfeer: {muf_txt}. Geschatte LUF ≈ {luf} MHz ({luf_note}).",
                          "en": "Ionosphere: {muf_txt}. Estimated LUF ≈ {luf} MHz ({luf_note}).",
                          "de": "Ionosphäre: {muf_txt}. Geschätzte LUF ≈ {luf} MHz ({luf_note}).",
                          "fr": "Ionosphère: {muf_txt}. LUF estimée ≈ {luf} MHz ({luf_note}).",
-                         "it": "Ionosfera: {muf_txt}. LUF stimata ≈ {luf} MHz ({luf_note})."},
-    "adv_luf_elevated": {"nl": "verhoogd door K-index", "en": "elevated by K-index", "de": "durch K-Index erhöht", "fr": "élevée par K-index", "it": "elevata dall'indice K"},
-    "adv_luf_normal":   {"nl": "normaal",               "en": "normal",              "de": "normal",               "fr": "normal",              "it": "normale"},
+                         "it": "Ionosfera: {muf_txt}. LUF stimata ≈ {luf} MHz ({luf_note}).",
+                         "es": "Ionosfera: {muf_txt}. LUF estimada ≈ {luf} MHz ({luf_note})."},
+    "adv_luf_elevated": {"nl": "verhoogd door K-index", "en": "elevated by K-index", "de": "durch K-Index erhöht", "fr": "élevée par K-index", "it": "elevata dall'indice K", "es": "elevada por índice K"},
+    "adv_luf_normal":   {"nl": "normaal",               "en": "normal",              "de": "normal",               "fr": "normal",              "it": "normale",              "es": "normal"},
     "adv_morning":      {"nl": "Ochtend ({h}:xx lokaal) — F2-laag bouwt op; 20m wordt snel bruikbaar. Grey-line kansen voor DX-paden richting Amerika en Azië.",
                          "en": "Morning ({h}:xx local) — F2 layer building up; 20m becoming usable quickly. Grey-line chances for DX paths towards America and Asia.",
                          "de": "Morgen ({h}:xx lokal) — F2-Schicht baut sich auf; 20m wird schnell nutzbar. Grauzonenchancen für DX-Wege in Richtung Amerika und Asien.",
                          "fr": "Matin ({h}:xx local) — couche F2 en formation; 20m bientôt utilisable. Opportunités grey-line vers l'Amérique et l'Asie.",
-                         "it": "Mattino ({h}:xx locale) — strato F2 in formazione; 20m presto utilizzabile. Opportunità grey-line verso America e Asia."},
+                         "it": "Mattino ({h}:xx locale) — strato F2 in formazione; 20m presto utilizzabile. Opportunità grey-line verso America e Asia.",
+                         "es": "Mañana ({h}:xx local) — capa F2 formándose; 20m pronto utilizable. Oportunidades grey-line para rutas DX hacia América y Asia."},
     "adv_midday":       {"nl": "Middag ({h}:xx lokaal) — F2 op maximale hoogte; beste window voor 15m/17m/20m DX. Probeer SSB of FT8 voor trans-Atlantische verbindingen.",
                          "en": "Midday ({h}:xx local) — F2 at maximum height; best window for 15m/17m/20m DX. Try SSB or FT8 for trans-Atlantic contacts.",
                          "de": "Mittag ({h}:xx lokal) — F2 auf maximaler Höhe; bestes Fenster für 15m/17m/20m DX. SSB oder FT8 für Transatlantik-Verbindungen.",
                          "fr": "Midi ({h}:xx local) — F2 à son maximum; meilleure fenêtre pour DX 15m/17m/20m. Essayer SSB ou FT8 pour liaisons transatlantiques.",
-                         "it": "Mezzogiorno ({h}:xx locale) — F2 al massimo; miglior finestra per DX 15m/17m/20m. Prova SSB o FT8 per collegamenti transatlantici."},
+                         "it": "Mezzogiorno ({h}:xx locale) — F2 al massimo; miglior finestra per DX 15m/17m/20m. Prova SSB o FT8 per collegamenti transatlantici.",
+                         "es": "Mediodía ({h}:xx local) — F2 en su máximo; mejor ventana para DX 15m/17m/20m. Probar SSB o FT8 para contactos transatlánticos."},
     "adv_afternoon":    {"nl": "Namiddag ({h}:xx lokaal) — Grey-line nadert; uitstekend voor DX richting Azië en Pacific. 15m en 17m vaak prachtig in deze uren.",
                          "en": "Afternoon ({h}:xx local) — Grey-line approaching; excellent for DX towards Asia and Pacific. 15m and 17m often excellent at this time.",
                          "de": "Nachmittag ({h}:xx lokal) — Grauzone nähert sich; ausgezeichnet für DX in Richtung Asien und Pazifik. 15m und 17m oft hervorragend.",
                          "fr": "Après-midi ({h}:xx local) — Grey-line approche; excellent pour DX vers l'Asie et le Pacifique. 15m et 17m souvent superbes.",
-                         "it": "Pomeriggio ({h}:xx locale) — Grey-line in avvicinamento; eccellente per DX verso Asia e Pacifico. 15m e 17m spesso ottimi."},
+                         "it": "Pomeriggio ({h}:xx locale) — Grey-line in avvicinamento; eccellente per DX verso Asia e Pacifico. 15m e 17m spesso ottimi.",
+                         "es": "Tarde ({h}:xx local) — Grey-line aproximándose; excelente para DX hacia Asia y Pacífico. 15m y 17m a menudo excelentes en estas horas."},
     "adv_early_night":  {"nl": "Vroege nacht ({h}:xx lokaal) — 40m en 80m open voor regionaal Europa-verkeer. F2-laag daalt; LUF stijgt op korte paden.",
                          "en": "Early night ({h}:xx local) — 40m and 80m open for regional European traffic. F2 layer falling; LUF rising on short paths.",
                          "de": "Frühe Nacht ({h}:xx lokal) — 40m und 80m offen für regionalen Europa-Verkehr. F2-Schicht sinkt; LUF steigt auf kurzen Wegen.",
                          "fr": "Début de nuit ({h}:xx local) — 40m et 80m ouverts pour trafic régional européen. Couche F2 en baisse; LUF monte sur courts trajets.",
-                         "it": "Prima notte ({h}:xx locale) — 40m e 80m aperti per traffico regionale europeo. Strato F2 in discesa; LUF in aumento su percorsi brevi."},
+                         "it": "Prima notte ({h}:xx locale) — 40m e 80m aperti per traffico regionale europeo. Strato F2 in discesa; LUF in aumento su percorsi brevi.",
+                         "es": "Primera noche ({h}:xx local) — 40m y 80m abiertos para tráfico regional europeo. Capa F2 bajando; LUF subiendo en rutas cortas."},
     "adv_night":        {"nl": "Nacht ({h}:xx lokaal) — 160m en 80m actief voor trans-Atlantisch DX. 40m goed voor Noord-Amerika. FT8 op lage banden voor DX-afstanden > 5000 km.",
                          "en": "Night ({h}:xx local) — 160m and 80m active for trans-Atlantic DX. 40m good for North America. FT8 on low bands for DX distances > 5000 km.",
                          "de": "Nacht ({h}:xx lokal) — 160m und 80m aktiv für transatlantisches DX. 40m gut für Nordamerika. FT8 auf niedrigen Bändern für DX > 5000 km.",
                          "fr": "Nuit ({h}:xx local) — 160m et 80m actifs pour DX transatlantique. 40m bon pour l'Amérique du Nord. FT8 sur bandes basses pour DX > 5000 km.",
-                         "it": "Notte ({h}:xx locale) — 160m e 80m attivi per DX transatlantico. 40m buono per il Nord America. FT8 sulle bande basse per DX > 5000 km."},
+                         "it": "Notte ({h}:xx locale) — 160m e 80m attivi per DX transatlantico. 40m buono per il Nord America. FT8 sulle bande basse per DX > 5000 km.",
+                         "es": "Noche ({h}:xx local) — 160m y 80m activos para DX transatlántico. 40m buena para América del Norte. FT8 en bandas bajas para DX > 5000 km."},
     "adv_pre_morning":  {"nl": "Voor de ochtend ({h}:xx lokaal) — Grey-line nadert; 80m/40m DX-window naar Azië/Pacific. 20m begint te openen richting Amerika.",
                          "en": "Pre-dawn ({h}:xx local) — Grey-line approaching; 80m/40m DX window towards Asia/Pacific. 20m starting to open towards America.",
                          "de": "Vor dem Morgen ({h}:xx lokal) — Grauzone nähert sich; 80m/40m DX-Fenster nach Asien/Pazifik. 20m beginnt sich in Richtung Amerika zu öffnen.",
                          "fr": "Avant l'aube ({h}:xx local) — Grey-line approche; fenêtre DX 80m/40m vers Asie/Pacifique. 20m commence à s'ouvrir vers l'Amérique.",
-                         "it": "Prima dell'alba ({h}:xx locale) — Grey-line in avvicinamento; finestra DX 80m/40m verso Asia/Pacifico. 20m inizia ad aprirsi verso l'America."},
+                         "it": "Prima dell'alba ({h}:xx locale) — Grey-line in avvicinamento; finestra DX 80m/40m verso Asia/Pacifico. 20m inizia ad aprirsi verso l'America.",
+                         "es": "Antes del amanecer ({h}:xx local) — Grey-line aproximándose; ventana DX 80m/40m hacia Asia/Pacífico. 20m empieza a abrirse hacia América."},
     "adv_mode_weak":    {"nl": "Modus-advies: condities zwak ({pct}% op {band}) — overweeg FT8 (+25 dB winst t.o.v. SSB) of CW (+10 dB). Huidig SNR-budget: {snr} dB.",
                          "en": "Mode advice: conditions weak ({pct}% on {band}) — consider FT8 (+25 dB gain over SSB) or CW (+10 dB). Current SNR budget: {snr} dB.",
                          "de": "Modusempfehlung: Bedingungen schwach ({pct}% auf {band}) — FT8 (+25 dB gegenüber SSB) oder CW (+10 dB) erwägen. Aktuelles SNR-Budget: {snr} dB.",
                          "fr": "Conseil de mode: conditions faibles ({pct}% sur {band}) — envisager FT8 (+25 dB gain vs SSB) ou CW (+10 dB). Budget SNR actuel: {snr} dB.",
-                         "it": "Consiglio modo: condizioni deboli ({pct}% su {band}) — considerare FT8 (+25 dB guadagno su SSB) o CW (+10 dB). Budget SNR attuale: {snr} dB."},
+                         "it": "Consiglio modo: condizioni deboli ({pct}% su {band}) — considerare FT8 (+25 dB guadagno su SSB) o CW (+10 dB). Budget SNR attuale: {snr} dB.",
+                         "es": "Consejo de modo: condiciones débiles ({pct}% en {band}) — considerar FT8 (+25 dB ganancia sobre SSB) o CW (+10 dB). Presupuesto SNR actual: {snr} dB."},
     "adv_mode_good":    {"nl": "Modus-advies: goede condities ({pct}% op {band}) — SSB goed bruikbaar. SNR-budget {snr} dB; verhoog vermogen of verbeter antenne voor meer bereik.",
                          "en": "Mode advice: good conditions ({pct}% on {band}) — SSB well usable. SNR budget {snr} dB; increase power or improve antenna for more range.",
                          "de": "Modusempfehlung: gute Bedingungen ({pct}% auf {band}) — SSB gut nutzbar. SNR-Budget {snr} dB; Leistung erhöhen oder Antenne verbessern.",
                          "fr": "Conseil de mode: bonnes conditions ({pct}% sur {band}) — SSB bien utilisable. Budget SNR {snr} dB; augmenter la puissance ou améliorer l'antenne.",
-                         "it": "Consiglio modo: buone condizioni ({pct}% su {band}) — SSB ben utilizzabile. Budget SNR {snr} dB; aumentare potenza o migliorare antenna."},
+                         "it": "Consiglio modo: buone condizioni ({pct}% su {band}) — SSB ben utilizzabile. Budget SNR {snr} dB; aumentare potenza o migliorare antenna.",
+                         "es": "Consejo de modo: buenas condiciones ({pct}% en {band}) — SSB bien utilizable. Presupuesto SNR {snr} dB; aumentar potencia o mejorar antena para más alcance."},
     "adv_mode_default": {"nl": "Modus-advies: {mode} passend bij huidig {pct}% op {band}. SNR-budget: {snr} dB. FT8 geeft altijd +25 dB extra marge.",
                          "en": "Mode advice: {mode} suitable for current {pct}% on {band}. SNR budget: {snr} dB. FT8 always gives +25 dB extra margin.",
                          "de": "Modusempfehlung: {mode} passend für aktuelle {pct}% auf {band}. SNR-Budget: {snr} dB. FT8 gibt immer +25 dB extra Marge.",
                          "fr": "Conseil de mode: {mode} adapté aux {pct}% actuels sur {band}. Budget SNR: {snr} dB. FT8 donne toujours +25 dB de marge supplémentaire.",
-                         "it": "Consiglio modo: {mode} adatto all'attuale {pct}% su {band}. Budget SNR: {snr} dB. FT8 dà sempre +25 dB di margine extra."},
+                         "it": "Consiglio modo: {mode} adatto all'attuale {pct}% su {band}. Budget SNR: {snr} dB. FT8 dà sempre +25 dB di margine extra.",
+                         "es": "Consejo de modo: {mode} adecuado para el {pct}% actual en {band}. Presupuesto SNR: {snr} dB. FT8 siempre da +25 dB de margen extra."},
     "adv_abs_high":     {"nl": "Auroraal absorptie verhoogd (K={k}, QTH {lat}°) — trans-polaire paden (Europa→Canada, Europa→Japan via pool) sterk verzwakt. Gebruik equatoriale routes via 20m/17m.",
                          "en": "Auroral absorption elevated (K={k}, QTH {lat}°) — trans-polar paths (Europe→Canada, Europe→Japan via pole) strongly attenuated. Use equatorial routes via 20m/17m.",
                          "de": "Polare Absorption erhöht (K={k}, QTH {lat}°) — transpolare Wege (Europa→Kanada, Europa→Japan via Pol) stark gedämpft. Äquatorialrouten über 20m/17m nutzen.",
                          "fr": "Absorption aurorale élevée (K={k}, QTH {lat}°) — chemins trans-polaires (Europe→Canada, Europe→Japon via pôle) fortement atténués. Utiliser routes équatoriales via 20m/17m.",
-                         "it": "Assorbimento aurorale elevato (K={k}, QTH {lat}°) — percorsi trans-polari (Europa→Canada, Europa→Giappone via polo) fortemente attenuati. Usare rotte equatoriali via 20m/17m."},
+                         "it": "Assorbimento aurorale elevato (K={k}, QTH {lat}°) — percorsi trans-polari (Europa→Canada, Europa→Giappone via polo) fortemente attenuati. Usare rotte equatoriali via 20m/17m.",
+                         "es": "Absorción auroral elevada (K={k}, QTH {lat}°) — rutas trans-polares (Europa→Canadá, Europa→Japón via polo) fuertemente atenuadas. Usar rutas ecuatoriales via 20m/17m."},
     "adv_abs_low":      {"nl": "Lichte absorptie mogelijk (K={k}, QTH {lat}°) — poolpaden kunnen sporadisch verstoord zijn. Monitor 40m voor bruikbaarheid.",
                          "en": "Minor absorption possible (K={k}, QTH {lat}°) — polar paths may be sporadically disturbed. Monitor 40m for usability.",
                          "de": "Leichte Absorption möglich (K={k}, QTH {lat}°) — Polarwege können sporadisch gestört sein. 40m auf Nutzbarkeit überwachen.",
                          "fr": "Légère absorption possible (K={k}, QTH {lat}°) — chemins polaires peuvent être sporadiquement perturbés. Surveiller 40m.",
-                         "it": "Assorbimento lieve possibile (K={k}, QTH {lat}°) — percorsi polari possono essere sporadicamente disturbati. Monitorare 40m."},
+                         "it": "Assorbimento lieve possibile (K={k}, QTH {lat}°) — percorsi polari possono essere sporadicamente disturbati. Monitorare 40m.",
+                         "es": "Absorción leve posible (K={k}, QTH {lat}°) — rutas polares pueden estar esporádicamente perturbadas. Monitorear 40m."},
     "adv_es_high":      {"nl": "Sporadic-E kans HOOG (maand {month}, {h}:xx lok.) — 6m/4m/2m kunnen onverwacht opengaan voor afstanden van 700–2500 km. Monitor 50.313 (FT8) en 50.150 (SSB). Typisch 15–90 min durend.",
                          "en": "Sporadic-E chance HIGH (month {month}, {h}:xx local) — 6m/4m/2m may unexpectedly open for distances of 700–2500 km. Monitor 50.313 (FT8) and 50.150 (SSB). Typically 15–90 min duration.",
                          "de": "Sporadic-E Chance HOCH (Monat {month}, {h}:xx lokal) — 6m/4m/2m können unerwartet für 700–2500 km öffnen. 50.313 (FT8) und 50.150 (SSB) überwachen. Typisch 15–90 min.",
                          "fr": "Chance Sporadic-E ÉLEVÉE (mois {month}, {h}:xx local) — 6m/4m/2m peuvent s'ouvrir inopinément sur 700–2500 km. Surveiller 50.313 (FT8) et 50.150 (SSB). Typiquement 15–90 min.",
-                         "it": "Probabilità Sporadic-E ALTA (mese {month}, {h}:xx locale) — 6m/4m/2m possono aprirsi inaspettatamente per distanze 700–2500 km. Monitorare 50.313 (FT8) e 50.150 (SSB). Tipicamente 15–90 min."},
+                         "it": "Probabilità Sporadic-E ALTA (mese {month}, {h}:xx locale) — 6m/4m/2m possono aprirsi inaspettatamente per distanze 700–2500 km. Monitorare 50.313 (FT8) e 50.150 (SSB). Tipicamente 15–90 min.",
+                         "es": "Probabilidad Sporadic-E ALTA (mes {month}, {h}:xx local) — 6m/4m/2m pueden abrirse inesperadamente para distancias de 700–2500 km. Monitorear 50.313 (FT8) y 50.150 (SSB). Típicamente 15–90 min de duración."},
     "adv_es_seasonal":  {"nl": "Sporadic-E seizoen actief (maand {month}) maar buiten piekuren — kans op 6m/4m opens is laag; meest actief 09–14h en 17–22h lokaal.",
                          "en": "Sporadic-E season active (month {month}) but outside peak hours — chance of 6m/4m openings low; most active 09–14h and 17–22h local.",
                          "de": "Sporadic-E-Saison aktiv (Monat {month}), aber außerhalb der Spitzenstunden — Chance auf 6m/4m-Öffnungen gering; am aktivsten 09–14h und 17–22h lokal.",
                          "fr": "Saison Sporadic-E active (mois {month}) mais hors heures de pointe — probabilité d'ouvertures 6m/4m faible; plus actif 09–14h et 17–22h local.",
-                         "it": "Stagione Sporadic-E attiva (mese {month}) ma fuori dalle ore di punta — probabilità di aperture 6m/4m bassa; più attiva 09–14h e 17–22h locale."},
+                         "it": "Stagione Sporadic-E attiva (mese {month}) ma fuori dalle ore di punta — probabilità di aperture 6m/4m bassa; più attiva 09–14h e 17–22h locale.",
+                         "es": "Temporada Sporadic-E activa (mes {month}) pero fuera de horas pico — probabilidad de aperturas 6m/4m baja; más activo 09–14h y 17–22h local."},
     "adv_es_winter":    {"nl": "Winter-Es mogelijk (maand {month}, {h}:xx lok.) — zeldzame maar plotselinge openingen op 6m; monitor 50.313 MHz.",
                          "en": "Winter-Es possible (month {month}, {h}:xx local) — rare but sudden openings on 6m; monitor 50.313 MHz.",
                          "de": "Winter-Es möglich (Monat {month}, {h}:xx lokal) — seltene aber plötzliche Öffnungen auf 6m; 50.313 MHz überwachen.",
                          "fr": "Es hivernal possible (mois {month}, {h}:xx local) — ouvertures rares mais soudaines sur 6m; surveiller 50.313 MHz.",
-                         "it": "Es invernale possibile (mese {month}, {h}:xx locale) — aperture rare ma improvvise su 6m; monitorare 50.313 MHz."},
+                         "it": "Es invernale possibile (mese {month}, {h}:xx locale) — aperture rare ma improvvise su 6m; monitorare 50.313 MHz.",
+                         "es": "Es invernal posible (mes {month}, {h}:xx local) — aperturas raras pero repentinas en 6m; monitorear 50.313 MHz."},
     "adv_tep":          {"nl": "TEP-venster (dag {doy}, {h}:xx lok.) — trans-equatoriale propagatie mogelijk. Paden richting Centraal-Afrika en Latijns-Amerika op 50 MHz en 144 MHz kunnen open zijn. Meest kansrijk 13–17h lokaal.",
                          "en": "TEP window (day {doy}, {h}:xx local) — trans-equatorial propagation possible. Paths towards Central Africa and Latin America on 50 MHz and 144 MHz may be open. Most likely 13–17h local.",
                          "de": "TEP-Fenster (Tag {doy}, {h}:xx lokal) — trans-äquatoriale Ausbreitung möglich. Wege nach Zentralafrika und Lateinamerika auf 50 MHz und 144 MHz können offen sein. Wahrscheinlichster Zeitraum 13–17h lokal.",
                          "fr": "Fenêtre TEP (jour {doy}, {h}:xx local) — propagation trans-équatoriale possible. Chemins vers l'Afrique centrale et l'Amérique latine sur 50 MHz et 144 MHz peuvent être ouverts. Plus probable 13–17h local.",
-                         "it": "Finestra TEP (giorno {doy}, {h}:xx locale) — propagazione trans-equatoriale possibile. Percorsi verso l'Africa centrale e l'America Latina su 50 MHz e 144 MHz possono essere aperti. Più probabile 13–17h locale."},
+                         "it": "Finestra TEP (giorno {doy}, {h}:xx locale) — propagazione trans-equatoriale possibile. Percorsi verso l'Africa centrale e l'America Latina su 50 MHz e 144 MHz possono essere aperti. Più probabile 13–17h locale.",
+                         "es": "Ventana TEP (día {doy}, {h}:xx local) — propagación trans-ecuatorial posible. Rutas hacia África Central y América Latina en 50 MHz y 144 MHz pueden estar abiertas. Más probable 13–17h local."},
     "adv_trend_change": {"nl": "Propagatie {direction} (afgelopen {age}u): {parts}.",
                          "en": "Propagation {direction} (last {age}h): {parts}.",
                          "de": "Ausbreitung {direction} (letzte {age}h): {parts}.",
                          "fr": "Propagation {direction} (dernières {age}h): {parts}.",
-                         "it": "Propagazione {direction} (ultime {age}h): {parts}."},
+                         "it": "Propagazione {direction} (ultime {age}h): {parts}.",
+                         "es": "Propagación {direction} (últimas {age}h): {parts}."},
     "adv_trend_stable": {"nl": "Propagatie stabiel (laatste {age}u geen significante wijziging).",
                          "en": "Propagation stable (last {age}h no significant change).",
                          "de": "Ausbreitung stabil (letzte {age}h keine signifikante Änderung).",
                          "fr": "Propagation stable (dernières {age}h aucun changement significatif).",
-                         "it": "Propagazione stabile (ultime {age}h nessun cambiamento significativo)."},
+                         "it": "Propagazione stabile (ultime {age}h nessun cambiamento significativo).",
+                         "es": "Propagación estable (últimas {age}h sin cambio significativo)."},
     "adv_sc_max":       {"nl": "Zonnecyclus 25 MAXIMUM — SSN={ssn} (hoogtepunt verwacht 2025–2026). Optimale F2-propagatie op hoge banden; geniet van 10m–15m DX terwijl de cyclus op zijn best is.",
                          "en": "Solar Cycle 25 MAXIMUM — SSN={ssn} (peak expected 2025–2026). Optimal F2 propagation on high bands; enjoy 10m–15m DX while the cycle is at its best.",
                          "de": "Sonnenzyklus 25 MAXIMUM — SSN={ssn} (Spitze erwartet 2025–2026). Optimale F2-Ausbreitung auf hohen Bändern; 10m–15m DX genießen während der Zyklus am besten ist.",
                          "fr": "Cycle Solaire 25 MAXIMUM — SSN={ssn} (pic attendu 2025–2026). Propagation F2 optimale sur les hautes bandes; profitez du DX 10m–15m pendant que le cycle est au mieux.",
-                         "it": "Ciclo Solare 25 MASSIMO — SSN={ssn} (picco atteso 2025–2026). Propagazione F2 ottimale sulle bande alte; goditi il DX 10m–15m mentre il ciclo è al massimo."},
+                         "it": "Ciclo Solare 25 MASSIMO — SSN={ssn} (picco atteso 2025–2026). Propagazione F2 ottimale sulle bande alte; goditi il DX 10m–15m mentre il ciclo è al massimo.",
+                         "es": "Ciclo Solar 25 MÁXIMO — SSN={ssn} (pico esperado 2025–2026). Propagación F2 óptima en bandas altas; disfruta del DX 10m–15m mientras el ciclo está en su mejor momento."},
     "adv_sc_high":      {"nl": "Zonnecyclus 25 hoog/maximumfase — SSN={ssn}. Hoge banden (10m–17m) regelmatig open voor DX. Verwacht verdere toename richting cycluspiek.",
                          "en": "Solar Cycle 25 high/peak phase — SSN={ssn}. High bands (10m–17m) regularly open for DX. Expect further increase towards cycle peak.",
                          "de": "Sonnenzyklus 25 hoch/Spitzenphase — SSN={ssn}. Hohe Bänder (10m–17m) regelmäßig offen für DX. Weiterer Anstieg Richtung Zyklusspitze erwartet.",
                          "fr": "Cycle Solaire 25 phase haute/maximum — SSN={ssn}. Hautes bandes (10m–17m) régulièrement ouvertes pour DX. Augmentation attendue vers le pic du cycle.",
-                         "it": "Ciclo Solare 25 fase alta/massimo — SSN={ssn}. Bande alte (10m–17m) regolarmente aperte per DX. Atteso ulteriore aumento verso il picco del ciclo."},
+                         "it": "Ciclo Solare 25 fase alta/massimo — SSN={ssn}. Bande alte (10m–17m) regolarmente aperte per DX. Atteso ulteriore aumento verso il picco del ciclo.",
+                         "es": "Ciclo Solar 25 fase alta/máximo — SSN={ssn}. Bandas altas (10m–17m) regularmente abiertas para DX. Se espera mayor aumento hacia el pico del ciclo."},
     "adv_sc_rising":    {"nl": "Zonnecyclus 25 opkomende fase — SSN={ssn}. Cyclus in opbouw; 20m–17m betrouwbaar, hogere banden variabel. Positieve trend verwacht.",
                          "en": "Solar Cycle 25 rising phase — SSN={ssn}. Cycle building up; 20m–17m reliable, higher bands variable. Positive trend expected.",
                          "de": "Sonnenzyklus 25 aufsteigende Phase — SSN={ssn}. Zyklus im Aufbau; 20m–17m zuverlässig, höhere Bänder variabel. Positiver Trend erwartet.",
                          "fr": "Cycle Solaire 25 phase montante — SSN={ssn}. Cycle en développement; 20m–17m fiables, hautes bandes variables. Tendance positive attendue.",
-                         "it": "Ciclo Solare 25 fase ascendente — SSN={ssn}. Ciclo in costruzione; 20m–17m affidabili, bande alte variabili. Tendenza positiva attesa."},
+                         "it": "Ciclo Solare 25 fase ascendente — SSN={ssn}. Ciclo in costruzione; 20m–17m affidabili, bande alte variabili. Tendenza positiva attesa.",
+                         "es": "Ciclo Solar 25 fase ascendente — SSN={ssn}. Ciclo en construcción; 20m–17m fiables, bandas altas variables. Tendencia positiva esperada."},
     "adv_sc_transition":{"nl": "Zonnecyclus in overgangsperiode — SSN={ssn}. Afhankelijk van trend: controleer of SSN stijgt of daalt. 20m/40m vormen ruggengraat.",
                          "en": "Solar cycle in transition — SSN={ssn}. Depending on trend: check whether SSN is rising or falling. 20m/40m form the backbone.",
                          "de": "Sonnenzyklus im Übergang — SSN={ssn}. Je nach Trend: prüfen ob SSN steigt oder fällt. 20m/40m bilden das Rückgrat.",
                          "fr": "Cycle solaire en transition — SSN={ssn}. Selon la tendance: vérifier si SSN monte ou descend. 20m/40m forment l'épine dorsale.",
-                         "it": "Ciclo solare in transizione — SSN={ssn}. In base alla tendenza: verificare se SSN sale o scende. 20m/40m formano la spina dorsale."},
+                         "it": "Ciclo solare in transizione — SSN={ssn}. In base alla tendenza: verificare se SSN sale o scende. 20m/40m formano la spina dorsale.",
+                         "es": "Ciclo solar en transición — SSN={ssn}. Según la tendencia: verificar si SSN sube o baja. 20m/40m forman la columna vertebral."},
     "adv_sc_low":       {"nl": "Zonnecyclus laag — SSN={ssn}. Cyclus mogelijk in minimum of vroeg stadium; 40m/80m/160m zijn de meest betrouwbare banden.",
                          "en": "Solar cycle low — SSN={ssn}. Cycle possibly at minimum or early stage; 40m/80m/160m are the most reliable bands.",
                          "de": "Sonnenzyklus tief — SSN={ssn}. Zyklus möglicherweise im Minimum oder frühen Stadium; 40m/80m/160m sind die zuverlässigsten Bänder.",
                          "fr": "Cycle solaire bas — SSN={ssn}. Cycle possiblement au minimum ou en début; 40m/80m/160m sont les bandes les plus fiables.",
-                         "it": "Ciclo solare basso — SSN={ssn}. Ciclo forse al minimo o in fase iniziale; 40m/80m/160m sono le bande più affidabili."},
+                         "it": "Ciclo solare basso — SSN={ssn}. Ciclo forse al minimo o in fase iniziale; 40m/80m/160m sono le bande più affidabili.",
+                         "es": "Ciclo solar bajo — SSN={ssn}. Ciclo posiblemente en mínimo o fase inicial; 40m/80m/160m son las bandas más fiables."},
     "adv_storm_recovery": {"nl": "Storm-herstelprognose: A={a}, K={k} — geschatte normaliseringstijd ≈{rh}u na piek. HF herstel verloopt van laag naar hoog (40m eerst, daarna 20m/15m). Monitor K-index voor herstel onder 3.",
                            "en": "Storm recovery forecast: A={a}, K={k} — estimated normalisation time ≈{rh}h after peak. HF recovery proceeds low-to-high (40m first, then 20m/15m). Monitor K-index for recovery below 3.",
                            "de": "Sturmerholungsprognose: A={a}, K={k} — geschätzte Normalisierungszeit ≈{rh}h nach dem Höhepunkt. KW-Erholung von unten nach oben (40m zuerst, dann 20m/15m). K-Index auf Erholung unter 3 überwachen.",
                            "fr": "Prévision de récupération: A={a}, K={k} — temps de normalisation estimé ≈{rh}h après le pic. Récupération HF du bas vers le haut (40m d'abord, puis 20m/15m). Surveiller K-index pour retour sous 3.",
-                           "it": "Previsione recupero tempesta: A={a}, K={k} — tempo di normalizzazione stimato ≈{rh}h dopo il picco. Recupero HF dal basso verso l'alto (prima 40m, poi 20m/15m). Monitorare K-index per recupero sotto 3."},
+                           "it": "Previsione recupero tempesta: A={a}, K={k} — tempo di normalizzazione stimato ≈{rh}h dopo il picco. Recupero HF dal basso verso l'alto (prima 40m, poi 20m/15m). Monitorare K-index per recupero sotto 3.",
+                           "es": "Pronóstico de recuperación de tormenta: A={a}, K={k} — tiempo estimado de normalización ≈{rh}h tras el pico. Recuperación HF de bajo a alto (primero 40m, luego 20m/15m). Monitorear índice K para recuperación bajo 3."},
     "adv_dx_cluster":   {"nl": "DX-cluster: {n} spots actief — top continenten: {top}. ",
                          "en": "DX cluster: {n} spots active — top continents: {top}. ",
                          "de": "DX-Cluster: {n} Spots aktiv — Top-Kontinente: {top}. ",
                          "fr": "DX cluster: {n} spots actifs — principaux continents: {top}. ",
-                         "it": "DX cluster: {n} spot attivi — principali continenti: {top}. "},
+                         "it": "DX cluster: {n} spot attivi — principali continenti: {top}. ",
+                         "es": "DX cluster: {n} spots activos — principales continentes: {top}. "},
     "adv_dx_oceania":   {"nl": "Oceanië ({n}×) actief → goede Oost-kans. ",
                          "en": "Oceania ({n}×) active → good East opportunity. ",
                          "de": "Ozeanien ({n}×) aktiv → gute Ostchance. ",
                          "fr": "Océanie ({n}×) active → bonne opportunité Est. ",
-                         "it": "Oceania ({n}×) attiva → buona opportunità Est. "},
+                         "it": "Oceania ({n}×) attiva → buona opportunità Est. ",
+                         "es": "Oceanía ({n}×) activa → buena oportunidad Este. "},
     "adv_dx_asia":      {"nl": "Azië ({n}×) goed vertegenwoordigd. ",
                          "en": "Asia ({n}×) well represented. ",
                          "de": "Asien ({n}×) gut vertreten. ",
                          "fr": "Asie ({n}×) bien représentée. ",
-                         "it": "Asia ({n}×) ben rappresentata. "},
+                         "it": "Asia ({n}×) ben rappresentata. ",
+                         "es": "Asia ({n}×) bien representada. "},
     "adv_dx_routes":    {"nl": "Optimale DX-routes nu: {routes}.",
                          "en": "Optimal DX routes now: {routes}.",
                          "de": "Optimale DX-Routen jetzt: {routes}.",
                          "fr": "Meilleures routes DX maintenant: {routes}.",
-                         "it": "Rotte DX ottimali ora: {routes}."},
+                         "it": "Rotte DX ottimali ora: {routes}.",
+                         "es": "Rutas DX óptimas ahora: {routes}."},
     "adv_overall_score":{"nl": "Algehele propagatie-score: {overall}  (SFI {sfi} · K {k} · {open} banden open). {daynight}condities, QTH {lat}°N.",
                          "en": "Overall propagation score: {overall}  (SFI {sfi} · K {k} · {open} bands open). {daynight} conditions, QTH {lat}°N.",
                          "de": "Gesamtausbreitungswert: {overall}  (SFI {sfi} · K {k} · {open} Bänder offen). {daynight}bedingungen, QTH {lat}°N.",
                          "fr": "Score de propagation global: {overall}  (SFI {sfi} · K {k} · {open} bandes ouvertes). Conditions {daynight}, QTH {lat}°N.",
-                         "it": "Punteggio propagazione globale: {overall}  (SFI {sfi} · K {k} · {open} bande aperte). Condizioni {daynight}, QTH {lat}°N."},
+                         "it": "Punteggio propagazione globale: {overall}  (SFI {sfi} · K {k} · {open} bande aperte). Condizioni {daynight}, QTH {lat}°N.",
+                         "es": "Puntuación general de propagación: {overall}  (SFI {sfi} · K {k} · {open} bandas abiertas). Condiciones {daynight}, QTH {lat}°N."},
     # ── DX routes (teksten) ───────────────────────────────────────────────────
-    "dx_route_eu_ja_day":   {"nl": "EU→JA (Azië) via long path, 14–21 MHz",       "en": "EU→JA (Asia) via long path, 14–21 MHz",         "de": "EU→JA (Asien) via Long Path, 14–21 MHz",           "fr": "EU→JA (Asie) via long path, 14–21 MHz",           "it": "EU→JA (Asia) via long path, 14–21 MHz"},
-    "dx_route_eu_w_day":    {"nl": "EU→W (Noord-Amerika) short path, 14–21 MHz",  "en": "EU→W (North America) short path, 14–21 MHz",   "de": "EU→W (Nordamerika) Short Path, 14–21 MHz",         "fr": "EU→W (Amérique du Nord) short path, 14–21 MHz",   "it": "EU→W (Nord America) short path, 14–21 MHz"},
-    "dx_route_eu_af_day":   {"nl": "EU→Afrika short path, 14–28 MHz",             "en": "EU→Africa short path, 14–28 MHz",               "de": "EU→Afrika Short Path, 14–28 MHz",                  "fr": "EU→Afrique short path, 14–28 MHz",                "it": "EU→Africa short path, 14–28 MHz"},
-    "dx_route_eu_oc_day":   {"nl": "EU→VK/ZL (Pacific) long path, 14–21 MHz",    "en": "EU→VK/ZL (Pacific) long path, 14–21 MHz",      "de": "EU→VK/ZL (Pazifik) Long Path, 14–21 MHz",          "fr": "EU→VK/ZL (Pacifique) long path, 14–21 MHz",       "it": "EU→VK/ZL (Pacifico) long path, 14–21 MHz"},
-    "dx_route_eu_w_night":  {"nl": "EU→W (Noord-Amerika) 40m–80m nacht-DX",      "en": "EU→W (North America) 40m–80m night DX",        "de": "EU→W (Nordamerika) 40m–80m Nacht-DX",              "fr": "EU→W (Amérique du Nord) 40m–80m DX nocturne",     "it": "EU→W (Nord America) 40m–80m DX notturno"},
-    "dx_route_eu_ja_night": {"nl": "EU→JA (Azië) 40m–20m via pool night path",   "en": "EU→JA (Asia) 40m–20m via polar night path",    "de": "EU→JA (Asien) 40m–20m via Polar Night Path",       "fr": "EU→JA (Asie) 40m–20m via chemin polaire nocturne","it": "EU→JA (Asia) 40m–20m via percorso polare notturno"},
+    "dx_route_eu_ja_day":   {"nl": "EU→JA (Azië) via long path, 14–21 MHz",       "en": "EU→JA (Asia) via long path, 14–21 MHz",         "de": "EU→JA (Asien) via Long Path, 14–21 MHz",           "fr": "EU→JA (Asie) via long path, 14–21 MHz",           "it": "EU→JA (Asia) via long path, 14–21 MHz",           "es": "EU→JA (Asia) via long path, 14–21 MHz"},
+    "dx_route_eu_w_day":    {"nl": "EU→W (Noord-Amerika) short path, 14–21 MHz",  "en": "EU→W (North America) short path, 14–21 MHz",   "de": "EU→W (Nordamerika) Short Path, 14–21 MHz",         "fr": "EU→W (Amérique du Nord) short path, 14–21 MHz",   "it": "EU→W (Nord America) short path, 14–21 MHz",       "es": "EU→W (América del Norte) short path, 14–21 MHz"},
+    "dx_route_eu_af_day":   {"nl": "EU→Afrika short path, 14–28 MHz",             "en": "EU→Africa short path, 14–28 MHz",               "de": "EU→Afrika Short Path, 14–28 MHz",                  "fr": "EU→Afrique short path, 14–28 MHz",                "it": "EU→Africa short path, 14–28 MHz",                 "es": "EU→África short path, 14–28 MHz"},
+    "dx_route_eu_oc_day":   {"nl": "EU→VK/ZL (Pacific) long path, 14–21 MHz",    "en": "EU→VK/ZL (Pacific) long path, 14–21 MHz",      "de": "EU→VK/ZL (Pazifik) Long Path, 14–21 MHz",          "fr": "EU→VK/ZL (Pacifique) long path, 14–21 MHz",       "it": "EU→VK/ZL (Pacifico) long path, 14–21 MHz",        "es": "EU→VK/ZL (Pacífico) long path, 14–21 MHz"},
+    "dx_route_eu_w_night":  {"nl": "EU→W (Noord-Amerika) 40m–80m nacht-DX",      "en": "EU→W (North America) 40m–80m night DX",        "de": "EU→W (Nordamerika) 40m–80m Nacht-DX",              "fr": "EU→W (Amérique du Nord) 40m–80m DX nocturne",     "it": "EU→W (Nord America) 40m–80m DX notturno",         "es": "EU→W (América del Norte) 40m–80m DX nocturno"},
+    "dx_route_eu_ja_night": {"nl": "EU→JA (Azië) 40m–20m via pool night path",   "en": "EU→JA (Asia) 40m–20m via polar night path",    "de": "EU→JA (Asien) 40m–20m via Polar Night Path",       "fr": "EU→JA (Asie) 40m–20m via chemin polaire nocturne","it": "EU→JA (Asia) 40m–20m via percorso polare notturno","es": "EU→JA (Asia) 40m–20m via ruta polar nocturna"},
+    # ── CAT interface dialoog ─────────────────────────────────────────────────
+    "cat_dlg_title":   {"nl": "CAT Interface Instellingen",       "en": "CAT Interface Settings",           "de": "CAT-Schnittstelleneinstellungen",  "fr": "Paramètres interface CAT",        "it": "Impostazioni interfaccia CAT",      "es": "Configuración interfaz CAT"},
+    "cat_ser_port":    {"nl": "Seriële Poort",                    "en": "Serial Port",                      "de": "Serielle Schnittstelle",          "fr": "Port série",                      "it": "Porta seriale",                    "es": "Puerto serie"},
+    "cat_port_lbl":    {"nl": "Poort:",                           "en": "Port:",                            "de": "Port:",                           "fr": "Port:",                           "it": "Porta:",                           "es": "Puerto:"},
+    "cat_scan":        {"nl": "Scan ▾",                           "en": "Scan ▾",                           "de": "Scan ▾",                          "fr": "Scan ▾",                          "it": "Scan ▾",                           "es": "Scan ▾"},
+    "cat_no_ports":    {"nl": "Geen poorten gevonden",            "en": "No ports found",                   "de": "Keine Ports gefunden",            "fr": "Aucun port trouvé",               "it": "Nessuna porta trovata",            "es": "No se encontraron puertos"},
+    "cat_no_pyserial": {"nl": "pyserial niet geïnstalleerd",      "en": "pyserial not installed",           "de": "pyserial nicht installiert",      "fr": "pyserial non installé",           "it": "pyserial non installato",          "es": "pyserial no instalado"},
+    "cat_ser_params":  {"nl": "Seriële Parameters",               "en": "Serial Parameters",                "de": "Serielle Parameter",              "fr": "Paramètres série",                "it": "Parametri seriali",                "es": "Parámetros serie"},
+    "cat_baud_lbl":    {"nl": "Baudrate:",                        "en": "Baud rate:",                       "de": "Baudrate:",                       "fr": "Débit:",                          "it": "Baud rate:",                       "es": "Velocidad:"},
+    "cat_bits_lbl":    {"nl": "Databits:",                        "en": "Data bits:",                       "de": "Datenbits:",                      "fr": "Bits de données:",                "it": "Bit di dati:",                     "es": "Bits de datos:"},
+    "cat_parity_lbl":  {"nl": "Pariteit:",                        "en": "Parity:",                          "de": "Parität:",                        "fr": "Parité:",                         "it": "Parità:",                          "es": "Paridad:"},
+    "cat_stops_lbl":   {"nl": "Stopbits:",                        "en": "Stop bits:",                       "de": "Stoppbits:",                      "fr": "Bits d'arrêt:",                   "it": "Bit di stop:",                     "es": "Bits de parada:"},
+    "cat_hs_title":    {"nl": "Handshake & Lijnsignalen",         "en": "Handshake & Line Signals",         "de": "Handshake & Leitungssignale",     "fr": "Handshake & Signaux de ligne",    "it": "Handshake & Segnali di linea",     "es": "Handshake y señales de línea"},
+    "cat_hs_lbl":      {"nl": "Handshake:",                       "en": "Handshake:",                       "de": "Handshake:",                      "fr": "Handshake:",                      "it": "Handshake:",                       "es": "Handshake:"},
+    "cat_enabled_cb":  {"nl": "Ingeschakeld",                     "en": "Enabled",                          "de": "Aktiviert",                       "fr": "Activé",                          "it": "Attivato",                         "es": "Activado"},
+    "cat_enable_lbl":  {"nl": "CAT interface inschakelen",        "en": "Enable CAT interface",             "de": "CAT-Schnittstelle aktivieren",    "fr": "Activer l'interface CAT",         "it": "Attiva interfaccia CAT",           "es": "Activar interfaz CAT"},
+    "cat_radio_title": {"nl": "Radio type",                       "en": "Radio type",                       "de": "Funkgerätetyp",                   "fr": "Type de radio",                   "it": "Tipo di radio",                    "es": "Tipo de radio"},
+    "cat_type_lbl":    {"nl": "Type:",                            "en": "Type:",                            "de": "Typ:",                            "fr": "Type:",                           "it": "Tipo:",                            "es": "Tipo:"},
+    "cat_civ_lbl":     {"nl": "CI-V adres:",                      "en": "CI-V address:",                    "de": "CI-V-Adresse:",                   "fr": "Adresse CI-V:",                   "it": "Indirizzo CI-V:",                  "es": "Dirección CI-V:"},
+    "cat_civ_hint":    {"nl": "hex, bv. 0x70 (IC-7300), 0x94 (IC-705)", "en": "hex, e.g. 0x70 (IC-7300), 0x94 (IC-705)", "de": "hex, z.B. 0x70 (IC-7300), 0x94 (IC-705)", "fr": "hex, ex. 0x70 (IC-7300), 0x94 (IC-705)", "it": "hex, es. 0x70 (IC-7300), 0x94 (IC-705)", "es": "hex, ej. 0x70 (IC-7300), 0x94 (IC-705)"},
+    "cat_test_btn":    {"nl": "Test verbinding",                  "en": "Test connection",                  "de": "Verbindung testen",               "fr": "Tester la connexion",             "it": "Testa connessione",                "es": "Probar conexión"},
+    "cat_save_btn":    {"nl": "Opslaan",                          "en": "Save",                             "de": "Speichern",                       "fr": "Enregistrer",                     "it": "Salva",                            "es": "Guardar"},
+    "cat_cancel_btn":  {"nl": "Annuleren",                        "en": "Cancel",                           "de": "Abbrechen",                       "fr": "Annuler",                         "it": "Annulla",                          "es": "Cancelar"},
+    "cat_st_no_ser":   {"nl": "⚠  pyserial niet geïnstalleerd  (pip install pyserial)", "en": "⚠  pyserial not installed  (pip install pyserial)", "de": "⚠  pyserial nicht installiert  (pip install pyserial)", "fr": "⚠  pyserial non installé  (pip install pyserial)", "it": "⚠  pyserial non installato  (pip install pyserial)", "es": "⚠  pyserial no instalado  (pip install pyserial)"},
+    "cat_st_no_port":  {"nl": "⚠  Geen poort opgegeven.",         "en": "⚠  No port specified.",            "de": "⚠  Kein Port angegeben.",         "fr": "⚠  Aucun port spécifié.",         "it": "⚠  Nessuna porta specificata.",    "es": "⚠  No se ha especificado puerto."},
+    "cat_st_ok":       {"nl": "✔  {port} geopend op {baud} baud — verbinding OK", "en": "✔  {port} opened at {baud} baud — connection OK", "de": "✔  {port} geöffnet mit {baud} Baud — Verbindung OK", "fr": "✔  {port} ouvert à {baud} bauds — connexion OK", "it": "✔  {port} aperto a {baud} baud — connessione OK", "es": "✔  {port} abierto a {baud} baudios — conexión OK"},
+    "cat_par_none":    {"nl": "N – Geen",    "en": "N – None",    "de": "N – Keine",    "fr": "N – Aucune",  "it": "N – Nessuna",  "es": "N – Ninguna"},
+    "cat_par_even":    {"nl": "E – Even",    "en": "E – Even",    "de": "E – Gerade",   "fr": "E – Pair",    "it": "E – Pari",     "es": "E – Par"},
+    "cat_par_odd":     {"nl": "O – Oneven",  "en": "O – Odd",     "de": "O – Ungerade", "fr": "O – Impair",  "it": "O – Dispari",  "es": "O – Impar"},
+    "cat_par_mark":    {"nl": "M – Mark",    "en": "M – Mark",    "de": "M – Mark",     "fr": "M – Marque",  "it": "M – Mark",     "es": "M – Mark"},
+    "cat_par_space":   {"nl": "S – Space",   "en": "S – Space",   "de": "S – Space",    "fr": "S – Espace",  "it": "S – Spazio",   "es": "S – Space"},
+    "cat_flow_none":   {"nl": "Geen",        "en": "None",        "de": "Keiner",       "fr": "Aucun",       "it": "Nessuno",      "es": "Ninguno"},
 }
 
 _HIST_KEEP_DAYS  = 90   # hoeveel dagen geschiedenis bewaren
@@ -1272,6 +1413,23 @@ def _calc_propagation(sfi: float, ssn: float, k_index: float,
 DX_CLUSTER_URL    = "https://dxwatch.com/dxsd1/s.php?s=0&r=30&cdxc=0"
 DX_REFRESH_SECS   = 120   # elke 2 minuten
 
+# ── WSPR/wspr.live ────────────────────────────────────────────────────────────
+WSPR_REFRESH_SECS = 900   # elke 15 minuten
+_WSPR_Q = (
+    "SELECT tx_sign,rx_sign,tx_lat,tx_lon,rx_lat,rx_lon,band,snr "
+    "FROM wspr.rx "
+    "WHERE time >= now() - interval 15 minute "
+    "LIMIT 300 "
+    "FORMAT JSONCompact"
+)
+WSPR_URL = "https://db1.wspr.live/?" + urllib.parse.urlencode({"query": _WSPR_Q})
+
+# wspr.live band-veld = MHz als integer → band-naam
+_WSPR_BAND_MAP: dict[int, str] = {
+    1: "160m", 3: "80m", 5: "60m", 7: "40m", 10: "30m",
+    14: "20m", 18: "17m", 21: "15m", 24: "12m", 28: "10m", 50: "6m",
+}
+
 # HF-band grenzen in kHz voor spot-filtering
 _BAND_RANGES_KHZ = [
     ("160m",  1800,  2000),
@@ -1287,11 +1445,69 @@ _BAND_RANGES_KHZ = [
     ("6m",   50000, 54000),
 ]
 
+def _fmt_freq_hz(freq_hz: int) -> str:
+    """Formatteer Hz naar ##.###.### notatie (bv. 14.200.000)."""
+    mhz = freq_hz // 1_000_000
+    khz = (freq_hz % 1_000_000) // 1_000
+    hz  = freq_hz % 1_000
+    return f"{mhz}.{khz:03d}.{hz:03d}"
+
+
 def _freq_khz_to_band(freq_khz: float) -> str:
     for name, lo, hi in _BAND_RANGES_KHZ:
         if lo <= freq_khz <= hi:
             return name
     return ""
+
+
+def _yaesu_set_freq(port: str, baud: int, bits: int = 8, parity: str = "N",
+                    stopbits: float = 1.0, freq_hz: int = 0,
+                    dtr: bool = False, rts: bool = False) -> bool:
+    """Stuur VFO-A frequentie via Yaesu CAT (VS0; + FA<11 digits>;)."""
+    if not _SERIAL_OK or not port:
+        return False
+    try:
+        with serial.Serial(port=port, baudrate=baud, bytesize=bits,
+                           parity=parity, stopbits=stopbits, timeout=1) as s:
+            s.dtr = dtr
+            s.rts = rts
+            s.write(f"VS0;FA{freq_hz:011d};".encode())
+        return True
+    except Exception:
+        return False
+
+
+def _kenwood_set_freq(port: str, baud: int, bits: int = 8, parity: str = "N",
+                      stopbits: float = 1.0, freq_hz: int = 0) -> bool:
+    """Stuur VFO-A frequentie via Kenwood/Elecraft CAT (FA<11 digits>;)."""
+    if not _SERIAL_OK or not port:
+        return False
+    try:
+        with serial.Serial(port=port, baudrate=baud, bytesize=bits,
+                           parity=parity, stopbits=stopbits, timeout=1) as s:
+            s.write(f"FA{freq_hz:011d};".encode())
+        return True
+    except Exception:
+        return False
+
+
+def _icom_set_freq(port: str, baud: int, bits: int = 8, parity: str = "N",
+                   stopbits: float = 1.0, freq_hz: int = 0,
+                   civ_addr: int = 0x70) -> bool:
+    """Stuur frequentie via Icom CI-V protocol (binair BCD, commando 0x05)."""
+    if not _SERIAL_OK or not port:
+        return False
+    # 10 cijfers packed BCD, least-significant pair eerst
+    freq_str = f"{freq_hz:010d}"
+    bcd = [((int(freq_str[i]) << 4) | int(freq_str[i + 1])) for i in range(0, 10, 2)]
+    msg = bytes([0xFE, 0xFE, civ_addr, 0xE0, 0x05]) + bytes(reversed(bcd)) + bytes([0xFD])
+    try:
+        with serial.Serial(port=port, baudrate=baud, bytesize=bits,
+                           parity=parity, stopbits=stopbits, timeout=1) as s:
+            s.write(msg)
+        return True
+    except Exception:
+        return False
 
 
 def _qth_continent(lat: float, lon: float) -> str:
@@ -1380,6 +1596,45 @@ def _fetch_dx_spots() -> list:
                 "sp_cont":  _callsign_continent(spotter),
             })
         spots.reverse()   # nieuwste eerst (hoogste ID = recentst)
+        return spots
+    except Exception:
+        return []
+
+
+def _fetch_wspr_spots() -> list:
+    """Haal recente WSPR-spots op via wspr.live (laatste 15 min, max 300).
+
+    Geeft lijst van dicts: {tx, rx, tx_lat, tx_lon, rx_lat, rx_lon, band, snr}.
+    Alleen HF-banden (1–50 MHz), spots met geldige coördinaten.
+    """
+    try:
+        req = urllib.request.Request(WSPR_URL,
+              headers={"User-Agent": "HAMIOS/1.0"})
+        with urllib.request.urlopen(req, timeout=10) as r:
+            raw = json.loads(r.read().decode("utf-8", errors="replace"))
+        spots = []
+        for row in raw.get("data", []):
+            try:
+                tx_sign, rx_sign = str(row[0]), str(row[1])
+                tx_lat, tx_lon   = float(row[2]), float(row[3])
+                rx_lat, rx_lon   = float(row[4]), float(row[5])
+                band_mhz         = int(row[6])
+                snr              = int(row[7])
+            except (ValueError, TypeError, IndexError):
+                continue
+            band_name = _WSPR_BAND_MAP.get(band_mhz)
+            if not band_name:
+                continue
+            # filter ongeldige coördinaten
+            if not (-90 <= tx_lat <= 90 and -180 <= tx_lon <= 180 and
+                    -90 <= rx_lat <= 90 and -180 <= rx_lon <= 180):
+                continue
+            spots.append({
+                "tx": tx_sign, "rx": rx_sign,
+                "tx_lat": tx_lat, "tx_lon": tx_lon,
+                "rx_lat": rx_lat, "rx_lon": rx_lon,
+                "band": band_name, "snr": snr,
+            })
         return spots
     except Exception:
         return []
@@ -1614,6 +1869,11 @@ class HAMIOSApp:
         self._show_graylijn_var = tk.BooleanVar(value=s["show_graylijn"])
         self._show_iaru_var     = tk.BooleanVar(value=s["show_iaru"])
         self._show_cs_var       = tk.BooleanVar(value=s["show_cs"])
+        self._show_spots_var    = tk.BooleanVar(value=s["show_spots"])
+        self._spot_hit_areas:   list = []   # [{x, y, r, spot}, ...] voor klik-detectie
+        self._show_wspr_var     = tk.BooleanVar(value=s["show_wspr"])
+        self._wspr_spots:       list = []
+        self._wspr_after_id             = None
         self._qth_lat_var = tk.StringVar(value=f"{self._qth_lat:.2f}")
         self._qth_lon_var = tk.StringVar(value=f"{self._qth_lon:.2f}")
         self._tr_widgets: dict = {}   # key → widget of list van widgets voor vertalingen
@@ -1641,6 +1901,26 @@ class HAMIOSApp:
         self._dx_own_cont_var       = tk.BooleanVar(value=True)
         self._advice_card_hashes: dict = {}   # kaart-index → hash, voor nieuw-stip per kaartje
 
+        # CAT interface instellingen
+        self._cat_port_var     = tk.StringVar(value=s["cat_port"])
+        self._cat_baud_var     = tk.StringVar(value=s["cat_baud"])
+        self._cat_bits_var     = tk.StringVar(value=s["cat_bits"])
+        self._cat_parity_var   = tk.StringVar(value=s["cat_parity"])
+        self._cat_stopbits_var = tk.StringVar(value=s["cat_stopbits"])
+        self._cat_flow_var     = tk.StringVar(value=s["cat_flow"])
+        self._cat_dtr_var      = tk.BooleanVar(value=s["cat_dtr"])
+        self._cat_rts_var      = tk.BooleanVar(value=s["cat_rts"])
+        self._cat_enabled_var  = tk.BooleanVar(value=s["cat_enabled"])
+        self._cat_radio_var    = tk.StringVar(value=s["cat_radio"])
+        self._cat_civ_addr_var = tk.StringVar(value=s["cat_civ_addr"])
+        self._cat_freq_var      = tk.StringVar(value="")
+        self._cat_terminal_var  = tk.BooleanVar(value=False)
+        self._cat_vfo_a_hz: int = 0
+        self._cat_vfo_b_hz: int = 0
+        self._cat_rx_queue: _queue.Queue = _queue.Queue()
+        self._cat_poll_lock = threading.Lock()
+        self._cat_poll_after_id = None
+
         self._build_ui()
         # Herstel legenda-selectie visueel na opbouw UI
         if self._hist_sel:
@@ -1656,6 +1936,8 @@ class HAMIOSApp:
         self.root.protocol("WM_DELETE_WINDOW", self._on_close)
         threading.Thread(target=self._refresh_solar, daemon=True).start()
         threading.Thread(target=self._refresh_dx, daemon=True).start()
+        threading.Thread(target=self._refresh_wspr, daemon=True).start()
+        self._cat_start_poll()
         threading.Thread(
             target=_fetch_basemap,
             kwargs={"callback": lambda: self.root.after(0, self._redraw_map)},
@@ -1741,6 +2023,7 @@ class HAMIOSApp:
 
     def _quit_app(self):
         """Netjes afsluiten: tray stoppen, instellingen opslaan, venster sluiten."""
+        self._cat_stop_poll()
         self._save_cur_settings()
         if self._tray_icon:
             try:
@@ -1748,6 +2031,459 @@ class HAMIOSApp:
             except Exception:
                 pass
         self.root.destroy()
+
+    # ── CAT Interface ─────────────────────────────────────────────────────────
+    def _update_cat_btn_color(self):
+        """Kleur CAT-knop groen als ingeschakeld, anders donkerblauw."""
+        if self._cat_enabled_var.get():
+            self._cat_btn.config(bg="#1B5E20", activebackground="#2E7D32")
+        else:
+            self._cat_btn.config(bg="#0D3B4F", activebackground="#1A6080")
+
+    def _update_cat_freq_lbl_visibility(self):
+        """Toon VFO-A/B label (en terminal toggle) alleen als CAT ingeschakeld is."""
+        if hasattr(self, "_cat_info_frame"):
+            if self._cat_enabled_var.get():
+                self._cat_info_frame.pack(fill=tk.X, padx=12, pady=(0, 2))
+            else:
+                self._cat_info_frame.pack_forget()
+                if hasattr(self, "_cat_terminal_frame"):
+                    self._cat_terminal_frame.pack_forget()
+
+    def _toggle_cat_terminal(self):
+        """Toon of verberg het CAT terminal venster."""
+        if self._cat_terminal_var.get():
+            self._cat_terminal_frame.pack(fill=tk.X)
+        else:
+            self._cat_terminal_frame.pack_forget()
+
+    def _cat_terminal_log(self, text: str, tag: str = "info"):
+        """Voeg een regel toe aan het CAT terminal venster (main thread only)."""
+        if not self._cat_terminal_var.get():
+            return
+        if not hasattr(self, "_cat_terminal_txt"):
+            return
+        w = self._cat_terminal_txt
+        w.config(state=tk.NORMAL)
+        w.insert(tk.END, text + "\n", tag)
+        w.see(tk.END)
+        lines = int(w.index(tk.END).split(".")[0])
+        if lines > 210:
+            w.delete("1.0", f"{lines - 200}.0")
+        w.config(state=tk.DISABLED)
+
+    def _cat_start_poll(self):
+        """Start VFO polling als CAT ingeschakeld en pyserial beschikbaar."""
+        self._cat_stop_poll()
+        if self._cat_enabled_var.get() and _SERIAL_OK:
+            self._cat_poll_after_id = self.root.after(500, self._cat_poll_tick)
+
+    def _cat_stop_poll(self):
+        if self._cat_poll_after_id is not None:
+            self.root.after_cancel(self._cat_poll_after_id)
+            self._cat_poll_after_id = None
+
+    def _cat_poll_tick(self):
+        """Peil VFO-A en VFO-B van de radio in een achtergrond-thread."""
+        if not self._cat_enabled_var.get() or not _SERIAL_OK:
+            return
+        port = self._cat_port_var.get().strip()
+        if not port:
+            self._cat_poll_after_id = self.root.after(2000, self._cat_poll_tick)
+            return
+
+        def _do_poll():
+            if not self._cat_poll_lock.acquire(blocking=False):
+                return
+            try:
+                baud  = int(self._cat_baud_var.get())
+                bits  = int(self._cat_bits_var.get())
+                par   = self._cat_parity_var.get()
+                stop  = float(self._cat_stopbits_var.get())
+                with serial.Serial(port=port, baudrate=baud, bytesize=bits,
+                                   parity=par, stopbits=stop, timeout=0.3) as s:
+                    s.dtr = False
+                    s.rts = False
+                    s.write(b"FA;FB;")
+                    raw = b""
+                    for _ in range(100):
+                        chunk = s.read(32)
+                        if not chunk:
+                            break
+                        raw += chunk
+                        if raw.count(b";") >= 2:
+                            break
+                self._cat_rx_queue.put(raw.decode("ascii", errors="ignore"))
+            except Exception:
+                pass
+            finally:
+                self._cat_poll_lock.release()
+
+        self._cat_terminal_log("▶ FA;FB;", "tx")
+        threading.Thread(target=_do_poll, daemon=True).start()
+        self._cat_poll_after_id = self.root.after(100, self._cat_process_rx)
+
+    def _cat_process_rx(self):
+        """Verwerk ontvangen CAT data en plan volgende poll."""
+        try:
+            while True:
+                raw = self._cat_rx_queue.get_nowait()
+                self._cat_terminal_log(f"◀ {raw.strip()}", "rx")
+                parts = [p.strip() for p in raw.split(";") if p.strip()]
+                for p in parts:
+                    if p.startswith("FA") and len(p) >= 13:
+                        digits = "".join(c for c in p[2:] if c.isdigit())
+                        if len(digits) >= 8:
+                            hz = int(digits[:11].zfill(11))
+                            if hz != self._cat_vfo_a_hz:
+                                self._cat_vfo_a_hz = hz
+                                self._cat_freq_var.set(
+                                    f"VFO-A:  {_fmt_freq_hz(hz)}")
+                    elif p.startswith("FB") and len(p) >= 13:
+                        digits = "".join(c for c in p[2:] if c.isdigit())
+                        if len(digits) >= 8:
+                            hz = int(digits[:11].zfill(11))
+                            if hz != self._cat_vfo_b_hz:
+                                self._cat_vfo_b_hz = hz
+                if self._cat_vfo_b_hz:
+                    self._cat_freq_var.set(
+                        f"VFO-A:  {_fmt_freq_hz(self._cat_vfo_a_hz)}"
+                        f"    VFO-B:  {_fmt_freq_hz(self._cat_vfo_b_hz)}")
+                if hasattr(self, "_last_band_pct") and self._last_band_pct:
+                    self._draw_prop_bars(self._last_band_pct)
+        except _queue.Empty:
+            pass
+        self._cat_poll_after_id = self.root.after(2000, self._cat_poll_tick)
+
+    def _open_cat_dialog(self):
+        """Open het CAT-interface instellingendialoogvenster."""
+        tr = self._tr
+        dlg = tk.Toplevel(self.root)
+        dlg.title(tr("cat_dlg_title"))
+        dlg.configure(bg=BG_PANEL)
+        dlg.resizable(False, False)
+        dlg.grab_set()   # modaal
+
+        # Tijdelijke kopieën van instellingen (alleen opgeslagen bij OK)
+        port_var     = tk.StringVar(value=self._cat_port_var.get())
+        baud_var     = tk.StringVar(value=self._cat_baud_var.get())
+        bits_var     = tk.StringVar(value=self._cat_bits_var.get())
+        parity_var   = tk.StringVar(value=self._cat_parity_var.get())
+        stop_var     = tk.StringVar(value=self._cat_stopbits_var.get())
+        flow_var     = tk.StringVar(value=self._cat_flow_var.get())
+        dtr_var      = tk.BooleanVar(value=self._cat_dtr_var.get())
+        rts_var      = tk.BooleanVar(value=self._cat_rts_var.get())
+        enabled_var   = tk.BooleanVar(value=self._cat_enabled_var.get())
+        radio_var     = tk.StringVar(value=self._cat_radio_var.get())
+        civ_addr_var  = tk.StringVar(value=self._cat_civ_addr_var.get())
+        status_var    = tk.StringVar(value="")
+
+        # ── Opties ──────────────────────────────────────────────────────────
+        BAUDS    = ["300","1200","2400","4800","9600","19200","38400",
+                    "57600","115200","230400"]
+        BITS     = ["7","8"]
+        PARITIES = [(tr("cat_par_none"),  "N"),
+                    (tr("cat_par_even"),  "E"),
+                    (tr("cat_par_odd"),   "O"),
+                    (tr("cat_par_mark"),  "M"),
+                    (tr("cat_par_space"), "S")]
+        STOPS    = ["1","1.5","2"]
+        FLOWS    = [tr("cat_flow_none"), "RTS/CTS", "XON/XOFF", "DTR/DSR"]
+
+        PAD = {"padx": 10, "pady": 4}
+
+        def _dropdown(parent, var, values, width=18):
+            mb = tk.Menubutton(parent, textvariable=var,
+                               font=_font(9), bg=BG_SURFACE, fg=TEXT_H1,
+                               relief=tk.FLAT, activebackground=BG_HOVER,
+                               activeforeground=TEXT_H1, width=width,
+                               anchor="w", padx=6, pady=3, cursor="hand2")
+            menu = tk.Menu(mb, tearoff=False, bg=BG_SURFACE, fg=TEXT_H1,
+                           activebackground=ACCENT, activeforeground=BG_ROOT,
+                           font=_font(9))
+            if values and isinstance(values[0], tuple):
+                # (label, value) tuples
+                for label, val in values:
+                    menu.add_command(label=label, command=lambda v=val: var.set(v))
+            else:
+                for v in values:
+                    menu.add_command(label=v, command=lambda v=v: var.set(v))
+            mb["menu"] = menu
+            return mb
+
+        # ── Sectie: Poort ────────────────────────────────────────────────────
+        port_frame = tk.LabelFrame(dlg, text=f" {tr('cat_ser_port')} ",
+                                   font=_font(9, "bold"), bg=BG_PANEL,
+                                   fg=ACCENT, bd=1, relief=tk.GROOVE)
+        port_frame.grid(row=0, column=0, columnspan=2, sticky="ew",
+                        padx=12, pady=(12, 4))
+        port_frame.columnconfigure(1, weight=1)
+
+        tk.Label(port_frame, text=tr("cat_port_lbl"), font=_font(9),
+                 bg=BG_PANEL, fg=TEXT_DIM, anchor="w").grid(
+                 row=1, column=0, sticky="w", **PAD)
+
+        port_entry = tk.Entry(port_frame, textvariable=port_var, width=14,
+                              bg=BG_SURFACE, fg=TEXT_H1,
+                              insertbackground=TEXT_H1, relief=tk.FLAT,
+                              font=_font(9))
+        port_entry.grid(row=1, column=1, sticky="w", padx=(10,4), pady=4)
+
+        def _scan_ports():
+            if _SERIAL_OK:
+                ports = [p.device for p in serial.tools.list_ports.comports()]
+                ports_sorted = sorted(ports)
+            else:
+                ports_sorted = []
+            scan_menu.delete(0, "end")
+            if ports_sorted:
+                for p in ports_sorted:
+                    scan_menu.add_command(label=p, command=lambda v=p: port_var.set(v))
+                scan_btn.config(text="Poort ▾")
+            else:
+                scan_menu.add_command(label=tr("cat_no_ports") if _SERIAL_OK
+                                      else tr("cat_no_pyserial"),
+                                      state="disabled")
+                scan_btn.config(text="Scan ▾")
+
+        scan_btn = tk.Menubutton(port_frame, text="Scan ▾",
+                                 font=_font(9), bg=BG_SURFACE, fg=TEXT_H1,
+                                 relief=tk.FLAT, activebackground=BG_HOVER,
+                                 activeforeground=TEXT_H1, padx=6, pady=3,
+                                 cursor="hand2")
+        scan_menu = tk.Menu(scan_btn, tearoff=False, bg=BG_SURFACE, fg=TEXT_H1,
+                            activebackground=ACCENT, activeforeground=BG_ROOT,
+                            font=_font(9))
+        scan_btn["menu"] = scan_menu
+        scan_btn.grid(row=1, column=2, sticky="w", padx=(0, 10), pady=4)
+        scan_btn.bind("<Button-1>", lambda _: _scan_ports())
+
+        # Pariteit-waarde omzetten voor weergave (N→"N – Geen" etc.)
+        _par_label = {v: l for l, v in PARITIES}
+
+        def _parity_display():
+            return _par_label.get(parity_var.get(), parity_var.get())
+
+        parity_disp = tk.StringVar(value=_parity_display())
+
+        def _set_parity(code):
+            parity_var.set(code)
+            parity_disp.set(_par_label.get(code, code))
+
+        # ── Sectie: Seriële parameters ───────────────────────────────────────
+        ser_frame = tk.LabelFrame(dlg, text=f" {tr('cat_ser_params')} ",
+                                  font=_font(9, "bold"), bg=BG_PANEL,
+                                  fg=ACCENT, bd=1, relief=tk.GROOVE)
+        ser_frame.grid(row=1, column=0, sticky="nsew", padx=(12, 6), pady=4)
+        ser_frame.columnconfigure(1, weight=1)
+
+        tk.Label(ser_frame, text=tr("cat_baud_lbl"), font=_font(9),
+                 bg=BG_PANEL, fg=TEXT_DIM, anchor="w").grid(
+                 row=1, column=0, sticky="w", **PAD)
+        _dropdown(ser_frame, baud_var, BAUDS, width=10).grid(
+            row=1, column=1, sticky="w", **PAD)
+
+        tk.Label(ser_frame, text=tr("cat_bits_lbl"), font=_font(9),
+                 bg=BG_PANEL, fg=TEXT_DIM, anchor="w").grid(
+                 row=2, column=0, sticky="w", **PAD)
+        _dropdown(ser_frame, bits_var, BITS, width=10).grid(
+            row=2, column=1, sticky="w", **PAD)
+
+        tk.Label(ser_frame, text=tr("cat_parity_lbl"), font=_font(9),
+                 bg=BG_PANEL, fg=TEXT_DIM, anchor="w").grid(
+                 row=3, column=0, sticky="w", **PAD)
+        par_mb = tk.Menubutton(ser_frame, textvariable=parity_disp,
+                               font=_font(9), bg=BG_SURFACE, fg=TEXT_H1,
+                               relief=tk.FLAT, activebackground=BG_HOVER,
+                               activeforeground=TEXT_H1, width=12,
+                               anchor="w", padx=6, pady=3, cursor="hand2")
+        par_menu = tk.Menu(par_mb, tearoff=False, bg=BG_SURFACE, fg=TEXT_H1,
+                           activebackground=ACCENT, activeforeground=BG_ROOT,
+                           font=_font(9))
+        for label, code in PARITIES:
+            par_menu.add_command(label=label, command=lambda c=code: _set_parity(c))
+        par_mb["menu"] = par_menu
+        par_mb.grid(row=3, column=1, sticky="w", **PAD)
+
+        tk.Label(ser_frame, text=tr("cat_stops_lbl"), font=_font(9),
+                 bg=BG_PANEL, fg=TEXT_DIM, anchor="w").grid(
+                 row=4, column=0, sticky="w", **PAD)
+        _dropdown(ser_frame, stop_var, STOPS, width=10).grid(
+            row=4, column=1, sticky="w", **PAD)
+
+        # ── Sectie: Handshake & lijnsignalen ─────────────────────────────────
+        hs_frame = tk.LabelFrame(dlg, text=f" {tr('cat_hs_title')} ",
+                                 font=_font(9, "bold"), bg=BG_PANEL,
+                                 fg=ACCENT, bd=1, relief=tk.GROOVE)
+        hs_frame.grid(row=1, column=1, sticky="nsew", padx=(6, 12), pady=4)
+        hs_frame.columnconfigure(1, weight=1)
+
+        tk.Label(hs_frame, text=tr("cat_hs_lbl"), font=_font(9),
+                 bg=BG_PANEL, fg=TEXT_DIM, anchor="w").grid(
+                 row=1, column=0, sticky="w", **PAD)
+        _dropdown(hs_frame, flow_var, FLOWS, width=12).grid(
+            row=1, column=1, sticky="w", **PAD)
+
+        tk.Label(hs_frame, text="DTR:", font=_font(9),
+                 bg=BG_PANEL, fg=TEXT_DIM, anchor="w").grid(
+                 row=2, column=0, sticky="w", **PAD)
+        tk.Checkbutton(hs_frame, text=tr("cat_enabled_cb"), variable=dtr_var,
+                       bg=BG_PANEL, fg=TEXT_BODY, selectcolor=BG_SURFACE,
+                       activebackground=BG_PANEL, activeforeground=TEXT_H1,
+                       font=_font(9)).grid(row=2, column=1, sticky="w", **PAD)
+
+        tk.Label(hs_frame, text="RTS:", font=_font(9),
+                 bg=BG_PANEL, fg=TEXT_DIM, anchor="w").grid(
+                 row=3, column=0, sticky="w", **PAD)
+        tk.Checkbutton(hs_frame, text=tr("cat_enabled_cb"), variable=rts_var,
+                       bg=BG_PANEL, fg=TEXT_BODY, selectcolor=BG_SURFACE,
+                       activebackground=BG_PANEL, activeforeground=TEXT_H1,
+                       font=_font(9)).grid(row=3, column=1, sticky="w", **PAD)
+
+        # Spacer zodat beide frames even hoog zijn
+        tk.Label(hs_frame, text="", bg=BG_PANEL).grid(row=4, column=0)
+
+        # ── Sectie: Radio type ────────────────────────────────────────────────
+        RADIO_TYPES = ["Yaesu CAT", "Kenwood / Elecraft", "Icom CI-V"]
+        radio_frame = tk.LabelFrame(dlg, text=f" {tr('cat_radio_title')} ",
+                                    font=_font(9, "bold"), bg=BG_PANEL,
+                                    fg=ACCENT, bd=1, relief=tk.GROOVE)
+        radio_frame.grid(row=2, column=0, columnspan=2, sticky="ew",
+                         padx=12, pady=4)
+        radio_frame.columnconfigure(1, weight=1)
+
+        tk.Label(radio_frame, text=tr("cat_type_lbl"), font=_font(9),
+                 bg=BG_PANEL, fg=TEXT_DIM, anchor="w").grid(
+                 row=0, column=0, sticky="w", **PAD)
+        _dropdown(radio_frame, radio_var, RADIO_TYPES, width=20).grid(
+            row=0, column=1, sticky="w", padx=(10, 4), pady=4)
+
+        civ_lbl = tk.Label(radio_frame, text=tr("cat_civ_lbl"), font=_font(9),
+                           bg=BG_PANEL, fg=TEXT_DIM, anchor="w")
+        civ_entry = tk.Entry(radio_frame, textvariable=civ_addr_var, width=8,
+                             bg=BG_SURFACE, fg=TEXT_H1,
+                             insertbackground=TEXT_H1, relief=tk.FLAT,
+                             font=_font(9))
+        civ_hint = tk.Label(radio_frame,
+                            text=tr("cat_civ_hint"),
+                            font=_font(8), bg=BG_PANEL, fg=TEXT_DIM)
+
+        def _update_civ_visibility(*_):
+            if radio_var.get() == "Icom CI-V":
+                civ_lbl.grid(row=1, column=0, sticky="w", **PAD)
+                civ_entry.grid(row=1, column=1, sticky="w", padx=(10, 4), pady=4)
+                civ_hint.grid(row=1, column=2, sticky="w", padx=(0, 10), pady=4)
+            else:
+                civ_lbl.grid_remove()
+                civ_entry.grid_remove()
+                civ_hint.grid_remove()
+
+        radio_var.trace_add("write", _update_civ_visibility)
+        _update_civ_visibility()
+
+        # ── Sectie: Activeren ─────────────────────────────────────────────────
+        act_frame = tk.Frame(dlg, bg=BG_PANEL)
+        act_frame.grid(row=3, column=0, columnspan=2, sticky="ew",
+                       padx=12, pady=(4, 2))
+        tk.Checkbutton(act_frame, text=tr("cat_enable_lbl"),
+                       variable=enabled_var,
+                       bg=BG_PANEL, fg=TEXT_H1, selectcolor=BG_SURFACE,
+                       activebackground=BG_PANEL, activeforeground=TEXT_H1,
+                       font=_font(9, "bold")).pack(side=tk.LEFT, padx=4)
+
+        # ── Status & Test ────────────────────────────────────────────────────
+        test_frame = tk.Frame(dlg, bg=BG_SURFACE, bd=1, relief=tk.GROOVE)
+        test_frame.grid(row=4, column=0, columnspan=2, sticky="ew",
+                        padx=12, pady=4)
+
+        def _test_connection():
+            if not _SERIAL_OK:
+                status_var.set(tr("cat_st_no_ser"))
+                status_lbl.config(fg="#FFC107")
+                return
+            port = port_var.get().strip()
+            if not port:
+                status_var.set(tr("cat_st_no_port"))
+                status_lbl.config(fg="#FFC107")
+                return
+            try:
+                baud  = int(baud_var.get())
+                bits  = int(bits_var.get())
+                stop  = float(stop_var.get())
+                par   = parity_var.get()
+                flow  = flow_var.get()
+                xonxoff  = ("XON/XOFF" in flow)
+                rtscts   = ("RTS/CTS"  in flow)
+                dsrdtr   = ("DTR/DSR"  in flow)
+                s = serial.Serial(
+                    port=port, baudrate=baud, bytesize=bits,
+                    parity=par, stopbits=stop,
+                    xonxoff=xonxoff, rtscts=rtscts, dsrdtr=dsrdtr,
+                    timeout=1
+                )
+                s.dtr = dtr_var.get()
+                s.rts = rts_var.get()
+                s.close()
+                status_var.set(tr("cat_st_ok").format(port=port, baud=baud))
+                status_lbl.config(fg="#4CAF50")
+            except serial.SerialException as e:
+                status_var.set(f"✘  {e}")
+                status_lbl.config(fg="#F44336")
+            except Exception as e:
+                status_var.set(f"✘  {e}")
+                status_lbl.config(fg="#F44336")
+
+        test_btn = tk.Button(test_frame, text=tr("cat_test_btn"),
+                             command=_test_connection,
+                             font=_font(9), bg="#1A3A5C", fg=TEXT_H1,
+                             activebackground="#2A5A8C", activeforeground=TEXT_H1,
+                             relief=tk.FLAT, padx=10, pady=3, cursor="hand2")
+        test_btn.pack(side=tk.LEFT, padx=8, pady=6)
+        status_lbl = tk.Label(test_frame, textvariable=status_var,
+                              font=_font(9), bg=BG_SURFACE, fg=TEXT_DIM,
+                              anchor="w", wraplength=320, justify="left")
+        status_lbl.pack(side=tk.LEFT, padx=(4, 8), pady=6, fill=tk.X, expand=True)
+
+        # ── OK / Annuleren ───────────────────────────────────────────────────
+        btn_frame = tk.Frame(dlg, bg=BG_PANEL)
+        btn_frame.grid(row=5, column=0, columnspan=2, sticky="e",
+                       padx=12, pady=(4, 12))
+
+        def _save_and_close():
+            self._cat_port_var.set(port_var.get().strip())
+            self._cat_baud_var.set(baud_var.get())
+            self._cat_bits_var.set(bits_var.get())
+            self._cat_parity_var.set(parity_var.get())
+            self._cat_stopbits_var.set(stop_var.get())
+            self._cat_flow_var.set(flow_var.get())
+            self._cat_dtr_var.set(dtr_var.get())
+            self._cat_rts_var.set(rts_var.get())
+            self._cat_enabled_var.set(enabled_var.get())
+            self._cat_radio_var.set(radio_var.get())
+            self._cat_civ_addr_var.set(civ_addr_var.get().strip())
+            self._save_cur_settings()
+            self._update_cat_btn_color()
+            self._cat_start_poll()
+            self._update_cat_freq_lbl_visibility()
+            dlg.destroy()
+
+        tk.Button(btn_frame, text=tr("cat_save_btn"),
+                  command=_save_and_close,
+                  font=_font(9), bg="#1B5E20", fg=TEXT_H1,
+                  activebackground="#2E7D32", activeforeground=TEXT_H1,
+                  relief=tk.FLAT, padx=14, pady=3, cursor="hand2").pack(
+                  side=tk.LEFT, padx=(0, 6))
+        tk.Button(btn_frame, text=tr("cat_cancel_btn"),
+                  command=dlg.destroy,
+                  font=_font(9), bg=BG_SURFACE, fg=TEXT_DIM,
+                  activebackground=BG_HOVER, activeforeground=TEXT_H1,
+                  relief=tk.FLAT, padx=10, pady=3, cursor="hand2").pack(side=tk.LEFT)
+
+        # Centreer dialoog op hoofdvenster
+        dlg.update_idletasks()
+        rx = self.root.winfo_x() + (self.root.winfo_width()  - dlg.winfo_reqwidth())  // 2
+        ry = self.root.winfo_y() + (self.root.winfo_height() - dlg.winfo_reqheight()) // 2
+        dlg.geometry(f"+{max(0,rx)}+{max(0,ry)}")
 
     # ── Layout ────────────────────────────────────────────────────────────────
     def _build_ui(self):
@@ -1765,8 +2501,17 @@ class HAMIOSApp:
                              font=_font(9), bg="#5A1010", fg=TEXT_H1,
                              activebackground="#8B1A1A", activeforeground=TEXT_H1,
                              relief=tk.FLAT, padx=8, pady=2, cursor="hand2")
-        exit_btn.pack(side=tk.LEFT, padx=(0, 10))
+        exit_btn.pack(side=tk.LEFT, padx=(0, 6))
         self._tr_widgets["exit"] = exit_btn
+
+        # CAT Interface knop (naast Afsluiten)
+        self._cat_btn = tk.Button(hdr, text="CAT",
+                                  command=self._open_cat_dialog,
+                                  font=_font(9), bg="#0D3B4F", fg=TEXT_H1,
+                                  activebackground="#1A6080", activeforeground=TEXT_H1,
+                                  relief=tk.FLAT, padx=8, pady=2, cursor="hand2")
+        self._cat_btn.pack(side=tk.LEFT, padx=(0, 10))
+        self._update_cat_btn_color()
 
         # ── Rechter kant (right → left volgorde) ────────────────────────────
         # Tijden rechts (UTC + lokaal)
@@ -2151,6 +2896,57 @@ class HAMIOSApp:
                                "≥ 1000 pfu: S5 — PCA grave, tutti i percorsi polari chiusi\n"
                                "PCA blocca le rotte polari 1–7 giorni."),
             },
+            "es": {
+                "sfi":        ("Índice de flujo solar (SFI)",
+                               "Medida de la actividad de radio solar a 10,7 cm.\n"
+                               "< 80: bajo  |  80–120: moderado  |  > 150: alto\n"
+                               "SFI más alto → mejor ionización → MUF más alta."),
+                "ssn":        ("Número de manchas solares (SSN)",
+                               "Número de manchas solares. SSN alto correlaciona con SFI más alto\n"
+                               "y mejor propagación HF, especialmente en bandas altas."),
+                "a_index":    ("Índice A (diario)",
+                               "Medida diaria de la actividad geomagnética (0–400).\n"
+                               "< 10: tranquilo  |  10–29: agitado  |  ≥ 30: tormenta\n"
+                               "Valores altos perturban la ionosfera (LUF elevada)."),
+                "k_index":    ("Índice K (cada 3 horas)",
+                               "Actividad geomagnética cada 3 horas (0–9).\n"
+                               "0–2: tranquilo  |  3–4: agitado  |  5+: tormenta\n"
+                               "Efecto directo en la absorción HF y rutas polares."),
+                "xray":       ("Flujo de rayos X (GOES)",
+                               "Flujo de rayos X solar. Clase A/B/C/M/X.\n"
+                               "Los destellos X pueden bloquear repentinamente la ionosfera\n"
+                               "del lado diurno (SWF – Short Wave Fadeout)."),
+                "muf":        ("Frecuencia Máxima Utilizable (MUF)",
+                               "Frecuencia más alta reflejada por la capa F2 en una ruta dada.\n"
+                               "Las bandas por encima de la MUF están cerradas.\n"
+                               "Calculada via foF2 × factor oblicuo 3,8."),
+                "luf":        ("Frecuencia Mínima Utilizable (LUF)",
+                               "Frecuencia más baja utilizable debido a la absorción de la capa D.\n"
+                               "Las bandas por debajo de la LUF son demasiado absorbidas.\n"
+                               "Aumenta con mayor índice K y actividad auroral."),
+                "sw_speed":   ("Velocidad del viento solar (km/s)",
+                               "Velocidad del viento solar medida por DSCOVR/ACE (NOAA).\n"
+                               "< 400: tranquilo  |  400–600: elevado  |  > 600: tormentoso\n"
+                               "Mayor velocidad puede aumentar la actividad geomagnética."),
+                "sw_bz":      ("Bz — campo magnético interplanetario (nT)",
+                               "Componente hacia el norte (positivo) o sur (negativo)\n"
+                               "del campo magnético interplanetario (IMF).\n"
+                               "Bz < −10 nT: riesgo de tormenta geomagnética aumenta fuertemente.\n"
+                               "Bz negativo se acopla al campo terrestre → índice K elevado."),
+                "iono_fof2":  ("Ionosonda foF2 — medido vs modelo (MHz)",
+                               "foF2 = frecuencia crítica de la capa F2 (medición ionosonda).\n"
+                               "Medido: valor actual de la ionosonda europea más cercana\n"
+                               "(GIRO/LGDC DIDBase, intervalo ≈15 min).\n"
+                               "Modelo: cálculo HAMIOS basado en SFI y SSN.\n"
+                               "Verde = buena coincidencia  |  Naranja = desviación moderada\n"
+                               "Rojo = gran desviación (tormenta o actividad inusual)."),
+                "proton_flux":("Flujo de protones >10 MeV (pfu)",
+                               "Protones de alta energía de erupciones solares.\n"
+                               "< 10 pfu: normal  |  ≥ 10: S1 (PCA posible)\n"
+                               "≥ 100 pfu: S3 — rutas polares bloqueadas\n"
+                               "≥ 1000 pfu: S5 — PCA grave, todos los caminos polares cerrados\n"
+                               "PCA bloquea rutas polares 1–7 días."),
+            },
         }
 
         def _get_solar_tips(lang: str) -> dict:
@@ -2270,7 +3066,7 @@ class HAMIOSApp:
 
         # ── Gecombineerde linker+midden zone ──────────────────────────────────
         combined = tk.Frame(top_row, bg=BG_ROOT)
-        combined.pack(side=tk.LEFT, fill=tk.BOTH, expand=True, padx=(0, 10))
+        combined.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
 
         # Sub-rij: Kaart+Hist+DX links (vaste breedte) | Prop+Schema rechts (expand)
         sub_row = tk.Frame(combined, bg=BG_ROOT)
@@ -2326,13 +3122,11 @@ class HAMIOSApp:
         _cb("locator",  self._show_locator_var)
         _cb(None,       self._show_cs_var,       "CS")
         _cb(None,       self._show_iaru_var,      "ITU")
+        _cb(None,       self._show_spots_var,    "Spots")
+        _cb(None,       self._show_wspr_var,     "WSPR")
         _cb("graylijn", self._show_graylijn_var)
         _cb("moon",     self._show_moon_var)
         _cb("sun",      self._show_sun_var)
-
-        self._map_updated_var = tk.StringVar(value="")
-        tk.Label(map_hdr, textvariable=self._map_updated_var,
-                 font=_font(8), bg=BG_PANEL, fg=TEXT_DIM).pack(side=tk.LEFT, padx=(14, 0))
 
         self._map_canvas = tk.Canvas(outer, height=200, bg="#1B3A5C",
                                      bd=0, highlightthickness=0)
@@ -2380,7 +3174,18 @@ class HAMIOSApp:
         return lat, lon
 
     def _on_map_click(self, vx: int, vy: int):
-        """Groot-cirkel bestemming instellen na een klik (geen drag)."""
+        """Klik op kaart: DX-spot popup als Spots aan staat, anders groot-cirkel."""
+        # Controleer eerst of er een DX-spot stip is geraakt
+        if self._show_spots_var.get():
+            for hit in self._spot_hit_areas:
+                if abs(vx - hit["x"]) <= hit["r"] and abs(vy - hit["y"]) <= hit["r"]:
+                    s = hit["spot"]
+                    self._gc_info_var.set(
+                        f"📡  {s.get('dx','')}  {s.get('freq_mhz','')} MHz"
+                        f"  [{s.get('band','')}]  "
+                        f"spotter: {s.get('spotter','')}  —  {s.get('comment','')}"
+                    )
+                    return
         lat, lon = self._viewport_to_latlon(vx, vy)
         self._gc_dest = (lat, lon)
         dist = _haversine_km(self._qth_lat, self._qth_lon, lat, lon)
@@ -2774,8 +3579,81 @@ class HAMIOSApp:
         self._map_photo = ImageTk.PhotoImage(img)
         c.delete("all")
         c.create_image(0, 0, anchor='nw', image=self._map_photo)
-        if hasattr(self, "_map_updated_var"):
-            self._map_updated_var.set(datetime.datetime.now().strftime("%H:%M"))
+        self._draw_dx_spots()
+        self._draw_wspr_spots()
+
+    def _draw_dx_spots(self):
+        """Teken DX-spot stippen en lijnen als canvas-items over de kaart."""
+        self._spot_hit_areas = []
+        if not getattr(self, "_show_spots_var", None) or not self._show_spots_var.get():
+            return
+        spots = getattr(self, "_dx_all_spots", [])
+        if not spots:
+            return
+        c  = self._map_canvas
+        W  = c.winfo_width()  or 960
+        VW = int(W * max(1.0, self._map_zoom))
+        VH = VW // 2
+        cl = self._map_crop_left
+        ct = self._map_crop_top
+
+        seen: set = set()   # dedup per DX-callsign (toon max 1 stip per DX)
+        for spot in spots[:80]:
+            dx_pos = _prefix_latlon(spot.get("dx", ""))
+            if not dx_pos:
+                continue
+            dx_mx, dx_my = _ll_to_xy(dx_pos[0], dx_pos[1], VW, VH)
+            dx_vx = dx_mx - cl
+            dx_vy = dx_my - ct
+            color = _SPOT_BAND_CLR.get(spot.get("band", ""), "#AAAAAA")
+
+            # Lijn van spotter naar DX
+            sp_pos = _prefix_latlon(spot.get("spotter", ""))
+            if sp_pos:
+                sp_mx, sp_my = _ll_to_xy(sp_pos[0], sp_pos[1], VW, VH)
+                c.create_line(sp_mx - cl, sp_my - ct, dx_vx, dx_vy,
+                              fill=color, width=1, dash=(3, 3))
+
+            # Stip op DX-locatie (één per uniek callsign)
+            dx_key = spot.get("dx", "")
+            if dx_key not in seen:
+                seen.add(dx_key)
+                r = 4
+                c.create_oval(dx_vx - r, dx_vy - r, dx_vx + r, dx_vy + r,
+                              fill=color, outline="white", width=1)
+                self._spot_hit_areas.append(
+                    {"x": dx_vx, "y": dx_vy, "r": r + 4, "spot": spot})
+
+    def _draw_wspr_spots(self):
+        """Teken WSPR-verbindingslijnen als canvas-items over de kaart."""
+        if not getattr(self, "_show_wspr_var", None) or not self._show_wspr_var.get():
+            return
+        spots = getattr(self, "_wspr_spots", [])
+        if not spots:
+            return
+        c  = self._map_canvas
+        W  = c.winfo_width() or 960
+        VW = int(W * max(1.0, self._map_zoom))
+        VH = VW // 2
+        cl = self._map_crop_left
+        ct = self._map_crop_top
+
+        for spot in spots:
+            color = _SPOT_BAND_CLR.get(spot["band"], "#888888")
+            # Lijndikte op basis van SNR: ≤-20 → 1, -20..-5 → 2, >-5 → 3
+            snr = spot["snr"]
+            width = 1 if snr <= -20 else (2 if snr <= -5 else 3)
+
+            tx_x, tx_y = _ll_to_xy(spot["tx_lat"], spot["tx_lon"], VW, VH)
+            rx_x, rx_y = _ll_to_xy(spot["rx_lat"], spot["rx_lon"], VW, VH)
+            c.create_line(tx_x - cl, tx_y - ct, rx_x - cl, rx_y - ct,
+                          fill=color, width=width)
+
+            # Klein stipje op de ontvanger
+            r = 2
+            c.create_oval(rx_x - cl - r, rx_y - ct - r,
+                          rx_x - cl + r, rx_y - ct + r,
+                          fill=color, outline="")
 
     # ── HF Propagatie panel ───────────────────────────────────────────────────
     def _build_prop_panel(self, parent):
@@ -2789,10 +3667,6 @@ class HAMIOSApp:
                                font=_font(10, "bold"), bg=BG_PANEL, fg=ACCENT)
         _prop_title.pack(side=tk.LEFT)
         self._tr_widgets["prop_header"] = _prop_title
-        self._prop_updated_var = tk.StringVar(value="")
-        tk.Label(prop_hdr, textvariable=self._prop_updated_var,
-                 font=_font(8), bg=BG_PANEL, fg=TEXT_DIM).pack(side=tk.RIGHT)
-
         ctrl = tk.Frame(outer, bg=BG_PANEL)
         ctrl.pack(fill=tk.X, padx=10, pady=(0, 4))
 
@@ -2846,14 +3720,53 @@ class HAMIOSApp:
                                lambda *_: self._draw_prop_bars(self._last_band_pct))
         self._bar_rows: list = []   # (y_top, y_bot, tooltip_text)
         self._tooltip  = _Tooltip(self._prop_canvas)
-        self._prop_canvas.bind("<Motion>", self._on_bar_motion)
-        self._prop_canvas.bind("<Leave>",  lambda *_: self._tooltip.hide())
+        self._prop_canvas.bind("<Motion>",   self._on_bar_motion)
+        self._prop_canvas.bind("<Leave>",    self._on_bar_leave)
+        self._prop_canvas.bind("<Button-1>", self._on_bar_click)
+
+        # VFO-A/B frequentie + terminal toggle (wordt verborgen als CAT uit)
+        self._cat_info_frame = tk.Frame(outer, bg=BG_PANEL)
+        self._cat_freq_lbl = tk.Label(self._cat_info_frame, textvariable=self._cat_freq_var,
+                                      font=_font(10, "bold"), bg=BG_PANEL,
+                                      fg=ACCENT, anchor="w")
+        self._cat_freq_lbl.pack(side=tk.LEFT, fill=tk.X, expand=True)
+        _cat_term_cb = tk.Checkbutton(self._cat_info_frame, text="Terminal",
+                                      variable=self._cat_terminal_var,
+                                      command=self._toggle_cat_terminal,
+                                      bg=BG_PANEL, fg=TEXT_DIM,
+                                      selectcolor=BG_SURFACE,
+                                      activebackground=BG_PANEL,
+                                      font=_font(8), cursor="hand2")
+        _cat_term_cb.pack(side=tk.RIGHT, padx=(4, 0))
+
+        # CAT terminal venster (verborgen tot checkbox aan)
+        self._cat_terminal_frame = tk.Frame(outer, bg=BG_PANEL)
+        _term_inner = tk.Frame(self._cat_terminal_frame, bg=BG_PANEL)
+        _term_inner.pack(fill=tk.BOTH, expand=True, pady=(0, 4))
+        _term_sb = tk.Scrollbar(_term_inner, orient=tk.VERTICAL,
+                                bg=BG_SURFACE, troughcolor=BG_PANEL)
+        self._cat_terminal_txt = tk.Text(
+            _term_inner, height=5,
+            bg=BG_SURFACE, fg=TEXT_BODY,
+            font=("Consolas", 8),
+            state=tk.DISABLED, wrap=tk.NONE,
+            yscrollcommand=_term_sb.set,
+            bd=0, padx=4, pady=2)
+        _term_sb.config(command=self._cat_terminal_txt.yview)
+        _term_sb.pack(side=tk.RIGHT, fill=tk.Y)
+        self._cat_terminal_txt.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
+        self._cat_terminal_txt.tag_configure("tx", foreground="#FFCA28")
+        self._cat_terminal_txt.tag_configure("rx", foreground="#80CFFF")
+        self._cat_terminal_txt.tag_configure("info", foreground=TEXT_DIM)
+
+        self._update_cat_freq_lbl_visibility()
 
     def _draw_prop_bars(self, band_pct):
         self._last_band_pct = band_pct
         c = self._prop_canvas
         c.delete("all")
         self._bar_rows = []
+        self._bar_band_rows = []
 
         W       = c.winfo_width() or 700
         BAR_H   = 13
@@ -2955,18 +3868,91 @@ class HAMIOSApp:
                           fill=ACCENT if ft8 != "—" else TEXT_DIM, anchor='center')
 
             self._bar_rows.append((y, y + BAR_H, tip))
+            self._bar_band_rows.append((y, y + BAR_H, name, freq))
+
+        # VFO-A / VFO-B markers (alleen als CAT ingeschakeld)
+        if self._cat_enabled_var.get():
+            _band_y = {r[2]: (r[0], r[1]) for r in self._bar_band_rows}
+            for vfo_hz, label, color in [
+                    (self._cat_vfo_a_hz, "A", "#FFFFFF"),
+                    (self._cat_vfo_b_hz, "B", "#80CFFF")]:
+                if not vfo_hz:
+                    continue
+                vfo_khz = vfo_hz / 1000
+                for bname, lo, hi in _BAND_RANGES_KHZ:
+                    if lo <= vfo_khz <= hi and bname in _band_y:
+                        y0, y1 = _band_y[bname]
+                        x = BAR_X + max(1, min(BAR_MAX - 1,
+                                               int(BAR_MAX * (vfo_khz - lo) / (hi - lo))))
+                        c.create_line(x, y0, x, y1, fill=color, width=2)
+                        c.create_text(x, y0 - 1, text=label,
+                                      font=("Segoe UI", 7, "bold"),
+                                      fill=color, anchor="s")
+                        break
 
     def _on_bar_motion(self, event: tk.Event):
-        if not self._show_tips_var.get():
-            self._tooltip.hide()
-            return
-        for y0, y1, tip in self._bar_rows:
+        for y0, y1, _ in self._bar_rows:
             if y0 <= event.y <= y1:
-                rx = self._prop_canvas.winfo_rootx() + event.x
-                ry = self._prop_canvas.winfo_rooty() + event.y
-                self._tooltip.show(rx, ry, tip)
+                self._prop_canvas.config(cursor="hand2")
+                if self._show_tips_var.get():
+                    rx = self._prop_canvas.winfo_rootx() + event.x
+                    ry = self._prop_canvas.winfo_rooty() + event.y
+                    self._tooltip.show(rx, ry, _)
                 return
+        self._prop_canvas.config(cursor="")
         self._tooltip.hide()
+
+    def _on_bar_leave(self, _event=None):
+        self._prop_canvas.config(cursor="")
+        self._tooltip.hide()
+
+    def _on_bar_click(self, event: tk.Event):
+        """Klik op een bandbalk → stuur startfrequentie naar radio via CAT."""
+        port = self._cat_port_var.get().strip()
+        if not port:
+            return
+        for y0, y1, _, freq_mhz in self._bar_band_rows:
+            if y0 <= event.y <= y1:
+                freq_hz = int(freq_mhz * 1_000_000)
+                baud = int(self._cat_baud_var.get())
+                bits = int(self._cat_bits_var.get())
+                par  = self._cat_parity_var.get()
+                stop = float(self._cat_stopbits_var.get())
+                radio = self._cat_radio_var.get()
+                lock = self._cat_poll_lock
+
+                def _send(fn, args):
+                    with lock:
+                        fn(*args)
+
+                if radio == "Icom CI-V":
+                    try:
+                        addr = int(self._cat_civ_addr_var.get(), 0)
+                    except ValueError:
+                        addr = 0x70
+                    self._cat_terminal_log(f"▶ <CI-V set freq={freq_hz} Hz addr=0x{addr:02X}>", "tx")
+                    threading.Thread(
+                        target=_send,
+                        args=(_icom_set_freq, (port, baud, bits, par, stop, freq_hz, addr)),
+                        daemon=True,
+                    ).start()
+                elif radio == "Kenwood / Elecraft":
+                    self._cat_terminal_log(f"▶ FA{freq_hz:011d};", "tx")
+                    threading.Thread(
+                        target=_send,
+                        args=(_kenwood_set_freq, (port, baud, bits, par, stop, freq_hz)),
+                        daemon=True,
+                    ).start()
+                else:  # Yaesu CAT (default)
+                    self._cat_terminal_log(f"▶ VS0;FA{freq_hz:011d};", "tx")
+                    threading.Thread(
+                        target=_send,
+                        args=(_yaesu_set_freq, (port, baud, bits, par, stop, freq_hz)),
+                        daemon=True,
+                    ).start()
+                self._cat_vfo_a_hz = freq_hz
+                self._cat_freq_var.set(f"VFO-A:  {_fmt_freq_hz(freq_hz)}")
+                break
 
     # ── Historiek panel ───────────────────────────────────────────────────────
     def _build_hist_panel(self, parent):
@@ -2996,10 +3982,6 @@ class HAMIOSApp:
                                 font=_font(9))
             rb.pack(side=tk.LEFT, padx=(8, 0))
             self._hist_range_rbs.append((rb, tr_key))
-
-        self._hist_updated_var = tk.StringVar(value="")
-        tk.Label(hdr, textvariable=self._hist_updated_var,
-                 font=_font(8), bg=BG_PANEL, fg=TEXT_DIM).pack(side=tk.RIGHT, padx=(0, 10))
 
         self._hist_canvas = tk.Canvas(outer, height=75, bg=BG_PANEL,
                                       bd=0, highlightthickness=0)
@@ -3112,8 +4094,6 @@ class HAMIOSApp:
             "mode": "Banden", "t0": t0, "dt": dt,
             "pad_l": PAD_L, "gw": gw, "data": data,
         }
-        if hasattr(self, "_hist_updated_var"):
-            self._hist_updated_var.set(datetime.datetime.now().strftime("%H:%M"))
 
     # ── Bandopenings-schema (heatmap) ─────────────────────────────────────────
     def _build_schedule_panel(self, parent):
@@ -3127,10 +4107,6 @@ class HAMIOSApp:
                                 font=_font(10, "bold"), bg=BG_PANEL, fg=ACCENT)
         _sched_title.pack(side=tk.LEFT)
         self._tr_widgets["sched_header"] = _sched_title
-        self._sched_updated_var = tk.StringVar(value="")
-        tk.Label(hdr, textvariable=self._sched_updated_var,
-                 font=_font(8), bg=BG_PANEL, fg=TEXT_DIM).pack(side=tk.RIGHT)
-
         self._sched_canvas = tk.Canvas(outer, height=180, bg=BG_PANEL,
                                        bd=0, highlightthickness=0)
         self._sched_canvas.pack(fill=tk.X, padx=10, pady=(0, 6))
@@ -3240,8 +4216,6 @@ class HAMIOSApp:
             "grid": grid_data,
             "utc_offset": utc_offset,
         }
-        if hasattr(self, "_sched_updated_var"):
-            self._sched_updated_var.set(datetime.datetime.now().strftime("%H:%M"))
 
     def _on_hist_motion(self, event: tk.Event):
         if not self._show_tips_var.get() or not self._hist_layout:
@@ -3436,6 +4410,22 @@ class HAMIOSApp:
             lambda: threading.Thread(target=self._refresh_dx, daemon=True).start()
         )
 
+    def _refresh_wspr(self):
+        spots = _fetch_wspr_spots()
+        self.root.after(0, lambda: self._on_wspr_spots(spots))
+
+    def _on_wspr_spots(self, spots: list):
+        self._wspr_spots = spots
+        if self._show_wspr_var.get():
+            self._draw_map()
+        self._schedule_wspr()
+
+    def _schedule_wspr(self):
+        self._wspr_after_id = self.root.after(
+            WSPR_REFRESH_SECS * 1000,
+            lambda: threading.Thread(target=self._refresh_wspr, daemon=True).start()
+        )
+
     # ── Advies panel ─────────────────────────────────────────────────────────
     def _build_advice_panel(self, parent):
         # Vaste hoogte op basis van constanten zodat winfo_reqheight() bij startup klopt
@@ -3449,9 +4439,6 @@ class HAMIOSApp:
                               font=_font(10, "bold"), bg=BG_PANEL, fg=ACCENT)
         _adv_title.pack(side=tk.LEFT)
         self._tr_widgets["adv_header"] = _adv_title
-        self._advice_updated_var = tk.StringVar(value="")
-        tk.Label(adv_hdr, textvariable=self._advice_updated_var,
-                 font=_font(8), bg=BG_PANEL, fg=TEXT_DIM).pack(side=tk.RIGHT)
         adv_h = ADV_ROWS * (ADV_CARD_H + ADV_CARD_GAP)
         adv_wrap = tk.Frame(outer, bg=BG_PANEL, height=adv_h)
         adv_wrap.pack(fill=tk.X, padx=10, pady=(0, 8))
@@ -3861,8 +4848,6 @@ class HAMIOSApp:
         # Stuur tips door naar de scrollende ticker onderaan
         self._update_ticker(tips)
 
-        if hasattr(self, "_advice_updated_var"):
-            self._advice_updated_var.set(datetime.datetime.now().strftime("%H:%M"))
 
     # ──────────────────────────────────────────────────────────────────────────
     # Ticker (scrollende prognose-balk onderaan het venster)
@@ -4040,8 +5025,6 @@ class HAMIOSApp:
         self._draw_schedule()
         self._update_advice()
         self._check_alerts(bp, k_index)
-        if hasattr(self, "_prop_updated_var"):
-            self._prop_updated_var.set(datetime.datetime.now().strftime("%H:%M"))
 
     # ── Instellingen opslaan ──────────────────────────────────────────────────
     def _save_cur_settings(self):
@@ -4059,10 +5042,23 @@ class HAMIOSApp:
                        self._show_graylijn_var.get(),
                        self._show_iaru_var.get(),
                        self._show_cs_var.get(),
+                       self._show_spots_var.get(),
+                       self._show_wspr_var.get(),
                        self._hist_range_var.get(),
                        self._hist_sel,
                        self._k_alert_var.get(),
-                       self._lang_var.get())
+                       self._lang_var.get(),
+                       self._cat_port_var.get(),
+                       self._cat_baud_var.get(),
+                       self._cat_bits_var.get(),
+                       self._cat_parity_var.get(),
+                       self._cat_stopbits_var.get(),
+                       self._cat_flow_var.get(),
+                       self._cat_dtr_var.get(),
+                       self._cat_rts_var.get(),
+                       self._cat_enabled_var.get(),
+                       self._cat_radio_var.get(),
+                       self._cat_civ_addr_var.get())
 
     # ── Refresh interval ──────────────────────────────────────────────────────
     # ── Systeem-tray ─────────────────────────────────────────────────────────
