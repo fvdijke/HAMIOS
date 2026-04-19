@@ -6,7 +6,7 @@
 
 **HAM-radio propagatie- en DX-monitor voor Windows**
 
-> v2.3 — Propagatiepadkaart · Bz 24h-grafiek · Band-openings-notificatie · CAT-interface · Aurora-ring overlay · WSPR/PSKReporter spots · DX-spot markers · 6 talen
+> v2.3 — Propagatiepadkaart · Bz 24h-grafiek · Band-openings-notificatie · Aurora-ring overlay · WSPR/PSKReporter spots · DX-spot markers · 14 talen via externe taalpakketten
 
 *Bedacht door Frank van Dijke · Ontwikkeld met Claude AI*
 
@@ -29,6 +29,7 @@ HAMIOS geeft radioamateurs realtime inzicht in HF-propagatie, zonne-activiteit e
 - **Callsign-prefix laag** (~110 DXCC-entiteiten)
 - **Zoom/pan**: muiswiel 1×–8×, klik+sleep om te pannen, rechts om te resetten
 - Render-cache met low-res maskers voor vloeiende zoom en pan
+- **Kaart-selectievakjes** (Zon, Maan, Graylijn, Aurora, WSPR, Spots, ITU, CS, Locator) staan in een eigen balk **onder de kaart**
 
 ### 🛰️ Propagatiepadkaart
 Klik op een bestemming op de kaart voor een directe padanalyse:
@@ -44,18 +45,18 @@ Klik op een bestemming op de kaart voor een directe padanalyse:
 - Beide hemisferen als echte ovaal (niet als simpele breedteband)
 - **Kleur op K-index**: groen (K < 3) · geel (K 3–5) · rood (K ≥ 6)
 - K=0 → ovaal bij ~67° geomag. breedte · K=9 → ~44° (equatorwaarts)
-- Selecteerbaar via **"Aurora"**-checkbox in de kaart-header
+- **Zachte gloed** (fade-effect, 6 lagen van breed+transparant naar smal+opaque — zelfde stijl als graylijn)
 
 ### 🔵 WSPR / PSKReporter spots op kaart
 - Live propagatiepaden van **wspr.rocks** (WSPR) en **pskreporter.info** (FT8/FT4)
 - Verbindingslijnen op de wereldkaart: **kleur = band**, **dikte = SNR**
-- Selecteerbaar via checkbox in de kaart-header
+- Selecteerbaar via checkbox onder de kaart
 - Geeft echte gemeten propagatie in plaats van alleen modelwaarden
 
 ### 📍 DX-spot markers op kaart
 - Actieve DX-cluster spots als lijnen: stip op DX-locatie (DXCC-centroid) + lijn naar spotter
 - Kleurcodering per band
-- Toggle via **"Spots"**-checkbox in de kaart-header
+- Toggle via **"Spots"**-checkbox onder de kaart
 - Klikken op een stip toont callsign, frequentie en comment als pop-up
 
 ### 🌞 Solar & Ionosfeer Data
@@ -94,8 +95,6 @@ Mini-tijdgrafiek onderaan het solar-paneel:
 - Kleurbalken: groen ≥ 60 % · geel 30–59 % · rood 1–29 % · grijs gesloten
 - Licentieklasse per band (N = Novice/Basis · F = Full/HAREC)
 - FT8-frequentie en aanbevolen modi per band
-- **CAT-integratie**: klik op een bandbalk → stuurt startfrequentie naar de radio
-- **VFO-A/B markers** op de bandbalken (wit = VFO-A, blauw = VFO-B)
 
 ### 🔔 Notificaties & Alarmen
 - **K-index alarm**: tray-melding bij overschrijden van instelbare drempel (spinbox 1–9)
@@ -106,21 +105,24 @@ Mini-tijdgrafiek onderaan het solar-paneel:
 - **PCA-melding**: Polar Cap Absorption bij verhoogde protonflux
 - Alle drempelwaarden opgeslagen in `HAMIOS.ini`
 
-### 🔌 CAT Interface
-Directe besturing van de transceiver via serieel USB, instelbaar via de **CAT**-knop in de header.
+### 🔌 CAT Interface *(experimenteel — werkt nog niet stabiel)*
+
+> ⚠️ **Let op**: de CAT-interface is experimenteel en werkt mogelijk niet op alle radio's. Gebruik op eigen risico. Feedback en testrapporten zijn welkom.
+
+Instelbaar via de **CAT**-knop in de header. Alleen serieel USB — geen TCP.
 
 | Radio type | Protocol | Commando |
 |------------|----------|----------|
-| Yaesu FT-950 e.a. | Yaesu CAT | `VS0;FA{11 digits};` |
+| Yaesu FT-950 e.a. | Yaesu CAT | `FA{9 digits};` |
 | Kenwood / Elecraft | Kenwood CAT | `FA{11 digits};` |
 | Icom | CI-V binair BCD | instelbaar adres (0x70 standaard) |
 
-- **VFO-A en VFO-B** worden elke 2 seconden uitgelezen via `FA;FB;`
-- VFO-A/B frequentie zichtbaar onder het HF-betrouwbaarheidspaneel
+- Klik op een bandbalk → stuurt startfrequentie naar de radio (als CAT ingeschakeld)
+- VFO-A/B worden **eenmalig** uitgelezen bij opstarten en na opslaan van instellingen
+- VFO-A/B frequentie zichtbaar onder de bandbalken
 - **CAT terminal venster**: schakel "Terminal" in naast de VFO-weergave
   - 🟡 Geel `▶` = verzonden commando's
   - 🔵 Blauw `◀` = ontvangen data van de radio
-- Poll-lock voorkomt conflicten tussen polling-thread en klik-naar-afstemmen
 
 ### 🕐 Bandopenings-schema
 - 24-uur heatmap voor alle 11 HF-banden
@@ -156,18 +158,30 @@ Directe besturing van de transceiver via serieel USB, instelbaar via de **CAT**-
 | 10 | 📊 Overall score | Samengesteld propagatie-oordeel |
 
 ### 🌐 Meertalig
-Volledig vertaald in **6 talen** — te wisselen in de header:
+**14 talen** ondersteund via een extern taalpakket-systeem — te wisselen in de header.
+
+Engels is de ingebouwde standaardtaal. Alle overige talen worden automatisch geladen vanuit `langs/*.json`-bestanden bij het opstarten. Aanwezige taalpakketten verschijnen direct in het taalmenu; extra pakketten kunnen eenvoudig worden toegevoegd of gedownload.
 
 | Code | Taal |
 |------|------|
+| EN | English *(ingebouwd)* |
 | NL | Nederlands |
-| EN | English |
 | DE | Deutsch |
 | FR | Français |
 | IT | Italiano |
 | ES | Español |
+| NO | Norsk |
+| PL | Polski |
+| SV | Svenska |
+| DA | Dansk |
+| FI | Suomi |
+| PT | Português |
+| JA | 日本語 |
+| RU | Русский |
 
-Alle interface-teksten, analyses, helpteksten en tooltips zijn vertaald.
+Alle interface-teksten, analyses, helpteksten en tooltips zijn per taal volledig vertaald.
+
+**Eigen taalpakket maken**: kopieer een bestaand `.json`-bestand uit `langs/`, pas `meta.code` en `meta.name` aan en vertaal de `strings`- en `solar_tips`-secties. HAMIOS detecteert het pakket automatisch bij de volgende start.
 
 ### ⚙️ Overig
 - **Systeemtray**: minimaliseren naar tray, notificaties voor band-openings en K-index
@@ -209,6 +223,8 @@ pip install pyinstaller
 pyinstaller HAMIOS.spec
 # → dist\HAMIOS.exe
 ```
+
+> **Let op**: zorg dat de `langs/`-map naast de EXE staat zodat de taalpakketten beschikbaar zijn.
 
 ---
 
@@ -259,6 +275,7 @@ LUF = (3.5 + K × 0.8) × auroraal-factor / 10^(SNR/20)
 
 ## 🔧 Toekomstige ideeën
 
+- CAT-interface stabiliseren (volledige Yaesu/Kenwood/Icom ondersteuning)
 - SDR-integratie
 - Logging-koppeling (ADIF/WSJTX)
 - Satelliet tracking
