@@ -194,7 +194,9 @@
     "cat_flow_none": "Нет",
     "alerts_hdr": "Уведомления",
     "alert_xflare_lbl": "X-вспышка / SWF",
-    "alert_pca_lbl": "PCA / Протон"
+    "alert_pca_lbl": "PCA / Протон",
+    "bz_chart_hdr": "Bz  24ч (нТл)",
+    "bz_now_lbl": "сейчас"
   },
   "solar_tips": {
     "sfi": [

@@ -194,7 +194,9 @@
     "cat_flow_none": "Ingen",
     "alerts_hdr": "Varsler",
     "alert_xflare_lbl": "X-blinke / SWF",
-    "alert_pca_lbl": "PCA / Proton"
+    "alert_pca_lbl": "PCA / Proton",
+    "bz_chart_hdr": "Bz  24t (nT)",
+    "bz_now_lbl": "na"
   },
   "solar_tips": {
     "sfi": [

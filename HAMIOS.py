@@ -117,6 +117,13 @@ Change Log (2.3)
     - VS0; prepend fix voor FT-950 (radio bleef in geheugen/split-modus)
     - Alle CAT-dialoogteksten vertaald in NL/EN/DE/FR/IT via _T-systeem
 
+2026-04-20  10:00  Terminal verwijderd, Bz grafiek naar HF band paneel verplaatst
+    - Terminal-selectie uit HF band paneel verwijderd (CAT uitgeschakeld)
+    - Bz 24h grafiek verplaatst van solar-paneel naar HF band paneel (onder band grafiek)
+    - SOLAR_MIN_H 820 → 720 px (Bz grafiek niet meer in solar-paneel)
+    - Bz grafiek taalafhankelijk: header via _tr("bz_chart_hdr"), "nu/now" via _tr("bz_now_lbl")
+    - Alle 13 taalbestanden bijgewerkt met bz_chart_hdr en bz_now_lbl
+
 2026-04-20  09:50  ITU uitgeschakeld, solar paneel herstructureerd, window hoogte fix
     - _ITU_DISABLED = True: ITU-checkbox verborgen, overlay-rendering geblokkeerd
     - SOLAR_MIN_H 700 → 820 px; minsize gebruikt MIN_WINDOW_H zodat Bz zichtbaar is
@@ -215,9 +222,9 @@ ADV_HDR_STRIP  = 40
 ADV_SECTION_H  = ADV_HDR_STRIP + ADV_ROWS * (ADV_CARD_H + ADV_CARD_GAP) + 8
 
 # Solar-paneel minimum: header(32) + params(198) + alert-sectie(110) +
-#   band-tabel header+11bands(196) + sep(11) + x-flare(44) + PCA(32) +
-#   Bz-header+grafiek(110) = ~733 → buffer → 820px
-SOLAR_MIN_H   = 820
+#   band-tabel header+11bands(196) + sep(11) + x-flare(44) + PCA(32) = ~623
+#   → buffer → 720px (Bz grafiek staat nu in HF band paneel)
+SOLAR_MIN_H   = 720
 
 # Minimale venster-hoogte zodat alles (incl. Bz-grafiek) zichtbaar is bij opstarten
 MIN_WINDOW_H  = APP_HDR_H + SOLAR_MIN_H + 6 + ADV_SECTION_H + 4 + TICKER_H
@@ -987,6 +994,8 @@ _T: dict[str, dict[str, str]] = {
     'alerts_hdr':       {"en": 'Notifications'},
     'alert_xflare_lbl': {"en": 'X-flare / SWF'},
     'alert_pca_lbl':    {"en": 'PCA / Proton'},
+    'bz_chart_hdr':     {"en": 'Bz  24h (nT)'},
+    'bz_now_lbl':       {"en": 'now'},
     'day_hdr': {"en": 'Day'},
     'night_hdr': {"en": 'Night'},
     'band_hdr': {"en": 'Band'},
@@ -2716,14 +2725,7 @@ class HAMIOSApp:
         _pca_cb.pack(side=tk.LEFT)
         self._tr_widgets["alert_pca_lbl"] = _pca_cb
 
-        # ── Bz 24-uurs mini-grafiek ───────────────────────────────────────────
-        tk.Frame(self._solar_frame, bg=BORDER, height=1).pack(fill=tk.X, pady=(2, 2))
-        _bz_hdr = tk.Label(self._solar_frame, text="Bz  24h (nT)",
-                           font=_font(8), bg=BG_PANEL, fg=TEXT_DIM, anchor='w')
-        _bz_hdr.pack(fill=tk.X)
-        self._bz_canvas = tk.Canvas(self._solar_frame, height=90, bg=BG_SURFACE,
-                                    bd=0, highlightthickness=0)
-        self._bz_canvas.pack(fill=tk.X, pady=(0, 4))
+        # Bz grafiek staat nu in het HF band paneel (zie _build_prop_panel)
 
         # ── Gecombineerde linker+midden zone ──────────────────────────────────
         combined = tk.Frame(top_row, bg=BG_ROOT)
@@ -3510,42 +3512,24 @@ class HAMIOSApp:
         self._prop_canvas.bind("<Leave>",    self._on_bar_leave)
         self._prop_canvas.bind("<Button-1>", self._on_bar_click)
 
-        # VFO-A/B frequentie + terminal toggle (wordt verborgen als CAT uit)
+        # VFO-A/B frequentie (alleen zichtbaar als CAT ingeschakeld — verborgen zolang CAT uitgeschakeld)
         self._cat_info_frame = tk.Frame(outer, bg=BG_PANEL)
         self._cat_freq_lbl = tk.Label(self._cat_info_frame, textvariable=self._cat_freq_var,
                                       font=_font(10, "bold"), bg=BG_PANEL,
                                       fg=ACCENT, anchor="w")
-        self._cat_freq_lbl.pack(side=tk.LEFT, fill=tk.X, expand=True)
-        _cat_term_cb = tk.Checkbutton(self._cat_info_frame, text="Terminal",
-                                      variable=self._cat_terminal_var,
-                                      command=self._toggle_cat_terminal,
-                                      bg=BG_PANEL, fg=TEXT_DIM,
-                                      selectcolor=BG_SURFACE,
-                                      activebackground=BG_PANEL,
-                                      font=_font(8), cursor="hand2")
-        _cat_term_cb.pack(side=tk.RIGHT, padx=(4, 0))
-
-        # CAT terminal venster (verborgen tot checkbox aan)
-        self._cat_terminal_frame = tk.Frame(outer, bg=BG_PANEL)
-        _term_inner = tk.Frame(self._cat_terminal_frame, bg=BG_PANEL)
-        _term_inner.pack(fill=tk.BOTH, expand=True, pady=(0, 4))
-        _term_sb = tk.Scrollbar(_term_inner, orient=tk.VERTICAL,
-                                bg=BG_SURFACE, troughcolor=BG_PANEL)
-        self._cat_terminal_txt = tk.Text(
-            _term_inner, height=5,
-            bg=BG_SURFACE, fg=TEXT_BODY,
-            font=("Consolas", 8),
-            state=tk.DISABLED, wrap=tk.NONE,
-            yscrollcommand=_term_sb.set,
-            bd=0, padx=4, pady=2)
-        _term_sb.config(command=self._cat_terminal_txt.yview)
-        _term_sb.pack(side=tk.RIGHT, fill=tk.Y)
-        self._cat_terminal_txt.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
-        self._cat_terminal_txt.tag_configure("tx", foreground="#FFCA28")
-        self._cat_terminal_txt.tag_configure("rx", foreground="#80CFFF")
-        self._cat_terminal_txt.tag_configure("info", foreground=TEXT_DIM)
+        self._cat_freq_lbl.pack(fill=tk.X, padx=12, pady=(0, 2))
 
         self._update_cat_freq_lbl_visibility()
+
+        # ── Bz 24-uurs mini-grafiek ───────────────────────────────────────────
+        tk.Frame(outer, bg=BORDER, height=1).pack(fill=tk.X, padx=10, pady=(4, 2))
+        self._bz_hdr_lbl = tk.Label(outer, text=self._tr("bz_chart_hdr"),
+                                    font=_font(8), bg=BG_PANEL, fg=TEXT_DIM, anchor='w')
+        self._bz_hdr_lbl.pack(fill=tk.X, padx=10)
+        self._tr_widgets["bz_chart_hdr"] = self._bz_hdr_lbl
+        self._bz_canvas = tk.Canvas(outer, height=90, bg=BG_SURFACE,
+                                    bd=0, highlightthickness=0)
+        self._bz_canvas.pack(fill=tk.X, padx=10, pady=(0, 6))
 
     def _draw_prop_bars(self, band_pct):
         self._last_band_pct = band_pct
@@ -5113,10 +5097,10 @@ class HAMIOSApp:
             c.create_text(PAD_L - 2, yr, text=lbl, fill=TEXT_DIM,
                           font=("Consolas", 7), anchor='e')
 
-        # Tijdlabel "24h"
+        # Tijdlabels (taalafhankelijk)
         c.create_text(PAD_L, H - PAD_B + 2, text="24h",
                       fill=TEXT_DIM, font=("Consolas", 7), anchor='nw')
-        c.create_text(W - PAD_R, H - PAD_B + 2, text="nu",
+        c.create_text(W - PAD_R, H - PAD_B + 2, text=self._tr("bz_now_lbl"),
                       fill=TEXT_DIM, font=("Consolas", 7), anchor='ne')
 
         # Bz-lijn: blauw (positief) of rood (negatief) per segment

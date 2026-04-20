@@ -194,7 +194,9 @@
     "cat_flow_none": "なし",
     "alerts_hdr": "通知",
     "alert_xflare_lbl": "Xフレア / SWF",
-    "alert_pca_lbl": "PCA / 陽子"
+    "alert_pca_lbl": "PCA / 陽子",
+    "bz_chart_hdr": "Bz  24時間 (nT)",
+    "bz_now_lbl": "今"
   },
   "solar_tips": {
     "sfi": [

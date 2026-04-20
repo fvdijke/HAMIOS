@@ -194,7 +194,9 @@
     "cat_flow_none": "Geen",
     "alerts_hdr": "Meldingen",
     "alert_xflare_lbl": "X-flare / SWF",
-    "alert_pca_lbl": "PCA / Proton"
+    "alert_pca_lbl": "PCA / Proton",
+    "bz_chart_hdr": "Bz  24u (nT)",
+    "bz_now_lbl": "nu"
   },
   "solar_tips": {
     "sfi": [

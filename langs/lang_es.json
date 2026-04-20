@@ -194,7 +194,9 @@
     "cat_flow_none": "Ninguno",
     "alerts_hdr": "Notificaciones",
     "alert_xflare_lbl": "Llamarada X / SWF",
-    "alert_pca_lbl": "PCA / Proton"
+    "alert_pca_lbl": "PCA / Proton",
+    "bz_chart_hdr": "Bz  24h (nT)",
+    "bz_now_lbl": "ahora"
   },
   "solar_tips": {
     "sfi": [

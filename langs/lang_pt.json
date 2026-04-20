@@ -194,7 +194,9 @@
     "cat_flow_none": "Nenhum",
     "alerts_hdr": "Notificacoes",
     "alert_xflare_lbl": "Erupcao X / SWF",
-    "alert_pca_lbl": "PCA / Proton"
+    "alert_pca_lbl": "PCA / Proton",
+    "bz_chart_hdr": "Bz  24h (nT)",
+    "bz_now_lbl": "agora"
   },
   "solar_tips": {
     "sfi": [
