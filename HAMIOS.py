@@ -117,6 +117,14 @@ Change Log (2.3)
     - VS0; prepend fix voor FT-950 (radio bleef in geheugen/split-modus)
     - Alle CAT-dialoogteksten vertaald in NL/EN/DE/FR/IT via _T-systeem
 
+2026-04-20  09:28  CAT uitgeschakeld, notificaties selecteerbaar, solar paneel vergroot
+    - _CAT_DISABLED = True: CAT-knop grijs, dialoog toont melding, klik-op-balk geblokkeerd
+    - Notificaties nu per type aan/uit: K-index · Band-opening · X-flare · PCA
+      Elke checkbox opgeslagen in HAMIOS.ini [Alerts]; standaard alles aan
+    - Solar-paneel breedte 210 → 250 px; Bz-grafiek hoogte 60 → 90 px
+    - wraplength X-flare/PCA labels 190 → 230 px (past bij nieuwe breedte)
+    - README.md (NL) en README_EN.md bijgewerkt
+
 2026-04-19  09:52  CAT: geen polling meer, eenmalige VFO-lezing
     - _cat_poll_tick vervangen door _cat_read_once (eenmalig, geen herplanning)
     - VFO-A/B worden eenmalig gelezen bij opstarten en na opslaan CAT-instellingen
@@ -164,6 +172,9 @@ try:
     _SERIAL_OK = True
 except ImportError:
     _SERIAL_OK = False
+
+# CAT tijdelijk uitgeschakeld — code intact, interface geblokkeerd tot stabiel
+_CAT_DISABLED = True
 
 # ── Paden ──────────────────────────────────────────────────────────────────────
 APP_DIR       = (os.path.dirname(sys.executable)
@@ -463,8 +474,12 @@ def _load_settings() -> dict:
         "show_aurora":   cfg.getboolean("Map",   "show_aurora",    fallback=True),
         "hist_range":    cfg.get       ("Graph", "hist_range",     fallback="Uren"),
         "hist_sel":      set(hist_sel_raw.split(",")) - {""} if hist_sel_raw else set(),
-        "k_alert":       cfg.getint   ("Alerts","k_alert",        fallback=4),
-        "band_alert":    cfg.getint   ("Alerts","band_alert",     fallback=40),
+        "k_alert":          cfg.getint    ("Alerts","k_alert",          fallback=4),
+        "band_alert":       cfg.getint    ("Alerts","band_alert",       fallback=40),
+        "alert_k_en":       cfg.getboolean("Alerts","alert_k_en",       fallback=True),
+        "alert_band_en":    cfg.getboolean("Alerts","alert_band_en",    fallback=True),
+        "alert_xflare_en":  cfg.getboolean("Alerts","alert_xflare_en",  fallback=True),
+        "alert_pca_en":     cfg.getboolean("Alerts","alert_pca_en",     fallback=True),
         # CAT interface
         "cat_port":      cfg.get      ("CAT",   "port",           fallback=""),
         "cat_baud":      cfg.get      ("CAT",   "baud",           fallback="9600"),
@@ -496,6 +511,10 @@ def _save_settings(lat: float, lon: float, refresh: str,
                    hist_sel: set = None,
                    k_alert: int = 4,
                    band_alert: int = 40,
+                   alert_k_en: bool = True,
+                   alert_band_en: bool = True,
+                   alert_xflare_en: bool = True,
+                   alert_pca_en: bool = True,
                    language: str = "Nederlands",
                    cat_port: str = "", cat_baud: str = "9600",
                    cat_bits: str = "8", cat_parity: str = "N",
@@ -520,7 +539,9 @@ def _save_settings(lat: float, lon: float, refresh: str,
                     "show_aurora": str(show_aurora)}
     cfg["Graph"]  = {"hist_range": hist_range,
                      "selected_bands": ",".join(sorted(hist_sel)) if hist_sel else ""}
-    cfg["Alerts"] = {"k_alert": str(k_alert), "band_alert": str(band_alert)}
+    cfg["Alerts"] = {"k_alert": str(k_alert), "band_alert": str(band_alert),
+                     "alert_k_en": str(alert_k_en), "alert_band_en": str(alert_band_en),
+                     "alert_xflare_en": str(alert_xflare_en), "alert_pca_en": str(alert_pca_en)}
     cfg["CAT"]    = {"port": cat_port, "baud": cat_baud, "bits": cat_bits,
                      "parity": cat_parity, "stopbits": cat_stopbits,
                      "flow": cat_flow, "dtr": str(cat_dtr), "rts": str(cat_rts),
@@ -950,8 +971,10 @@ _T: dict[str, dict[str, str]] = {
     'graylijn': {"en": 'Gray line'},
     'locator': {"en": 'Locator'},
     'updated_lbl': {"en": 'Updated'},
-    'k_alert_lbl': {"en": 'Alert K ≥'},
-    'band_alert_lbl': {"en": 'Band open ≥'},
+    'k_alert_lbl':      {"en": 'Alert K ≥'},
+    'band_alert_lbl':   {"en": 'Band open ≥'},
+    'alert_xflare_lbl': {"en": 'X-flare alert'},
+    'alert_pca_lbl':    {"en": 'PCA alert'},
     'day_hdr': {"en": 'Day'},
     'night_hdr': {"en": 'Night'},
     'band_hdr': {"en": 'Band'},
@@ -1754,8 +1777,12 @@ class HAMIOSApp:
         self._map_drag_moved: bool  = False
         self._dst_var           = tk.BooleanVar(value=s["dst"])
         self._next_refresh_at: datetime.datetime | None = None
-        self._k_alert_var       = tk.IntVar(value=s["k_alert"])
-        self._band_alert_var    = tk.IntVar(value=s["band_alert"])
+        self._k_alert_var          = tk.IntVar(value=s["k_alert"])
+        self._band_alert_var       = tk.IntVar(value=s["band_alert"])
+        self._alert_k_en_var       = tk.BooleanVar(value=s.get("alert_k_en",    True))
+        self._alert_band_en_var    = tk.BooleanVar(value=s.get("alert_band_en", True))
+        self._alert_xflare_en_var  = tk.BooleanVar(value=s.get("alert_xflare_en", True))
+        self._alert_pca_en_var     = tk.BooleanVar(value=s.get("alert_pca_en",  True))
         self._prev_band_open: dict = {}   # name → bool, voor band-opening detectie
         self._prev_k_above: bool   = False
         self._tray_icon             = None
@@ -1943,6 +1970,8 @@ class HAMIOSApp:
 
     def _cat_start_poll(self):
         """Eenmalige VFO-lezing bij opstarten (geen herhaling)."""
+        if _CAT_DISABLED:
+            return
         self._cat_stop_poll()
         if self._cat_enabled_var.get() and _SERIAL_OK:
             self._cat_poll_after_id = self.root.after(500, self._cat_read_once)
@@ -2020,6 +2049,13 @@ class HAMIOSApp:
 
     def _open_cat_dialog(self):
         """Open het CAT-interface instellingendialoogvenster."""
+        if _CAT_DISABLED:
+            import tkinter.messagebox as mb
+            mb.showinfo("CAT — tijdelijk uitgeschakeld",
+                        "De CAT-interface is tijdelijk uitgeschakeld.\n"
+                        "De functionaliteit wordt in een volgende versie afgerond.",
+                        parent=self.root)
+            return
         tr = self._tr
         dlg = tk.Toplevel(self.root)
         dlg.title(tr("cat_dlg_title"))
@@ -2367,14 +2403,16 @@ class HAMIOSApp:
         exit_btn.pack(side=tk.LEFT, padx=(0, 6))
         self._tr_widgets["exit"] = exit_btn
 
-        # CAT Interface knop (naast Afsluiten)
-        self._cat_btn = tk.Button(hdr, text="CAT",
+        # CAT Interface knop (naast Afsluiten) — grijs als tijdelijk uitgeschakeld
+        self._cat_btn = tk.Button(hdr, text="CAT  ⚠",
                                   command=self._open_cat_dialog,
-                                  font=_font(9), bg="#0D3B4F", fg=TEXT_H1,
-                                  activebackground="#1A6080", activeforeground=TEXT_H1,
-                                  relief=tk.FLAT, padx=8, pady=2, cursor="hand2")
+                                  font=_font(9), bg="#3A3A3A", fg="#777777",
+                                  activebackground="#3A3A3A", activeforeground="#999999",
+                                  relief=tk.FLAT, padx=8, pady=2,
+                                  cursor="hand2" if not _CAT_DISABLED else "arrow")
         self._cat_btn.pack(side=tk.LEFT, padx=(0, 10))
-        self._update_cat_btn_color()
+        if not _CAT_DISABLED:
+            self._update_cat_btn_color()
 
         # ── Rechter kant (right → left volgorde) ────────────────────────────
         # Tijden rechts (UTC + lokaal)
@@ -2489,7 +2527,7 @@ class HAMIOSApp:
         top_row.pack(fill=tk.BOTH, expand=True)
 
         # Solar rechts (eerst pack zodat hij niet wordt verdrongen)
-        solar_col = tk.Frame(top_row, bg=BG_PANEL, width=210, height=SOLAR_MIN_H)
+        solar_col = tk.Frame(top_row, bg=BG_PANEL, width=250, height=SOLAR_MIN_H)
         solar_col.pack(side=tk.RIGHT, fill=tk.Y, padx=(10, 0))
         solar_col.pack_propagate(False)
 
@@ -2558,11 +2596,16 @@ class HAMIOSApp:
 
             # Melding K ≥ direct onder K-index, waarde uitgelijnd met getallen-kolom
             if key == "k_index":
+                # K-index drempel + aan/uit checkbox
                 alert_row = tk.Frame(self._solar_frame, bg=BG_PANEL)
-                alert_row.pack(fill=tk.X, pady=(0, 2))
+                alert_row.pack(fill=tk.X, pady=(0, 1))
+                tk.Checkbutton(alert_row, variable=self._alert_k_en_var,
+                               command=self._save_cur_settings,
+                               bg=BG_PANEL, selectcolor=BG_SURFACE,
+                               activebackground=BG_PANEL).pack(side=tk.LEFT, padx=(0, 2))
                 _k_alert_lbl = tk.Label(alert_row, text=self._tr("k_alert_lbl"),
                                         font=_font(9), bg=BG_PANEL,
-                                        fg=TEXT_DIM, anchor='w', width=16)
+                                        fg=TEXT_DIM, anchor='w', width=9)
                 _k_alert_lbl.pack(side=tk.LEFT)
                 self._tr_widgets["k_alert_lbl"] = _k_alert_lbl
                 tk.Spinbox(alert_row, from_=1, to=9, width=3,
@@ -2570,12 +2613,17 @@ class HAMIOSApp:
                            command=self._save_cur_settings,
                            bg=BG_SURFACE, fg=TEXT_H1, buttonbackground=BG_SURFACE,
                            relief=tk.FLAT, font=_font(9, "bold")).pack(side=tk.LEFT)
-                # Band-opening drempel
+
+                # Band-opening drempel + aan/uit checkbox
                 band_alert_row = tk.Frame(self._solar_frame, bg=BG_PANEL)
-                band_alert_row.pack(fill=tk.X, pady=(0, 2))
+                band_alert_row.pack(fill=tk.X, pady=(0, 1))
+                tk.Checkbutton(band_alert_row, variable=self._alert_band_en_var,
+                               command=self._save_cur_settings,
+                               bg=BG_PANEL, selectcolor=BG_SURFACE,
+                               activebackground=BG_PANEL).pack(side=tk.LEFT, padx=(0, 2))
                 _band_alert_lbl = tk.Label(band_alert_row, text=self._tr("band_alert_lbl"),
                                            font=_font(9), bg=BG_PANEL,
-                                           fg=TEXT_DIM, anchor='w', width=16)
+                                           fg=TEXT_DIM, anchor='w', width=9)
                 _band_alert_lbl.pack(side=tk.LEFT)
                 self._tr_widgets["band_alert_lbl"] = _band_alert_lbl
                 tk.Spinbox(band_alert_row, from_=10, to=90, increment=5, width=4,
@@ -2585,6 +2633,30 @@ class HAMIOSApp:
                            relief=tk.FLAT, font=_font(9, "bold")).pack(side=tk.LEFT)
                 tk.Label(band_alert_row, text="%", font=_font(9),
                          bg=BG_PANEL, fg=TEXT_DIM).pack(side=tk.LEFT, padx=(2, 0))
+
+                # X-flare notificatie
+                xflare_row = tk.Frame(self._solar_frame, bg=BG_PANEL)
+                xflare_row.pack(fill=tk.X, pady=(0, 1))
+                tk.Checkbutton(xflare_row, variable=self._alert_xflare_en_var,
+                               command=self._save_cur_settings,
+                               bg=BG_PANEL, selectcolor=BG_SURFACE,
+                               activebackground=BG_PANEL).pack(side=tk.LEFT, padx=(0, 2))
+                _xf_lbl = tk.Label(xflare_row, text=self._tr("alert_xflare_lbl"),
+                                   font=_font(9), bg=BG_PANEL, fg=TEXT_DIM, anchor='w')
+                _xf_lbl.pack(side=tk.LEFT)
+                self._tr_widgets["alert_xflare_lbl"] = _xf_lbl
+
+                # PCA notificatie
+                pca_row = tk.Frame(self._solar_frame, bg=BG_PANEL)
+                pca_row.pack(fill=tk.X, pady=(0, 2))
+                tk.Checkbutton(pca_row, variable=self._alert_pca_en_var,
+                               command=self._save_cur_settings,
+                               bg=BG_PANEL, selectcolor=BG_SURFACE,
+                               activebackground=BG_PANEL).pack(side=tk.LEFT, padx=(0, 2))
+                _pca_lbl2 = tk.Label(pca_row, text=self._tr("alert_pca_lbl"),
+                                     font=_font(9), bg=BG_PANEL, fg=TEXT_DIM, anchor='w')
+                _pca_lbl2.pack(side=tk.LEFT)
+                self._tr_widgets["alert_pca_lbl"] = _pca_lbl2
 
         # Scheidingslijn tussen params en bandentabel
         tk.Frame(self._solar_frame, bg=BORDER, height=1).pack(fill=tk.X, pady=(4, 2))
@@ -2624,14 +2696,14 @@ class HAMIOSApp:
         # X-flare waarschuwing — natuurlijke hoogte (geen vaste height=)
         self._xflare_lbl = tk.Label(self._solar_frame, textvariable=self._xflare_var,
                                     font=_font(8, "bold"), bg=BG_PANEL, fg="#FF7043",
-                                    wraplength=190, justify='left', anchor='nw')
+                                    wraplength=230, justify='left', anchor='nw')
         self._xflare_lbl.pack(fill=tk.X, pady=(0, 2))
 
         # PCA-waarschuwing (proton event — paars) — natuurlijke hoogte
         self._pca_var = tk.StringVar(value="")
         self._pca_lbl = tk.Label(self._solar_frame, textvariable=self._pca_var,
                                  font=_font(8, "bold"), bg=BG_PANEL, fg="#CE93D8",
-                                 wraplength=190, justify='left', anchor='nw')
+                                 wraplength=230, justify='left', anchor='nw')
         self._pca_lbl.pack(fill=tk.X, pady=(0, 2))
 
         # ── Bz 24-uurs mini-grafiek ───────────────────────────────────────────
@@ -2639,7 +2711,7 @@ class HAMIOSApp:
         _bz_hdr = tk.Label(self._solar_frame, text="Bz  24h (nT)",
                            font=_font(8), bg=BG_PANEL, fg=TEXT_DIM, anchor='w')
         _bz_hdr.pack(fill=tk.X)
-        self._bz_canvas = tk.Canvas(self._solar_frame, height=60, bg=BG_SURFACE,
+        self._bz_canvas = tk.Canvas(self._solar_frame, height=90, bg=BG_SURFACE,
                                     bd=0, highlightthickness=0)
         self._bz_canvas.pack(fill=tk.X, pady=(0, 4))
 
@@ -3611,6 +3683,8 @@ class HAMIOSApp:
 
     def _on_bar_click(self, event: tk.Event):
         """Klik op een bandbalk → stuur startfrequentie naar radio via CAT."""
+        if _CAT_DISABLED:
+            return
         port = self._cat_port_var.get().strip()
         if not port:
             return
@@ -4752,6 +4826,10 @@ class HAMIOSApp:
                        self._hist_sel,
                        self._k_alert_var.get(),
                        self._band_alert_var.get(),
+                       self._alert_k_en_var.get(),
+                       self._alert_band_en_var.get(),
+                       self._alert_xflare_en_var.get(),
+                       self._alert_pca_en_var.get(),
                        self._lang_var.get(),
                        self._cat_port_var.get(),
                        self._cat_baud_var.get(),
@@ -4806,7 +4884,7 @@ class HAMIOSApp:
 
         # ── K-index drempel ──────────────────────────────────────────────
         k_above = k_index >= k_threshold
-        if k_above and not self._prev_k_above:
+        if k_above and not self._prev_k_above and self._alert_k_en_var.get():
             self._tray_notify(
                 "⚠️ Geomagnetische storm",
                 f"K-index is gestegen naar {int(k_index)} (drempel: {k_threshold}). "
@@ -4822,7 +4900,7 @@ class HAMIOSApp:
                 newly_open.append(f"{name} ({pct}%)")
             self._prev_band_open[name] = is_open
 
-        if newly_open:
+        if newly_open and self._alert_band_en_var.get():
             bands_str = ",  ".join(newly_open)
             self._tray_notify(
                 "📡 Band geopend",
@@ -5076,7 +5154,7 @@ class HAMIOSApp:
                 msg = self._tr("xflare_warning").format(xray=xray, dur=dur_min)
                 self._xflare_var.set(msg)
                 self._xflare_lbl.config(fg="#FF7043")
-                if xray != self._last_xflare:
+                if xray != self._last_xflare and self._alert_xflare_en_var.get():
                     self._tray_notify(
                         f"☢ {xray}-flare",
                         self._tr("xflare_notify_body").format(dur=dur_min))
@@ -5113,7 +5191,7 @@ class HAMIOSApp:
             msg = self._tr("pca_warning").format(s=s_level, pf=pf, dur=dur)
             self._pca_var.set(msg)
             self._pca_lbl.config(fg=s_color)
-            if s_level > self._last_pca_level:
+            if s_level > self._last_pca_level and self._alert_pca_en_var.get():
                 self._tray_notify(
                     f"☢ Proton event S{s_level}",
                     self._tr("pca_notify_body").format(pf=pf, dur=dur))
