@@ -297,4 +297,4 @@ Dit project leeft van experimenteren — net als de hobby zelf.
 
 ---
 
-*73 de PA3FVD · veel DX!*
+*73*
