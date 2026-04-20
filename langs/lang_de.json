@@ -196,7 +196,26 @@
     "alert_xflare_lbl": "X-Flare / SWF",
     "alert_pca_lbl": "PCA / Proton",
     "bz_chart_hdr": "Bz  24h (nT)",
-    "bz_now_lbl": "jetzt"
+    "bz_now_lbl": "jetzt",
+    "dx_col_band": "Band",
+    "dx_col_spotter": "Spotter",
+    "dx_col_comment": "Kommentar",
+    "hf_col_start": "Start",
+    "hf_col_mode": "Modus",
+    "ant_isotropic": "Isotropic 0dBi",
+    "ant_mag_loop": "Magnetische Schleife",
+    "ant_vertical": "Vertikal",
+    "ant_groundplane": "Groundplane",
+    "ant_inverted_v": "Inverted V",
+    "ant_dipole": "Dipol ~2dBi",
+    "ant_efhw": "EFHW",
+    "ant_ocfd": "OCFD",
+    "ant_jpole": "J-Antenne",
+    "ant_longwire": "Langdraht",
+    "ant_delta_loop": "Deltaschleife ~3dBi",
+    "ant_quad": "Quad ~8dBi",
+    "ant_yagi": "Yagi ~7dBi",
+    "ant_beam": "Richtantenne ~10dBi"
   },
   "solar_tips": {
     "sfi": [
@@ -242,6 +261,22 @@
     "proton_flux": [
       "Protonenfluss >10 MeV (pfu)",
       "Hochenergetische Protonen aus Sonneneruptionen.\n< 10 pfu: normal  |  ≥ 10: S1 (PCA möglich)\n≥ 100 pfu: S3 — Polarrouten gesperrt\n≥ 1000 pfu: S5 — schwere PCA, alle Polarwege geschlossen\nPCA sperrt Polarrouten 1–7 Tage."
+    ],
+    "tip_k_alert": [
+      "K-Index Warnung",
+      "Benachrichtigung wenn der K-Index den eingestellten Schwellenwert erreicht oder überschreitet.\nK ≥ 5: Geomagnetischer Sturm — HF-Ausbreitung kann gestört sein.\nEmpfehlung: 3–4 für Frühwarnung, 5+ für Sturmbedingungen."
+    ],
+    "tip_band_alert": [
+      "Bandöffnungs-Warnung",
+      "Benachrichtigung wenn ein Band den eingestellten Ausbreitungsscore erreicht.\nEin höherer Schwellenwert reduziert Falschmeldungen.\nEmpfohlen: 50–70% für aktives Monitoring."
+    ],
+    "tip_xflare_alert": [
+      "X-Flare Warnung",
+      "Benachrichtigung bei X-Klasse Sonneneruptionen (Röntgenfluss ≥ 10⁻⁴ W/m²).\nX-Flares können einen Kurzwellen-Ausfall (SWF) auf der Sonnenseite verursachen,\nder die HF-Ausbreitung für Minuten bis Stunden blockiert."
+    ],
+    "tip_pca_alert": [
+      "Polare Kappen-Absorption (PCA) Warnung",
+      "Benachrichtigung wenn Protonenfluss ≥ 10 pfu (S1-Ereignis).\nHochenergetische Protonen aus Sonneneruptionen verursachen PCA,\nPolarrouten können 1–7 Tage blockiert sein.\nBesonders kritisch für Verbindungen über arktische/antarktische Regionen."
     ]
   }
 }

@@ -2,6 +2,10 @@
 ─────────────────────────────────────────────────────────────────────
 Change Log (1.0)
 ─────────────────────────────────────────────────────────────────────
+· 2026-04-20 15:00 CEST — Tooltips toegevoegd aan de 4 meldingscheckboxes (K-index,
+               Band-opening, X-flare, PCA) in alle 14 talen (EN + 13 taalpacks).
+               tip_k_alert / tip_band_alert / tip_xflare_alert / tip_pca_alert
+               toegevoegd aan _SOLAR_TIPS en langs/*.json solar_tips secties.
 · 2026-04-14 20:14 CEST — _center_window hoogte: 920px hard cap vervangen door
                min(usable_h, root.winfo_reqheight()) zodat het venster exact
                past bij de werkelijke inhoud (incl. 4 rijen advieskaarten).

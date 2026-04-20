@@ -196,7 +196,26 @@
     "alert_xflare_lbl": "Eruption X / SWF",
     "alert_pca_lbl": "PCA / Proton",
     "bz_chart_hdr": "Bz  24h (nT)",
-    "bz_now_lbl": "maint."
+    "bz_now_lbl": "maint.",
+    "dx_col_band": "Bande",
+    "dx_col_spotter": "Rapporteur",
+    "dx_col_comment": "Commentaire",
+    "hf_col_start": "Début",
+    "hf_col_mode": "Mode",
+    "ant_isotropic": "Isotropique 0dBi",
+    "ant_mag_loop": "Boucle magnetique",
+    "ant_vertical": "Verticale",
+    "ant_groundplane": "Plan de sol",
+    "ant_inverted_v": "V inverse",
+    "ant_dipole": "Dipole ~2dBi",
+    "ant_efhw": "EFHW",
+    "ant_ocfd": "OCFD",
+    "ant_jpole": "Antenne J",
+    "ant_longwire": "Long fil",
+    "ant_delta_loop": "Boucle delta ~3dBi",
+    "ant_quad": "Quad ~8dBi",
+    "ant_yagi": "Yagi ~7dBi",
+    "ant_beam": "Directive ~10dBi"
   },
   "solar_tips": {
     "sfi": [
@@ -242,6 +261,22 @@
     "proton_flux": [
       "Flux de protons >10 MeV (pfu)",
       "Protons de haute énergie provenant d'éruptions solaires.\n< 10 pfu: normal  |  ≥ 10: S1 (PCA possible)\n≥ 100 pfu: S3 — routes polaires bloquées\n≥ 1000 pfu: S5 — PCA sévère, tous les chemins polaires fermés\nLa PCA bloque les routes polaires 1–7 jours."
+    ],
+    "tip_k_alert": [
+      "Alerte indice K",
+      "Notification quand l'indice K atteint ou dépasse le seuil défini.\nK ≥ 5: tempête géomagnétique — propagation HF peut être perturbée.\nRéglage conseillé: 3–4 pour avertissement précoce, 5+ pour conditions de tempête."
+    ],
+    "tip_band_alert": [
+      "Alerte ouverture de bande",
+      "Notification quand le score de propagation d'une bande atteint le seuil défini.\nUn seuil plus élevé réduit les fausses alertes.\nRecommandé: 50–70% pour surveillance active."
+    ],
+    "tip_xflare_alert": [
+      "Alerte éruption X",
+      "Notification lors d'éruptions solaires de classe X (flux X ≥ 10⁻⁴ W/m²).\nLes éruptions X peuvent provoquer un évanouissement des ondes courtes (SWF)\nbloquant la propagation HF pendant des minutes à des heures."
+    ],
+    "tip_pca_alert": [
+      "Alerte absorption calotte polaire (PCA)",
+      "Notification quand le flux de protons ≥ 10 pfu (événement S1).\nLes protons de haute énergie causent la PCA,\nbloquant les routes polaires pendant 1–7 jours.\nCritique pour les liaisons via les régions arctiques/antarctiques."
     ]
   }
 }

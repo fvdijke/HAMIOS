@@ -196,7 +196,26 @@
     "alert_xflare_lbl": "Brillamento X / SWF",
     "alert_pca_lbl": "PCA / Protone",
     "bz_chart_hdr": "Bz  24h (nT)",
-    "bz_now_lbl": "adesso"
+    "bz_now_lbl": "adesso",
+    "dx_col_band": "Banda",
+    "dx_col_spotter": "Spotter",
+    "dx_col_comment": "Commento",
+    "hf_col_start": "Inizio",
+    "hf_col_mode": "Modo",
+    "ant_isotropic": "Isotropico 0dBi",
+    "ant_mag_loop": "Loop magnetica",
+    "ant_vertical": "Verticale",
+    "ant_groundplane": "Groundplane",
+    "ant_inverted_v": "Inverted V",
+    "ant_dipole": "Dipolo ~2dBi",
+    "ant_efhw": "EFHW",
+    "ant_ocfd": "OCFD",
+    "ant_jpole": "Antenna J",
+    "ant_longwire": "Filo lungo",
+    "ant_delta_loop": "Loop delta ~3dBi",
+    "ant_quad": "Quad ~8dBi",
+    "ant_yagi": "Yagi ~7dBi",
+    "ant_beam": "Direttiva ~10dBi"
   },
   "solar_tips": {
     "sfi": [
@@ -242,6 +261,22 @@
     "proton_flux": [
       "Flusso protonico >10 MeV (pfu)",
       "Protoni ad alta energia da eruzioni solari.\n< 10 pfu: normale  |  ≥ 10: S1 (PCA possibile)\n≥ 100 pfu: S3 — rotte polari bloccate\n≥ 1000 pfu: S5 — PCA grave, tutti i percorsi polari chiusi\nPCA blocca le rotte polari 1–7 giorni."
+    ],
+    "tip_k_alert": [
+      "Avviso indice K",
+      "Notifica quando l'indice K raggiunge o supera la soglia impostata.\nK ≥ 5: tempesta geomagnetica — propagazione HF può essere disturbata.\nImpostare 3–4 per avviso precoce, 5+ per condizioni di tempesta."
+    ],
+    "tip_band_alert": [
+      "Avviso apertura banda",
+      "Notifica quando il punteggio di propagazione di una banda raggiunge la soglia.\nUna soglia più alta riduce i falsi positivi.\nConsigliato: 50–70% per monitoraggio attivo."
+    ],
+    "tip_xflare_alert": [
+      "Avviso brillamento X",
+      "Notifica per brillamenti solari di classe X (flusso X ≥ 10⁻⁴ W/m²).\nI brillamenti X possono causare Short Wave Fadeout (SWF) sul lato solare,\nbloccando la propagazione HF per minuti o ore."
+    ],
+    "tip_pca_alert": [
+      "Avviso assorbimento calotta polare (PCA)",
+      "Notifica quando il flusso di protoni ≥ 10 pfu (evento S1).\nProtoni ad alta energia causano PCA,\nblocco delle rotte polari per 1–7 giorni.\nCritico per percorsi attraverso regioni artiche/antartiche."
     ]
   }
 }

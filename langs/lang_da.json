@@ -196,7 +196,26 @@
     "alert_xflare_lbl": "X-flare / SWF",
     "alert_pca_lbl": "PCA / Proton",
     "bz_chart_hdr": "Bz  24t (nT)",
-    "bz_now_lbl": "nu"
+    "bz_now_lbl": "nu",
+    "dx_col_band": "Bånd",
+    "dx_col_spotter": "Spotter",
+    "dx_col_comment": "Kommentar",
+    "hf_col_start": "Start",
+    "hf_col_mode": "Tilstand",
+    "ant_isotropic": "Isotropisk 0dBi",
+    "ant_mag_loop": "Magnetisk loop",
+    "ant_vertical": "Vertikal",
+    "ant_groundplane": "Groundplane",
+    "ant_inverted_v": "Inverteret V",
+    "ant_dipole": "Dipol ~2dBi",
+    "ant_efhw": "EFHW",
+    "ant_ocfd": "OCFD",
+    "ant_jpole": "J-antenne",
+    "ant_longwire": "Langtrad",
+    "ant_delta_loop": "Deltaloop ~3dBi",
+    "ant_quad": "Quad ~8dBi",
+    "ant_yagi": "Yagi ~7dBi",
+    "ant_beam": "Retningsantenne ~10dBi"
   },
   "solar_tips": {
     "sfi": [
@@ -242,6 +261,22 @@
     "proton_flux": [
       "Protonstrøm >10 MeV (pfu)",
       "Højenergetiske protoner fra soludbrud.\n< 10 pfu: normal  |  ≥ 10: S1 (PCA mulig)\n≥ 100 pfu: S3 — polbaner blokeret\n≥ 1000 pfu: S5 — alvorlig PCA, alle polbaner lukkede\nPCA blokerer polbaner i 1–7 dage."
+    ],
+    "tip_k_alert": [
+      "K-indeks alarm",
+      "Besked når K-indeks når eller overstiger den indstillede grænse.\nK ≥ 5: geomagnetisk storm — HF-udbredelse kan forstyrres.\nAnbefalet: 3–4 for tidlig advarsel, 5+ for stormforhold."
+    ],
+    "tip_band_alert": [
+      "Båndåbning alarm",
+      "Besked når et bånds udbredelsesskore når den indstillede grænse.\nEn højere grænse reducerer falske alarmer.\nAnbefalet: 50–70% for aktiv overvågning."
+    ],
+    "tip_xflare_alert": [
+      "X-flare alarm",
+      "Besked ved X-klasse solstorme (røntgenstråling ≥ 10⁻⁴ W/m²).\nX-flares kan forårsage kortbølge-fadeout (SWF) på soldagen,\nog blokere HF-udbredelse i minutter til timer."
+    ],
+    "tip_pca_alert": [
+      "Polarhætte absorption (PCA) alarm",
+      "Besked når protonstråling ≥ 10 pfu (S1-hændelse).\nHøjenergiprotoner fra solstorme forårsager PCA,\npolarruter kan blokeres i 1–7 dage.\nSpecielt kritisk for forbindelser via arktiske/antarktiske regioner."
     ]
   }
 }

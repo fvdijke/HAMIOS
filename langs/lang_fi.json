@@ -196,7 +196,26 @@
     "alert_xflare_lbl": "X-leimahdus / SWF",
     "alert_pca_lbl": "PCA / Protoni",
     "bz_chart_hdr": "Bz  24h (nT)",
-    "bz_now_lbl": "nyt"
+    "bz_now_lbl": "nyt",
+    "dx_col_band": "Kaista",
+    "dx_col_spotter": "Spotter",
+    "dx_col_comment": "Kommentti",
+    "hf_col_start": "Alku",
+    "hf_col_mode": "Tila",
+    "ant_isotropic": "Isotropinen 0dBi",
+    "ant_mag_loop": "Magneettinen silmukka",
+    "ant_vertical": "Pystyantenna",
+    "ant_groundplane": "Groundplane",
+    "ant_inverted_v": "Kaannetty V",
+    "ant_dipole": "Dipoli ~2dBi",
+    "ant_efhw": "EFHW",
+    "ant_ocfd": "OCFD",
+    "ant_jpole": "J-antenni",
+    "ant_longwire": "Pitka lanka",
+    "ant_delta_loop": "Deltasilmukka ~3dBi",
+    "ant_quad": "Quad ~8dBi",
+    "ant_yagi": "Yagi ~7dBi",
+    "ant_beam": "Suunta-antenni ~10dBi"
   },
   "solar_tips": {
     "sfi": [
@@ -242,6 +261,22 @@
     "proton_flux": [
       "Protonivuo >10 MeV (pfu)",
       "Suuren energian protonit auringon leimahduksista.\n< 10 pfu: normaali  |  ≥ 10: S1 (PCA mahdollinen)\n≥ 100 pfu: S3 — polaariset reitit estetty\n≥ 1000 pfu: S5 — vakava PCA, kaikki polaariradat suljettu\nPCA estää polaariset reitit 1–7 päivää."
+    ],
+    "tip_k_alert": [
+      "K-indeksi hälytys",
+      "Ilmoitus kun K-indeksi saavuttaa tai ylittää asetetun kynnysarvon.\nK ≥ 5: geomagneettinen myrsky — HF-eteneminen voi häiriintyä.\nSuositus: 3–4 varhaisvaroitukseen, 5+ myrskyolosuhteisiin."
+    ],
+    "tip_band_alert": [
+      "Taajuuskaistan avautuminen hälytys",
+      "Ilmoitus kun kaistan etenemispisteet saavuttavat asetetun kynnyksen.\nKorkeampi kynnys vähentää vääriä hälytyksiä.\nSuositus: 50–70% aktiiviseen seurantaan."
+    ],
+    "tip_xflare_alert": [
+      "X-liekki hälytys",
+      "Ilmoitus X-luokan aurinkoliekkien yhteydessä (röntgenvuo ≥ 10⁻⁴ W/m²).\nX-liekit voivat aiheuttaa lyhytaallon häipymistä (SWF) aurinkopuolella,\nestäen HF-etenemisen minuuteista tunteihin."
+    ],
+    "tip_pca_alert": [
+      "Napualueen absorptio (PCA) hälytys",
+      "Ilmoitus kun protoonivirta ≥ 10 pfu (S1-tapahtuma).\nKorkean energian protonit aiheuttavat PCA:n,\npolarireiteillä voi olla esteitä 1–7 päivää.\nKriittinen arktisten/antarktisten alueiden reiteille."
     ]
   }
 }

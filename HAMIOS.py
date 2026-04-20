@@ -18,144 +18,12 @@ Dependencies:
 Todo
 ─────────────────────────────────────────────────────────────────────
 
-[x] 1. Propagatiepadkaart
-    Klik QTH + bestemming → kleurgecodeerde balk naast het groot-cirkelpad.
-    Bereken MUF/LUF voor de specifieke afstand (QTH→bestemming) en toon
-    welke band nu het best is voor juist die route. Kleur per band,
-    score in %, tooltip met details.
-
-[x] 2. Band-openings-notificatie
-    Systeemtray-melding als een band van "gesloten" naar ≥ 40% springt.
-    Drempelwaarde instelbaar (spinbox in header, naast K-alert).
-    Melding: "20m open — 78%". Geen melding als band al open was bij
-    vorige refresh. Eventueel ook een geluidssignaal.
-
-[x] 3. Bz-tijdgrafiek
-    Mini-tijdgrafiek van Bz (en optioneel solarwindsnelheid) in het
-    solar-paneel — laatste 24u van NOAA SWPC real-time data.
-    Ophalen via https://services.swpc.noaa.gov/products/solar-wind/mag-1-day.json
-    en https://services.swpc.noaa.gov/products/solar-wind/plasma-1-day.json.
-    Zelfde donkere stijl als de band-historiekgrafiek. Bz-lijn blauw/rood
-    (negatief=rood), nul-as gestippeld.
 
 ─────────────────────────────────────────────────────────────────────
 Change Log (2.3)
 ─────────────────────────────────────────────────────────────────────
 
-2026-04-18  Taalpack-systeem: externe JSON-bestanden in langs/
-    - Alleen English is ingebouwd als default/fallback (_T + _SOLAR_TIPS)
-    - Extra talen (nl/de/fr/it/es) zijn losse JSON-packs in langs/*.json
-    - _load_lang_packs() scant langs/ bij opstart en laadt automatisch gevonden talen
-    - Taaldetectie: eerste veld "meta.code" en "meta.name" in pack-bestand
-    - Menubutton toont alle geladen talen dynamisch; onbekende INI-taal valt terug op EN
-    - Community kan nieuwe talen toevoegen zonder de broncode aan te passen
 
-2026-04-18  ITU regio-grenzen gecorrigeerd
-    - Lijn B (R1/R2): recht langs 20°W meridian (was verkeerde dog-leg via 10°W/50°W)
-    - Lijn A (R1/R3 Midden-Oosten): N-pool 40°E → Kaukasus → Irak/Iran → Golf van Oman → Z-pool 59°E
-    - Lijn A Rusland-arm: nauwkeurige coördinaten Kazakhstan/Mongolië/China-grens → Vladivostok
-    - Alle grenslijnen eenzelfde dikke donkergroene kleur conform referentiekaart
-    - Regio-polygonen bijgewerkt naar gecorrigeerde grenzen
-
-2026-04-18  Bz 24-uurs mini-grafiek in solar-paneel
-    - Canvas (60px) onderaan het solar-paneel; blauw=positief Bz, rood=negatief
-    - Data: NOAA SWPC mag-1-day.json, downsampled naar 240 punten
-    - Nul-as gestippeld, Y-labels -20/0/+20 nT, tijdlabels "24h" / "nu"
-    - Actuele Bz-waarde rechtsbovenin grafiek met kleurcode
-    - Opgehaald tegelijk met solar data, via _refresh_solar thread
-
-2026-04-18  Band-openings-notificatie: instelbare drempel
-    - "Band open ≥" spinbox in solar-paneel (10–90%, stap 5, standaard 40%)
-    - Tray-melding bij overgang gesloten→open per band (bijv. "20m (78%)")
-    - Drempel opgeslagen in HAMIOS.ini [Alerts] band_alert
-    - Oude hardcoded 20%-drempel vervangen door instelbare waarde
-
-2026-04-18  Propagatiepadkaart: band-kwaliteit voor QTH→bestemming
-    - Klik op kaart → label toont top-5 open banden voor dat specifieke traject
-    - Midpunt van het groot-cirkelpad gebruikt voor ionosferische berekening
-    - Dag/nacht op het midpunt bepaalt de juiste SFI/SSN/K-correctie
-    - Aantal hops berekend (≈ dist / 3500 km per hop)
-    - Groot-cirkel lijn kleurt mee met de beste band (groen=20m, rood=10m, enz.)
-    - Label toont ook MUF op het midpunt; vertaald in 6 talen
-
-2026-04-18  Aurora-ring overlay op kaart
-    - "Aurora" checkbox in kaart-header (selecteerbaar, opgeslagen in INI)
-    - Feldstein/Holzworth geomagnetisch ovaal: sferische trig. op dipool-pool
-      (Noord 80.65°N/287.35°E · Zuid 80.65°S/107.35°E, IGRF-2025)
-    - Beide hemisferen getekend als dikke polyline, gesplitst op anti-meridiaan
-    - Kleur: groen K<3 · geel K 3–5 · rood K≥6; lijndikte schaalt met K
-    - K=0 → ovaal op ~67° geomag. lat · K=9 → ~44° (equatorwaarts)
-
-2026-04-18  CAT terminal venster toegevoegd
-    - "Terminal" checkbox naast VFO-A/B label in het propagatie-paneel
-    - Togglebaar: zichtbaar als CAT ingeschakeld én Terminal aangevinkt
-    - Geel (▶) = verzonden commando's (FA;FB; poll, VS0;FA…; set)
-    - Blauw (◀) = ontvangen data van de radio
-    - Max 200 regels (auto-trim); Consolas 8pt monospace weergave
-
-2026-04-18  CAT bugfix + VFO-A/B display in bandpaneel
-    - _yaesu_set_freq: 9→11 cijfers, VS0; prepend, DTR/RTS=False (FT-950 correctie)
-    - VFO-A/B label alleen zichtbaar als CAT ingeschakeld is in Setup
-    - CAT polling elke 2s via FA;FB; → VFO-A (wit) en VFO-B (blauw) markers op bandbalken
-    - _cat_poll_lock voorkomt conflict tussen poll-thread en klik-naar-afstemmen
-    - _cat_vfo_a_hz bijgewerkt bij klik op bandbalk
-
-2026-04-18  Spaans (Español) toegevoegd als zesde taal
-    - _LANG_NAMES en _LANG_CODES uitgebreid met "Español" / "es"
-    - Alle ~130 entries in _T vertaald naar het Spaans
-    - _SOLAR_TIPS_LANG uitgebreid met Spaanse tooltip-teksten
-
-2026-04-17 12:10  CAT-interface: klik-naar-afstemmen via serieel USB (Yaesu CAT)
-    - _yaesu_set_freq: stuurt VS0;FA<9 digits>; naar VFO-A (FT-950 e.a.)
-    - _kenwood_set_freq: FA<11 digits>; voor Kenwood/Elecraft
-    - _icom_set_freq: CI-V binair BCD, instelbaar adres
-    - CAT-dialoog: radio-type dropdown + CI-V adresveld; volledig vertaald (5 talen)
-    - Cursor verandert naar hand2 bij hover over bandbalken
-    - Klik op een bandbalk stuurt de startfrequentie naar de radio
-
-2026-04-17 12:35  CAT verbeteringen
-    - VS0; prepend fix voor FT-950 (radio bleef in geheugen/split-modus)
-    - Alle CAT-dialoogteksten vertaald in NL/EN/DE/FR/IT via _T-systeem
-
-2026-04-20  10:00  Terminal verwijderd, Bz grafiek naar HF band paneel verplaatst
-    - Terminal-selectie uit HF band paneel verwijderd (CAT uitgeschakeld)
-    - Bz 24h grafiek verplaatst van solar-paneel naar HF band paneel (onder band grafiek)
-    - SOLAR_MIN_H 820 → 720 px (Bz grafiek niet meer in solar-paneel)
-    - Bz grafiek taalafhankelijk: header via _tr("bz_chart_hdr"), "nu/now" via _tr("bz_now_lbl")
-    - Alle 13 taalbestanden bijgewerkt met bz_chart_hdr en bz_now_lbl
-
-2026-04-20  09:50  ITU uitgeschakeld, solar paneel herstructureerd, window hoogte fix
-    - _ITU_DISABLED = True: ITU-checkbox verborgen, overlay-rendering geblokkeerd
-    - SOLAR_MIN_H 700 → 820 px; minsize gebruikt MIN_WINDOW_H zodat Bz zichtbaar is
-    - Solar-paneel waarden uitlijnen met vaste breedte (width=8) per rij
-    - Alert-vinkjes verplaatst naar aparte 'Meldingen' sectie onder de bandentabel
-    - Alle alert-checkboxen wit/lichtgrijs (fg=TEXT_BODY, activeforeground=TEXT_H1)
-    - Kaart-selectievakjes ook wit/lichtgrijs
-    - Nieuwe vertaalsleutel 'alerts_hdr' + bijgewerkte labels voor xflare/pca
-    - Alle 13 taalbestanden bijgewerkt met alerts_hdr, alert_xflare_lbl, alert_pca_lbl
-    - README (NL) en README_EN: uitgebreide installatie-handleiding met taalbestanden
-
-2026-04-20  09:28  CAT uitgeschakeld, notificaties selecteerbaar, solar paneel vergroot
-    - _CAT_DISABLED = True: CAT-knop grijs, dialoog toont melding, klik-op-balk geblokkeerd
-    - Notificaties nu per type aan/uit: K-index · Band-opening · X-flare · PCA
-      Elke checkbox opgeslagen in HAMIOS.ini [Alerts]; standaard alles aan
-    - Solar-paneel breedte 210 → 250 px; Bz-grafiek hoogte 60 → 90 px
-    - wraplength X-flare/PCA labels 190 → 230 px (past bij nieuwe breedte)
-    - README.md (NL) en README_EN.md bijgewerkt
-
-2026-04-19  09:52  CAT: geen polling meer, eenmalige VFO-lezing
-    - _cat_poll_tick vervangen door _cat_read_once (eenmalig, geen herplanning)
-    - VFO-A/B worden eenmalig gelezen bij opstarten en na opslaan CAT-instellingen
-    - Daarna toont de display de via klik-naar-afstemmen verzonden frequentie
-
-2026-04-19  09:35  Aurora-ring: fade-effect zoals de graylijn
-    - Ovaal wordt getekend in 6 lagen van breed+transparant naar smal+opaque
-    - Geeft zachte gloed in plaats van harde lijn (zelfde aanpak als graylijn)
-
-2026-04-19  09:32  Kaart-selectievakjes verplaatst naar onder de wereldkaart
-    - Alle checkboxen (Zon, Maan, Graylijn, Aurora, WSPR, Spots, ITU, CS, Locator)
-      staan nu in een eigen balk onder de kaart in plaats van in de header
-    - Meer ruimte voor de selectievakjes; kaart-header toont alleen de titel
 
 """
 
@@ -226,8 +94,9 @@ ADV_SECTION_H  = ADV_HDR_STRIP + ADV_ROWS * (ADV_CARD_H + ADV_CARD_GAP) + 8
 #   → buffer → 720px (Bz grafiek staat nu in HF band paneel)
 SOLAR_MIN_H   = 720
 
-# Minimale venster-hoogte zodat alles (incl. Bz-grafiek) zichtbaar is bij opstarten
-MIN_WINDOW_H  = APP_HDR_H + SOLAR_MIN_H + 6 + ADV_SECTION_H + 4 + TICKER_H
+# Minimale venster-hoogte: header + solar + body-marges + advies (vrije hoogte) + ticker
+# ADV_SECTION_H + 30px marge voor adv-header en font-scaling variatie
+MIN_WINDOW_H  = APP_HDR_H + SOLAR_MIN_H + 6 + ADV_SECTION_H + 30 + TICKER_H
 
 BG_ROOT    = "#1A1C1F"
 BG_PANEL   = "#22252A"
@@ -476,7 +345,9 @@ def _load_settings() -> dict:
         "refresh":       cfg.get       ("App",   "refresh",        fallback="1 min"),
         "mode":          cfg.get       ("App",   "mode",           fallback="SSB"),
         "power":         cfg.get       ("App",   "power",          fallback="100W"),
-        "antenna":       cfg.get       ("App",   "antenna",        fallback="Isotropic 0dBi"),
+        "antenna":       _ANT_KEY_MIGRATION.get(
+                             cfg.get("App", "antenna", fallback="Isotropic 0dBi"),
+                             cfg.get("App", "antenna", fallback="Isotropic 0dBi")),
         "dst":           cfg.getboolean("App",   "dst",            fallback=True),
         "show_tips":     cfg.getboolean("App",   "show_tips",      fallback=True),
         "show_ticker":   cfg.getboolean("App",   "show_ticker",    fallback=True),
@@ -914,8 +785,8 @@ _POWER_DB = {"5W": -13, "10W": -10, "25W": -6, "50W": -3,
              "100W": 0, "500W": 7, "1kW": 10}
 _ANT_DB = {
     "Isotropic 0dBi":   0,
-    "Magnetische loop":  0,
-    "Vertikaal":         0,
+    "Magnetic loop":     0,
+    "Vertical":          0,
     "Groundplane":       0,
     "Inverted V":        1,
     "Dipole ~2dBi":      2,
@@ -927,6 +798,29 @@ _ANT_DB = {
     "Quad ~8dBi":        8,
     "Yagi ~7dBi":        7,
     "Beam ~10dBi":      10,
+}
+
+# Vertaalsleutels per antenne (internal key → _T key)
+_ANT_TR_KEYS = {
+    "Isotropic 0dBi":   "ant_isotropic",
+    "Magnetic loop":    "ant_mag_loop",
+    "Vertical":         "ant_vertical",
+    "Groundplane":      "ant_groundplane",
+    "Inverted V":       "ant_inverted_v",
+    "Dipole ~2dBi":     "ant_dipole",
+    "EFHW":             "ant_efhw",
+    "OCFD":             "ant_ocfd",
+    "J-pole":           "ant_jpole",
+    "Long wire":        "ant_longwire",
+    "Delta loop ~3dBi": "ant_delta_loop",
+    "Quad ~8dBi":       "ant_quad",
+    "Yagi ~7dBi":       "ant_yagi",
+    "Beam ~10dBi":      "ant_beam",
+}
+# Migratie: oude (Nederlandse) keys → nieuwe interne keys
+_ANT_KEY_MIGRATION = {
+    "Magnetische loop": "Magnetic loop",
+    "Vertikaal":        "Vertical",
 }
 
 # ── DX-spot kaartoverlay ──────────────────────────────────────────────────────
@@ -1002,6 +896,20 @@ _T: dict[str, dict[str, str]] = {
     'mode_lbl': {"en": 'Mode:'},
     'power_lbl': {"en": 'Power:'},
     'ant_lbl': {"en": 'Antenna:'},
+    'ant_isotropic':  {"en": 'Isotropic 0dBi'},
+    'ant_mag_loop':   {"en": 'Magnetic loop'},
+    'ant_vertical':   {"en": 'Vertical'},
+    'ant_groundplane':{"en": 'Groundplane'},
+    'ant_inverted_v': {"en": 'Inverted V'},
+    'ant_dipole':     {"en": 'Dipole ~2dBi'},
+    'ant_efhw':       {"en": 'EFHW'},
+    'ant_ocfd':       {"en": 'OCFD'},
+    'ant_jpole':      {"en": 'J-pole'},
+    'ant_longwire':   {"en": 'Long wire'},
+    'ant_delta_loop': {"en": 'Delta loop ~3dBi'},
+    'ant_quad':       {"en": 'Quad ~8dBi'},
+    'ant_yagi':       {"en": 'Yagi ~7dBi'},
+    'ant_beam':       {"en": 'Beam ~10dBi'},
     'day_auto': {"en": 'Day (auto)'},
     'closed': {"en": 'Closed'},
     'cond_good': {"en": 'Good'},
@@ -1025,6 +933,11 @@ _T: dict[str, dict[str, str]] = {
     'own_cont_lbl': {"en": 'Own continent'},
     'dx_loading': {"en": 'Loading…'},
     'no_dx_spots': {"en": 'No HF spots available'},
+    'dx_col_band':    {"en": 'Band'},
+    'dx_col_spotter': {"en": 'Spotter'},
+    'dx_col_comment': {"en": 'Comment'},
+    'hf_col_start':   {"en": 'Start'},
+    'hf_col_mode':    {"en": 'Mode'},
     'dx_of': {"en": 'of'},
     'dx_own_cont_filter': {"en": ' · own continent'},
     'no_spots_ts': {"en": 'No spots available  ·  {ts}'},
@@ -1209,6 +1122,23 @@ _SOLAR_TIPS: dict[str, tuple[str, str]] = {
                    "≥ 100 pfu: S3 — polar routes blocked\n"
                    "≥ 1000 pfu: S5 — severe PCA, all polar paths closed\n"
                    "PCA blocks polar routes for 1–7 days."),
+    "tip_k_alert":   ("K-index alert",
+                      "Notify when the K-index reaches or exceeds the set threshold.\n"
+                      "K ≥ 5: geomagnetic storm — HF propagation may be disrupted.\n"
+                      "Set to 3–4 for early warning, 5+ for storm conditions."),
+    "tip_band_alert":("Band opening alert",
+                      "Notify when a band's propagation score reaches the set percentage.\n"
+                      "A higher threshold reduces false positives.\n"
+                      "Recommended: 50–70% for active monitoring."),
+    "tip_xflare_alert":("X-flare alert",
+                        "Notify on X-class solar flares (X-ray flux ≥ 10⁻⁴ W/m²).\n"
+                        "X-flares can cause Short Wave Fadeout (SWF) on the sunlit side,\n"
+                        "blocking HF propagation for minutes to hours."),
+    "tip_pca_alert": ("Polar Cap Absorption (PCA) alert",
+                      "Notify when proton flux ≥ 10 pfu (S1 event).\n"
+                      "High-energy protons from solar flares cause PCA,\n"
+                      "blocking polar routes for 1–7 days.\n"
+                      "Most critical for paths through Arctic/Antarctic regions."),
 }
 
 # ── Taalpack-loader ──────────────────────────────────────────────────────────
@@ -1749,7 +1679,16 @@ class HAMIOSApp:
         self.root = root
         self.root.title("HAMIOS v2.3")
         self.root.configure(bg=BG_ROOT)
-        self.root.minsize(800, 500)
+
+        # Geometrie instellen vóór _build_ui — geen root.update() nodig, geen flicker.
+        # winfo_screenwidth/height werkt direct zonder update().
+        _scr_w = root.winfo_screenwidth()
+        _scr_h = root.winfo_screenheight()
+        _ini_w = min(1400, _scr_w - 60)
+        _ini_h = 1220
+        _ini_y = max(0, (_scr_h - _ini_h) // 2)
+        root.geometry(f"{_ini_w}x{_ini_h}+{(_scr_w-_ini_w)//2}+{_ini_y}")
+        root.minsize(min(900, _scr_w - 60), MIN_WINDOW_H)
 
         self._solar_data: dict = {}
         self._solar_after_id = None
@@ -1762,13 +1701,16 @@ class HAMIOSApp:
         self._mode_var    = tk.StringVar(value=s["mode"])
         self._power_var   = tk.StringVar(value=s["power"])
         self._ant_var     = tk.StringVar(value=s["antenna"])
+        # Display-var voor vertaalde antenne naam (textvariable in menubutton)
+        self._ant_display_var = tk.StringVar(
+            value=self._tr_static(_ANT_TR_KEYS.get(s["antenna"], ""), s["antenna"],
+                                  _LANG_CODES.get(s["language"], "en")))
         self._day_var     = tk.BooleanVar(value=True)
         self._refresh_var = tk.StringVar(value=s["refresh"])
         _saved_lang = s["language"] if s["language"] in _LANG_NAMES else "English"
         self._lang_var    = tk.StringVar(value=_saved_lang)
         self._last_band_pct = [(n, f, 0) for n, f, _ in _BANDS]
-        _prune_history()
-        self._history:    list = _load_history()
+        self._history:    list = []   # gevuld door background-thread na _prune_history
         self._hist_range_var = tk.StringVar(value=s["hist_range"])
         self._hist_sel: set  = s["hist_sel"]
         self._show_tips_var    = tk.BooleanVar(value=s["show_tips"])
@@ -1846,7 +1788,6 @@ class HAMIOSApp:
                 lbl_d.config(fg=color     if active else TEXT_DIM)
                 lbl_n.config(fg=TEXT_BODY if active else TEXT_DIM,
                              font=_font(8, "bold") if active else _font(8))
-        self._center_window(1400)   # h_hint = MIN_WINDOW_H (default)
         self._tick_clock()
         self._start_tray()
         self.root.protocol("WM_DELETE_WINDOW", self._on_close)
@@ -1859,6 +1800,10 @@ class HAMIOSApp:
             kwargs={"callback": lambda: self.root.after(0, self._redraw_map)},
             daemon=True,
         ).start()
+        # Geschiedenis: prune + laden in background zodat main thread niet blokkeert
+        threading.Thread(target=self._load_history_bg, daemon=True).start()
+        # Venster tonen na volledige opbouw — correct gecentreerd, geen flicker
+        self.root.after(1, self.root.deiconify)
 
     # ── Klok ──────────────────────────────────────────────────────────────────
     def _tick_clock(self):
@@ -1891,11 +1836,28 @@ class HAMIOSApp:
         self._clock_after_id = self.root.after(1000, self._tick_clock)
 
     # ── Vertalingen ───────────────────────────────────────────────────────────
+    @staticmethod
+    def _tr_static(key: str, fallback: str, lang: str) -> str:
+        """Vertaling zonder instantie-context (voor gebruik in __init__)."""
+        entry = _T.get(key, {})
+        return entry.get(lang) or entry.get("en") or fallback
+
     def _tr(self, key: str) -> str:
         """Geeft vertaling terug; valt terug op EN als taalpack de sleutel mist."""
         lang = _LANG_CODES.get(self._lang_var.get(), "en")
         entry = _T.get(key, {})
         return entry.get(lang) or entry.get("en", key)
+
+    def _refresh_ant_display(self):
+        """Zet de vertaalde antenne naam in _ant_display_var op basis van huidige taal."""
+        key = self._ant_var.get()
+        tr_key = _ANT_TR_KEYS.get(key, "")
+        self._ant_display_var.set(self._tr(tr_key) if tr_key else key)
+        # Menu labels herbouwen
+        if hasattr(self, "_ant_menu"):
+            for i, opt in enumerate(list(_ANT_DB.keys())):
+                tr = _ANT_TR_KEYS.get(opt, "")
+                self._ant_menu.entryconfigure(i, label=self._tr(tr) if tr else opt)
 
     def _apply_translations(self):
         """Werk alle opgeslagen widget-referenties bij met de nieuwe taal."""
@@ -1914,7 +1876,13 @@ class HAMIOSApp:
                 rb.config(text=self._tr(tr_key))
             except tk.TclError:
                 pass
-        # Refresh + advice opnieuw renderen bij taalwissel
+        # Antenne display var + menu labels bijwerken
+        self._refresh_ant_display()
+        # Canvas-panelen opnieuw tekenen (kolom headers, labels, statusteksten)
+        self._draw_prop_bars(self._last_band_pct)
+        self._filter_dx_spots()   # hergenereert statusregel + canvas kolom headers
+        self._draw_bz_graph(getattr(self, "_last_bz_pts", []))
+        # Advice opnieuw renderen bij taalwissel
         self._update_advice()
 
     def _on_lang_change(self, *_):
@@ -2681,6 +2649,7 @@ class HAMIOSApp:
                                font=_font(9), text=self._tr("k_alert_lbl"), anchor='w', width=12)
         _k_cb.pack(side=tk.LEFT)
         self._tr_widgets["k_alert_lbl"] = _k_cb
+        _bind_tip(_k_cb, "tip_k_alert")
         tk.Spinbox(k_row, from_=1, to=9, width=3, textvariable=self._k_alert_var,
                    command=self._save_cur_settings,
                    bg=BG_SURFACE, fg=TEXT_H1, buttonbackground=BG_SURFACE,
@@ -2696,6 +2665,7 @@ class HAMIOSApp:
                                font=_font(9), text=self._tr("band_alert_lbl"), anchor='w', width=12)
         _b_cb.pack(side=tk.LEFT)
         self._tr_widgets["band_alert_lbl"] = _b_cb
+        _bind_tip(_b_cb, "tip_band_alert")
         tk.Spinbox(b_row, from_=10, to=90, increment=5, width=4,
                    textvariable=self._band_alert_var, command=self._save_cur_settings,
                    bg=BG_SURFACE, fg=TEXT_H1, buttonbackground=BG_SURFACE,
@@ -2713,6 +2683,7 @@ class HAMIOSApp:
                                 font=_font(9), text=self._tr("alert_xflare_lbl"), anchor='w')
         _xf_cb.pack(side=tk.LEFT)
         self._tr_widgets["alert_xflare_lbl"] = _xf_cb
+        _bind_tip(_xf_cb, "tip_xflare_alert")
 
         # PCA melding
         _pca_row2 = tk.Frame(self._solar_frame, bg=BG_PANEL)
@@ -2724,6 +2695,7 @@ class HAMIOSApp:
                                  font=_font(9), text=self._tr("alert_pca_lbl"), anchor='w')
         _pca_cb.pack(side=tk.LEFT)
         self._tr_widgets["alert_pca_lbl"] = _pca_cb
+        _bind_tip(_pca_cb, "tip_pca_alert")
 
         # Bz grafiek staat nu in het HF band paneel (zie _build_prop_panel)
 
@@ -3015,8 +2987,8 @@ class HAMIOSApp:
         H = c.winfo_height() or 400
         # Virtuele wereld-afmetingen: altijd 2:1 ongeacht canvas-hoogte
         zoom = max(1.0, self._map_zoom)
-        VW   = int(W * zoom)
-        VH   = int(W // 2 * zoom)
+        VW   = max(2, int(W * zoom))
+        VH   = max(1, int(W // 2 * zoom))
 
         if not _PIL_OK:
             c.delete("all")
@@ -3458,10 +3430,13 @@ class HAMIOSApp:
         ctrl = tk.Frame(outer, bg=BG_PANEL)
         ctrl.pack(fill=tk.X, padx=10, pady=(0, 4))
 
-        def _menubutton(par, var, options, label, width=12):
-            tk.Label(par, text=label, font=_font(9), bg=BG_PANEL,
-                     fg=TEXT_DIM).pack(side=tk.LEFT, padx=(0, 2))
-            mb2 = tk.Menubutton(par, textvariable=var, font=_font(9),
+        def _menubutton(par, var, options, tr_key, width=12, tr_option_keys=None, display_var=None):
+            lbl = tk.Label(par, text=self._tr(tr_key), font=_font(9), bg=BG_PANEL,
+                           fg=TEXT_DIM)
+            lbl.pack(side=tk.LEFT, padx=(0, 2))
+            self._tr_widgets[tr_key] = lbl
+            dvar = display_var if display_var is not None else var
+            mb2 = tk.Menubutton(par, textvariable=dvar, font=_font(9),
                                 bg=BG_SURFACE, fg=TEXT_H1, relief=tk.FLAT,
                                 activebackground=BG_HOVER, activeforeground=TEXT_H1,
                                 width=width, anchor='w', padx=6, pady=3, cursor="hand2")
@@ -3469,14 +3444,22 @@ class HAMIOSApp:
                             activebackground=ACCENT, activeforeground=BG_ROOT,
                             font=_font(9))
             for opt in options:
-                menu2.add_command(label=opt,
-                                  command=lambda v=opt: (var.set(v), self._recalc_prop()))
+                disp = self._tr(tr_option_keys[opt]) if tr_option_keys and opt in tr_option_keys else opt
+                def _on_select(v=opt):
+                    var.set(v)
+                    if display_var is not None and tr_option_keys and v in tr_option_keys:
+                        display_var.set(self._tr(tr_option_keys[v]))
+                    self._recalc_prop()
+                menu2.add_command(label=disp, command=_on_select)
             mb2["menu"] = menu2
             mb2.pack(side=tk.LEFT, padx=(0, 12))
+            return menu2
 
-        _menubutton(ctrl, self._mode_var,  list(_MODE_DB.keys()),  self._tr("mode_lbl"),  width=5)
-        _menubutton(ctrl, self._power_var, list(_POWER_DB.keys()), self._tr("power_lbl"), width=5)
-        _menubutton(ctrl, self._ant_var,   list(_ANT_DB.keys()),   self._tr("ant_lbl"),   width=18)
+        _menubutton(ctrl, self._mode_var,  list(_MODE_DB.keys()),  "mode_lbl",  width=5)
+        _menubutton(ctrl, self._power_var, list(_POWER_DB.keys()), "power_lbl", width=5)
+        self._ant_menu = _menubutton(ctrl, self._ant_var, list(_ANT_DB.keys()), "ant_lbl",
+                                     width=18, tr_option_keys=_ANT_TR_KEYS,
+                                     display_var=self._ant_display_var)
 
         _day_auto_cb = tk.Checkbutton(ctrl, text=self._tr("day_auto"),
                                       variable=self._day_var,
@@ -3558,8 +3541,8 @@ class HAMIOSApp:
 
         _hdr(BAR_X,                                    BAR_MAX, "")
         _hdr(BAR_X + BAR_MAX,                          PCT_W,   "%")
-        _hdr(BAR_X + BAR_MAX + PCT_W,                  FREQ_W,  "Start")
-        _hdr(BAR_X + BAR_MAX + PCT_W + FREQ_W,         MODES_W, "Mode")
+        _hdr(BAR_X + BAR_MAX + PCT_W,                  FREQ_W,  self._tr("hf_col_start"))
+        _hdr(BAR_X + BAR_MAX + PCT_W + FREQ_W,         MODES_W, self._tr("hf_col_mode"))
         _hdr(BAR_X + BAR_MAX + PCT_W + FREQ_W + MODES_W, FT8_W, "FT8")
 
         hf_pct = [(n, f, p) for n, f, p in band_pct if p != -1]
@@ -4129,12 +4112,12 @@ class HAMIOSApp:
         C_CMT  = max(40, W - C_UTC - C_BAND - C_DX - C_FREQ - C_SPOT - 12)
 
         # Kolomkoppen
-        for txt, x in [("UTC",     4),
-                       ("Band",    4 + C_UTC),
-                       ("DX",      4 + C_UTC + C_BAND),
-                       ("MHz",     4 + C_UTC + C_BAND + C_DX),
-                       ("Spotter", 4 + C_UTC + C_BAND + C_DX + C_FREQ),
-                       ("Comment", 4 + C_UTC + C_BAND + C_DX + C_FREQ + C_SPOT)]:
+        for txt, x in [("UTC",                          4),
+                       (self._tr("dx_col_band"),        4 + C_UTC),
+                       ("DX",                           4 + C_UTC + C_BAND),
+                       ("MHz",                          4 + C_UTC + C_BAND + C_DX),
+                       (self._tr("dx_col_spotter"),     4 + C_UTC + C_BAND + C_DX + C_FREQ),
+                       (self._tr("dx_col_comment"),     4 + C_UTC + C_BAND + C_DX + C_FREQ + C_SPOT)]:
             c.create_text(x, 2, text=txt, fill=ACCENT,
                           font=("Consolas", 8, "bold"), anchor='nw')
         c.create_line(0, ROW_H + 2, W, ROW_H + 2, fill=BORDER)
@@ -4200,13 +4183,13 @@ class HAMIOSApp:
 
     # ── Advies panel ─────────────────────────────────────────────────────────
     def _build_advice_panel(self, parent):
-        # Vaste hoogte op basis van constanten zodat winfo_reqheight() bij startup klopt
-        outer = tk.Frame(parent, bg=BG_PANEL, height=ADV_SECTION_H)
-        outer.pack(fill=tk.X, pady=(6, 0))
-        outer.pack_propagate(False)
+        # Geen vaste hoogte op outer — inhoud bepaalt de hoogte via adv_wrap (fixed)
+        outer = tk.Frame(parent, bg=BG_PANEL)
+        # side=BOTTOM: claimt ruimte vóórdat top_row uitbreidt met expand=True
+        outer.pack(side=tk.BOTTOM, fill=tk.X, pady=(6, 0))
         tk.Frame(outer, bg=ACCENT, height=2).pack(fill=tk.X)
         adv_hdr = tk.Frame(outer, bg=BG_PANEL)
-        adv_hdr.pack(fill=tk.X, padx=10, pady=(4, 0))
+        adv_hdr.pack(fill=tk.X, padx=10, pady=(4, 2))
         _adv_title = tk.Label(adv_hdr, text=self._tr("adv_header"),
                               font=_font(10, "bold"), bg=BG_PANEL, fg=ACCENT)
         _adv_title.pack(side=tk.LEFT)
@@ -5057,6 +5040,7 @@ class HAMIOSApp:
 
     def _draw_bz_graph(self, pts: list):
         """Teken Bz 24-uurs mini-grafiek op self._bz_canvas."""
+        self._last_bz_pts = pts
         if not hasattr(self, "_bz_canvas"):
             return
         c = self._bz_canvas
@@ -5195,22 +5179,16 @@ class HAMIOSApp:
             self._pca_var.set("")
             self._last_pca_level = 0
 
-    # ── Venster centreren ─────────────────────────────────────────────────────
-    def _center_window(self, w_hint: int, h_hint: int = MIN_WINDOW_H):
-        # update() zodat canvas-widgets correct gemeten worden (resize-events vuren)
-        self.root.update()
-        scr_w = self.root.winfo_screenwidth()
-        scr_h = self.root.winfo_screenheight()
-        usable_w = scr_w - 60
-        # Breedte: gebruik hint, begrensd aan scherm
-        w = min(w_hint, usable_w)
-        # Hoogte: minstens h_hint (= MIN_WINDOW_H), geen scherm-cap zodat alles past
-        h = max(h_hint, self.root.winfo_reqheight())
-        x = max(0, (scr_w - w) // 2)
-        y = max(0, (scr_h - h) // 2)
-        self.root.geometry(f"{w}x{h}+{x}+{y}")
-        # Stel minsize in zodat verkleinen niet onder bruikbare grens gaat
-        self.root.minsize(min(900, usable_w), min(MIN_WINDOW_H, scr_h))
+    # ── Geschiedenis laden in background ──────────────────────────────────────
+    def _load_history_bg(self):
+        """Prune + laad geschiedenis buiten de main thread; update hist-grafiek daarna."""
+        _prune_history()
+        rows = _load_history()
+        self.root.after(0, lambda: self._on_history_loaded(rows))
+
+    def _on_history_loaded(self, rows: list):
+        self._history = rows
+        self._draw_hist_graph()
 
 
 # ── Entrypoint ─────────────────────────────────────────────────────────────────
@@ -5219,6 +5197,7 @@ if __name__ == "__main__":
     import traceback as _tb
 
     root = tk.Tk()
+    root.withdraw()   # verberg tot UI volledig is opgebouwd en gecentreerd
 
     # Ctrl+C via OS-signaal → netjes afsluiten via event-loop
     signal.signal(signal.SIGINT, lambda *_: root.after(0, root.destroy))

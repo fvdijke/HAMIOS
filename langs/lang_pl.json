@@ -196,7 +196,26 @@
     "alert_xflare_lbl": "Rozblysk X / SWF",
     "alert_pca_lbl": "PCA / Proton",
     "bz_chart_hdr": "Bz  24h (nT)",
-    "bz_now_lbl": "teraz"
+    "bz_now_lbl": "teraz",
+    "dx_col_band": "Pasmo",
+    "dx_col_spotter": "Spotter",
+    "dx_col_comment": "Komentarz",
+    "hf_col_start": "Początek",
+    "hf_col_mode": "Tryb",
+    "ant_isotropic": "Izotropowa 0dBi",
+    "ant_mag_loop": "Petla magnetyczna",
+    "ant_vertical": "Pionowa",
+    "ant_groundplane": "Groundplane",
+    "ant_inverted_v": "Odwrocone V",
+    "ant_dipole": "Dipol ~2dBi",
+    "ant_efhw": "EFHW",
+    "ant_ocfd": "OCFD",
+    "ant_jpole": "Antena J",
+    "ant_longwire": "Dlugi drut",
+    "ant_delta_loop": "Petla delta ~3dBi",
+    "ant_quad": "Quad ~8dBi",
+    "ant_yagi": "Yagi ~7dBi",
+    "ant_beam": "Kierunkowa ~10dBi"
   },
   "solar_tips": {
     "sfi": [
@@ -242,6 +261,22 @@
     "proton_flux": [
       "Strumień protonów >10 MeV (pfu)",
       "Wysokoenergetyczne protony z rozbłysków słonecznych.\n< 10 pfu: normalny  |  ≥ 10: S1 (PCA możliwa)\n≥ 100 pfu: S3 — trasy polarne zablokowane\n≥ 1000 pfu: S5 — poważna PCA, wszystkie ścieżki polarne zamknięte\nPCA blokuje trasy polarne przez 1–7 dni."
+    ],
+    "tip_k_alert": [
+      "Alert indeksu K",
+      "Powiadomienie gdy indeks K osiągnie lub przekroczy ustawiony próg.\nK ≥ 5: burza geomagnetyczna — propagacja KF może być zakłócona.\nZalecane: 3–4 dla wczesnego ostrzeżenia, 5+ dla warunków burzowych."
+    ],
+    "tip_band_alert": [
+      "Alert otwarcia pasma",
+      "Powiadomienie gdy wynik propagacji pasma osiągnie ustawiony próg.\nWyższy próg zmniejsza fałszywe alarmy.\nZalecane: 50–70% dla aktywnego monitorowania."
+    ],
+    "tip_xflare_alert": [
+      "Alert rozbłysku X",
+      "Powiadomienie przy rozbłyskach słonecznych klasy X (strumień X ≥ 10⁻⁴ W/m²).\nRozbłyski X mogą powodować zanik fali krótkiej (SWF) po stronie słonecznej,\nblokując propagację KF na minuty do godzin."
+    ],
+    "tip_pca_alert": [
+      "Alert absorpcji czapy polarnej (PCA)",
+      "Powiadomienie gdy strumień protonów ≥ 10 pfu (zdarzenie S1).\nWysokoenergetyczne protony z rozbłysków powodują PCA,\nblokując trasy polarne na 1–7 dni.\nNajważniejsze dla tras przez regiony arktyczne/antarktyczne."
     ]
   }
 }

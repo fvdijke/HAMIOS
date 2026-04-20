@@ -196,7 +196,26 @@
     "alert_xflare_lbl": "Xフレア / SWF",
     "alert_pca_lbl": "PCA / 陽子",
     "bz_chart_hdr": "Bz  24時間 (nT)",
-    "bz_now_lbl": "今"
+    "bz_now_lbl": "今",
+    "dx_col_band": "バンド",
+    "dx_col_spotter": "スポッター",
+    "dx_col_comment": "コメント",
+    "hf_col_start": "開始",
+    "hf_col_mode": "モード",
+    "ant_isotropic": "等方性 0dBi",
+    "ant_mag_loop": "磁気ループ",
+    "ant_vertical": "バーチカル",
+    "ant_groundplane": "グランドプレーン",
+    "ant_inverted_v": "インバーテッドV",
+    "ant_dipole": "ダイポール ~2dBi",
+    "ant_efhw": "EFHW",
+    "ant_ocfd": "OCFD",
+    "ant_jpole": "Jポール",
+    "ant_longwire": "ロングワイヤー",
+    "ant_delta_loop": "デルタループ ~3dBi",
+    "ant_quad": "クワッド ~8dBi",
+    "ant_yagi": "八木 ~7dBi",
+    "ant_beam": "ビーム ~10dBi"
   },
   "solar_tips": {
     "sfi": [
@@ -242,6 +261,22 @@
     "proton_flux": [
       "陽子フラックス >10 MeV (pfu)",
       "太陽フレアからの高エネルギー陽子。\n< 10 pfu: 正常  |  ≥ 10: S1 (PCA の可能性)\n≥ 100 pfu: S3 — 極ルート封鎖\n≥ 1000 pfu: S5 — 重大 PCA、すべての極ルートクローズ\nPCA は極ルートを 1～7 日間封鎖。"
+    ],
+    "tip_k_alert": [
+      "K指数アラート",
+      "K指数が設定した閖値に達するか超えた場合に通知します。\nK ≥ 5: 地碁2気嵐 — HF伝扳が乱れる可能性があります。\n推奨: 早期警告は3–4、嵐の状態は5+。"
+    ],
+    "tip_band_alert": [
+      "バンドオープンアラート",
+      "バンドの伝扳スコアが設定した閒値に達した場合に通知します。\n閒値を高くすると誤報が減ります。\n推奨: アクティブモニタリングは50–70%。"
+    ],
+    "tip_xflare_alert": [
+      "Xフレアアラート",
+      "Xクラスの太陽フレア（X線フラックス ≥ 10⁻⁴ W/m²）の際に通知します。\nXフレアは昼側でショートウェーブフェードアウト（SWF）を引き起こし、\nHF伝扳を数分から数時間遗断することがあります。"
+    ],
+    "tip_pca_alert": [
+      "極冠吸収（PCA）アラート",
+      "陽子フラックスが ≥ 10 pfu（S1イベント）になった場合に通知します。\n高エネルギー陽子がPCAを引き起こし、\n極地ルートが1～7日間遗断される可能性があります。\n北極/南極地域を通るパスに特に重要です。"
     ]
   }
 }
