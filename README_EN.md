@@ -146,24 +146,75 @@ All thresholds and on/off states are saved in `HAMIOS.ini`.
 
 ## 🖥️ Installation
 
-### Requirements
+### Step 1 — Python requirements
+
 ```bash
 pip install pillow
 ```
-Optional (system tray):
+
+Optional for system tray notifications:
+
 ```bash
 pip install pystray
 ```
 
-### Run
+### Step 2 — Install language packs
+
+HAMIOS ships with English as the built-in language. All other languages are separate `.json` files that **must be downloaded separately**.
+
+**Download:**
+Get the language files from the [latest release](https://github.com/fvdijke/HAMIOS/releases) — download `langs.zip` or the individual `.json` files.
+
+**Placement when using the EXE:**
+```
+HAMIOS.exe          ← the application
+langs\
+  lang_nl.json      ← Nederlands
+  lang_de.json      ← Deutsch
+  lang_fr.json      ← Français
+  lang_it.json      ← Italiano
+  lang_es.json      ← Español
+  lang_no.json      ← Norsk
+  lang_pl.json      ← Polski
+  lang_sv.json      ← Svenska
+  lang_da.json      ← Dansk
+  lang_fi.json      ← Suomi
+  lang_pt.json      ← Português
+  lang_ja.json      ← 日本語
+  lang_ru.json      ← Русский
+```
+
+**Placement when using the source code:**
+```
+HAMIOS.py
+langs\
+  lang_nl.json
+  ...
+```
+
+> The `langs/` folder must be placed **next to** `HAMIOS.exe` or `HAMIOS.py`. HAMIOS detects installed language packs automatically on startup.
+
+**Creating your own language pack:**
+Copy an existing `.json` file, update `meta.code` and `meta.name`, and translate the `strings` and `solar_tips` sections. HAMIOS will load the new pack automatically.
+
+### Step 3 — Run
+
 ```bash
 python HAMIOS.py
 ```
 
 ### Standalone EXE (Windows) — recommended
-Download `HAMIOS.exe` from the [latest release](https://github.com/fvdijke/HAMIOS/releases) and run directly. No Python required.
 
-> **Note**: place the `langs/` folder next to the EXE so language packs are available.
+Download `HAMIOS.exe` and the `langs/` folder from the [latest release](https://github.com/fvdijke/HAMIOS/releases) and run directly. No Python required.
+
+Build yourself from source:
+
+```bash
+pip install pyinstaller
+pyinstaller HAMIOS.spec
+# → dist\HAMIOS.exe
+# Then copy langs\ next to the EXE
+```
 
 ---
 

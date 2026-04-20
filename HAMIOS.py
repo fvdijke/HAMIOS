@@ -117,6 +117,17 @@ Change Log (2.3)
     - VS0; prepend fix voor FT-950 (radio bleef in geheugen/split-modus)
     - Alle CAT-dialoogteksten vertaald in NL/EN/DE/FR/IT via _T-systeem
 
+2026-04-20  09:50  ITU uitgeschakeld, solar paneel herstructureerd, window hoogte fix
+    - _ITU_DISABLED = True: ITU-checkbox verborgen, overlay-rendering geblokkeerd
+    - SOLAR_MIN_H 700 → 820 px; minsize gebruikt MIN_WINDOW_H zodat Bz zichtbaar is
+    - Solar-paneel waarden uitlijnen met vaste breedte (width=8) per rij
+    - Alert-vinkjes verplaatst naar aparte 'Meldingen' sectie onder de bandentabel
+    - Alle alert-checkboxen wit/lichtgrijs (fg=TEXT_BODY, activeforeground=TEXT_H1)
+    - Kaart-selectievakjes ook wit/lichtgrijs
+    - Nieuwe vertaalsleutel 'alerts_hdr' + bijgewerkte labels voor xflare/pca
+    - Alle 13 taalbestanden bijgewerkt met alerts_hdr, alert_xflare_lbl, alert_pca_lbl
+    - README (NL) en README_EN: uitgebreide installatie-handleiding met taalbestanden
+
 2026-04-20  09:28  CAT uitgeschakeld, notificaties selecteerbaar, solar paneel vergroot
     - _CAT_DISABLED = True: CAT-knop grijs, dialoog toont melding, klik-op-balk geblokkeerd
     - Notificaties nu per type aan/uit: K-index · Band-opening · X-flare · PCA
@@ -175,6 +186,8 @@ except ImportError:
 
 # CAT tijdelijk uitgeschakeld — code intact, interface geblokkeerd tot stabiel
 _CAT_DISABLED = True
+# ITU regio-overlay tijdelijk uitgeschakeld — grenzen worden herzien
+_ITU_DISABLED = True
 
 # ── Paden ──────────────────────────────────────────────────────────────────────
 APP_DIR       = (os.path.dirname(sys.executable)
@@ -201,14 +214,12 @@ APP_HDR_H     = 42   # hoogte app-header balk
 ADV_HDR_STRIP  = 40
 ADV_SECTION_H  = ADV_HDR_STRIP + ADV_ROWS * (ADV_CARD_H + ADV_CARD_GAP) + 8
 
-# Solar-paneel minimum: solar_col-header(32) + param-rijen+K-alert(214) +
-#   band-tabel header+11bands(196) + sep(11) + x-flare h=3(44) + PCA h=2(32) = 529
-#   → royale buffer → 700px zodat alles ruim zichtbaar is.
-SOLAR_MIN_H   = 700
+# Solar-paneel minimum: header(32) + params(198) + alert-sectie(110) +
+#   band-tabel header+11bands(196) + sep(11) + x-flare(44) + PCA(32) +
+#   Bz-header+grafiek(110) = ~733 → buffer → 820px
+SOLAR_MIN_H   = 820
 
-# Minimale venster-hoogte zodat alles zichtbaar is bij opstarten:
-#   app-header + solar-paneel (bepaalt top_row hoogte) + outer-pady(6) +
-#   advies-sectie + body-ondermarge(4) + ticker
+# Minimale venster-hoogte zodat alles (incl. Bz-grafiek) zichtbaar is bij opstarten
 MIN_WINDOW_H  = APP_HDR_H + SOLAR_MIN_H + 6 + ADV_SECTION_H + 4 + TICKER_H
 
 BG_ROOT    = "#1A1C1F"
@@ -973,8 +984,9 @@ _T: dict[str, dict[str, str]] = {
     'updated_lbl': {"en": 'Updated'},
     'k_alert_lbl':      {"en": 'Alert K ≥'},
     'band_alert_lbl':   {"en": 'Band open ≥'},
-    'alert_xflare_lbl': {"en": 'X-flare alert'},
-    'alert_pca_lbl':    {"en": 'PCA alert'},
+    'alerts_hdr':       {"en": 'Notifications'},
+    'alert_xflare_lbl': {"en": 'X-flare / SWF'},
+    'alert_pca_lbl':    {"en": 'PCA / Proton'},
     'day_hdr': {"en": 'Day'},
     'night_hdr': {"en": 'Night'},
     'band_hdr': {"en": 'Band'},
@@ -2589,74 +2601,11 @@ class HAMIOSApp:
             var = tk.StringVar(value="—")
             self._solar_vars[key] = var
             val_lbl = tk.Label(row, textvariable=var, font=_font(9, "bold"),
-                               bg=BG_PANEL, fg=TEXT_H1, anchor='w', cursor="question_arrow")
+                               bg=BG_PANEL, fg=TEXT_H1, anchor='w', width=8,
+                               cursor="question_arrow")
             val_lbl.pack(side=tk.LEFT)
             _bind_tip(val_lbl, key)
             self._solar_val_lbls[key] = val_lbl
-
-            # Melding K ≥ direct onder K-index, waarde uitgelijnd met getallen-kolom
-            if key == "k_index":
-                # K-index drempel + aan/uit checkbox
-                alert_row = tk.Frame(self._solar_frame, bg=BG_PANEL)
-                alert_row.pack(fill=tk.X, pady=(0, 1))
-                tk.Checkbutton(alert_row, variable=self._alert_k_en_var,
-                               command=self._save_cur_settings,
-                               bg=BG_PANEL, selectcolor=BG_SURFACE,
-                               activebackground=BG_PANEL).pack(side=tk.LEFT, padx=(0, 2))
-                _k_alert_lbl = tk.Label(alert_row, text=self._tr("k_alert_lbl"),
-                                        font=_font(9), bg=BG_PANEL,
-                                        fg=TEXT_DIM, anchor='w', width=9)
-                _k_alert_lbl.pack(side=tk.LEFT)
-                self._tr_widgets["k_alert_lbl"] = _k_alert_lbl
-                tk.Spinbox(alert_row, from_=1, to=9, width=3,
-                           textvariable=self._k_alert_var,
-                           command=self._save_cur_settings,
-                           bg=BG_SURFACE, fg=TEXT_H1, buttonbackground=BG_SURFACE,
-                           relief=tk.FLAT, font=_font(9, "bold")).pack(side=tk.LEFT)
-
-                # Band-opening drempel + aan/uit checkbox
-                band_alert_row = tk.Frame(self._solar_frame, bg=BG_PANEL)
-                band_alert_row.pack(fill=tk.X, pady=(0, 1))
-                tk.Checkbutton(band_alert_row, variable=self._alert_band_en_var,
-                               command=self._save_cur_settings,
-                               bg=BG_PANEL, selectcolor=BG_SURFACE,
-                               activebackground=BG_PANEL).pack(side=tk.LEFT, padx=(0, 2))
-                _band_alert_lbl = tk.Label(band_alert_row, text=self._tr("band_alert_lbl"),
-                                           font=_font(9), bg=BG_PANEL,
-                                           fg=TEXT_DIM, anchor='w', width=9)
-                _band_alert_lbl.pack(side=tk.LEFT)
-                self._tr_widgets["band_alert_lbl"] = _band_alert_lbl
-                tk.Spinbox(band_alert_row, from_=10, to=90, increment=5, width=4,
-                           textvariable=self._band_alert_var,
-                           command=self._save_cur_settings,
-                           bg=BG_SURFACE, fg=TEXT_H1, buttonbackground=BG_SURFACE,
-                           relief=tk.FLAT, font=_font(9, "bold")).pack(side=tk.LEFT)
-                tk.Label(band_alert_row, text="%", font=_font(9),
-                         bg=BG_PANEL, fg=TEXT_DIM).pack(side=tk.LEFT, padx=(2, 0))
-
-                # X-flare notificatie
-                xflare_row = tk.Frame(self._solar_frame, bg=BG_PANEL)
-                xflare_row.pack(fill=tk.X, pady=(0, 1))
-                tk.Checkbutton(xflare_row, variable=self._alert_xflare_en_var,
-                               command=self._save_cur_settings,
-                               bg=BG_PANEL, selectcolor=BG_SURFACE,
-                               activebackground=BG_PANEL).pack(side=tk.LEFT, padx=(0, 2))
-                _xf_lbl = tk.Label(xflare_row, text=self._tr("alert_xflare_lbl"),
-                                   font=_font(9), bg=BG_PANEL, fg=TEXT_DIM, anchor='w')
-                _xf_lbl.pack(side=tk.LEFT)
-                self._tr_widgets["alert_xflare_lbl"] = _xf_lbl
-
-                # PCA notificatie
-                pca_row = tk.Frame(self._solar_frame, bg=BG_PANEL)
-                pca_row.pack(fill=tk.X, pady=(0, 2))
-                tk.Checkbutton(pca_row, variable=self._alert_pca_en_var,
-                               command=self._save_cur_settings,
-                               bg=BG_PANEL, selectcolor=BG_SURFACE,
-                               activebackground=BG_PANEL).pack(side=tk.LEFT, padx=(0, 2))
-                _pca_lbl2 = tk.Label(pca_row, text=self._tr("alert_pca_lbl"),
-                                     font=_font(9), bg=BG_PANEL, fg=TEXT_DIM, anchor='w')
-                _pca_lbl2.pack(side=tk.LEFT)
-                self._tr_widgets["alert_pca_lbl"] = _pca_lbl2
 
         # Scheidingslijn tussen params en bandentabel
         tk.Frame(self._solar_frame, bg=BORDER, height=1).pack(fill=tk.X, pady=(4, 2))
@@ -2705,6 +2654,67 @@ class HAMIOSApp:
                                  font=_font(8, "bold"), bg=BG_PANEL, fg="#CE93D8",
                                  wraplength=230, justify='left', anchor='nw')
         self._pca_lbl.pack(fill=tk.X, pady=(0, 2))
+
+        # ── Meldingen sectie ─────────────────────────────────────────────────
+        tk.Frame(self._solar_frame, bg=BORDER, height=1).pack(fill=tk.X, pady=(4, 2))
+        _alert_hdr = tk.Label(self._solar_frame, text=self._tr("alerts_hdr"),
+                              font=_font(9, "bold"), bg=BG_PANEL, fg=ACCENT, anchor='w')
+        _alert_hdr.pack(fill=tk.X, pady=(0, 2))
+        self._tr_widgets["alerts_hdr"] = _alert_hdr
+
+        # K-index drempel
+        k_row = tk.Frame(self._solar_frame, bg=BG_PANEL)
+        k_row.pack(fill=tk.X, pady=(0, 1))
+        _k_cb = tk.Checkbutton(k_row, variable=self._alert_k_en_var,
+                               command=self._save_cur_settings,
+                               bg=BG_PANEL, fg=TEXT_BODY, selectcolor=BG_SURFACE,
+                               activebackground=BG_PANEL, activeforeground=TEXT_H1,
+                               font=_font(9), text=self._tr("k_alert_lbl"), anchor='w', width=12)
+        _k_cb.pack(side=tk.LEFT)
+        self._tr_widgets["k_alert_lbl"] = _k_cb
+        tk.Spinbox(k_row, from_=1, to=9, width=3, textvariable=self._k_alert_var,
+                   command=self._save_cur_settings,
+                   bg=BG_SURFACE, fg=TEXT_H1, buttonbackground=BG_SURFACE,
+                   relief=tk.FLAT, font=_font(9, "bold")).pack(side=tk.LEFT, padx=(2, 0))
+
+        # Band-opening drempel
+        b_row = tk.Frame(self._solar_frame, bg=BG_PANEL)
+        b_row.pack(fill=tk.X, pady=(0, 1))
+        _b_cb = tk.Checkbutton(b_row, variable=self._alert_band_en_var,
+                               command=self._save_cur_settings,
+                               bg=BG_PANEL, fg=TEXT_BODY, selectcolor=BG_SURFACE,
+                               activebackground=BG_PANEL, activeforeground=TEXT_H1,
+                               font=_font(9), text=self._tr("band_alert_lbl"), anchor='w', width=12)
+        _b_cb.pack(side=tk.LEFT)
+        self._tr_widgets["band_alert_lbl"] = _b_cb
+        tk.Spinbox(b_row, from_=10, to=90, increment=5, width=4,
+                   textvariable=self._band_alert_var, command=self._save_cur_settings,
+                   bg=BG_SURFACE, fg=TEXT_H1, buttonbackground=BG_SURFACE,
+                   relief=tk.FLAT, font=_font(9, "bold")).pack(side=tk.LEFT, padx=(2, 0))
+        tk.Label(b_row, text="%", font=_font(9), bg=BG_PANEL,
+                 fg=TEXT_DIM).pack(side=tk.LEFT, padx=(2, 0))
+
+        # X-flare melding
+        _xf_row = tk.Frame(self._solar_frame, bg=BG_PANEL)
+        _xf_row.pack(fill=tk.X, pady=(0, 1))
+        _xf_cb = tk.Checkbutton(_xf_row, variable=self._alert_xflare_en_var,
+                                command=self._save_cur_settings,
+                                bg=BG_PANEL, fg=TEXT_BODY, selectcolor=BG_SURFACE,
+                                activebackground=BG_PANEL, activeforeground=TEXT_H1,
+                                font=_font(9), text=self._tr("alert_xflare_lbl"), anchor='w')
+        _xf_cb.pack(side=tk.LEFT)
+        self._tr_widgets["alert_xflare_lbl"] = _xf_cb
+
+        # PCA melding
+        _pca_row2 = tk.Frame(self._solar_frame, bg=BG_PANEL)
+        _pca_row2.pack(fill=tk.X, pady=(0, 3))
+        _pca_cb = tk.Checkbutton(_pca_row2, variable=self._alert_pca_en_var,
+                                 command=self._save_cur_settings,
+                                 bg=BG_PANEL, fg=TEXT_BODY, selectcolor=BG_SURFACE,
+                                 activebackground=BG_PANEL, activeforeground=TEXT_H1,
+                                 font=_font(9), text=self._tr("alert_pca_lbl"), anchor='w')
+        _pca_cb.pack(side=tk.LEFT)
+        self._tr_widgets["alert_pca_lbl"] = _pca_cb
 
         # ── Bz 24-uurs mini-grafiek ───────────────────────────────────────────
         tk.Frame(self._solar_frame, bg=BORDER, height=1).pack(fill=tk.X, pady=(2, 2))
@@ -2776,8 +2786,8 @@ class HAMIOSApp:
                 self._draw_map()
             cb = tk.Checkbutton(map_controls, text=self._tr(tr_key) if tr_key else fallback_text,
                                 variable=var, command=_on_toggle,
-                                bg=BG_PANEL, fg=TEXT_DIM, selectcolor=BG_SURFACE,
-                                activebackground=BG_PANEL, activeforeground=TEXT_BODY,
+                                bg=BG_PANEL, fg=TEXT_BODY, selectcolor=BG_SURFACE,
+                                activebackground=BG_PANEL, activeforeground=TEXT_H1,
                                 font=_font(9))
             cb.pack(side=tk.LEFT, padx=(0, 6))
             if tr_key:
@@ -2793,7 +2803,8 @@ class HAMIOSApp:
         _cb(None,       self._show_aurora_var,   "Aurora")
         _cb(None,       self._show_wspr_var,     "WSPR")
         _cb(None,       self._show_spots_var,    "Spots")
-        _cb(None,       self._show_iaru_var,      "ITU")
+        if not _ITU_DISABLED:
+            _cb(None, self._show_iaru_var, "ITU")
         _cb(None,       self._show_cs_var,       "CS")
         _cb("locator",  self._show_locator_var)
 
@@ -3101,7 +3112,7 @@ class HAMIOSApp:
                 draw = ImageDraw.Draw(img)
 
             # ── ITU regio-overlay (correcte R1/R2/R3 grenzen) ────────────────
-            if self._show_iaru_var.get():
+            if not _ITU_DISABLED and self._show_iaru_var.get():
                 itu_img = Image.new("RGBA", (VW, VH), (0, 0, 0, 0))
                 id_     = ImageDraw.Draw(itu_img)
                 AF, AL  = 55, 220   # alpha vulling / grenslijn  (55≈22% dekking)
@@ -5215,7 +5226,7 @@ class HAMIOSApp:
         y = max(0, (scr_h - h) // 2)
         self.root.geometry(f"{w}x{h}+{x}+{y}")
         # Stel minsize in zodat verkleinen niet onder bruikbare grens gaat
-        self.root.minsize(min(900, usable_w), min(700, scr_h))
+        self.root.minsize(min(900, usable_w), min(MIN_WINDOW_H, scr_h))
 
 
 # ── Entrypoint ─────────────────────────────────────────────────────────────────

@@ -191,7 +191,10 @@
     "cat_par_odd": "O – Oneven",
     "cat_par_mark": "M – Mark",
     "cat_par_space": "S – Space",
-    "cat_flow_none": "Geen"
+    "cat_flow_none": "Geen",
+    "alerts_hdr": "Meldingen",
+    "alert_xflare_lbl": "X-flare / SWF",
+    "alert_pca_lbl": "PCA / Proton"
   },
   "solar_tips": {
     "sfi": [

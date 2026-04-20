@@ -191,7 +191,10 @@
     "cat_par_odd": "O – 奇数",
     "cat_par_mark": "M – マーク",
     "cat_par_space": "S – スペース",
-    "cat_flow_none": "なし"
+    "cat_flow_none": "なし",
+    "alerts_hdr": "通知",
+    "alert_xflare_lbl": "Xフレア / SWF",
+    "alert_pca_lbl": "PCA / 陽子"
   },
   "solar_tips": {
     "sfi": [

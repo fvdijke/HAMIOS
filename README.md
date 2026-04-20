@@ -148,24 +148,75 @@ Alle drempelwaarden en aan/uit-staten worden opgeslagen in `HAMIOS.ini`.
 
 ## 🖥️ Installatie
 
-### Vereisten
+### Stap 1 — Python vereisten
+
 ```bash
 pip install pillow
 ```
-Optioneel (systeemtray):
+
+Optioneel voor systeemtray-notificaties:
+
 ```bash
 pip install pystray
 ```
 
-### Starten
+### Stap 2 — Taalbestanden installeren
+
+HAMIOS wordt geleverd met Engels als ingebouwde taal. Alle andere talen staan in losse `.json`-bestanden die je **apart moet downloaden**.
+
+**Downloaden:**
+Haal de taalbestanden op uit de [laatste release](https://github.com/fvdijke/HAMIOS/releases) — download het bestand `langs.zip` (of de individuele `.json`-bestanden).
+
+**Plaatsing bij gebruik van de EXE:**
+```
+HAMIOS.exe          ← het programma
+langs\
+  lang_nl.json      ← Nederlands
+  lang_de.json      ← Deutsch
+  lang_fr.json      ← Français
+  lang_it.json      ← Italiano
+  lang_es.json      ← Español
+  lang_no.json      ← Norsk
+  lang_pl.json      ← Polski
+  lang_sv.json      ← Svenska
+  lang_da.json      ← Dansk
+  lang_fi.json      ← Suomi
+  lang_pt.json      ← Português
+  lang_ja.json      ← 日本語
+  lang_ru.json      ← Русский
+```
+
+**Plaatsing bij gebruik van de broncode:**
+```
+HAMIOS.py
+langs\
+  lang_nl.json
+  ...
+```
+
+> De `langs/`-map moet **naast** `HAMIOS.exe` of `HAMIOS.py` staan. HAMIOS detecteert aanwezige taalbestanden automatisch bij opstarten.
+
+**Eigen taalbestand maken:**
+Kopieer een bestaand `.json`-bestand, pas `meta.code` en `meta.name` aan en vertaal de `strings`- en `solar_tips`-secties. HAMIOS laadt het nieuwe pakket automatisch.
+
+### Stap 3 — Starten
+
 ```bash
 python HAMIOS.py
 ```
 
 ### Standalone EXE (Windows) — aanbevolen
-Download `HAMIOS.exe` uit de [laatste release](https://github.com/fvdijke/HAMIOS/releases) en voer direct uit. Geen Python vereist.
 
-> **Let op**: zorg dat de `langs/`-map naast de EXE staat zodat de taalpakketten beschikbaar zijn.
+Download `HAMIOS.exe` én de `langs/`-map uit de [laatste release](https://github.com/fvdijke/HAMIOS/releases) en voer direct uit. Geen Python vereist.
+
+Zelf bouwen vanuit broncode:
+
+```bash
+pip install pyinstaller
+pyinstaller HAMIOS.spec
+# → dist\HAMIOS.exe
+# Kopieer daarna langs\ naast de EXE
+```
 
 ---
 

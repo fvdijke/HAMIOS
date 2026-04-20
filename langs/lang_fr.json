@@ -191,7 +191,10 @@
     "cat_par_odd": "O – Impair",
     "cat_par_mark": "M – Marque",
     "cat_par_space": "S – Espace",
-    "cat_flow_none": "Aucun"
+    "cat_flow_none": "Aucun",
+    "alerts_hdr": "Notifications",
+    "alert_xflare_lbl": "Eruption X / SWF",
+    "alert_pca_lbl": "PCA / Proton"
   },
   "solar_tips": {
     "sfi": [

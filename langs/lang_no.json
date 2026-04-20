@@ -191,7 +191,10 @@
     "cat_par_odd": "O – Oddetall",
     "cat_par_mark": "M – Mark",
     "cat_par_space": "S – Space",
-    "cat_flow_none": "Ingen"
+    "cat_flow_none": "Ingen",
+    "alerts_hdr": "Varsler",
+    "alert_xflare_lbl": "X-blinke / SWF",
+    "alert_pca_lbl": "PCA / Proton"
   },
   "solar_tips": {
     "sfi": [
