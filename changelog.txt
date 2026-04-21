@@ -2,6 +2,9 @@
 ─────────────────────────────────────────────────────────────────────
 Change Log (1.0)
 ─────────────────────────────────────────────────────────────────────
+· 2026-04-21 13:19 CEST — Alle checkboxes en radiobuttons uniform gemaakt: fg=TEXT_BODY,
+               activeforeground=TEXT_H1 in alle panelen (header, solar, kaart,
+               HF band, DX spots, history, CAT-dialoog).
 · 2026-04-20 15:00 CEST — Tooltips toegevoegd aan de 4 meldingscheckboxes (K-index,
                Band-opening, X-flare, PCA) in alle 14 talen (EN + 13 taalpacks).
                tip_k_alert / tip_band_alert / tip_xflare_alert / tip_pca_alert

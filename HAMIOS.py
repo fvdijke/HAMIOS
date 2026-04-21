@@ -2275,7 +2275,7 @@ class HAMIOSApp:
                        padx=12, pady=(4, 2))
         tk.Checkbutton(act_frame, text=tr("cat_enable_lbl"),
                        variable=enabled_var,
-                       bg=BG_PANEL, fg=TEXT_H1, selectcolor=BG_SURFACE,
+                       bg=BG_PANEL, fg=TEXT_BODY, selectcolor=BG_SURFACE,
                        activebackground=BG_PANEL, activeforeground=TEXT_H1,
                        font=_font(9, "bold")).pack(side=tk.LEFT, padx=4)
 
@@ -2417,22 +2417,22 @@ class HAMIOSApp:
         tk.Frame(hdr, bg=BORDER, width=1).pack(side=tk.RIGHT, fill=tk.Y, pady=8)
         cb_dst = tk.Checkbutton(hdr, text=self._tr("summer_time"), variable=self._dst_var,
                                 command=self._save_cur_settings,
-                                bg=BG_PANEL, fg=TEXT_DIM, selectcolor=BG_SURFACE,
-                                activebackground=BG_PANEL, activeforeground=TEXT_BODY,
+                                bg=BG_PANEL, fg=TEXT_BODY, selectcolor=BG_SURFACE,
+                                activebackground=BG_PANEL, activeforeground=TEXT_H1,
                                 font=_font(9))
         cb_dst.pack(side=tk.RIGHT, padx=(0, 8))
         self._tr_widgets["summer_time"] = cb_dst
         cb_tips = tk.Checkbutton(hdr, text=self._tr("tooltips"), variable=self._show_tips_var,
-                                 bg=BG_PANEL, fg=TEXT_DIM, selectcolor=BG_SURFACE,
-                                 activebackground=BG_PANEL, activeforeground=TEXT_BODY,
+                                 bg=BG_PANEL, fg=TEXT_BODY, selectcolor=BG_SURFACE,
+                                 activebackground=BG_PANEL, activeforeground=TEXT_H1,
                                  font=_font(9))
         cb_tips.pack(side=tk.RIGHT, padx=(0, 4))
         self._tr_widgets["tooltips"] = cb_tips
         cb_ticker = tk.Checkbutton(hdr, text=self._tr("ticker"),
                                    variable=self._ticker_enabled_var,
                                    command=self._toggle_ticker,
-                                   bg=BG_PANEL, fg=TEXT_DIM, selectcolor=BG_SURFACE,
-                                   activebackground=BG_PANEL, activeforeground=TEXT_BODY,
+                                   bg=BG_PANEL, fg=TEXT_BODY, selectcolor=BG_SURFACE,
+                                   activebackground=BG_PANEL, activeforeground=TEXT_H1,
                                    font=_font(9))
         cb_ticker.pack(side=tk.RIGHT, padx=(0, 4))
         self._tr_widgets["ticker"] = cb_ticker
@@ -3465,7 +3465,8 @@ class HAMIOSApp:
                                       variable=self._day_var,
                                       command=self._recalc_prop,
                                       bg=BG_PANEL, fg=TEXT_BODY, selectcolor=BG_SURFACE,
-                                      activebackground=BG_PANEL, font=_font(9))
+                                      activebackground=BG_PANEL, activeforeground=TEXT_H1,
+                                      font=_font(9))
         _day_auto_cb.pack(side=tk.LEFT, padx=(4, 0))
         self._tr_widgets["day_auto"] = _day_auto_cb
 
@@ -4050,8 +4051,8 @@ class HAMIOSApp:
         _dx_own_cb = tk.Checkbutton(hdr, text=self._tr("own_cont_lbl"),
                                     variable=self._dx_own_cont_var,
                                     command=self._filter_dx_spots,
-                                    bg=BG_PANEL, fg=TEXT_DIM, selectcolor=BG_SURFACE,
-                                    activebackground=BG_PANEL, activeforeground=TEXT_BODY,
+                                    bg=BG_PANEL, fg=TEXT_BODY, selectcolor=BG_SURFACE,
+                                    activebackground=BG_PANEL, activeforeground=TEXT_H1,
                                     font=_font(9))
         _dx_own_cb.pack(side=tk.RIGHT, padx=(0, 4))
         self._tr_widgets["own_cont_lbl"] = _dx_own_cb
