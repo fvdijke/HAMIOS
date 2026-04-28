@@ -67,6 +67,8 @@
     "dx_status_fmt": "{n} van {total} spots  (HF{filt})  ·  {ts}",
     "map_nolib": "pip install pillow  voor kaartweergave",
     "map_downloading": "⬇ NASA-kaart wordt gedownload…",
+    "map_display_lbl": "Weergave:",
+    "map_data_lbl": "Data:",
     "distance_lbl": "Afstand",
     "direction_lbl": "Richting",
     "right_clk_clear": "klik rechts om te wissen",

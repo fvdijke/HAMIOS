@@ -67,6 +67,8 @@
     "dx_status_fmt": "{n} / {total} スポット  (HF{filt})  ·  {ts}",
     "map_nolib": "pip install pillow  で地図を表示",
     "map_downloading": "⬇ NASA 地図をダウンロード中…",
+    "map_display_lbl": "表示：",
+    "map_data_lbl": "データ：",
     "distance_lbl": "距離",
     "direction_lbl": "方向",
     "right_clk_clear": "右クリックでクリア",

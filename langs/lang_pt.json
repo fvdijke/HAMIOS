@@ -67,6 +67,8 @@
     "dx_status_fmt": "{n} de {total} spots  (HF{filt})  ·  {ts}",
     "map_nolib": "pip install pillow  para exibir o mapa",
     "map_downloading": "⬇ Baixando mapa NASA…",
+    "map_display_lbl": "Exibição:",
+    "map_data_lbl": "Dados:",
     "distance_lbl": "Distância",
     "direction_lbl": "Direção",
     "right_clk_clear": "clique direito para limpar",

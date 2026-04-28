@@ -67,6 +67,8 @@
     "dx_status_fmt": "{n} / {total} spottia  (HF{filt})  ·  {ts}",
     "map_nolib": "pip install pillow  karttanäyttöä varten",
     "map_downloading": "⬇ Ladataan NASA-karttaa…",
+    "map_display_lbl": "Näyttö:",
+    "map_data_lbl": "Data:",
     "distance_lbl": "Etäisyys",
     "direction_lbl": "Suunta",
     "right_clk_clear": "napsauta hiiren oikealla poistaaksesi",

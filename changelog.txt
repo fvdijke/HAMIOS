@@ -1,7 +1,56 @@
+─────────────────────────────────────────────────────────────────────
+Change Log (3.0)
+─────────────────────────────────────────────────────────────────────
+· 2026-04-28 13:15 CEST — Versie 3.0: volledig interface-redesign.
+  Layout:
+    · Wereldkaart centraal (vaste hoogte 380 px, zoom/pan intact)
+    · Solar/Ionosfeer paneel verplaatst naar linkerkolom (200 px)
+    · HF Band Betrouwbaarheid naar rechterkolom (420 px)
+    · DX Spots als volledige-hoogte kolom uiterst rechts (360 px)
+    · Beginbreedte vergroot naar min(1768, scherm-60) px zodat DX
+      additioneel is en overige panelen hun breedte behouden
+    · Onderste rij: 3 gelijke kolommen (Schema | Bandverloop | Bz)
+    · Bz 24u-grafiek als zelfstandig paneel (_build_bz_panel)
+    · Kaartoverlays gegroepeerd: "Weergave" (Zon/Maan/Graylijn/Aurora)
+      en "Data" (WSPR/Spots/CS/Locator)
+    · Alle panelen in een rij uniform even hoog via fill=BOTH expand
+    · Graticule-labels crop-bewust zodat graden altijd zichtbaar zijn
+  Bandbalken (HF Betrouwbaarheid):
+    · 22 px hoog (was 13 px), 4 px tussenruimte
+    · Gradient-vulling in band-eigen kleur (licht boven → donker onder)
+    · Glans-lijn bovenaan elk gevuld balkje
+    · Bandnaam vet en in bandkleur (was grijs)
+  Solar paneel:
+    · PCA/proton-flux meldingen verwijderd (label en checkbox)
+    · X-flare waarschuwingslabel verwijderd (checkbox)
+    · proton_flux rij verwijderd uit solar parameters
+    · Solar label-font 9→8, breedte 16→14 chars voor 200 px kolom
+  Taalbestanden:
+    · map_display_lbl en map_data_lbl toegevoegd aan alle 13 packs
+    · bz_chart_hdr al aanwezig; bz_now_lbl al aanwezig
+  README.md en README_EN.md volledig herschreven voor v3.0
+  changelog.txt bijgewerkt
+
+─────────────────────────────────────────────────────────────────────
+Change Log (2.4 – 2.5)
+─────────────────────────────────────────────────────────────────────
+· 2026-04-25 11:05 CEST — Versie 2.5: ionosonde-netwerk uitgebreid,
+               offline-indicator, DX-spot heatmap.
+· 2026-04-25 10:58 CEST — Versie 2.4: ThemeManager, interactieve kaart,
+               propagatietrend-advieskaart, WSPR-filters, CONFIG_SCHEMA.
 
 ─────────────────────────────────────────────────────────────────────
 Change Log (1.0)
 ─────────────────────────────────────────────────────────────────────
+· 2026-04-23 15:30 CEST — Implementatie Theme Configuration Manager (v2.4):
+               dynamische thema-switching (Midnight, DeepOcean, HighContrast)
+               via header-menu; recursieve kleurtoepassing op alle widgets;
+               opslag van thema-keuze in HAMIOS.ini.
+· 2026-04-23 15:15 CEST — Versie 2.4: Interactieve kaart met Great Circle paden
+               (kleur bepaald door beste propagatieband), wereldwijde ionosonde-
+               netwerk uitbreiding, predictief trendmodel op basis van SFI/K-index
+               historiek, SNR-filtering voor WSPR-spots, offline connectiviteits-
+               indicator en configuratie-validatielaag (CONFIG_SCHEMA).
 · 2026-04-21 13:19 CEST — Alle checkboxes en radiobuttons uniform gemaakt: fg=TEXT_BODY,
                activeforeground=TEXT_H1 in alle panelen (header, solar, kaart,
                HF band, DX spots, history, CAT-dialoog).
@@ -39,12 +88,12 @@ Change Log (1.0)
                90→75px; venster-hoogte begrensd op min(usable,920)px.
 · 2026-04-14 14:06 CEST — Bandopenings-schema canvas op 180px gezet (fill=X, expand
                verwijderd); outer niet langer expand zodat hoogte consistent is met
-               DX Spots en Analyse & Advies.
+               DX Spots en Advies.
 · 2026-04-14 14:05 CEST — DX Spots canvas terug naar 180px. Analyse & Advies inhoud
                ingepakt in adv_wrap (height=180, pack_propagate=False) zodat beide
                panelen een gelijke vaste hoogte van 180px hebben.
-· 2026-04-14 13:48 CEST — DX Spots canvas 180→90px; expand verwijderd zodat paneel
-               dezelfde hoogte heeft als Band Verloop.
+· 2026-04-14 13:48 CEST — DX Spots canvas 180→90px; expand verwijderd om paneel
+               dezelfde hoogte te geven als Band Verloop.
 · 2026-04-14 13:45 CEST — DX Spots: outer en dx_wrap fill=BOTH/expand zodat de onderkant
                van het paneel aansluit tegen het advies-paneel. Melding K ≥ label
                font 8→9 zodat width=16 dezelfde pixelbreedte geeft als de overige
@@ -95,7 +144,7 @@ Change Log (1.0)
                paneel verplaatst naar body-niveau zodat het de volledige breedte
                beslaat (over kaart + solar kolom).
 · 2026-04-13 09:34 CEST — Efficiëntie: _font() gecached via module-level dict; 53
-               aanroepen hergebruiken nu 8 unieke Font-objecten i.p.v. telkens
+               aanroepingen hergebruiken nu 8 unieke Font-objecten i.p.v. telkens
                nieuwe te maken. K-index rij verplaatst naar onderaan de solar-
                metriekenlijst (na Bz), direct boven "Melding K ≥" spinbox.
                TODO-blok uit bestandshoofd verwijderd.
@@ -214,10 +263,10 @@ Change Log (1.0)
 · 2026-04-09 13:30 CEST — Historiekgrafiek (alle HF-banden, %) met tijdbereik-
                selectie (Uren/Dagen/Weken/Maanden) en klikbare bandlegenda.
                Data opgeslagen in CSV (90 dagen bewaard).
-· 2026-04-09 13:00 CEST — Gesloten banden grijs weergegeven (zelfde stijl als
+· 2026-04-09 13:00 CEST — Gesloten banden grijs weergegeven (elfde stijl als
                LOS/Tropo). Mouse-over tooltips per band en per solar-gegeven.
 · 2026-04-09 12:15 CEST — Wereldkaart (blauw thema, equirectangular, 400 px hoog):
-               dag/nacht terminator met zachte overgang, zon- en maanpositie, QTH-
+               dag/nacht terminator met zachte overgang, zon- en maanpositie, QTH
                markering. NASA-kaart (2048×1024) automatisch gedownload; polygoon-
                kaart als fallback. Breedtegraad/lengtegraad labels op raster.
 · 2026-04-09 12:00 CEST — Solar panel toont alle 15 banden (dag én nacht) via
@@ -230,5 +279,5 @@ Change Log (1.0)
                10 min / 30 min / 1 uur); countdown in header. Lokale tijd (CET/CEST)
                en UTC in header; vinkje Zomertijd opgeslagen in HAMIOS.ini.
 · 2026-04-08 00:00 CEST — Initiële versie: solar/ionosfeer data panel (SFI, SSN,
-               A/K-index, X-ray), HF band betrouwbaarheidspanel (MUF/LUF model,
+               A/L-index, X-ray), HF band betrouwbaarheidspanel (MUF/LUF model,
                mode/vermogen/antenne correctie, gekleurde balkjes per band).

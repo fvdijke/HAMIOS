@@ -67,6 +67,8 @@
     "dx_status_fmt": "{n} av {total} spot  (HF{filt})  ·  {ts}",
     "map_nolib": "pip install pillow  for kartvisning",
     "map_downloading": "⬇ Laster ned NASA-kart…",
+    "map_display_lbl": "Visning:",
+    "map_data_lbl": "Data:",
     "distance_lbl": "Avstand",
     "direction_lbl": "Retning",
     "right_clk_clear": "høyreklikk for å slette",

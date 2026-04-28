@@ -1,24 +1,20 @@
-# 📡 HAMIOS v2.3
-<img width="1743" height="1416" alt="HAMIOS v2 3" src="https://github.com/user-attachments/assets/3045d73a-9008-43d8-9dea-3d3fd5102792" />
-
-**Multilingual + Multi overlay**
-<img width="1743" height="1416" alt="HAMIOS-ALL v2 3" src="https://github.com/user-attachments/assets/4250a620-1bac-4867-9d78-0ac172a26e89" />
+# 📡 HAMIOS v3.0
 
 **HAM-radio propagatie- en DX-monitor voor Windows**
 
-> v2.3 — Propagatiepadkaart · Bz 24h-grafiek · Selecteerbare notificaties · Aurora-ring overlay · WSPR/PSKReporter spots · DX-spot markers · 14 talen via externe taalpakketten
+> v3.0 — Volledig nieuw interface-ontwerp · Wereldkaart centraal · DX Spots volledige-hoogte kolom · Gradientbalken met bandkleuren · Bz-grafiek als eigen paneel · 14 talen via externe taalpakketten
 
 *Bedacht door Frank van Dijke · Ontwikkeld met Claude AI*
 
-HAMIOS geeft radioamateurs realtime inzicht in HF-propagatie, zonne-activiteit en DX-mogelijkheden — verpakt in een moderne donkere GUI die volledig op het scherm past bij opstarten.
+HAMIOS geeft radioamateurs realtime inzicht in HF-propagatie, zonne-activiteit en DX-mogelijkheden — verpakt in een moderne donkere GUI.
 
 ---
 
 ## ✨ Features
 
-### 🌍 Interactieve Wereldkaart
+### 🌍 Interactieve Wereldkaart *(centraal in het venster)*
 - Equirectangulaire NASA-kaart, automatisch gedownload bij eerste gebruik
-- **Altijd correcte 2:1 verhouding** — geen horizontale vervorming
+- **Vaste hoogte (380 px)** met correcte 2:1 rendering — nooit horizontale vervorming
 - **Dag/nacht-terminator** met zachte overgangszone
 - **Graylijn** (amber band, ~1000 km breed)
 - **Zon- en maanpositie** (geocentrisch berekend)
@@ -28,31 +24,28 @@ HAMIOS geeft radioamateurs realtime inzicht in HF-propagatie, zonne-activiteit e
 - **Maidenhead-locatorraster** (20° × 10°, labels AA–RR)
 - **Callsign-prefix laag** (~110 DXCC-entiteiten)
 - **Zoom/pan**: muiswiel 1×–8×, klik+sleep om te pannen, rechts om te resetten
-- Render-cache met low-res maskers voor vloeiende zoom en pan
-- **Kaart-selectievakjes** (Zon, Maan, Graylijn, Aurora, WSPR, Spots, ITU, CS, Locator) in een eigen balk **onder de kaart**
+- **Kaart-overlays gegroepeerd** onder de kaart:
+  - *Weergave:* Zon · Maan · Graylijn · Aurora
+  - *Data:* WSPR · Spots · CS · Locator
 
 ### 🛰️ Propagatiepadkaart
-Klik op een bestemming op de kaart voor een directe padanalyse:
 - **Band-kwaliteit** berekend op het midpunt van het groot-cirkelpad
-- Dag/nacht correctie op het midpunt (juiste ionosferische condities)
+- Dag/nacht correctie op het midpunt
 - Aantal hops geschat (≈ afstand / 3500 km)
-- Top-5 open banden getoond: `↳  8.847 km / 3 hops / dag  ▸  20m 87%  ·  17m 72%  ·  15m 54%  (MUF 24.1 MHz)`
-- **Groot-cirkel lijn kleurt naar de beste band** (groen = 20m, geel = 17m, rood = 10m, …)
+- Top-5 open banden: `↳  8.847 km / 3 hops / dag  ▸  20m 87%  ·  17m 72%  ·  15m 54%  (MUF 24.1 MHz)`
+- **Groot-cirkel lijn kleurt naar de beste band**
 
 ### 🌌 Aurora-ring overlay
-- Magnetische aurora-ovaal op de kaart op basis van de K-index
-- Berekend via **Feldstein/Holzworth** sferische trigonometrie (IGRF-2025)
-- Beide hemisferen als echte ovaal
+- Magnetische aurora-ovaal op basis van de K-index (Feldstein/Holzworth, IGRF-2025)
 - **Kleur op K-index**: groen (K < 3) · geel (K 3–5) · rood (K ≥ 6)
-- **Zachte gloed** — fade-effect in 6 lagen (zelfde stijl als graylijn)
 
 ### 🔵 WSPR / PSKReporter spots op kaart
 - Live propagatiepaden van **wspr.rocks** (WSPR) en **pskreporter.info** (FT8/FT4)
-- Verbindingslijnen op de wereldkaart: **kleur = band**, **dikte = SNR**
+- Verbindingslijnen: **kleur = band**, **dikte = SNR**
 
 ### 📍 DX-spot markers op kaart
 - Actieve DX-cluster spots: stip op DX-locatie + lijn naar spotter, kleurcodering per band
-- Klikken op een stip toont callsign, frequentie en comment als pop-up
+- Klikken op een stip toont callsign, frequentie en comment
 
 ### 🌞 Solar & Ionosfeer Data
 
@@ -63,53 +56,54 @@ Klik op een bestemming op de kaart voor een directe padanalyse:
 | A-index | hamqsl.com | Dagelijkse geomagnetische activiteit |
 | K-index | hamqsl.com | 3-uurs geomagnetische activiteit (0–9) |
 | X-ray | hamqsl.com | GOES röntgenflux (A/B/C/M/X klasse) |
-| MUF | intern model | Maximum Usable Frequency (berekend) |
-| LUF | intern model | Lowest Usable Frequency (berekend) |
+| MUF | intern model | Maximum Usable Frequency |
+| LUF | intern model | Lowest Usable Frequency |
 | Solarwindsnelheid | NOAA SWPC | km/s via DSCOVR/ACE |
 | Bz | NOAA SWPC | Interplanetair magneetveld Z-component (nT) |
+| foF2 | GIRO/LGDC | Gemeten F2-laag kritische frequentie (ionosonde) |
 
-### 📊 Bz 24-uurs mini-grafiek
+### 📊 Bz 24-uurs grafiek *(eigen paneel)*
 - **Blauw** = positief Bz (gunstig) · **Rood** = negatief Bz (geoeffectief)
-- 240 datapunten over 24 uur · Y-labels −20 / 0 / +20 nT
-- Vergroot grafiekgebied voor betere leesbaarheid
+- Y-labels −20 / 0 / +20 nT · past automatisch in het paneel
 
-### 📶 HF Band Betrouwbaarheid
+### 📶 HF Band Betrouwbaarheid *(vernieuwd in v3.0)*
 - Intern MUF/LUF-model op basis van SFI, SSN, K-index en QTH-breedtegraad
 - SNR-budget gecorrigeerd voor **mode**, **vermogen** en **antenne**
-- Kleurbalken: groen ≥ 60 % · geel 30–59 % · rood 1–29 % · grijs gesloten
-- Licentieklasse per band (N = Novice/Basis · F = Full/HAREC)
+- **Gradientbalken in band-eigen kleur** (licht → donker) met glans-lijn
+- Bandnaam **vet en in bandkleur** — elke band heeft zijn eigen identiteit
+- Kolommen: start-MHz · modi · FT8-frequentie
 
-### 🔔 Notificaties & Alarmen — volledig selecteerbaar
-
-Elk notificatietype is **afzonderlijk aan/uit te zetten** via een checkbox in het solar-paneel:
+### 🔔 Meldingen & Alarmen
 
 | Notificatie | Instelling | Beschrijving |
 |-------------|-----------|--------------|
-| ⚠️ K-index storm | Checkbox + drempel (spinbox 1–9) | Melding bij stijging boven drempel |
-| 📡 Band geopend | Checkbox + drempel (spinbox 10–90 %) | Melding als band opengaat |
-| ☢️ X-flare / SWF | Checkbox | M/X-klasse flare detectie |
-| 🟣 PCA / Proton event | Checkbox | Polar Cap Absorption melding |
+| ⚠️ K-index storm | Checkbox + drempel (1–9) | Melding bij stijging boven drempel |
+| 📡 Band geopend | Checkbox + drempel (10–90 %) | Melding als band opengaat |
 
-Alle drempelwaarden en aan/uit-staten worden opgeslagen in `HAMIOS.ini`.
+Drempelwaarden worden opgeslagen in `HAMIOS.ini`.
 
 ### 🔌 CAT Interface *(tijdelijk uitgeschakeld)*
-
-> ⚠️ De CAT-interface is tijdelijk uitgeschakeld in afwachting van verdere ontwikkeling en stabiliteitstests. De code is intact — de functionaliteit wordt in een volgende versie afgerond.
+> De CAT-interface is tijdelijk uitgeschakeld. De code is intact en wordt in een volgende versie afgerond.
 
 ### 🕐 Bandopenings-schema
 - 24-uur heatmap voor alle 11 HF-banden
 - Tijdas in lokale tijd (CET/CEST), huidige tijd gemarkeerd
+- Hover-tooltip: band · uur · kwaliteit · modi · FT8-frequentie
 
 ### 📈 Band Verloop
 - Tijdgrafiek van alle HF-banden (%) — 90 dagen bewaard in CSV
 - Tijdbereik: Uren · Dagen · Weken · Maanden
+- Klikbare legenda om banden aan/uit te zetten
 
-### 📻 Live DX Spots
-- JSON-feed van dxwatch.com, ververst elke 2 minuten
+### 📡 Live DX Spots *(volledige-hoogte rechterkolom)*
+- JSON-feed van dxwatch.com, ververst elke 5 minuten
 - Kolommen: UTC · Band · DX · MHz · Spotter · Comment
+- **Eigen-continent filter** — toon alleen spots van je eigen continent
+- **Heatmap-modus**: band × UTC-uur activiteitspatroon (24h buffer)
+- Spots ook als markers op de wereldkaart (schakelbaar)
 
 ### 💡 Propagatie-analyse & Advies
-12 analyse-kaarten in 3 kolommen × 4 rijen, automatisch bijgewerkt.
+12 analyse-kaarten in 3 kolommen × 4 rijen.
 
 | # | Kaart | Inhoud |
 |---|-------|--------|
@@ -118,10 +112,10 @@ Alle drempelwaarden en aan/uit-staten worden opgeslagen in `HAMIOS.ini`.
 | 3 | ☀️ Zonactiviteit | SFI + SSN, zonnecyclus-fase |
 | 4 | 💨 Solarwind | Snelheid + Bz-impact |
 | 5 | ☢️ X-flare/SWF | Xray-klasse, herstelschatting |
-| 6 | 📶 Ionosfeer | MUF, LUF-schatting, F2-laag |
-| 7 | 🌅 Dag/nacht | Grey-line tijdvensters per uurblok |
+| 6 | 📶 Ionosfeer | MUF, LUF, F2-laag |
+| 7 | 🌅 Dag/nacht | Grey-line tijdvensters |
 | 8 | 🔧 Modus-advies | FT8 vs SSB/CW op basis van SNR-budget |
-| 9 | 🧲 Absorptie | Auroraal absorptie poolroutes (QTH-lat) |
+| 9 | 🧲 Absorptie | Auroraal absorptie poolroutes |
 | 10 | 📊 Overall score | Samengesteld propagatie-oordeel |
 
 ### 🌐 Meertalig
@@ -138,11 +132,34 @@ Alle drempelwaarden en aan/uit-staten worden opgeslagen in `HAMIOS.ini`.
 | JA | 日本語 | RU | Русский |
 
 ### ⚙️ Overig
+- **Dynamische thema's**: Midnight · DeepOcean · HighContrast
 - **Systeemtray**: minimaliseren naar tray, tray-notificaties
 - **Tooltips** met uitleg per solar-parameter
 - **Automatische refresh**: Uit / 30 s / 1 min / 5 min / 10 min / 30 min / 1 uur
 - **Scrollende ticker** met actuele propagatietips
 - Alle instellingen opgeslagen in `HAMIOS.ini`
+
+---
+
+## 🖥️ Layout (v3.0)
+
+```
+┌─────────────────────────────────────────────────────────────────────────┐
+│ HEADER  (titel · exit · CAT · interval · taal · QTH · thema · tijd)     │
+├──────────┬──────────────────────────────────┬────────────┬──────────────┤
+│  Solar   │      Wereldkaart (centraal)      │    HF      │              │
+│ Ionosfeer│      380 px hoog, zoom/pan       │    Band    │   DX Spots   │
+│  200 px  │   Weergave: Zon Maan Graylijn    │  Betrouw-  │  (volledig   │
+│          │   Data: WSPR Spots CS Locator    │  baarheid  │   hoogte)    │
+│          ├──────────────────────────────────┤   420 px   │   360 px     │
+│          │  Schema  │  Bandverloop  │  Bz   │            │              │
+│          │  (1/3)   │    (1/3)      │ (1/3) │            │              │
+├──────────┴──────────────────────────────────┴────────────┤              │
+│              Propagatie-analyse & Advies                  │              │
+├───────────────────────────────────────────────────────────┴──────────────┤
+│ TICKER                                                                    │
+└──────────────────────────────────────────────────────────────────────────┘
+```
 
 ---
 
@@ -162,42 +179,34 @@ pip install pystray
 
 ### Stap 2 — Taalbestanden installeren
 
-HAMIOS wordt geleverd met Engels als ingebouwde taal. Alle andere talen staan in losse `.json`-bestanden die je **apart moet downloaden**.
+HAMIOS wordt geleverd met Engels als ingebouwde taal. Alle andere talen staan in losse `.json`-bestanden.
 
 **Downloaden:**
-Haal de taalbestanden op uit de [laatste release](https://github.com/fvdijke/HAMIOS/releases) — download het bestand `langs.zip` (of de individuele `.json`-bestanden).
+Haal de taalbestanden op uit de [laatste release](https://github.com/fvdijke/HAMIOS/releases) — download `langs.zip`.
 
-**Plaatsing bij gebruik van de EXE:**
+**Mapstructuur:**
 ```
-HAMIOS.exe          ← het programma
+HAMIOS.exe  (of HAMIOS.py)
 langs\
-  lang_nl.json      ← Nederlands
-  lang_de.json      ← Deutsch
-  lang_fr.json      ← Français
-  lang_it.json      ← Italiano
-  lang_es.json      ← Español
-  lang_no.json      ← Norsk
-  lang_pl.json      ← Polski
-  lang_sv.json      ← Svenska
-  lang_da.json      ← Dansk
-  lang_fi.json      ← Suomi
-  lang_pt.json      ← Português
-  lang_ja.json      ← 日本語
-  lang_ru.json      ← Русский
+  lang_nl.json    ← Nederlands
+  lang_de.json    ← Deutsch
+  lang_fr.json    ← Français
+  lang_it.json    ← Italiano
+  lang_es.json    ← Español
+  lang_no.json    ← Norsk
+  lang_pl.json    ← Polski
+  lang_sv.json    ← Svenska
+  lang_da.json    ← Dansk
+  lang_fi.json    ← Suomi
+  lang_pt.json    ← Português
+  lang_ja.json    ← 日本語
+  lang_ru.json    ← Русский
 ```
 
-**Plaatsing bij gebruik van de broncode:**
-```
-HAMIOS.py
-langs\
-  lang_nl.json
-  ...
-```
-
-> De `langs/`-map moet **naast** `HAMIOS.exe` of `HAMIOS.py` staan. HAMIOS detecteert aanwezige taalbestanden automatisch bij opstarten.
+> De `langs/`-map moet **naast** `HAMIOS.exe` of `HAMIOS.py` staan.
 
 **Eigen taalbestand maken:**
-Kopieer een bestaand `.json`-bestand, pas `meta.code` en `meta.name` aan en vertaal de `strings`- en `solar_tips`-secties. HAMIOS laadt het nieuwe pakket automatisch.
+Kopieer een bestaand `.json`-bestand, pas `meta.code` en `meta.name` aan en vertaal de `strings`- en `solar_tips`-secties.
 
 ### Stap 3 — Starten
 
@@ -207,9 +216,9 @@ python HAMIOS.py
 
 ### Standalone EXE (Windows) — aanbevolen
 
-Download `HAMIOS.exe` én de `langs/`-map uit de [laatste release](https://github.com/fvdijke/HAMIOS/releases) en voer direct uit. Geen Python vereist.
+Download `HAMIOS.exe` én de `langs/`-map uit de [laatste release](https://github.com/fvdijke/HAMIOS/releases). Geen Python vereist.
 
-Zelf bouwen vanuit broncode:
+Zelf bouwen:
 
 ```bash
 pip install pyinstaller
@@ -250,9 +259,11 @@ LUF  = (3.5 + K × 0.8) × auroraal-factor / 10^(SNR/20)
 | | Minimum | Aanbevolen |
 |-|---------|-----------|
 | OS | Windows 10 | Windows 11 |
-| Schermresolutie | 1280 × 800 | 1920 × 1080 |
+| Schermresolutie | 1280 × 900 | 1920 × 1080 of groter |
 | Python | 3.10 | 3.12+ |
 | Internet | Vereist (data-feeds) | — |
+
+> v3.0 maakt optimaal gebruik van een breed scherm (≥ 1768 px) door de DX-kolom als additionele rechterkolom toe te voegen. Op smalle schermen wordt het venster proportioneel smaller maar blijven alle panelen bruikbaar.
 
 ---
 
@@ -271,4 +282,4 @@ Vrij te gebruiken voor persoonlijk, niet-commercieel amateur radio gebruik.
 
 ---
 
-*73*
+*73 de PA3FVD*

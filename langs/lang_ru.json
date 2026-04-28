@@ -67,6 +67,8 @@
     "dx_status_fmt": "{n} из {total} спотов  (КВ{filt})  ·  {ts}",
     "map_nolib": "pip install pillow  для отображения карты",
     "map_downloading": "⬇ Загрузка карты NASA…",
+    "map_display_lbl": "Отображение:",
+    "map_data_lbl": "Данные:",
     "distance_lbl": "Расстояние",
     "direction_lbl": "Направление",
     "right_clk_clear": "правая кнопка — очистить",

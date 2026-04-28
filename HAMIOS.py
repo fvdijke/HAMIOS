@@ -1,5 +1,5 @@
 """
-HAMIOS v2.3
+HAMIOS v3.0
 by Frank van Dijke
 
 HAM radio propagatie- en DX-monitor met donkere GUI.
@@ -7,7 +7,9 @@ Features: solar/ionosfeer data (SFI, SSN, A/K-index, Bz, solarwind),
           HF band betrouwbaarheid (MUF/LUF model, mode/vermogen/antenne),
           WSPR/PSKReporter spots op kaart, DX-spot markers,
           CAT-interface (Yaesu/Kenwood/Elecraft/Icom CI-V),
-          6 talen (NL/EN/DE/FR/IT/ES), systeemtray, ticker.
+          6 talen (NL/EN/DE/FR/IT/ES), systeemtray, ticker,
+          dynamische thema's (Midnight/DeepOcean/HighContrast),
+          wereldwijde ionosondes, offline-indicator, DX-spot heatmap.
 
 Dependencies:
   pip install pillow
@@ -17,19 +19,94 @@ Dependencies:
 ─────────────────────────────────────────────────────────────────────
 Todo
 ─────────────────────────────────────────────────────────────────────
+- [x] UX: Interactieve kaart (klik bestemming → bereken prop + teken hop-lijn)
+- [x] UX: Thema-configuratie (ondersteuning voor meerdere donkere thema's/high-contrast)
+- [x] Data: Uitbreiden ionosonde-netwerk naar wereldwijde stations
+- [x] Data: Voorspellend model toevoegen op basis van 48u trendanalyse
+- [x] Data: WSPR filters implementeren (SNR drempel, band-selectie)
+- [x] Stab: Implementeren van "Offline" indicator bij netwerkuitval
+- [x] Stab: Validatie toevoegen aan HAMIOS.ini loading process
+- [ ] CAT: Retry-mechanisme voor seriële poorten implementeren en _CAT_DISABLED op False zetten
+- [x] Vis: Heatmap implementeren voor historische DX-spot activiteit
+- [x] Vis: We gaan verder met versie 3.0. Deze versie is volledig geent op hetr verbeteren van de interface.
+           Maak een nieuw ontwerp voor de interface waarbij de wereldkaart min of meer centraal staat.
+           Het formaat van deze kaart is altijd hetzelfde. Wel moet je nog steeds kunnen zoomen en pannen.
+           Zet de selectievakjes op logische plekken. Zet data die gerelateerd is aan ellkaar ook bij elkaar.
+           Zorg dat grafieken goed leesbaar zijn. Maak de bandgrafieken mooier.
+           Kijk ook of je de band balken aantrekkelijker kan maken.
+- [x] Vis: Melding selecties kunnen onder de overige selectie vakjes in het map paneel.
+- [x] Vis: Voer een vierde kolom toe voor de DX Spot en zet alle DX spot functies weer aan. Laat de breedte van alle overige kolommen hetzelfde.
+           Het totaal scherm mag dus wel breder worden.
+- [x] Vis: Voeg een tooltip toe aan de Bz grafiek en maak de grafiek ook aantrekkelijker en duidelijker. Formaal moet hetzelfde blijven.
+- [x] Vis: Maak de kolommen in de eerste row net zo breed als de kolommen in de tweede row. De map moet dam wel geresized worden zodat deze neg zo breed is als de tweede kolom.
+- [x] Vis: Schakelen tussen thema's werkt niet goed. Thema's blijven hangen.
 
 
 ─────────────────────────────────────────────────────────────────────
-Change Log (2.3)
+Change Log (3.0)
 ─────────────────────────────────────────────────────────────────────
+· 2026-04-25 16:15 CEST — Cross-platform: platform-detectie (_IS_MAC/_IS_WIN);
+               _FONT_SANS (Helvetica Neue/Segoe UI/DejaVu Sans) en _FONT_MONO
+               (Menlo/Consolas/DejaVu Sans Mono) vervangen alle hardcoded fontnamen.
+               Tooltip-vensters krijgen -topmost True op macOS (Sequoia-fix).
+               DX-canvas scroll: Button-4/5 bindings toegevoegd voor Linux;
+               muiswiel-richting via event.num/delta werkt nu op alle platforms.
 
+· 2026-04-25 15:30 CEST — Versie 3.0 (vervolg): DX Spots als vierde kolom in top_row
+               (breedte 300 px, fill=Y, alle DX-functies actief).
+               Bottom_row kolommen uitgelijnd: sched_col=230 px (=solar), bz_col=310 px
+               (=HF), hist_col expandeert vrij → map en hist visueel gelijkbreedte.
+               Meldingen (K-index/band-alert) verplaatst van solar-paneel naar rij 3 van
+               de kaartoverlays (map panel), onder WSPR/Spots/CS/Locator.
+               Bz grafiek verbeterd: hoogte 90→120 px; area-fill (blauw/rood tint);
+               horizontale gridlijnen bij ±20/±40; tijdgridlijnen 6/12/18h; Y-as lijn;
+               cursor-tooltip bij muisbeweging (Bz-waarde + tijdstip); lijndikte 2 px.
+               Thema-fix: _apply_theme() gebruikt nu kleur-remap van vorig→nieuw thema
+               (THEMES lookup), zodat herhaalschakelingen correct werken. UI gebouwd
+               met Midnight-constanten; na _build_ui() altijd remap naar opgeslagen thema.
 
+· 2026-04-28 13:15 CEST — Versie 3.0: Interface-redesign: wereldkaart centraal in
+               het midden (vaste hoogte 380 px, zoom/pan intact); solar-paneel
+               verplaatst naar linkerkolom; HF-bandbetrouwbaarheid naar rechterkolom;
+               Onderste rij: 3 gelijke kolommen (Schema | Bandverloop | Bz grafiek),
+               allen expand=True zodat hoogte en breedte automatisch gelijk zijn.
+               Bz-grafiek als zelfstandig paneel (_build_bz_panel), hoogte dynamisch.
+               Map-paneel outer fill=BOTH→gelijke hoogte top-rij; center_col/right_col
+               achtergrond BG_PANEL. Graticule-labels aangepast aan crop_t zodat
+               graden altijd zichtbaar zijn. DX Spots en PCA/flux-meldingen verwijderd.
+               Bandbalken vernieuwd: 22 px, gradient, band-eigen kleur. 2.5 → 3.0.
+
+Change Log (2.5)
+─────────────────────────────────────────────────────────────────────
+· 2026-04-25 11:05 CEST — Versie 2.5: Ionosonde-netwerk uitgebreid van 6 Europese naar
+               21 wereldwijde stations (Europa, Noord- en Zuid-Amerika, Afrika,
+               Azië, Australazië); _nearest_iono_station kiest automatisch het
+               dichtstbijzijnde station op basis van QTH.
+               Offline-indicator: ⚠ OFFLINE-label in header verschijnt bij
+               netwerkfout in solar-fetch; verdwijnt zodra verbinding hersteld is.
+               DX-spot heatmap: toggle-knop "Heatmap" in DX Spots panel wisselt
+               tussen spotenlijst en band × UTC-uur heatmap (24h historiekbuffer).
+               Intensiteitskleur per band; spottellingen zichtbaar in cellen.
+
+Change Log (2.4)
+─────────────────────────────────────────────────────────────────────
+· 2026-04-25 10:58 CEST — Versie 2.4: ThemeManager geïntegreerd (Midnight/DeepOcean/
+               HighContrast); dynamische thema-switching via header-menu; recursieve
+               kleurtoepassing op alle widgets; opslag van thema-keuze in HAMIOS.ini.
+               Interactieve kaart: klik op bestemming toont groot-cirkelpad (kleur
+               bepaald door beste propagatieband) + afstand/richting.
+               Propagatietrend-advieskaart op basis van SFI/K/band-historiek.
+               WSPR SNR-drempel en band-filter instelbaar via _fetch_wspr_spots().
+               CONFIG_SCHEMA validatielaag voor HAMIOS.ini (bereik, type, opties).
+               Checkboxes/radiobuttons uniform: fg=TEXT_BODY, activeforeground=TEXT_H1.
 
 """
 
 
 import configparser
+from theme_manager import ThemeManager, THEMES
 import csv
+
 import json
 import math
 import os
@@ -52,17 +129,17 @@ try:
     _PIL_OK = True
 except ImportError:
     _PIL_OK = False
-try:
-    import serial
-    import serial.tools.list_ports
-    _SERIAL_OK = True
-except ImportError:
-    _SERIAL_OK = False
-
 # CAT tijdelijk uitgeschakeld — code intact, interface geblokkeerd tot stabiel
 _CAT_DISABLED = True
 # ITU regio-overlay tijdelijk uitgeschakeld — grenzen worden herzien
 _ITU_DISABLED = True
+
+# ── Platform detectie ──────────────────────────────────────────────────────────
+_IS_MAC = sys.platform == "darwin"
+_IS_WIN = sys.platform == "win32"
+# Platformspecifieke fontnamen
+_FONT_SANS = "Helvetica Neue" if _IS_MAC else ("Segoe UI"  if _IS_WIN else "DejaVu Sans")
+_FONT_MONO = "Menlo"          if _IS_MAC else ("Consolas"  if _IS_WIN else "DejaVu Sans Mono")
 
 # ── Paden ──────────────────────────────────────────────────────────────────────
 APP_DIR       = (os.path.dirname(sys.executable)
@@ -331,93 +408,142 @@ _FONT_CACHE: dict = {}
 def _font(size=10, weight="normal"):
     key = (size, weight)
     if key not in _FONT_CACHE:
-        _FONT_CACHE[key] = tkfont.Font(family="Segoe UI", size=size, weight=weight)
+        _FONT_CACHE[key] = tkfont.Font(family=_FONT_SANS, size=size, weight=weight)
     return _FONT_CACHE[key]
 
 # ── Instellingen ───────────────────────────────────────────────────────────────
+CONFIG_SCHEMA = {
+    "QTH": {
+        "lat": {"type": float, "min": -90.0, "max": 90.0, "default": 52.0},
+        "lon": {"type": float, "min": -180.0, "max": 180.0, "default": 5.1},
+    },
+    "App": {
+        "refresh": {"type": str, "options": ["30s", "1 min", "5 min", "10 min", "30 min", "1 uur"], "default": "1 min"},
+        "mode": {"type": str, "default": "SSB"},
+        "power": {"type": str, "default": "100W"},
+        "antenna": {"type": str, "default": "Isotropic 0dBi"},
+        "dst": {"type": bool, "default": True},
+        "show_tips": {"type": bool, "default": True},
+        "show_ticker": {"type": bool, "default": True},
+        "language": {"type": str, "default": "English"},
+    },
+    "Map": {
+        "show_sun": {"type": bool, "default": True},
+        "show_moon": {"type": bool, "default": True},
+        "show_locator": {"type": bool, "default": False},
+        "show_graylijn": {"type": bool, "default": True},
+        "show_iaru": {"type": bool, "default": False},
+        "show_cs": {"type": bool, "default": False},
+        "show_spots": {"type": bool, "default": False},
+        "show_wspr": {"type": bool, "default": False},
+        "show_aurora": {"type": bool, "default": True},
+    },
+    "Graph": {
+        "hist_range": {"type": str, "options": ["Uren", "Dagen", "Weken", "Maanden"], "default": "Uren"},
+    },
+    "Alerts": {
+        "k_alert": {"type": int, "min": 0, "max": 9, "default": 4},
+        "band_alert": {"type": int, "min": 0, "max": 100, "default": 40},
+        "alert_k_en": {"type": bool, "default": True},
+        "alert_band_en": {"type": bool, "default": True},
+        "alert_xflare_en": {"type": bool, "default": True},
+        "alert_pca_en": {"type": bool, "default": True},
+    },
+    "CAT": {
+        "port": {"type": str, "default": ""},
+        "baud": {"type": str, "default": "9600"},
+        "bits": {"type": str, "default": "8"},
+        "parity": {"type": str, "default": "N"},
+        "stopbits": {"type": str, "default": "1"},
+        "flow": {"type": str, "default": "Geen"},
+        "dtr": {"type": bool, "default": False},
+        "rts": {"type": bool, "default": False},
+        "enabled": {"type": bool, "default": False},
+        "radio": {"type": str, "default": "Yaesu CAT"},
+        "civ_addr": {"type": str, "default": "0x70"},
+    }
+}
+
 def _load_settings() -> dict:
     cfg = configparser.ConfigParser()
     cfg.read(SETTINGS_FILE, encoding="utf-8")
+
+    # Pre-extract history selection as it's a special set
     hist_sel_raw = cfg.get("Graph", "selected_bands", fallback="")
-    return {
-        "lat":           cfg.getfloat  ("QTH",   "lat",            fallback=52.0),
-        "lon":           cfg.getfloat  ("QTH",   "lon",            fallback=5.1),
-        "refresh":       cfg.get       ("App",   "refresh",        fallback="1 min"),
-        "mode":          cfg.get       ("App",   "mode",           fallback="SSB"),
-        "power":         cfg.get       ("App",   "power",          fallback="100W"),
-        "antenna":       _ANT_KEY_MIGRATION.get(
-                             cfg.get("App", "antenna", fallback="Isotropic 0dBi"),
-                             cfg.get("App", "antenna", fallback="Isotropic 0dBi")),
-        "dst":           cfg.getboolean("App",   "dst",            fallback=True),
-        "show_tips":     cfg.getboolean("App",   "show_tips",      fallback=True),
-        "show_ticker":   cfg.getboolean("App",   "show_ticker",    fallback=True),
-        "language":      cfg.get       ("App",   "language",       fallback="English"),
-        "show_sun":      cfg.getboolean("Map",   "show_sun",       fallback=True),
-        "show_moon":     cfg.getboolean("Map",   "show_moon",      fallback=True),
-        "show_locator":  cfg.getboolean("Map",   "show_locator",   fallback=False),
-        "show_graylijn": cfg.getboolean("Map",   "show_graylijn",  fallback=True),
-        "show_iaru":     cfg.getboolean("Map",   "show_iaru",      fallback=False),
-        "show_cs":       cfg.getboolean("Map",   "show_cs",        fallback=False),
-        "show_spots":    cfg.getboolean("Map",   "show_spots",     fallback=False),
-        "show_wspr":     cfg.getboolean("Map",   "show_wspr",      fallback=False),
-        "show_aurora":   cfg.getboolean("Map",   "show_aurora",    fallback=True),
-        "hist_range":    cfg.get       ("Graph", "hist_range",     fallback="Uren"),
-        "hist_sel":      set(hist_sel_raw.split(",")) - {""} if hist_sel_raw else set(),
-        "k_alert":          cfg.getint    ("Alerts","k_alert",          fallback=4),
-        "band_alert":       cfg.getint    ("Alerts","band_alert",       fallback=40),
-        "alert_k_en":       cfg.getboolean("Alerts","alert_k_en",       fallback=True),
-        "alert_band_en":    cfg.getboolean("Alerts","alert_band_en",    fallback=True),
-        "alert_xflare_en":  cfg.getboolean("Alerts","alert_xflare_en",  fallback=True),
-        "alert_pca_en":     cfg.getboolean("Alerts","alert_pca_en",     fallback=True),
-        # CAT interface
-        "cat_port":      cfg.get      ("CAT",   "port",           fallback=""),
-        "cat_baud":      cfg.get      ("CAT",   "baud",           fallback="9600"),
-        "cat_bits":      cfg.get      ("CAT",   "bits",           fallback="8"),
-        "cat_parity":    cfg.get      ("CAT",   "parity",         fallback="N"),
-        "cat_stopbits":  cfg.get      ("CAT",   "stopbits",       fallback="1"),
-        "cat_flow":      cfg.get      ("CAT",   "flow",           fallback="Geen"),
-        "cat_dtr":       cfg.getboolean("CAT",  "dtr",            fallback=False),
-        "cat_rts":       cfg.getboolean("CAT",  "rts",            fallback=False),
-        "cat_enabled":   cfg.getboolean("CAT",  "enabled",        fallback=False),
-        "cat_radio":     cfg.get       ("CAT",  "radio",          fallback="Yaesu CAT"),
-        "cat_civ_addr":  cfg.get       ("CAT",  "civ_addr",       fallback="0x70"),
-    }
+
+    res = {}
+    for section, keys in CONFIG_SCHEMA.items():
+        for key, spec in keys.items():
+            val = None
+            try:
+                # Use configparser's typed getters
+                if spec["type"] == float:
+                    val = cfg.getfloat(section, key, fallback=spec["default"])
+                elif spec["type"] == int:
+                    val = cfg.getint(section, key, fallback=spec["default"])
+                elif spec["type"] == bool:
+                    val = cfg.getboolean(section, key, fallback=spec["default"])
+                else:
+                    val = cfg.get(section, key, fallback=spec["default"])
+
+                # Validation: Range check
+                if "min" in spec and val < spec["min"]: val = spec["default"]
+                if "max" in spec and val > spec["max"]: val = spec["default"]
+                # Validation: Option check
+                if "options" in spec and val not in spec["options"]: val = spec["default"]
+
+            except (ValueError, TypeError):
+                val = spec["default"]
+
+            res[key] = val
+            # Handle CAT keys which are stored as 'port', 'baud' etc. in INI but used as 'cat_port' in app
+            if section == "CAT":
+                res[f"cat_{key}"] = val
+
+    # Special handling for antenna migration
+    res["antenna"] = _ANT_KEY_MIGRATION.get(res["antenna"], res["antenna"])
+
+    # Special handling for history set
+    res["hist_sel"] = set(hist_sel_raw.split(",")) - {""} if hist_sel_raw else set()
+
+    return res
 
 def _save_settings(lat: float, lon: float, refresh: str,
-                   mode: str = "SSB", power: str = "100W",
-                   antenna: str = "Isotropic 0dBi",
-                   dst: bool = True, show_tips: bool = True,
-                   show_ticker: bool = True,
-                   show_sun: bool = True, show_moon: bool = True,
-                   show_locator: bool = False,
-                   show_graylijn: bool = True,
-                   show_iaru: bool = False,
-                   show_cs: bool = False,
-                   show_spots: bool = False,
-                   show_wspr: bool = False,
-                   show_aurora: bool = True,
-                   hist_range: str = "Uren",
-                   hist_sel: set = None,
-                   k_alert: int = 4,
-                   band_alert: int = 40,
-                   alert_k_en: bool = True,
-                   alert_band_en: bool = True,
-                   alert_xflare_en: bool = True,
-                   alert_pca_en: bool = True,
-                   language: str = "Nederlands",
-                   cat_port: str = "", cat_baud: str = "9600",
-                   cat_bits: str = "8", cat_parity: str = "N",
-                   cat_stopbits: str = "1", cat_flow: str = "Geen",
-                   cat_dtr: bool = False, cat_rts: bool = False,
-                   cat_enabled: bool = False,
-                   cat_radio: str = "Yaesu CAT",
-                   cat_civ_addr: str = "0x70") -> None:
+                      mode: str = "SSB", power: str = "100W",
+                      antenna: str = "Isotropic 0dBi",
+                      dst: bool = True, show_tips: bool = True,
+                      show_ticker: bool = True,
+                      show_sun: bool = True, show_moon: bool = True,
+                      show_locator: bool = False,
+                      show_graylijn: bool = True,
+                      show_iaru: bool = False,
+                      show_cs: bool = False,
+                      show_spots: bool = False,
+                      show_wspr: bool = False,
+                      show_aurora: bool = True,
+                      hist_range: str = "Uren",
+                      hist_sel: set = None,
+                      k_alert: int = 4,
+                      band_alert: int = 40,
+                      alert_k_en: bool = True,
+                      alert_band_en: bool = True,
+                      alert_xflare_en: bool = True,
+                      alert_pca_en: bool = True,
+                      language: str = "Nederlands",
+                      theme: str = "Midnight",
+                      cat_port: str = "", cat_baud: str = "9600",
+                      cat_bits: str = "8", cat_parity: str = "N",
+                      cat_stopbits: str = "1", cat_flow: str = "Geen",
+                      cat_dtr: bool = False, cat_rts: bool = False,
+                      cat_enabled: bool = False,
+                      cat_radio: str = "Yaesu CAT",
+                      cat_civ_addr: str = "0x70") -> None:
     cfg = configparser.ConfigParser()
     cfg["QTH"]   = {"lat": str(lat), "lon": str(lon)}
     cfg["App"]   = {"refresh": refresh, "mode": mode, "power": power,
                     "antenna": antenna, "dst": str(dst),
                     "show_tips": str(show_tips), "show_ticker": str(show_ticker),
-                    "language": language}
+                    "language": language, "theme": theme}
     cfg["Map"]   = {"show_sun": str(show_sun), "show_moon": str(show_moon),
                     "show_locator": str(show_locator),
                     "show_graylijn": str(show_graylijn),
@@ -439,7 +565,18 @@ def _save_settings(lat: float, lon: float, refresh: str,
     with open(SETTINGS_FILE, "w", encoding="utf-8") as f:
         cfg.write(f)
 
-# ── Solar data ophalen ─────────────────────────────────────────────────────────
+def _safe_request(url: str, timeout: int = 10, headers: dict = None) -> tuple[bool, any]:
+    """Wrapper voor urllib.request.urlopen om connectiviteit te monitoren.
+    Geeft (succes, resultaat) terug.
+    """
+    if headers is None:
+        headers = {"User-Agent": "HAMIOS/1.0"}
+    try:
+        req = urllib.request.Request(url, headers=headers)
+        with urllib.request.urlopen(req, timeout=timeout) as r:
+            return True, r.read()
+    except (urllib.error.URLError, socket.timeout, Exception):
+        return False, None
 SOLAR_URL    = "https://www.hamqsl.com/solarxml.php"
 SW_SPEED_URL   = "https://services.swpc.noaa.gov/products/summary/solar-wind-speed.json"
 SW_MAG_URL     = "https://services.swpc.noaa.gov/products/summary/solar-wind-mag-field.json"
@@ -448,20 +585,43 @@ SPEED_1DAY_URL = "https://services.swpc.noaa.gov/products/solar-wind/plasma-1-da
 # GOES >10 MeV integraalproton flux — meest recente meting (laatste element in array)
 # Formaat: [{time_tag, satellite, flux, channel}, ...] — channel "P5" = >10 MeV
 PROTON_URL   = "https://services.swpc.noaa.gov/json/goes/primary/integral-protons-1-day.json"
-# GIRO/LGDC DIDBase — foF2 van Europese ionosondes
+# GIRO/LGDC DIDBase — foF2 van wereldwijde ionosondes
 # Formaat antwoord: TSV met commentaarregels (#); kolommen: Time(UTC)  foF2  QD
 IONO_URL     = ("https://lgdc.uml.edu/common/DIDBGetValues"
                 "?ursiCode={code}&charName=foF2"
                 "&fromDate={t_from}&toDate={t_to}")
 
-# Europese ionosondes: (URSI-code, naam, lat, lon)
+# Wereldwijde ionosondes: (URSI-code, naam, lat, lon)
+# Codes gebaseerd op GIRO/LGDC station registry; niet-responsieve stations
+# geven "—" terug door bestaande foutafhandeling in _fetch_ionosonde.
 _IONO_STATIONS: list[tuple[str, str, float, float]] = [
-    ("DB049", "Dourbes BE",    50.1,   4.6),
-    ("JR055", "Juliusruh DE",  54.6,  13.4),
-    ("EB040", "Ebro ES",       40.8,   0.5),
-    ("AT138", "Athene GR",     38.0,  23.5),
-    ("PQ052", "Průhonice CZ",  50.0,  14.6),
-    ("RO041", "Rome IT",       41.9,  12.5),
+    # Europa
+    ("DB049", "Dourbes BE",      50.1,   4.6),
+    ("JR055", "Juliusruh DE",    54.6,  13.4),
+    ("CB953", "Chilton UK",      51.6,  -1.3),
+    ("EB040", "Ebro ES",         40.8,   0.5),
+    ("AT138", "Athene GR",       38.0,  23.5),
+    ("PQ052", "Průhonice CZ",    50.0,  14.6),
+    ("RO041", "Rome IT",         41.9,  12.5),
+    ("RL052", "Tromso NO",       69.6,  19.2),
+    # Noord-Amerika
+    ("BC840", "Boulder CO",      40.0,-105.3),
+    ("WP937", "Wallops VA",      37.9, -75.5),
+    ("MHJ45", "Millstone MA",    42.6, -71.5),
+    # Zuid-Amerika
+    ("CA830", "Cachoeira BR",   -22.7, -45.0),
+    ("SA418", "San Juan PR",     18.5, -66.1),
+    # Afrika
+    ("HM13R", "Hermanus ZA",    -34.4,  19.2),
+    ("AS00Q", "Ascension Isl",   -7.9, -14.4),
+    # Azië
+    ("KH137", "Khabarovsk RU",   48.5, 135.0),
+    ("WU430", "Wuhan CN",        30.5, 114.4),
+    ("KK908", "Wakkanai JP",     45.2, 141.8),
+    # Australazië
+    ("HO535", "Hobart AU",      -42.9, 147.3),
+    ("DW41K", "Darwin AU",      -12.5, 130.9),
+    ("TH763", "Townsville AU",  -19.6, 146.8),
 ]
 
 def _fetch_solar() -> dict:
@@ -942,6 +1102,8 @@ _T: dict[str, dict[str, str]] = {
     'dx_own_cont_filter': {"en": ' · own continent'},
     'no_spots_ts': {"en": 'No spots available  ·  {ts}'},
     'dx_status_fmt': {"en": '{n} of {total} spots  (HF{filt})  ·  {ts}'},
+    'map_display_lbl': {"en": 'Display:'},
+    'map_data_lbl':    {"en": 'Data:'},
     'map_nolib': {"en": 'pip install pillow  for map display'},
     'map_downloading': {"en": '⬇ Downloading NASA map…'},
     'distance_lbl': {"en": 'Distance'},
@@ -1440,7 +1602,7 @@ def _fetch_dx_spots() -> list:
         return []
 
 
-def _fetch_wspr_spots() -> list:
+def _fetch_wspr_spots(snr_min: int = -20, band_filter: set = None) -> list:
     """Haal recente WSPR-spots op via wspr.live (laatste 15 min, max 300).
 
     Geeft lijst van dicts: {tx, rx, tx_lat, tx_lon, rx_lat, rx_lon, band, snr}.
@@ -1464,6 +1626,14 @@ def _fetch_wspr_spots() -> list:
             band_name = _WSPR_BAND_MAP.get(band_mhz)
             if not band_name:
                 continue
+
+            # SNR filter
+            if snr < snr_min:
+                continue
+            # Band filter
+            if band_filter and band_name not in band_filter:
+                continue
+
             # filter ongeldige coördinaten
             if not (-90 <= tx_lat <= 90 and -180 <= tx_lon <= 180 and
                     -90 <= rx_lat <= 90 and -180 <= rx_lon <= 180):
@@ -1602,13 +1772,15 @@ class _Tooltip:
             self._win.destroy()
         self._win = tw = tk.Toplevel(self._widget)
         tw.wm_overrideredirect(True)
+        if _IS_MAC:
+            tw.wm_attributes("-topmost", True)
         tw.configure(bg=BORDER)
 
         outer = tk.Frame(tw, bg=BG_SURFACE, padx=10, pady=8)
         outer.pack(padx=1, pady=1)   # 1px BORDER zichtbaar rondom
 
         def _f(sz=9, bold=False):
-            return tkfont.Font(family="Segoe UI", size=sz,
+            return tkfont.Font(family=_FONT_SANS, size=sz,
                                weight="bold" if bold else "normal")
 
         if isinstance(content, list):
@@ -1677,18 +1849,19 @@ class _Tooltip:
 class HAMIOSApp:
     def __init__(self, root: tk.Tk):
         self.root = root
-        self.root.title("HAMIOS v2.3")
+        self.root.title("HAMIOS v3.0")
         self.root.configure(bg=BG_ROOT)
 
         # Geometrie instellen vóór _build_ui — geen root.update() nodig, geen flicker.
         # winfo_screenwidth/height werkt direct zonder update().
         _scr_w = root.winfo_screenwidth()
         _scr_h = root.winfo_screenheight()
-        _ini_w = min(1400, _scr_w - 60)
+        _DX_EXTRA = 368            # DX-kolom 360 px + padx 8 px
+        _ini_w = min(1400 + _DX_EXTRA, _scr_w - 60)
         _ini_h = 1220
         _ini_y = max(0, (_scr_h - _ini_h) // 2)
         root.geometry(f"{_ini_w}x{_ini_h}+{(_scr_w-_ini_w)//2}+{_ini_y}")
-        root.minsize(min(900, _scr_w - 60), MIN_WINDOW_H)
+        root.minsize(min(900 + _DX_EXTRA, _scr_w - 60), MIN_WINDOW_H)
 
         self._solar_data: dict = {}
         self._solar_after_id = None
@@ -1727,9 +1900,16 @@ class HAMIOSApp:
         self._show_wspr_var     = tk.BooleanVar(value=s["show_wspr"])
         self._wspr_spots:       list = []
         self._wspr_after_id             = None
+        self._wspr_snr_min       = tk.IntVar(value=s.get("wspr_snr_min", -20))
+        self._wspr_band_filter   = tk.StringVar(value=",".join(s.get("wspr_band_filter", [])))
         self._qth_lat_var = tk.StringVar(value=f"{self._qth_lat:.2f}")
         self._qth_lon_var = tk.StringVar(value=f"{self._qth_lon:.2f}")
         self._tr_widgets: dict = {}   # key → widget of list van widgets voor vertalingen
+        # ---- Theme Manager Init ------------------------------------------------
+        self.theme_manager = ThemeManager(s)
+        self._theme_var = tk.StringVar(value=self.theme_manager.current_theme_name)
+        # UI wordt opgebouwd met Midnight-constanten; remap daarna naar opgeslagen thema
+        self._applied_theme_name = "Midnight"
         self._gc_dest: tuple | None = None   # (lat, lon) groot-cirkel bestemming
         self._map_zoom:       float = 1.0   # zoom-factor (1.0 = volledig)
         self._map_cx:         float = 0.0   # viewport-middelpunt lon
@@ -1755,6 +1935,9 @@ class HAMIOSApp:
         self._last_fof2_model: float = 0.0 # model foF2 (MHz), bijgewerkt door _recalc_prop
         self._dx_all_spots: list    = []   # ruwe spots van dxwatch
         self._dx_after_id           = None
+        self._net_ok: bool          = True   # False = laatste solar-fetch mislukt
+        self._dx_spot_history: list = []     # [(datetime_utc, band_str), ...] — 24h buffer
+        self._dx_heatmap_mode: bool = False  # True = heatmap, False = lijst
         self._dx_next_at: datetime.datetime | None = None
         self._dx_own_cont_var       = tk.BooleanVar(value=True)
         self._advice_card_hashes: dict = {}   # kaart-index → hash, voor nieuw-stip per kaartje
@@ -1780,6 +1963,9 @@ class HAMIOSApp:
         self._cat_poll_after_id = None
 
         self._build_ui()
+        # Pas opgeslagen thema toe (UI is gebouwd met Midnight-constanten)
+        self._applied_theme_name = "Midnight"
+        self._apply_theme()
         # Herstel legenda-selectie visueel na opbouw UI
         if self._hist_sel:
             for bname, (lbl_d, lbl_n) in self._leg_widgets.items():
@@ -1880,14 +2066,91 @@ class HAMIOSApp:
         self._refresh_ant_display()
         # Canvas-panelen opnieuw tekenen (kolom headers, labels, statusteksten)
         self._draw_prop_bars(self._last_band_pct)
-        self._filter_dx_spots()   # hergenereert statusregel + canvas kolom headers
-        self._draw_bz_graph(getattr(self, "_last_bz_pts", []))
+        self._filter_dx_spots()
         # Advice opnieuw renderen bij taalwissel
         self._update_advice()
 
     def _on_lang_change(self, *_):
         self._apply_translations()
         self._save_cur_settings()
+
+    def _on_theme_change(self, theme_name):
+        """Wissel thema en pas kleuren toe op alle widgets."""
+        if self.theme_manager.set_theme(theme_name):
+            self._theme_var.set(theme_name)
+            self._apply_theme()
+            self._save_cur_settings()
+            # Kaart moet opnieuw renderen want kleuren kunnen veranderen (indien themed)
+            self._draw_map()
+
+    def _apply_theme(self):
+        """Doorloop alle widgets en remap kleuren van vorig naar nieuw thema."""
+        tm       = self.theme_manager
+        new_name = tm.current_theme_name
+        prev_name = getattr(self, "_applied_theme_name", "Midnight")
+
+        prev = THEMES[prev_name]
+        new  = THEMES[new_name]
+
+        # Bouw kleur-remap: {oud_hex_lower → nieuw_hex}
+        color_map: dict[str, str] = {}
+        for key in new:
+            if prev[key].lower() != new[key].lower():
+                color_map[prev[key].lower()] = new[key]
+
+        self.root.configure(bg=new["BG_ROOT"])
+
+        def remap(c: str) -> str:
+            return color_map.get(c.lower(), c) if c else c
+
+        def walk(widget):
+            try:
+                wc = widget.winfo_class()
+                if wc in ("Frame", "Toplevel", "LabelFrame"):
+                    widget.configure(bg=remap(widget.cget("bg")))
+                elif wc == "Label":
+                    widget.configure(bg=remap(widget.cget("bg")),
+                                     fg=remap(widget.cget("fg")))
+                elif wc == "Button":
+                    widget.configure(bg=remap(widget.cget("bg")),
+                                     fg=remap(widget.cget("fg")),
+                                     activebackground=remap(widget.cget("activebackground")),
+                                     activeforeground=remap(widget.cget("activeforeground")))
+                elif wc in ("Checkbutton", "Radiobutton"):
+                    widget.configure(bg=remap(widget.cget("bg")),
+                                     fg=remap(widget.cget("fg")),
+                                     selectcolor=remap(widget.cget("selectcolor")),
+                                     activebackground=remap(widget.cget("activebackground")),
+                                     activeforeground=remap(widget.cget("activeforeground")))
+                elif wc == "Menubutton":
+                    widget.configure(bg=remap(widget.cget("bg")),
+                                     fg=remap(widget.cget("fg")),
+                                     activebackground=remap(widget.cget("activebackground")),
+                                     activeforeground=remap(widget.cget("activeforeground")))
+                elif wc == "Canvas":
+                    widget.configure(bg=remap(widget.cget("bg")))
+                elif wc == "Scrollbar":
+                    widget.configure(bg=remap(widget.cget("bg")),
+                                     troughcolor=remap(widget.cget("troughcolor")))
+                elif wc == "Spinbox":
+                    widget.configure(bg=remap(widget.cget("bg")),
+                                     fg=remap(widget.cget("fg")),
+                                     buttonbackground=remap(widget.cget("buttonbackground")))
+                elif wc == "Entry":
+                    widget.configure(bg=remap(widget.cget("bg")),
+                                     fg=remap(widget.cget("fg")),
+                                     insertbackground=remap(widget.cget("insertbackground")))
+                for child in widget.winfo_children():
+                    walk(child)
+            except Exception:
+                pass
+
+        walk(self.root)
+        self._applied_theme_name = new_name
+        # Canvas-inhoud opnieuw tekenen met nieuwe kleuren
+        self._draw_bz_graph(getattr(self, "_last_bz_pts", []))
+        if hasattr(self, "_last_band_pct"):
+            self._draw_prop_bars(self._last_band_pct)
 
     def _apply_qth(self, *_):
         """Verwerk gewijzigde QTH lat/lon invoer."""
@@ -2373,15 +2636,38 @@ class HAMIOSApp:
         ry = self.root.winfo_y() + (self.root.winfo_height() - dlg.winfo_reqheight()) // 2
         dlg.geometry(f"+{max(0,rx)}+{max(0,ry)}")
 
+    def _switch_view(self, view_name):
+        """Wissel tussen verschillende hoofdviews in de content area."""
+        if view_name not in self._views:
+            return
+        # Verberg alle views
+        for v in self._views.values():
+            v.pack_forget()
+        # Toon geselecteerde view
+        self._views[view_name].pack(fill=tk.BOTH, expand=True)
+        # Update navigatie-knoppen kleur
+        for key, btn in self._nav_btns.items():
+            if key == view_name:
+                btn.configure(bg=BG_HOVER, fg=ACCENT)
+            else:
+                btn.configure(bg=BG_PANEL, fg=TEXT_BODY)
+
     # ── Layout ────────────────────────────────────────────────────────────────
+
     def _build_ui(self):
         # Header
         hdr = tk.Frame(self.root, bg=BG_PANEL, height=42)
         hdr.pack(fill=tk.X)
         tk.Frame(hdr, bg=ACCENT, width=4).pack(side=tk.LEFT, fill=tk.Y)
-        tk.Label(hdr, text="📡  HAMIOS v2.3",
+        tk.Label(hdr, text="📡  HAMIOS v3.0",
                  font=_font(13, "bold"), bg=BG_PANEL, fg=ACCENT,
                  pady=8).pack(side=tk.LEFT, padx=10)
+
+        # Offline indicator — zichtbaar als netwerkfout
+        self._offline_lbl = tk.Label(hdr, text="⚠ OFFLINE",
+                                     font=_font(9, "bold"), bg=BG_PANEL,
+                                     fg="#EF5350", pady=8)
+        # Nog niet gepack — verschijnt alleen bij netfout via _update_net_indicator()
 
         # Exit knop (links, naast titel)
         exit_btn = tk.Button(hdr, text=self._tr("exit"),
@@ -2413,15 +2699,25 @@ class HAMIOSApp:
         tk.Label(hdr, textvariable=self._local_var,
                  font=_font(10, "bold"), bg=BG_PANEL, fg=TEXT_H1).pack(side=tk.RIGHT, padx=(0, 10))
 
-        # Checkboxes
+        # ── Thema selector ─────────────────────────────────────────────────────
         tk.Frame(hdr, bg=BORDER, width=1).pack(side=tk.RIGHT, fill=tk.Y, pady=8)
-        cb_dst = tk.Checkbutton(hdr, text=self._tr("summer_time"), variable=self._dst_var,
-                                command=self._save_cur_settings,
-                                bg=BG_PANEL, fg=TEXT_BODY, selectcolor=BG_SURFACE,
-                                activebackground=BG_PANEL, activeforeground=TEXT_H1,
-                                font=_font(9))
-        cb_dst.pack(side=tk.RIGHT, padx=(0, 8))
-        self._tr_widgets["summer_time"] = cb_dst
+        theme_mb = tk.Menubutton(hdr, textvariable=self._theme_var,
+                                 font=_font(9), bg=BG_SURFACE, fg=TEXT_H1,
+                                 relief=tk.FLAT, activebackground=BG_HOVER,
+                                 activeforeground=TEXT_H1, width=11,
+                                 anchor='w', padx=6, pady=3, cursor="hand2")
+        theme_menu = tk.Menu(theme_mb, tearoff=False, bg=BG_SURFACE, fg=TEXT_H1,
+                             activebackground=ACCENT, activeforeground=BG_ROOT,
+                             font=_font(9))
+        for tname in THEMES.keys():
+            theme_menu.add_command(label=tname,
+                                   command=lambda v=tname: self._on_theme_change(v))
+        theme_mb["menu"] = theme_menu
+        theme_mb.pack(side=tk.RIGHT, padx=(0, 4))
+        theme_lbl = tk.Label(hdr, text=self._tr("theme_lbl") if "theme_lbl" in _T else "Theme:",
+                            font=_font(9), bg=BG_PANEL, fg=TEXT_DIM)
+        theme_lbl.pack(side=tk.RIGHT, padx=(8, 2))
+        self._tr_widgets["theme_lbl"] = theme_lbl
         cb_tips = tk.Checkbutton(hdr, text=self._tr("tooltips"), variable=self._show_tips_var,
                                  bg=BG_PANEL, fg=TEXT_BODY, selectcolor=BG_SURFACE,
                                  activebackground=BG_PANEL, activeforeground=TEXT_H1,
@@ -2507,17 +2803,27 @@ class HAMIOSApp:
         # Ticker onderaan (pack VOOR body zodat hij aan de onderkant blijft)
         self._build_ticker()
 
-        # Hoofd body — 3 kolommen: Kaart | Panelen | Solar  +  onderaan DX + Advies
+        # ── Hoofd body v3.0: Kaart centraal ──────────────────────────────────
         body = tk.Frame(self.root, bg=BG_ROOT)
         body.pack(fill=tk.BOTH, expand=True, padx=10, pady=(0, 4))
 
-        # Bovenste rij: Kaart | Hist/Schema/Prop | Solar
-        top_row = tk.Frame(body, bg=BG_ROOT)
+        # ── DX Spots kolom rechts (eerst pack → verdringt nooit) ──────────────
+        dx_col = tk.Frame(body, bg=BG_PANEL, width=360)
+        dx_col.pack(side=tk.RIGHT, fill=tk.Y, padx=(8, 0))
+        dx_col.pack_propagate(False)
+        self._build_dx_panel(dx_col)
+
+        # ── Linker gedeelte: top_row + bottom_row + advies ────────────────────
+        left_area = tk.Frame(body, bg=BG_ROOT)
+        left_area.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
+
+        # Bovenste rij: Solar links | Kaart midden | Bandsegment rechts
+        top_row = tk.Frame(left_area, bg=BG_ROOT)
         top_row.pack(fill=tk.BOTH, expand=True)
 
-        # Solar rechts (eerst pack zodat hij niet wordt verdrongen)
-        solar_col = tk.Frame(top_row, bg=BG_PANEL, width=250, height=SOLAR_MIN_H)
-        solar_col.pack(side=tk.RIGHT, fill=tk.Y, padx=(10, 0))
+        # Solar links (vaste breedte, hoogte vult top_row)
+        solar_col = tk.Frame(top_row, bg=BG_PANEL, width=200)
+        solar_col.pack(side=tk.LEFT, fill=tk.Y)
         solar_col.pack_propagate(False)
 
         tk.Frame(solar_col, bg=ACCENT, height=2).pack(fill=tk.X)
@@ -2560,7 +2866,6 @@ class HAMIOSApp:
             ("luf",         "LUF (MHz)"),
             ("sw_speed",    "Solarwind (km/s)"),
             ("sw_bz",       "Bz (nT)"),
-            ("proton_flux", "Proton >10MeV"),
             ("iono_fof2",   None),      # None → dynamisch label via StringVar
         ]:
             row = tk.Frame(self._solar_frame, bg=BG_PANEL)
@@ -2568,17 +2873,17 @@ class HAMIOSApp:
             if label is None:
                 # Ionosonde-rij: label tekst is dynamisch
                 lbl = tk.Label(row, textvariable=self._iono_station_var,
-                               font=_font(9), bg=BG_PANEL,
-                               fg=TEXT_DIM, anchor='w', width=16, cursor="question_arrow")
+                               font=_font(8), bg=BG_PANEL,
+                               fg=TEXT_DIM, anchor='w', width=14, cursor="question_arrow")
             else:
-                lbl = tk.Label(row, text=label + ":", font=_font(9), bg=BG_PANEL,
-                               fg=TEXT_DIM, anchor='w', width=16, cursor="question_arrow")
+                lbl = tk.Label(row, text=label + ":", font=_font(8), bg=BG_PANEL,
+                               fg=TEXT_DIM, anchor='w', width=14, cursor="question_arrow")
             lbl.pack(side=tk.LEFT)
             _bind_tip(lbl, key)
             var = tk.StringVar(value="—")
             self._solar_vars[key] = var
-            val_lbl = tk.Label(row, textvariable=var, font=_font(9, "bold"),
-                               bg=BG_PANEL, fg=TEXT_H1, anchor='w', width=8,
+            val_lbl = tk.Label(row, textvariable=var, font=_font(8, "bold"),
+                               bg=BG_PANEL, fg=TEXT_H1, anchor='w', width=7,
                                cursor="question_arrow")
             val_lbl.pack(side=tk.LEFT)
             _bind_tip(val_lbl, key)
@@ -2590,8 +2895,8 @@ class HAMIOSApp:
         # Bandentabel
         hdr_row = tk.Frame(self._solar_frame, bg=BG_PANEL)
         hdr_row.pack(fill=tk.X, pady=(0, 0))
-        for key, w in [("band_hdr", 6), ("day_hdr", 6), ("night_hdr", 6)]:
-            lbl = tk.Label(hdr_row, text=self._tr(key), font=_font(9, "bold"),
+        for key, w in [("band_hdr", 5), ("day_hdr", 5), ("night_hdr", 5)]:
+            lbl = tk.Label(hdr_row, text=self._tr(key), font=_font(8, "bold"),
                            bg=BG_PANEL, fg=ACCENT, width=w, anchor='w')
             lbl.pack(side=tk.LEFT)
             self._tr_widgets.setdefault(key, [])
@@ -2607,126 +2912,52 @@ class HAMIOSApp:
             row = tk.Frame(self._solar_frame, bg=BG_PANEL)
             row.pack(fill=tk.X, pady=1)
             tk.Label(row, text=name, font=_font(8), bg=BG_PANEL,
-                     fg=TEXT_DIM, width=6, anchor='w').pack(side=tk.LEFT)
+                     fg=TEXT_DIM, width=5, anchor='w').pack(side=tk.LEFT)
             day_lbl = tk.Label(row, text="—", font=_font(8, "bold"),
-                               bg=BG_PANEL, fg=TEXT_DIM, width=6, anchor='w')
+                               bg=BG_PANEL, fg=TEXT_DIM, width=5, anchor='w')
             day_lbl.pack(side=tk.LEFT)
             ngt_lbl = tk.Label(row, text="—", font=_font(8, "bold"),
-                               bg=BG_PANEL, fg=TEXT_DIM, width=6, anchor='w')
+                               bg=BG_PANEL, fg=TEXT_DIM, width=5, anchor='w')
             ngt_lbl.pack(side=tk.LEFT)
             self._band_cond_labels[name] = (day_lbl, ngt_lbl, is_hf)
 
-        # Scheidingslijn + waarschuwingen direct ónder de bandentabel
+        # Scheidingslijn onder de bandentabel
         tk.Frame(self._solar_frame, bg=BORDER, height=1).pack(fill=tk.X, pady=(4, 2))
 
-        # X-flare waarschuwing — natuurlijke hoogte (geen vaste height=)
-        self._xflare_lbl = tk.Label(self._solar_frame, textvariable=self._xflare_var,
-                                    font=_font(8, "bold"), bg=BG_PANEL, fg="#FF7043",
-                                    wraplength=230, justify='left', anchor='nw')
-        self._xflare_lbl.pack(fill=tk.X, pady=(0, 2))
+        # ── HF Bandsegment rechts (vaste breedte) ────────────────────────────
+        right_col = tk.Frame(top_row, bg=BG_PANEL, width=420)
+        right_col.pack(side=tk.LEFT, fill=tk.Y, padx=(8, 8))
+        right_col.pack_propagate(False)
+        self._build_prop_panel(right_col)
 
-        # PCA-waarschuwing (proton event — paars) — natuurlijke hoogte
-        self._pca_var = tk.StringVar(value="")
-        self._pca_lbl = tk.Label(self._solar_frame, textvariable=self._pca_var,
-                                 font=_font(8, "bold"), bg=BG_PANEL, fg="#CE93D8",
-                                 wraplength=230, justify='left', anchor='nw')
-        self._pca_lbl.pack(fill=tk.X, pady=(0, 2))
+        # ── Kaart midden (expanderend) ────────────────────────────────────────
+        center_col = tk.Frame(top_row, bg=BG_PANEL)
+        center_col.pack(side=tk.LEFT, fill=tk.BOTH, expand=True, padx=(0, 0))
+        self._build_map_panel(center_col)
 
-        # ── Meldingen sectie ─────────────────────────────────────────────────
-        tk.Frame(self._solar_frame, bg=BORDER, height=1).pack(fill=tk.X, pady=(4, 2))
-        _alert_hdr = tk.Label(self._solar_frame, text=self._tr("alerts_hdr"),
-                              font=_font(9, "bold"), bg=BG_PANEL, fg=ACCENT, anchor='w')
-        _alert_hdr.pack(fill=tk.X, pady=(0, 2))
-        self._tr_widgets["alerts_hdr"] = _alert_hdr
+        # ── Onderste rij: Schema | Bandverloop | Bz ───────────────────────────
+        bottom_row = tk.Frame(left_area, bg=BG_ROOT)
+        bottom_row.pack(fill=tk.X, expand=False, pady=(8, 0))
 
-        # K-index drempel
-        k_row = tk.Frame(self._solar_frame, bg=BG_PANEL)
-        k_row.pack(fill=tk.X, pady=(0, 1))
-        _k_cb = tk.Checkbutton(k_row, variable=self._alert_k_en_var,
-                               command=self._save_cur_settings,
-                               bg=BG_PANEL, fg=TEXT_BODY, selectcolor=BG_SURFACE,
-                               activebackground=BG_PANEL, activeforeground=TEXT_H1,
-                               font=_font(9), text=self._tr("k_alert_lbl"), anchor='w', width=12)
-        _k_cb.pack(side=tk.LEFT)
-        self._tr_widgets["k_alert_lbl"] = _k_cb
-        _bind_tip(_k_cb, "tip_k_alert")
-        tk.Spinbox(k_row, from_=1, to=9, width=3, textvariable=self._k_alert_var,
-                   command=self._save_cur_settings,
-                   bg=BG_SURFACE, fg=TEXT_H1, buttonbackground=BG_SURFACE,
-                   relief=tk.FLAT, font=_font(9, "bold")).pack(side=tk.LEFT, padx=(2, 0))
+        sched_col = tk.Frame(bottom_row, bg=BG_ROOT)
+        sched_col.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
+        self._build_schedule_panel(sched_col)
 
-        # Band-opening drempel
-        b_row = tk.Frame(self._solar_frame, bg=BG_PANEL)
-        b_row.pack(fill=tk.X, pady=(0, 1))
-        _b_cb = tk.Checkbutton(b_row, variable=self._alert_band_en_var,
-                               command=self._save_cur_settings,
-                               bg=BG_PANEL, fg=TEXT_BODY, selectcolor=BG_SURFACE,
-                               activebackground=BG_PANEL, activeforeground=TEXT_H1,
-                               font=_font(9), text=self._tr("band_alert_lbl"), anchor='w', width=12)
-        _b_cb.pack(side=tk.LEFT)
-        self._tr_widgets["band_alert_lbl"] = _b_cb
-        _bind_tip(_b_cb, "tip_band_alert")
-        tk.Spinbox(b_row, from_=10, to=90, increment=5, width=4,
-                   textvariable=self._band_alert_var, command=self._save_cur_settings,
-                   bg=BG_SURFACE, fg=TEXT_H1, buttonbackground=BG_SURFACE,
-                   relief=tk.FLAT, font=_font(9, "bold")).pack(side=tk.LEFT, padx=(2, 0))
-        tk.Label(b_row, text="%", font=_font(9), bg=BG_PANEL,
-                 fg=TEXT_DIM).pack(side=tk.LEFT, padx=(2, 0))
+        hist_col = tk.Frame(bottom_row, bg=BG_ROOT)
+        hist_col.pack(side=tk.LEFT, fill=tk.BOTH, expand=True, padx=(6, 6))
+        self._build_hist_panel(hist_col)
 
-        # X-flare melding
-        _xf_row = tk.Frame(self._solar_frame, bg=BG_PANEL)
-        _xf_row.pack(fill=tk.X, pady=(0, 1))
-        _xf_cb = tk.Checkbutton(_xf_row, variable=self._alert_xflare_en_var,
-                                command=self._save_cur_settings,
-                                bg=BG_PANEL, fg=TEXT_BODY, selectcolor=BG_SURFACE,
-                                activebackground=BG_PANEL, activeforeground=TEXT_H1,
-                                font=_font(9), text=self._tr("alert_xflare_lbl"), anchor='w')
-        _xf_cb.pack(side=tk.LEFT)
-        self._tr_widgets["alert_xflare_lbl"] = _xf_cb
-        _bind_tip(_xf_cb, "tip_xflare_alert")
+        bz_col = tk.Frame(bottom_row, bg=BG_ROOT)
+        bz_col.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
+        self._build_bz_panel(bz_col)
 
-        # PCA melding
-        _pca_row2 = tk.Frame(self._solar_frame, bg=BG_PANEL)
-        _pca_row2.pack(fill=tk.X, pady=(0, 3))
-        _pca_cb = tk.Checkbutton(_pca_row2, variable=self._alert_pca_en_var,
-                                 command=self._save_cur_settings,
-                                 bg=BG_PANEL, fg=TEXT_BODY, selectcolor=BG_SURFACE,
-                                 activebackground=BG_PANEL, activeforeground=TEXT_H1,
-                                 font=_font(9), text=self._tr("alert_pca_lbl"), anchor='w')
-        _pca_cb.pack(side=tk.LEFT)
-        self._tr_widgets["alert_pca_lbl"] = _pca_cb
-        _bind_tip(_pca_cb, "tip_pca_alert")
-
-        # Bz grafiek staat nu in het HF band paneel (zie _build_prop_panel)
-
-        # ── Gecombineerde linker+midden zone ──────────────────────────────────
-        combined = tk.Frame(top_row, bg=BG_ROOT)
-        combined.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
-
-        # Sub-rij: Kaart+Hist+DX links (vaste breedte) | Prop+Schema rechts (expand)
-        sub_row = tk.Frame(combined, bg=BG_ROOT)
-        sub_row.pack(fill=tk.BOTH, expand=True)
-
-        # Linkerkolom: Bandopenings-schema + Hist + DX (vaste breedte)
-        left_sub = tk.Frame(sub_row, bg=BG_ROOT, width=480)
-        left_sub.pack(side=tk.LEFT, fill=tk.Y)
-        left_sub.pack_propagate(False)
-        self._build_schedule_panel(left_sub)
-        self._build_hist_panel(left_sub)
-        self._build_dx_panel(left_sub)
-
-        right_sub = tk.Frame(sub_row, bg=BG_ROOT)
-        right_sub.pack(side=tk.LEFT, fill=tk.BOTH, expand=True, padx=(10, 0))
-        self._build_map_panel(right_sub)
-        self._build_prop_panel(right_sub)  # HF Betrouwbaarheid onder Wereldkaart
-
-        # Advies: volledige breedte onderin body (over alle kolommen inclusief Solar)
-        self._build_advice_panel(body)
+        # ── Advies: volledige breedte onderin left_area ──────────────────────
+        self._build_advice_panel(left_area)
 
     # ── Wereldkaart panel ─────────────────────────────────────────────────────
     def _build_map_panel(self, parent):
         outer = tk.Frame(parent, bg=BG_PANEL)
-        outer.pack(fill=tk.X, pady=(0, 0))
+        outer.pack(fill=tk.BOTH, expand=True, pady=(0, 0))
         tk.Frame(outer, bg=ACCENT, height=2).pack(fill=tk.X)
 
         map_hdr = tk.Frame(outer, bg=BG_PANEL)
@@ -2737,7 +2968,7 @@ class HAMIOSApp:
         map_title.pack(side=tk.LEFT, padx=10)
         self._tr_widgets["worldmap"] = map_title
 
-        self._map_canvas = tk.Canvas(outer, height=200, bg="#1B3A5C",
+        self._map_canvas = tk.Canvas(outer, height=380, bg="#1B3A5C",
                                      bd=0, highlightthickness=0)
         self._map_canvas.pack(fill=tk.X, padx=10, pady=(2, 2))
         self._map_photo = None
@@ -2746,19 +2977,20 @@ class HAMIOSApp:
         self._map_canvas.bind("<B1-Motion>",      self._on_map_drag)
         self._map_canvas.bind("<ButtonRelease-1>", self._on_map_btn1_release)
         self._map_canvas.bind("<Button-3>",       self._on_map_clear)
-        self._map_canvas.bind("<MouseWheel>",     self._on_map_scroll)   # Windows
-        self._map_canvas.bind("<Button-4>",       self._on_map_scroll)   # Linux
-        self._map_canvas.bind("<Button-5>",       self._on_map_scroll)   # Linux
+        self._map_canvas.bind("<MouseWheel>",     self._on_map_scroll)   # Windows & Mac
+        self._map_canvas.bind("<Button-4>",       self._on_map_scroll)   # Linux scroll up
+        self._map_canvas.bind("<Button-5>",       self._on_map_scroll)   # Linux scroll down
 
-        # Selectievakjes onder de kaart
+        # Kaartoverlays — gegroepeerd per categorie
         map_controls = tk.Frame(outer, bg=BG_PANEL)
-        map_controls.pack(fill=tk.X, padx=10, pady=(2, 2))
+        map_controls.pack(fill=tk.X, padx=10, pady=(4, 2))
 
-        def _cb(tr_key, var, fallback_text=""):
+        def _cb(parent_row, tr_key, var, fallback_text=""):
             def _on_toggle():
                 self._save_cur_settings()
                 self._draw_map()
-            cb = tk.Checkbutton(map_controls, text=self._tr(tr_key) if tr_key else fallback_text,
+            cb = tk.Checkbutton(parent_row,
+                                text=self._tr(tr_key) if tr_key else fallback_text,
                                 variable=var, command=_on_toggle,
                                 bg=BG_PANEL, fg=TEXT_BODY, selectcolor=BG_SURFACE,
                                 activebackground=BG_PANEL, activeforeground=TEXT_H1,
@@ -2771,16 +3003,72 @@ class HAMIOSApp:
                 else:
                     self._tr_widgets[tr_key] = [self._tr_widgets[tr_key], cb]
 
-        _cb("sun",      self._show_sun_var)
-        _cb("moon",     self._show_moon_var)
-        _cb("graylijn", self._show_graylijn_var)
-        _cb(None,       self._show_aurora_var,   "Aurora")
-        _cb(None,       self._show_wspr_var,     "WSPR")
-        _cb(None,       self._show_spots_var,    "Spots")
+        # Rij 1: Astronomisch / atmosferisch
+        row1 = tk.Frame(map_controls, bg=BG_PANEL)
+        row1.pack(fill=tk.X, pady=(0, 2))
+        tk.Label(row1, text=self._tr("map_display_lbl"),
+                 font=_font(8), bg=BG_PANEL, fg=TEXT_DIM).pack(side=tk.LEFT, padx=(0, 4))
+        _cb(row1, "sun",      self._show_sun_var)
+        _cb(row1, "moon",     self._show_moon_var)
+        _cb(row1, "graylijn", self._show_graylijn_var)
+        _cb(row1, None,       self._show_aurora_var, "Aurora")
+
+        # Rij 2: Datalagen
+        row2 = tk.Frame(map_controls, bg=BG_PANEL)
+        row2.pack(fill=tk.X)
+        tk.Label(row2, text=self._tr("map_data_lbl"),
+                 font=_font(8), bg=BG_PANEL, fg=TEXT_DIM).pack(side=tk.LEFT, padx=(0, 4))
+        _cb(row2, None,      self._show_wspr_var,  "WSPR")
+        _cb(row2, None,      self._show_spots_var, "Spots")
+        _cb(row2, None,      self._show_cs_var,    "CS")
+        _cb(row2, "locator", self._show_locator_var)
         if not _ITU_DISABLED:
-            _cb(None, self._show_iaru_var, "ITU")
-        _cb(None,       self._show_cs_var,       "CS")
-        _cb("locator",  self._show_locator_var)
+            _cb(row2, None, self._show_iaru_var, "ITU")
+
+        # Rij 3: Meldingen (K-index + band-opening drempel)
+        row3 = tk.Frame(map_controls, bg=BG_PANEL)
+        row3.pack(fill=tk.X, pady=(2, 0))
+        _alert_hdr_map = tk.Label(row3, text=self._tr("alerts_hdr") + ":",
+                                  font=_font(8), bg=BG_PANEL, fg=TEXT_DIM)
+        _alert_hdr_map.pack(side=tk.LEFT, padx=(0, 4))
+        self._tr_widgets.setdefault("alerts_hdr", [])
+        if not isinstance(self._tr_widgets["alerts_hdr"], list):
+            self._tr_widgets["alerts_hdr"] = [self._tr_widgets["alerts_hdr"]]
+        self._tr_widgets["alerts_hdr"].append(_alert_hdr_map)
+
+        _k_cb_map = tk.Checkbutton(row3, variable=self._alert_k_en_var,
+                                   command=self._save_cur_settings,
+                                   bg=BG_PANEL, fg=TEXT_BODY, selectcolor=BG_SURFACE,
+                                   activebackground=BG_PANEL, activeforeground=TEXT_H1,
+                                   font=_font(9), text=self._tr("k_alert_lbl"), anchor='w')
+        _k_cb_map.pack(side=tk.LEFT, padx=(0, 2))
+        self._tr_widgets.setdefault("k_alert_lbl", [])
+        if not isinstance(self._tr_widgets["k_alert_lbl"], list):
+            self._tr_widgets["k_alert_lbl"] = [self._tr_widgets["k_alert_lbl"]]
+        self._tr_widgets["k_alert_lbl"].append(_k_cb_map)
+
+        tk.Spinbox(row3, from_=1, to=9, width=2, textvariable=self._k_alert_var,
+                   command=self._save_cur_settings,
+                   bg=BG_SURFACE, fg=TEXT_H1, buttonbackground=BG_SURFACE,
+                   relief=tk.FLAT, font=_font(9, "bold")).pack(side=tk.LEFT, padx=(0, 10))
+
+        _b_cb_map = tk.Checkbutton(row3, variable=self._alert_band_en_var,
+                                   command=self._save_cur_settings,
+                                   bg=BG_PANEL, fg=TEXT_BODY, selectcolor=BG_SURFACE,
+                                   activebackground=BG_PANEL, activeforeground=TEXT_H1,
+                                   font=_font(9), text=self._tr("band_alert_lbl"), anchor='w')
+        _b_cb_map.pack(side=tk.LEFT, padx=(0, 2))
+        self._tr_widgets.setdefault("band_alert_lbl", [])
+        if not isinstance(self._tr_widgets["band_alert_lbl"], list):
+            self._tr_widgets["band_alert_lbl"] = [self._tr_widgets["band_alert_lbl"]]
+        self._tr_widgets["band_alert_lbl"].append(_b_cb_map)
+
+        tk.Spinbox(row3, from_=10, to=90, increment=5, width=3,
+                   textvariable=self._band_alert_var, command=self._save_cur_settings,
+                   bg=BG_SURFACE, fg=TEXT_H1, buttonbackground=BG_SURFACE,
+                   relief=tk.FLAT, font=_font(9, "bold")).pack(side=tk.LEFT, padx=(0, 2))
+        tk.Label(row3, text="%", font=_font(9), bg=BG_PANEL,
+                 fg=TEXT_DIM).pack(side=tk.LEFT)
 
         # Info-label voor groot-cirkel (richting/afstand)
         self._gc_info_var = tk.StringVar(value="")
@@ -2795,11 +3083,8 @@ class HAMIOSApp:
                                      anchor='w')
         self._gc_path_lbl.pack(fill=tk.X, padx=10, pady=(0, 4))
 
-    def _on_map_resize(self, event):
-        """Stel canvas hoogte in; rendering gebruikt altijd 2:1 ratio."""
-        new_h = max(80, min(event.width // 2, 320))
-        if self._map_canvas.winfo_height() != new_h:
-            self._map_canvas.config(height=new_h)
+    def _on_map_resize(self, _event=None):
+        """Kaart herrenderen bij breedte-aanpassing; hoogte is vast (v3.0)."""
         self._draw_map()
 
     def _redraw_map(self):
@@ -2995,7 +3280,7 @@ class HAMIOSApp:
             c.create_rectangle(0, 0, W, H, fill="#1B3A5C", outline="")
             c.create_text(W // 2, H // 2,
                           text=self._tr("map_nolib"),
-                          fill=TEXT_DIM, font=("Segoe UI", 9))
+                          fill=TEXT_DIM, font=(_FONT_SANS, 9))
             return
 
         # ── Basiskaart (gecached bij grootte-wijziging) ───────────────────────
@@ -3017,16 +3302,22 @@ class HAMIOSApp:
                     (6, 4), self._tr("map_downloading"), fill=MAP_GRID)
 
             # Graticule + graden-labels
+            # crop_t_est: hoeveel pixels van de bovenkant worden weggesneden
+            # zodat labels altijd zichtbaar zijn in het canvas-venster
+            crop_t_est = max(0, (VH - H) // 2)
             d   = ImageDraw.Draw(src)
             LBL = (180, 200, 220)   # contrasterende lichtblauwe kleur
             for lat in range(-60, 90, 30):
                 gy = int((90 - lat) / 180 * VH)
                 d.line([(0, gy), (VW, gy)], fill=MAP_GRID, width=1)
-                d.text((3, gy + 2), f"{lat:+d}°", fill=LBL)
+                # label net onder de lijn, maar nooit boven de crop-rand
+                text_y = max(gy + 2, crop_t_est + 4)
+                d.text((3, text_y), f"{lat:+d}°", fill=LBL)
             for lon in range(-150, 180, 30):
                 gx = int((lon + 180) / 360 * VW)
                 d.line([(gx, 0), (gx, VH)], fill=MAP_GRID, width=1)
-                d.text((gx + 2, 2), f"{lon:+d}°", fill=LBL)
+                # altijd binnen het zichtbare gebied (crop_t_est + 4px marge)
+                d.text((gx + 2, crop_t_est + 4), f"{lon:+d}°", fill=LBL)
 
             self._map_base_img  = src
             self._map_base_size = cache_key
@@ -3416,6 +3707,82 @@ class HAMIOSApp:
                           fill=color, outline="")
 
     # ── HF Propagatie panel ───────────────────────────────────────────────────
+    def _build_bz_panel(self, parent):
+        """Bz 24-uurs grafiek als zelfstandig paneel."""
+        outer = tk.Frame(parent, bg=BG_PANEL)
+        outer.pack(fill=tk.BOTH, expand=True)
+        tk.Frame(outer, bg=ACCENT, height=2).pack(fill=tk.X)
+        _bz_hdr = tk.Label(outer, text=self._tr("bz_chart_hdr"),
+                           font=_font(10, "bold"), bg=BG_PANEL, fg=ACCENT, pady=4)
+        _bz_hdr.pack(anchor='w', padx=10)
+        self._tr_widgets["bz_chart_hdr"] = _bz_hdr
+        self._bz_canvas = tk.Canvas(outer, height=120, bg=BG_SURFACE,
+                                    bd=0, highlightthickness=0)
+        self._bz_canvas.pack(fill=tk.BOTH, expand=True, padx=10, pady=(0, 6))
+        self._bz_canvas.bind("<Configure>",
+                             lambda *_: self._draw_bz_graph(
+                                 getattr(self, "_last_bz_pts", [])))
+
+        # Tooltip: toon Bz-waarde bij muisbeweging
+        self._bz_tooltip_id = None
+        self._bz_tooltip_win: tk.Toplevel | None = None
+
+        def _bz_on_motion(event):
+            pts = getattr(self, "_last_bz_pts", [])
+            if not pts:
+                return
+            c = self._bz_canvas
+            W = c.winfo_width() or 200
+            H = c.winfo_height() or 120
+            PAD_L, PAD_R = 30, 4
+            gW = W - PAD_L - PAD_R
+            mx = event.x
+            # Interpoleer tijdstip op basis van x-positie
+            if gW <= 0:
+                return
+            frac = (mx - PAD_L) / gW         # 0=24h geleden, 1=nu
+            hours_ago = 24 * (1.0 - max(0, min(1, frac)))
+            # Zoek het dichtstbijzijnde punt
+            closest = min(pts, key=lambda p: abs(p[0] - hours_ago))
+            bz_val  = closest[1]
+            age_h   = int(closest[0])
+            age_min = int((closest[0] - age_h) * 60)
+            label   = f"Bz: {bz_val:+.1f} nT  ({age_h}h {age_min:02d}m ago)"
+
+            # Verwijder oud tooltip
+            if self._bz_tooltip_win:
+                try:
+                    self._bz_tooltip_win.destroy()
+                except Exception:
+                    pass
+            tw = tk.Toplevel(c)
+            tw.wm_overrideredirect(True)
+            if _IS_MAC:
+                tw.wm_attributes("-topmost", True)
+            tw.configure(bg=BORDER)
+            tk.Label(tw, text=label, font=_font(8), bg=BG_SURFACE,
+                     fg=TEXT_H1, padx=8, pady=4).pack(padx=1, pady=1)
+            rx = c.winfo_rootx() + event.x + 12
+            ry = c.winfo_rooty() + event.y - 28
+            tw.wm_geometry(f"+{rx}+{ry}")
+            self._bz_tooltip_win = tw
+            # Verticale cursor-lijn op canvas
+            c.delete("bz_cursor")
+            c.create_line(mx, 0, mx, H, fill=BORDER, dash=(3, 3),
+                          tags="bz_cursor")
+
+        def _bz_on_leave(event):
+            if self._bz_tooltip_win:
+                try:
+                    self._bz_tooltip_win.destroy()
+                except Exception:
+                    pass
+                self._bz_tooltip_win = None
+            self._bz_canvas.delete("bz_cursor")
+
+        self._bz_canvas.bind("<Motion>", _bz_on_motion)
+        self._bz_canvas.bind("<Leave>",  _bz_on_leave)
+
     def _build_prop_panel(self, parent):
         outer = tk.Frame(parent, bg=BG_PANEL)
         outer.pack(fill=tk.BOTH, expand=True, pady=(0, 0))
@@ -3480,9 +3847,9 @@ class HAMIOSApp:
             tk.Label(info, textvariable=var, font=_font(9, "bold"),
                      bg=BG_PANEL, fg=fg).pack(side=tk.LEFT, padx=(0, 18))
 
-        BAR_H    = 13
-        BAR_PAD  = 1
-        HDR_H    = 14
+        BAR_H    = 22
+        BAR_PAD  = 4
+        HDR_H    = 16
         _hf_count = sum(1 for _, _, is_hf in _BANDS if is_hf)
         canvas_h = HDR_H + _hf_count * (BAR_H + BAR_PAD) + BAR_PAD + 2
         self._prop_canvas = tk.Canvas(outer, height=canvas_h, bg=BG_PANEL,
@@ -3505,15 +3872,6 @@ class HAMIOSApp:
 
         self._update_cat_freq_lbl_visibility()
 
-        # ── Bz 24-uurs mini-grafiek ───────────────────────────────────────────
-        tk.Frame(outer, bg=BORDER, height=1).pack(fill=tk.X, padx=10, pady=(4, 2))
-        self._bz_hdr_lbl = tk.Label(outer, text=self._tr("bz_chart_hdr"),
-                                    font=_font(8), bg=BG_PANEL, fg=TEXT_DIM, anchor='w')
-        self._bz_hdr_lbl.pack(fill=tk.X, padx=10)
-        self._tr_widgets["bz_chart_hdr"] = self._bz_hdr_lbl
-        self._bz_canvas = tk.Canvas(outer, height=90, bg=BG_SURFACE,
-                                    bd=0, highlightthickness=0)
-        self._bz_canvas.pack(fill=tk.X, padx=10, pady=(0, 6))
 
     def _draw_prop_bars(self, band_pct):
         self._last_band_pct = band_pct
@@ -3523,56 +3881,68 @@ class HAMIOSApp:
         self._bar_band_rows = []
 
         W       = c.winfo_width() or 700
-        BAR_H   = 13
-        BAR_PAD = 1
-        HDR_H   = 14
-        LABEL_W = 40
-        LIC_W   = 20
-        PCT_W   = 36
-        MODES_W = 84
-        FREQ_W  = 60
-        FT8_W   = 62
-        BAR_X   = LABEL_W + LIC_W + 4
+        BAR_H   = 22
+        BAR_PAD = 4
+        HDR_H   = 16
+        LABEL_W = 46
+        PCT_W   = 40
+        FREQ_W  = 58
+        MODES_W = 80
+        FT8_W   = 58
+        BAR_X   = LABEL_W + 4
         BAR_MAX = max(40, W - BAR_X - PCT_W - FREQ_W - MODES_W - FT8_W - 10)
+
+        def _gradient_fill(x1, y1, x2, y2, color):
+            """Gradiëntbalk: heldere bandkleur boven → 50% donkerder onder."""
+            r = int(color[1:3], 16)
+            g = int(color[3:5], 16)
+            b = int(color[5:7], 16)
+            h = max(1, y2 - y1)
+            slices = min(h, 6)
+            for i in range(slices):
+                factor = 1.0 - (i / slices) * 0.50
+                cr = min(255, int(r * factor))
+                cg = min(255, int(g * factor))
+                cb = min(255, int(b * factor))
+                sy1 = y1 + i * h // slices
+                sy2 = y1 + (i + 1) * h // slices if i < slices - 1 else y2
+                c.create_rectangle(x1, sy1, x2, sy2,
+                                   fill=f"#{cr:02x}{cg:02x}{cb:02x}", outline="")
 
         # Kolomhoofden
         def _hdr(x, w, txt):
             c.create_text(x + w // 2, HDR_H // 2, text=txt,
-                          font=("Segoe UI", 8, "bold"), fill=ACCENT, anchor='center')
+                          font=(_FONT_SANS, 8, "bold"), fill=ACCENT, anchor='center')
 
-        _hdr(BAR_X,                                    BAR_MAX, "")
-        _hdr(BAR_X + BAR_MAX,                          PCT_W,   "%")
-        _hdr(BAR_X + BAR_MAX + PCT_W,                  FREQ_W,  self._tr("hf_col_start"))
-        _hdr(BAR_X + BAR_MAX + PCT_W + FREQ_W,         MODES_W, self._tr("hf_col_mode"))
-        _hdr(BAR_X + BAR_MAX + PCT_W + FREQ_W + MODES_W, FT8_W, "FT8")
+        _hdr(BAR_X,                                       BAR_MAX, "")
+        _hdr(BAR_X + BAR_MAX,                             PCT_W,   "%")
+        _hdr(BAR_X + BAR_MAX + PCT_W,                     FREQ_W,  self._tr("hf_col_start"))
+        _hdr(BAR_X + BAR_MAX + PCT_W + FREQ_W,            MODES_W, self._tr("hf_col_mode"))
+        _hdr(BAR_X + BAR_MAX + PCT_W + FREQ_W + MODES_W,  FT8_W,   "FT8")
 
         hf_pct = [(n, f, p) for n, f, p in band_pct if p != -1]
         for i, entry in enumerate(hf_pct):
             name, freq, pct = entry[0], entry[1], entry[2]
             y = HDR_H + BAR_PAD + i * (BAR_H + BAR_PAD)
+            band_color = _BAND_COLORS.get(name, TEXT_DIM)
 
-            # Bandnaam
+            # Bandnaam — band-specifieke kleur, vet
             c.create_text(LABEL_W - 2, y + BAR_H // 2,
-                          text=name, font=("Segoe UI", 9),
-                          fill=TEXT_DIM, anchor='e')
-
-            # Licentie (N/F)
-            lic = _BAND_LICENSE.get(name, "")
-            c.create_text(LABEL_W + LIC_W - 2, y + BAR_H // 2,
-                          text=lic, font=("Segoe UI", 7),
-                          fill=TEXT_DIM, anchor='e')
+                          text=name, font=(_FONT_SANS, 9, "bold"),
+                          fill=band_color, anchor='e')
 
             freq_str = f"{freq:.3f} MHz" if freq < 1000 else f"{freq/1000:.3f} GHz"
 
+            # Balk achtergrond (met 1 px rand-inzet voor subtiele 3D rand)
+            c.create_rectangle(BAR_X, y + 1, BAR_X + BAR_MAX, y + BAR_H - 1,
+                               fill=BG_SURFACE, outline=BORDER, width=1)
+
             if pct == 0:
-                # Band volledig gesloten — zelfde stijl als LOS/Tropo
-                c.create_rectangle(BAR_X, y, BAR_X + BAR_MAX, y + BAR_H,
-                                   fill=BG_SURFACE, outline=BORDER, width=1)
                 c.create_text(BAR_X + BAR_MAX // 2, y + BAR_H // 2,
-                              text=self._tr("closed"), font=("Segoe UI", 8),
+                              text=self._tr("closed"), font=(_FONT_SANS, 8),
                               fill=TEXT_DIM, anchor='center')
                 c.create_text(BAR_X + BAR_MAX + PCT_W // 2, y + BAR_H // 2,
-                              text="0%", font=("Segoe UI", 9, "bold"),
+                              text="0%", font=(_FONT_SANS, 9, "bold"),
                               fill=TEXT_DIM, anchor='center')
                 tip = [
                     (f"{name}  ·  {freq_str}", None),
@@ -3583,18 +3953,20 @@ class HAMIOSApp:
                     ("FT8:",                   _BAND_FT8.get(name, "—") + " MHz"),
                 ]
             else:
-                # HF: kleurenbalk
-                c.create_rectangle(BAR_X, y, BAR_X + BAR_MAX, y + BAR_H,
-                                   fill=BG_SURFACE, outline=BORDER, width=1)
-                color = "#4CAF50" if pct >= 60 else ("#FFC107" if pct >= 30 else "#F44336")
-                cond  = (self._tr("cond_good") if pct >= 60 else
-                         (self._tr("cond_fair") if pct >= 30 else self._tr("cond_poor")))
                 fill_w = int(BAR_MAX * pct / 100)
-                if fill_w > 2:
-                    c.create_rectangle(BAR_X + 1, y + 1, BAR_X + fill_w, y + BAR_H - 1,
-                                       fill=color, outline="")
+                cond = (self._tr("cond_good") if pct >= 60 else
+                        (self._tr("cond_fair") if pct >= 30 else self._tr("cond_poor")))
+                if fill_w > 3:
+                    _gradient_fill(BAR_X + 1, y + 2, BAR_X + fill_w, y + BAR_H - 2,
+                                   band_color)
+                    # Glans-lijn bovenaan de balk
+                    gr = min(255, int(int(band_color[1:3], 16) * 1.5))
+                    gg = min(255, int(int(band_color[3:5], 16) * 1.5))
+                    gb = min(255, int(int(band_color[5:7], 16) * 1.5))
+                    c.create_line(BAR_X + 2, y + 2, BAR_X + fill_w - 1, y + 2,
+                                  fill=f"#{gr:02x}{gg:02x}{gb:02x}", width=1)
                 c.create_text(BAR_X + BAR_MAX + PCT_W // 2, y + BAR_H // 2,
-                              text=f"{pct}%", font=("Segoe UI", 9, "bold"),
+                              text=f"{pct}%", font=(_FONT_SANS, 9, "bold"),
                               fill=TEXT_H1, anchor='center')
                 tip = [
                     (f"{name}  ·  {freq_str}", None),
@@ -3604,21 +3976,21 @@ class HAMIOSApp:
                     ("FT8:",                       _BAND_FT8.get(name, "—") + " MHz"),
                 ]
 
-            # Frequentie (kort, rechts van balk)
+            # Frequentie
             c.create_text(BAR_X + BAR_MAX + PCT_W + FREQ_W // 2, y + BAR_H // 2,
-                          text=freq_str.split()[0], font=("Segoe UI", 8),
+                          text=freq_str.split()[0], font=(_FONT_SANS, 8),
                           fill=TEXT_DIM, anchor='center')
 
             # Modi
             c.create_text(BAR_X + BAR_MAX + PCT_W + FREQ_W + MODES_W // 2, y + BAR_H // 2,
-                          text=_BAND_MODES.get(name, ""), font=("Segoe UI", 8),
+                          text=_BAND_MODES.get(name, ""), font=(_FONT_SANS, 8),
                           fill=TEXT_DIM, anchor='center')
 
             # FT8 frequentie
             ft8 = _BAND_FT8.get(name, "—")
             c.create_text(BAR_X + BAR_MAX + PCT_W + FREQ_W + MODES_W + FT8_W // 2,
                           y + BAR_H // 2,
-                          text=ft8, font=("Segoe UI", 8),
+                          text=ft8, font=(_FONT_SANS, 8),
                           fill=ACCENT if ft8 != "—" else TEXT_DIM, anchor='center')
 
             self._bar_rows.append((y, y + BAR_H, tip))
@@ -3640,7 +4012,7 @@ class HAMIOSApp:
                                                int(BAR_MAX * (vfo_khz - lo) / (hi - lo))))
                         c.create_line(x, y0, x, y1, fill=color, width=2)
                         c.create_text(x, y0 - 1, text=label,
-                                      font=("Segoe UI", 7, "bold"),
+                                      font=(_FONT_SANS, 7, "bold"),
                                       fill=color, anchor="s")
                         break
 
@@ -3713,7 +4085,7 @@ class HAMIOSApp:
     # ── Historiek panel ───────────────────────────────────────────────────────
     def _build_hist_panel(self, parent):
         outer = tk.Frame(parent, bg=BG_PANEL)
-        outer.pack(fill=tk.X, pady=(6, 0))
+        outer.pack(fill=tk.BOTH, expand=True, pady=(0, 0))
 
         tk.Frame(outer, bg=ACCENT, height=2).pack(fill=tk.X)
 
@@ -3739,9 +4111,9 @@ class HAMIOSApp:
             rb.pack(side=tk.LEFT, padx=(8, 0))
             self._hist_range_rbs.append((rb, tr_key))
 
-        self._hist_canvas = tk.Canvas(outer, height=75, bg=BG_PANEL,
+        self._hist_canvas = tk.Canvas(outer, height=90, bg=BG_PANEL,
                                       bd=0, highlightthickness=0)
-        self._hist_canvas.pack(fill=tk.X, padx=10, pady=(0, 6))
+        self._hist_canvas.pack(fill=tk.BOTH, expand=True, padx=10, pady=(0, 6))
         self._hist_canvas.bind("<Configure>", lambda *_: self._draw_hist_graph())
         self._hist_tooltip = _Tooltip(self._hist_canvas)
         self._hist_layout: dict = {}
@@ -3812,12 +4184,12 @@ class HAMIOSApp:
             c.create_line(PAD_L, gy, W - PAD_R, gy,
                           fill=BORDER, dash=(2, 4))
             c.create_text(PAD_L - 3, gy, text=str(pct),
-                          fill=TEXT_DIM, font=("Segoe UI", 7), anchor='e')
+                          fill=TEXT_DIM, font=(_FONT_SANS, 7), anchor='e')
 
         if len(data) < 2:
             c.create_text(W // 2, PAD_T + gh // 2,
                           text=self._tr("no_hist_data"),
-                          fill=TEXT_DIM, font=("Segoe UI", 9), anchor='center')
+                          fill=TEXT_DIM, font=(_FONT_SANS, 9), anchor='center')
             self._hist_layout = {}
             return
 
@@ -3854,7 +4226,7 @@ class HAMIOSApp:
     # ── Bandopenings-schema (heatmap) ─────────────────────────────────────────
     def _build_schedule_panel(self, parent):
         outer = tk.Frame(parent, bg=BG_PANEL)
-        outer.pack(fill=tk.X, pady=(0, 0))
+        outer.pack(fill=tk.BOTH, expand=True, pady=(0, 0))
         tk.Frame(outer, bg=ACCENT, height=2).pack(fill=tk.X)
 
         hdr = tk.Frame(outer, bg=BG_PANEL)
@@ -3865,7 +4237,7 @@ class HAMIOSApp:
         self._tr_widgets["sched_header"] = _sched_title
         self._sched_canvas = tk.Canvas(outer, height=180, bg=BG_PANEL,
                                        bd=0, highlightthickness=0)
-        self._sched_canvas.pack(fill=tk.X, padx=10, pady=(0, 6))
+        self._sched_canvas.pack(fill=tk.BOTH, expand=True, padx=10, pady=(0, 6))
         self._sched_canvas.bind("<Configure>", lambda *_: self._draw_schedule())
         self._sched_tooltip = _Tooltip(self._sched_canvas)
         self._sched_layout: dict = {}   # grid-layout voor hover
@@ -3913,7 +4285,7 @@ class HAMIOSApp:
         for local_h in range(0, n_hours, 3):
             lx = PAD_L + local_h * cell_w + cell_w // 2
             c.create_text(lx, PAD_T - 4, text=f"{local_h:02d}",
-                          fill=TEXT_DIM, font=("Segoe UI", 7), anchor='s')
+                          fill=TEXT_DIM, font=(_FONT_SANS, 7), anchor='s')
 
         # ── Bereken propagatie per uur en per band ────────────────────────
         # grid_data[bi][h] = pct  (voor hover-tooltip)
@@ -3923,7 +4295,7 @@ class HAMIOSApp:
             cy = PAD_T + bi * cell_h
             # Bandnaam links
             c.create_text(PAD_L - 3, cy + cell_h // 2, text=bname,
-                          fill=TEXT_DIM, font=("Segoe UI", 7), anchor='e')
+                          fill=TEXT_DIM, font=(_FONT_SANS, 7), anchor='e')
             for local_h in range(n_hours):
                 # Lokale tijd → UTC
                 utc_h    = (local_h - utc_offset) % 24
@@ -4039,7 +4411,7 @@ class HAMIOSApp:
     # ── DX Spots panel ───────────────────────────────────────────────────────
     def _build_dx_panel(self, parent):
         outer = tk.Frame(parent, bg=BG_PANEL)
-        outer.pack(fill=tk.BOTH, expand=True, pady=(6, 0))
+        outer.pack(fill=tk.BOTH, expand=True)
         tk.Frame(outer, bg=ACCENT, height=2).pack(fill=tk.X)
 
         hdr = tk.Frame(outer, bg=BG_PANEL)
@@ -4056,6 +4428,15 @@ class HAMIOSApp:
                                     font=_font(9))
         _dx_own_cb.pack(side=tk.RIGHT, padx=(0, 4))
         self._tr_widgets["own_cont_lbl"] = _dx_own_cb
+
+        # Heatmap toggle knop
+        self._dx_heatmap_btn = tk.Button(
+            hdr, text="Heatmap",
+            command=self._toggle_dx_heatmap,
+            font=_font(8), bg=BG_SURFACE, fg=TEXT_DIM,
+            activebackground=BG_HOVER, activeforeground=TEXT_H1,
+            relief=tk.FLAT, padx=6, pady=1, cursor="hand2")
+        self._dx_heatmap_btn.pack(side=tk.RIGHT, padx=(0, 6))
 
         status_row = tk.Frame(outer, bg=BG_PANEL)
         status_row.pack(fill=tk.X, padx=10)
@@ -4077,11 +4458,18 @@ class HAMIOSApp:
         dx_sb.pack(side=tk.RIGHT, fill=tk.Y)
         self._dx_canvas.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
         self._dx_canvas.bind("<Configure>", lambda *_: self._draw_dx_panel())
-        self._dx_canvas.bind("<MouseWheel>",
-            lambda e: self._dx_canvas.yview_scroll(
-                -1 if e.delta > 0 else 1, "units"))
+        def _dx_scroll(e):
+            if e.num == 4 or e.delta > 0:
+                self._dx_canvas.yview_scroll(-1, "units")
+            else:
+                self._dx_canvas.yview_scroll(1, "units")
+        self._dx_canvas.bind("<MouseWheel>", _dx_scroll)   # Windows & Mac
+        self._dx_canvas.bind("<Button-4>",   _dx_scroll)   # Linux scroll up
+        self._dx_canvas.bind("<Button-5>",   _dx_scroll)   # Linux scroll down
 
     def _filter_dx_spots(self):
+        if not hasattr(self, "_dx_status_var"):
+            return
         spots = self._dx_all_spots
         if self._dx_own_cont_var.get():
             my = _qth_continent(self._qth_lat, self._qth_lon)
@@ -4098,6 +4486,82 @@ class HAMIOSApp:
         else:
             self._dx_status_var.set(self._tr("no_spots_ts").format(ts=ts))
 
+    def _toggle_dx_heatmap(self):
+        self._dx_heatmap_mode = not self._dx_heatmap_mode
+        if self._dx_heatmap_mode:
+            self._dx_heatmap_btn.config(fg=ACCENT, bg=BG_HOVER)
+        else:
+            self._dx_heatmap_btn.config(fg=TEXT_DIM, bg=BG_SURFACE)
+        self._draw_dx_panel()
+
+    def _draw_dx_heatmap(self, c, W: int, H: int):
+        """Teken heatmap: band (Y) × UTC-uur (X) → spot-intensiteit."""
+        BANDS = ["160m","80m","60m","40m","30m","20m","17m","15m","12m","10m","6m"]
+        HOURS = 24
+        MARGIN_L = 38   # bandnaam links
+        MARGIN_B = 18   # uurlabels onder
+        MARGIN_T = 6
+
+        cw = max(1, (W - MARGIN_L) // HOURS)     # cel breedte
+        ch = max(1, (H - MARGIN_T - MARGIN_B) // len(BANDS))  # cel hoogte
+
+        # Tel spots per (band, uur)
+        counts: dict[tuple, int] = {}
+        for ts, band in self._dx_spot_history:
+            h = ts.hour
+            counts[(band, h)] = counts.get((band, h), 0) + 1
+
+        max_count = max(counts.values(), default=1)
+
+        for bi, band in enumerate(BANDS):
+            y0 = MARGIN_T + bi * ch
+            y1 = y0 + ch
+            # Bandlabel
+            color = _BAND_COLORS.get(band, TEXT_DIM)
+            c.create_text(MARGIN_L - 3, (y0 + y1) // 2,
+                          text=band, fill=color,
+                          font=(_FONT_MONO, 7, "bold"), anchor='e')
+            for hour in range(HOURS):
+                x0 = MARGIN_L + hour * cw
+                x1 = x0 + cw - 1
+                cnt = counts.get((band, hour), 0)
+                if cnt:
+                    intensity = min(1.0, cnt / max_count)
+                    base = _BAND_COLORS.get(band, "#607080")
+                    # Alpha-simulatie: vervaag van BG_SURFACE naar base_color
+                    r0, g0, b0 = int(BG_SURFACE[1:3], 16), int(BG_SURFACE[3:5], 16), int(BG_SURFACE[5:7], 16)
+                    r1, g1, b1 = int(base[1:3], 16), int(base[3:5], 16), int(base[5:7], 16)
+                    r = int(r0 + (r1 - r0) * intensity)
+                    g = int(g0 + (g1 - g0) * intensity)
+                    b = int(b0 + (b1 - b0) * intensity)
+                    fill = f"#{r:02X}{g:02X}{b:02X}"
+                else:
+                    fill = BG_SURFACE
+                c.create_rectangle(x0, y0, x1, y1 - 1, fill=fill, outline="")
+                if cnt and cw >= 12:
+                    c.create_text((x0 + x1) // 2, (y0 + y1) // 2,
+                                  text=str(cnt), fill=BG_ROOT if intensity > 0.5 else TEXT_DIM,
+                                  font=(_FONT_MONO, 6))
+
+        # Uurlabels onderin
+        for hour in range(0, HOURS, 3):
+            x = MARGIN_L + hour * cw + cw // 2
+            c.create_text(x, H - MARGIN_B + 3,
+                          text=f"{hour:02d}", fill=TEXT_DIM,
+                          font=(_FONT_MONO, 7), anchor='n')
+
+        # "UTC" label
+        c.create_text(MARGIN_L + (HOURS * cw) // 2, H - 3,
+                      text="UTC", fill=TEXT_DIM, font=(_FONT_MONO, 6), anchor='s')
+
+        # Geen history-label
+        if not self._dx_spot_history:
+            c.create_text(W // 2, H // 2,
+                          text="Nog geen spothistorie (wacht op eerste refresh…)",
+                          fill=TEXT_DIM, font=(_FONT_SANS, 8), anchor='center')
+
+        c.configure(scrollregion=(0, 0, W, H))
+
     def _draw_dx_panel(self):
         if not hasattr(self, "_dx_canvas"):
             return
@@ -4105,6 +4569,10 @@ class HAMIOSApp:
         c.delete("all")
         W = c.winfo_width() or 700
         H = c.winfo_height() or 196
+
+        if getattr(self, "_dx_heatmap_mode", False):
+            self._draw_dx_heatmap(c, W, H)
+            return
 
         spots = getattr(self, "_dx_filtered", [])
         ROW_H = 16
@@ -4120,13 +4588,13 @@ class HAMIOSApp:
                        (self._tr("dx_col_spotter"),     4 + C_UTC + C_BAND + C_DX + C_FREQ),
                        (self._tr("dx_col_comment"),     4 + C_UTC + C_BAND + C_DX + C_FREQ + C_SPOT)]:
             c.create_text(x, 2, text=txt, fill=ACCENT,
-                          font=("Consolas", 8, "bold"), anchor='nw')
+                          font=(_FONT_MONO, 8, "bold"), anchor='nw')
         c.create_line(0, ROW_H + 2, W, ROW_H + 2, fill=BORDER)
 
         if not spots:
             c.create_text(W // 2, H // 2,
                           text=self._tr("no_dx_spots"),
-                          fill=TEXT_DIM, font=("Segoe UI", 9), anchor='center')
+                          fill=TEXT_DIM, font=(_FONT_SANS, 9), anchor='center')
             c.configure(scrollregion=(0, 0, W, H))
             return
 
@@ -4139,13 +4607,13 @@ class HAMIOSApp:
             band  = s["band"]
             color = _BAND_COLORS.get(band, TEXT_DIM)
             x = 4
-            c.create_text(x, y, text=s["time"],         fill=TEXT_DIM,  font=("Consolas", 8), anchor='nw'); x += C_UTC
-            c.create_text(x, y, text=band,              fill=color,     font=("Consolas", 8, "bold"), anchor='nw'); x += C_BAND
-            c.create_text(x, y, text=s["dx"][:11],      fill=TEXT_H1,   font=("Consolas", 8), anchor='nw'); x += C_DX
-            c.create_text(x, y, text=s["freq_mhz"],     fill=TEXT_BODY, font=("Consolas", 8), anchor='nw'); x += C_FREQ
-            c.create_text(x, y, text=s["spotter"][:10], fill=TEXT_DIM,  font=("Consolas", 8), anchor='nw'); x += C_SPOT
+            c.create_text(x, y, text=s["time"],         fill=TEXT_DIM,  font=(_FONT_MONO, 8), anchor='nw'); x += C_UTC
+            c.create_text(x, y, text=band,              fill=color,     font=(_FONT_MONO, 8, "bold"), anchor='nw'); x += C_BAND
+            c.create_text(x, y, text=s["dx"][:11],      fill=TEXT_H1,   font=(_FONT_MONO, 8), anchor='nw'); x += C_DX
+            c.create_text(x, y, text=s["freq_mhz"],     fill=TEXT_BODY, font=(_FONT_MONO, 8), anchor='nw'); x += C_FREQ
+            c.create_text(x, y, text=s["spotter"][:10], fill=TEXT_DIM,  font=(_FONT_MONO, 8), anchor='nw'); x += C_SPOT
             c.create_text(x, y, text=s.get("comment", "")[:max_ch],
-                          fill=TEXT_DIM, font=("Consolas", 8), anchor='nw')
+                          fill=TEXT_DIM, font=(_FONT_MONO, 8), anchor='nw')
         total_h = ROW_H + 4 + len(spots) * ROW_H
         c.configure(scrollregion=(0, 0, W, total_h))
 
@@ -4155,6 +4623,14 @@ class HAMIOSApp:
 
     def _on_dx_spots(self, spots: list):
         self._dx_all_spots = spots
+        # Accumuleer history voor heatmap (24h buffer)
+        now = datetime.datetime.now(datetime.timezone.utc)
+        cutoff = now - datetime.timedelta(hours=24)
+        new_entries = [(now, s["band"]) for s in spots if s.get("band")]
+        self._dx_spot_history = (
+            [(t, b) for t, b in self._dx_spot_history if t >= cutoff]
+            + new_entries
+        )
         self._filter_dx_spots()
         self._schedule_dx()
 
@@ -4167,8 +4643,14 @@ class HAMIOSApp:
         )
 
     def _refresh_wspr(self):
-        spots = _fetch_wspr_spots()
-        self.root.after(0, lambda: self._on_wspr_spots(spots))
+        def _do_fetch():
+            snr_min = self._wspr_snr_min.get()
+            band_filter_raw = self._wspr_band_filter.get()
+            band_filter = set(band_filter_raw.split(",")) - {""} if band_filter_raw else None
+            spots = _fetch_wspr_spots(snr_min=snr_min, band_filter=band_filter)
+            self.root.after(0, lambda: self._on_wspr_spots(spots))
+
+        threading.Thread(target=_do_fetch, daemon=True).start()
 
     def _on_wspr_spots(self, spots: list):
         self._wspr_spots = spots
@@ -4838,7 +5320,7 @@ class HAMIOSApp:
             pystray.Menu.SEPARATOR,
             pystray.MenuItem(self._tr("tray_exit"), self._tray_quit),
         )
-        self._tray_icon = pystray.Icon("HAMIOS", tray_img, "HAMIOS v2.3", menu)
+        self._tray_icon = pystray.Icon("HAMIOS", tray_img, "HAMIOS v3.0", menu)
         threading.Thread(target=self._tray_icon.run, daemon=True).start()
 
     def _tray_show(self, icon=None, item=None):
@@ -4901,9 +5383,20 @@ class HAMIOSApp:
             self._solar_after_id = None
         self._schedule_solar()
 
+    def _update_net_indicator(self, ok: bool):
+        """Toon of verberg de OFFLINE-indicator in de header (main-thread)."""
+        self._net_ok = ok
+        if ok:
+            self._offline_lbl.pack_forget()
+        else:
+            # Pack direct na de HAMIOS-titel (links)
+            if not self._offline_lbl.winfo_ismapped():
+                self._offline_lbl.pack(side=tk.LEFT, padx=(0, 6))
+
     # ── Solar data ────────────────────────────────────────────────────────────
     def _refresh_solar(self):
         data = _fetch_solar()
+        net_ok = "error" not in data and bool(data)
         # Ionosonde: kies dichtstbijzijnde station o.b.v. QTH
         station = _nearest_iono_station(self._qth_lat, self._qth_lon)
         iono = _fetch_ionosonde(station[0])
@@ -4912,6 +5405,7 @@ class HAMIOSApp:
         data["iono_station"] = iono["station"]
         # Bz 24-uurs geschiedenis
         data["bz_history"]   = _fetch_bz_24h()
+        self.root.after(0, lambda: self._update_net_indicator(net_ok))
         self.root.after(0, lambda: self._update_solar(data))
 
     def _schedule_solar(self):
@@ -5025,12 +5519,6 @@ class HAMIOSApp:
             self._iono_station_var.set(f"foF2 {short}:")
 
 
-        # ── X-flare detectie ──────────────────────────────────────────────────
-        self._check_xflare(data.get("xray", ""))
-
-        # ── PCA detectie ──────────────────────────────────────────────────────
-        self._check_pca(data.get("proton_flux", "—"))
-
         # ── Bz 24-uurs grafiek ────────────────────────────────────────────────
         if "bz_history" in data:
             self._draw_bz_graph(data["bz_history"])
@@ -5040,27 +5528,26 @@ class HAMIOSApp:
         self._schedule_solar()
 
     def _draw_bz_graph(self, pts: list):
-        """Teken Bz 24-uurs mini-grafiek op self._bz_canvas."""
+        """Teken Bz 24-uurs grafiek op self._bz_canvas."""
         self._last_bz_pts = pts
         if not hasattr(self, "_bz_canvas"):
             return
         c = self._bz_canvas
         c.update_idletasks()
-        W = c.winfo_width() or 200
-        H = 60
+        W = c.winfo_width()  or 200
+        H = c.winfo_height() or 120
         c.delete("all")
-        c.config(height=H)
 
         # Achtergrond
         c.create_rectangle(0, 0, W, H, fill=BG_SURFACE, outline="")
 
         if not pts:
             c.create_text(W // 2, H // 2, text="—", fill=TEXT_DIM,
-                          font=("Consolas", 9))
+                          font=(_FONT_MONO, 9))
             return
 
-        BZ_MAX = 40.0   # clip bereik
-        PAD_L, PAD_R, PAD_T, PAD_B = 26, 4, 4, 12
+        BZ_MAX = 40.0
+        PAD_L, PAD_R, PAD_T, PAD_B = 30, 6, 6, 16
 
         gW = W - PAD_L - PAD_R
         gH = H - PAD_T - PAD_B
@@ -5071,54 +5558,72 @@ class HAMIOSApp:
         def t_to_x(hours_ago):
             return PAD_L + gW * (1.0 - min(hours_ago, 24) / 24)
 
-        # Nul-as (gestippeld)
         y0 = bz_to_y(0)
-        for xi in range(PAD_L, W - PAD_R, 6):
-            c.create_line(xi, y0, xi + 3, y0, fill=TEXT_DIM, width=1)
+
+        # Lichte horizontale gridlijnen bij -20, 0, +20
+        for bz_ref in (-20, 0, 20):
+            yr = bz_to_y(bz_ref)
+            is_zero = bz_ref == 0
+            # Nul-as iets helderder
+            grid_color = "#404850" if not is_zero else "#505860"
+            dash = () if not is_zero else (4, 4)
+            c.create_line(PAD_L, yr, W - PAD_R, yr,
+                          fill=grid_color, width=1, dash=dash)
+
+        # Tijdgridlijnen bij 6, 12, 18h geleden
+        for h in (6, 12, 18):
+            xg = t_to_x(h)
+            c.create_line(xg, PAD_T, xg, H - PAD_B, fill="#404850", width=1, dash=(2, 4))
 
         # Y-as labels
-        for bz_ref, lbl in [(-20, "-20"), (0, "0"), (20, "+20")]:
+        for bz_ref, lbl in [(-20, "-20"), (0, "0"), (20, "+20"), (-40, "-40"), (40, "+40")]:
             yr = bz_to_y(bz_ref)
-            c.create_text(PAD_L - 2, yr, text=lbl, fill=TEXT_DIM,
-                          font=("Consolas", 7), anchor='e')
+            if PAD_T <= yr <= H - PAD_B:
+                c.create_text(PAD_L - 3, yr, text=lbl, fill=TEXT_DIM,
+                              font=(_FONT_MONO, 7), anchor='e')
 
-        # Tijdlabels (taalafhankelijk)
-        c.create_text(PAD_L, H - PAD_B + 2, text="24h",
-                      fill=TEXT_DIM, font=("Consolas", 7), anchor='nw')
-        c.create_text(W - PAD_R, H - PAD_B + 2, text=self._tr("bz_now_lbl"),
-                      fill=TEXT_DIM, font=("Consolas", 7), anchor='ne')
+        # Tijdlabels
+        for h, lbl, anch in [(24, "24h", 'nw'), (12, "12h", 'n'), (0, self._tr("bz_now_lbl"), 'ne')]:
+            xg = t_to_x(h)
+            c.create_text(xg, H - PAD_B + 2, text=lbl,
+                          fill=TEXT_DIM, font=(_FONT_MONO, 7), anchor=anch)
 
-        # Bz-lijn: blauw (positief) of rood (negatief) per segment
-        xy_pos, xy_neg = [], []
-        for hours_ago, bz in pts:
-            x = t_to_x(hours_ago)
-            y = bz_to_y(bz)
+        # Bouw gesorteerde lijst: oudste punt eerst (hours_ago aflopend)
+        ordered = sorted(pts, key=lambda p: p[0], reverse=True)
+        xy_all  = [(t_to_x(ha), bz_to_y(bz), bz) for ha, bz in ordered]
+
+        # Area fill: één aaneengesloten polygoon per kleur, gesloten op nul-as
+        poly_pos = [PAD_L, y0]
+        poly_neg = [PAD_L, y0]
+        for x, y, bz in xy_all:
             if bz >= 0:
-                xy_pos.append((x, y));  xy_neg.append(None)
+                poly_pos += [x, y]
             else:
-                xy_neg.append((x, y));  xy_pos.append(None)
+                poly_neg += [x, y]
+        if len(xy_all) >= 2:
+            last_x = xy_all[-1][0]
+            if len(poly_pos) >= 6:
+                c.create_polygon(poly_pos + [last_x, y0], fill="#1A3A4A", outline="")
+            if len(poly_neg) >= 6:
+                c.create_polygon(poly_neg + [last_x, y0], fill="#3A1A1A", outline="")
 
-        def _draw_segments(xy_list, color):
-            seg = []
-            for pt in xy_list + [None]:
-                if pt is not None:
-                    seg.append(pt)
-                else:
-                    if len(seg) >= 2:
-                        flat = [v for p in seg for v in p]
-                        c.create_line(flat, fill=color, width=1, smooth=True)
-                    seg = []
+        # Lijnlaag: segment per kleur op nul-crossing
+        if len(xy_all) >= 2:
+            for i in range(len(xy_all) - 1):
+                x1, y1, bz1 = xy_all[i]
+                x2, y2, _   = xy_all[i + 1]
+                color = "#4FC3F7" if bz1 >= 0 else "#EF5350"
+                c.create_line(x1, y1, x2, y2, fill=color, width=2)
 
-        _draw_segments(xy_pos, "#4FC3F7")   # blauw = positief (noordwaarts)
-        _draw_segments(xy_neg, "#EF5350")   # rood  = negatief (zuidwaarts)
+        # Huidige Bz-waarde: grote tekst rechtsboven
+        last_bz = ordered[-1][1]
+        clr = "#EF5350" if last_bz < -10 else ("#FFA726" if last_bz < 0 else "#4FC3F7")
+        c.create_text(W - PAD_R - 2, PAD_T,
+                      text=f"{last_bz:+.1f} nT", fill=clr,
+                      font=(_FONT_MONO, 8, "bold"), anchor='ne')
 
-        # Huidige Bz-waarde rechts in de grafiek
-        if pts:
-            last_bz = pts[-1][1]
-            clr = "#EF5350" if last_bz < -10 else ("#FFA726" if last_bz < 0 else "#4FC3F7")
-            c.create_text(W - PAD_R - 2, PAD_T,
-                          text=f"{last_bz:+.1f}", fill=clr,
-                          font=("Consolas", 7, "bold"), anchor='ne')
+        # Y-as lijn
+        c.create_line(PAD_L, PAD_T, PAD_L, H - PAD_B, fill=BORDER, width=1)
 
     def _check_xflare(self, xray: str):
         """Detecteer M/X-flare in het xray-veld en toon SWF-waarschuwing."""
