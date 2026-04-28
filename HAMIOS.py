@@ -65,6 +65,14 @@ Change Log (3.0)
                (THEMES lookup), zodat herhaalschakelingen correct werken. UI gebouwd
                met Midnight-constanten; na _build_ui() altijd remap naar opgeslagen thema.
 
+· 2026-04-28 14:13 CEST — Versie 3.0 (data-uitbreiding hoge prioriteit):
+               Nieuwe data: solarwind dichtheid (ρ n/cm³), planetaire Kp-index,
+               Kp 48u staafdiagram, X-ray 24u log-grafiek, 3-daagse storm-kans
+               voorspelling (NOAA SWPC), WSPR spot-teller per band in bandbalken.
+               Bottom row uitgebreid naar 4 kolommen: Schema | Bandverloop |
+               Kp 48u | Bz+X-ray gestapeld. Solar paneel: 2 extra parameter-rijen
+               (sw_density, kp_planet) + kleurcodering. Solar panel ook smaller.
+
 · 2026-04-28 13:15 CEST — Versie 3.0: Interface-redesign: wereldkaart centraal in
                het midden (vaste hoogte 380 px, zoom/pan intact); solar-paneel
                verplaatst naar linkerkolom; HF-bandbetrouwbaarheid naar rechterkolom;
@@ -577,14 +585,23 @@ def _safe_request(url: str, timeout: int = 10, headers: dict = None) -> tuple[bo
             return True, r.read()
     except (urllib.error.URLError, socket.timeout, Exception):
         return False, None
-SOLAR_URL    = "https://www.hamqsl.com/solarxml.php"
+SOLAR_URL      = "https://www.hamqsl.com/solarxml.php"
 SW_SPEED_URL   = "https://services.swpc.noaa.gov/products/summary/solar-wind-speed.json"
 SW_MAG_URL     = "https://services.swpc.noaa.gov/products/summary/solar-wind-mag-field.json"
 BZ_1DAY_URL    = "https://services.swpc.noaa.gov/products/solar-wind/mag-1-day.json"
 SPEED_1DAY_URL = "https://services.swpc.noaa.gov/products/solar-wind/plasma-1-day.json"
 # GOES >10 MeV integraalproton flux — meest recente meting (laatste element in array)
 # Formaat: [{time_tag, satellite, flux, channel}, ...] — channel "P5" = >10 MeV
-PROTON_URL   = "https://services.swpc.noaa.gov/json/goes/primary/integral-protons-1-day.json"
+PROTON_URL     = "https://services.swpc.noaa.gov/json/goes/primary/integral-protons-1-day.json"
+# Planetaire Kp-index — 3-uurs blokken, ca. 3 dagen beschikbaar
+# Formaat: [["time_tag","kp","a_running","station_count"], ...]
+KP_INDEX_URL   = "https://services.swpc.noaa.gov/products/noaa-planetary-k-index.json"
+# GOES X-ray flux 1-dag — 1-minuut resolutie, short (0.1-0.8 nm) en long (1-8 nm) kanaal
+# Formaat: [{time_tag, satellite, current_class, current_ratio, ...}, ...]
+XRAY_1DAY_URL  = "https://services.swpc.noaa.gov/json/goes/primary/xrays-1-day.json"
+# 3-daagse geomagnetische storm-kansen — minor (K≥5) / moderate (K≥6) / severe (K≥7)
+# Formaat: [[date_str, minor_pct, moderate_pct, severe_pct], ...]
+STORM_PROB_URL = "https://services.swpc.noaa.gov/products/noaa-geomagnetic-storm-probabilities.json"
 # GIRO/LGDC DIDBase — foF2 van wereldwijde ionosondes
 # Formaat antwoord: TSV met commentaarregels (#); kolommen: Time(UTC)  foF2  QD
 IONO_URL     = ("https://lgdc.uml.edu/common/DIDBGetValues"
@@ -667,6 +684,40 @@ def _fetch_solar() -> dict:
             data["sw_bz"] = f"{float(bz):.1f}" if bz is not None else "—"
         except Exception:
             data["sw_bz"] = "—"
+        # ── Solarwind dichtheid (uit plasma 1-day, eerste entry) ──────────────
+        try:
+            with urllib.request.urlopen(SPEED_1DAY_URL, timeout=6) as r:
+                plasma_rows = json.loads(r.read())
+            # Formaat: [header_row, [time, density, speed, temperature], ...]
+            # Meest recente = laatste rij met geldige density
+            p_entry = None
+            for row in reversed(plasma_rows[1:] if len(plasma_rows) > 1 else []):
+                if isinstance(row, list) and len(row) >= 3:
+                    p_entry = row
+                    break
+            if p_entry:
+                dens = p_entry[1]
+                data["sw_density"] = f"{float(dens):.1f}" if dens not in (None, "null", "") else "—"
+            else:
+                data["sw_density"] = "—"
+        except Exception:
+            data["sw_density"] = "—"
+        # ── Planetaire Kp-index (NOAA SWPC summary) ───────────────────────────
+        try:
+            with urllib.request.urlopen(KP_INDEX_URL, timeout=6) as r:
+                kp_rows = json.loads(r.read())
+            # Laatste rij met geldige Kp-waarde
+            kp_val = None
+            for row in reversed(kp_rows[1:] if len(kp_rows) > 1 else []):
+                if isinstance(row, list) and len(row) >= 2:
+                    try:
+                        kp_val = float(row[1])
+                        break
+                    except (ValueError, TypeError):
+                        continue
+            data["kp_planet"] = f"{kp_val:.2f}" if kp_val is not None else "—"
+        except Exception:
+            data["kp_planet"] = "—"
         # ── Proton flux >10 MeV (GOES SWPC) ───────────────────────────────────
         # Primair: HamQSL XML 'protonflux' veld; backup: NOAA GOES JSON
         pf_hamqsl = sd.findtext("protonflux", "").strip()
@@ -750,6 +801,101 @@ def _fetch_bz_24h() -> list[tuple[float, float]]:
         step = len(pts) // 240
         pts = pts[::step]
     return pts
+
+
+def _fetch_kp_24h() -> list:
+    """Haal planetaire Kp-index op (NOAA, 3-uurs blokken, laatste 24-48u).
+
+    Geeft lijst van (hours_ago, kp); meest recente punt last.
+    """
+    try:
+        with urllib.request.urlopen(KP_INDEX_URL, timeout=8) as r:
+            rows = json.loads(r.read().decode())
+    except Exception:
+        return []
+    # Eerste rij = kolomhoofden: ["time_tag","kp","a_running","station_count"]
+    if not rows or len(rows) < 2:
+        return []
+    now_ts = datetime.datetime.now(datetime.timezone.utc)
+    pts = []
+    for row in rows[1:]:
+        try:
+            ts = datetime.datetime.strptime(row[0][:19], "%Y-%m-%d %H:%M:%S")
+            ts = ts.replace(tzinfo=datetime.timezone.utc)
+            kp = float(row[1])
+            hours_ago = (now_ts - ts).total_seconds() / 3600
+            if hours_ago > 48:
+                continue
+            pts.append((hours_ago, kp))
+        except Exception:
+            continue
+    pts.reverse()
+    return pts
+
+
+def _fetch_xray_24h() -> list:
+    """Haal GOES X-ray flux op (0.1–0.8 nm kanaal, laatste 24u).
+
+    Geeft lijst van (hours_ago, flux_watts); downsampled naar max 120 punten.
+    """
+    try:
+        with urllib.request.urlopen(XRAY_1DAY_URL, timeout=8) as r:
+            rows = json.loads(r.read().decode())
+    except Exception:
+        return []
+    if not rows:
+        return []
+    now_ts = datetime.datetime.now(datetime.timezone.utc)
+    pts = []
+    for entry in rows:
+        try:
+            # Kies het 0.1-0.8nm (short) kanaal: energy "0.1-0.8nm" of "short"
+            if entry.get("energy", "") not in ("0.1-0.8nm", "0.05-0.4nm", "short", ""):
+                continue
+            flux = float(entry.get("flux") or entry.get("observed_flux") or 0)
+            if flux <= 0:
+                continue
+            ts = datetime.datetime.strptime(entry["time_tag"][:19], "%Y-%m-%d %H:%M:%S")
+            ts = ts.replace(tzinfo=datetime.timezone.utc)
+            hours_ago = (now_ts - ts).total_seconds() / 3600
+            if hours_ago > 24:
+                continue
+            pts.append((hours_ago, flux))
+        except Exception:
+            continue
+    pts.reverse()
+    # Downsample naar max 120 punten
+    if len(pts) > 120:
+        step = len(pts) // 120
+        pts = pts[::step]
+    return pts
+
+
+def _fetch_storm_probs() -> list:
+    """Haal 3-daagse geomagnetische storm-kansen op van NOAA SWPC.
+
+    Geeft lijst van dicts {date, minor, moderate, severe} voor 3 dagen.
+    """
+    try:
+        with urllib.request.urlopen(STORM_PROB_URL, timeout=8) as r:
+            rows = json.loads(r.read().decode())
+    except Exception:
+        return []
+    # Formaat: [["DateStamp","Minor","Moderate","Severe"], [date, pct, pct, pct], ...]
+    result = []
+    data_rows = [r for r in rows if isinstance(r, list) and len(r) >= 4
+                 and not str(r[0]).startswith("Date")]
+    for row in data_rows[:3]:
+        try:
+            result.append({
+                "date":     str(row[0]),
+                "minor":    int(row[1]),
+                "moderate": int(row[2]),
+                "severe":   int(row[3]),
+            })
+        except Exception:
+            continue
+    return result
 
 
 # ── Ionosonde helpers ─────────────────────────────────────────────────────────
@@ -1104,6 +1250,12 @@ _T: dict[str, dict[str, str]] = {
     'dx_status_fmt': {"en": '{n} of {total} spots  (HF{filt})  ·  {ts}'},
     'map_display_lbl': {"en": 'Display:'},
     'map_data_lbl':    {"en": 'Data:'},
+    'sw_density_lbl':  {"en": 'SW density (n/cm³)'},
+    'kp_planet_lbl':   {"en": 'Kp (planetary)'},
+    'storm_forecast_hdr': {"en": 'Storm forecast (3d)'},
+    'kp_chart_hdr':    {"en": 'Kp  48h (3h blocks)'},
+    'xray_chart_hdr':  {"en": 'X-ray  24h'},
+    'wspr_lbl':        {"en": 'W'},
     'map_nolib': {"en": 'pip install pillow  for map display'},
     'map_downloading': {"en": '⬇ Downloading NASA map…'},
     'distance_lbl': {"en": 'Distance'},
@@ -1271,6 +1423,16 @@ _SOLAR_TIPS: dict[str, tuple[str, str]] = {
                    "of the interplanetary magnetic field (IMF).\n"
                    "Bz < −10 nT: risk of geomagnetic storm increases strongly.\n"
                    "Negative Bz couples to the Earth's field → higher K-index."),
+    "sw_density": ("Solar wind proton density (n/cm³)",
+                   "Number of protons per cubic centimetre in the solar wind.\n"
+                   "< 5: low  |  5–15: normal  |  > 15: elevated\n"
+                   "High density amplifies geomagnetic effects of a CME.\n"
+                   "Combined with speed: ram pressure = ½ × ρ × v²."),
+    "kp_planet":  ("Planetary K-index (Kp)",
+                   "Global 3-hour geomagnetic activity index averaged over 13 stations.\n"
+                   "0–2: quiet  |  3–4: unsettled  |  5: minor storm (G1)\n"
+                   "6: moderate (G2)  |  7: strong (G3)  |  ≥ 8: severe/extreme\n"
+                   "More representative than a single local K-index."),
     "iono_fof2":  ("Ionosonde foF2 — measured vs model (MHz)",
                    "foF2 = critical frequency of the F2-layer (ionosonde measurement).\n"
                    "Measured: current value from nearest European ionosonde\n"
@@ -2067,6 +2229,8 @@ class HAMIOSApp:
         # Canvas-panelen opnieuw tekenen (kolom headers, labels, statusteksten)
         self._draw_prop_bars(self._last_band_pct)
         self._filter_dx_spots()
+        self._draw_kp_bars(getattr(self, "_last_kp_pts", []))
+        self._draw_xray_graph(getattr(self, "_last_xray_pts", []))
         # Advice opnieuw renderen bij taalwissel
         self._update_advice()
 
@@ -2866,15 +3030,27 @@ class HAMIOSApp:
             ("luf",         "LUF (MHz)"),
             ("sw_speed",    "Solarwind (km/s)"),
             ("sw_bz",       "Bz (nT)"),
+            ("sw_density",  None),      # None → via tr-sleutel
+            ("kp_planet",   None),      # None → via tr-sleutel
             ("iono_fof2",   None),      # None → dynamisch label via StringVar
         ]:
             row = tk.Frame(self._solar_frame, bg=BG_PANEL)
             row.pack(fill=tk.X, pady=2)
-            if label is None:
+            # Vertaalde labels voor nieuwe parameters
+            _TR_LABELS = {
+                "sw_density": "sw_density_lbl",
+                "kp_planet":  "kp_planet_lbl",
+            }
+            if key == "iono_fof2":
                 # Ionosonde-rij: label tekst is dynamisch
                 lbl = tk.Label(row, textvariable=self._iono_station_var,
                                font=_font(8), bg=BG_PANEL,
                                fg=TEXT_DIM, anchor='w', width=14, cursor="question_arrow")
+            elif key in _TR_LABELS:
+                lbl = tk.Label(row, text=self._tr(_TR_LABELS[key]) + ":",
+                               font=_font(8), bg=BG_PANEL,
+                               fg=TEXT_DIM, anchor='w', width=14, cursor="question_arrow")
+                self._tr_widgets[_TR_LABELS[key]] = lbl
             else:
                 lbl = tk.Label(row, text=label + ":", font=_font(8), bg=BG_PANEL,
                                fg=TEXT_DIM, anchor='w', width=14, cursor="question_arrow")
@@ -2924,6 +3100,20 @@ class HAMIOSApp:
         # Scheidingslijn onder de bandentabel
         tk.Frame(self._solar_frame, bg=BORDER, height=1).pack(fill=tk.X, pady=(4, 2))
 
+        # ── 3-daagse storm-kans voorspelling ─────────────────────────────────
+        _fc_hdr = tk.Label(self._solar_frame, text=self._tr("storm_forecast_hdr"),
+                           font=_font(8, "bold"), bg=BG_PANEL, fg=ACCENT, anchor='w')
+        _fc_hdr.pack(fill=tk.X, pady=(0, 1))
+        self._tr_widgets["storm_forecast_hdr"] = _fc_hdr
+        self._storm_fc_vars = []
+        for _ in range(3):
+            var = tk.StringVar(value="—")
+            lbl = tk.Label(self._solar_frame, textvariable=var,
+                           font=_font(7), bg=BG_PANEL, fg=TEXT_DIM, anchor='w')
+            lbl.pack(fill=tk.X)
+            self._storm_fc_vars.append(var)
+        tk.Frame(self._solar_frame, bg=BORDER, height=1).pack(fill=tk.X, pady=(3, 2))
+
         # ── HF Bandsegment rechts (vaste breedte) ────────────────────────────
         right_col = tk.Frame(top_row, bg=BG_PANEL, width=420)
         right_col.pack(side=tk.LEFT, fill=tk.Y, padx=(8, 8))
@@ -2935,7 +3125,7 @@ class HAMIOSApp:
         center_col.pack(side=tk.LEFT, fill=tk.BOTH, expand=True, padx=(0, 0))
         self._build_map_panel(center_col)
 
-        # ── Onderste rij: Schema | Bandverloop | Bz ───────────────────────────
+        # ── Onderste rij: Schema | Bandverloop | Kp 48u | Bz + X-ray ──────────
         bottom_row = tk.Frame(left_area, bg=BG_ROOT)
         bottom_row.pack(fill=tk.X, expand=False, pady=(8, 0))
 
@@ -2947,9 +3137,13 @@ class HAMIOSApp:
         hist_col.pack(side=tk.LEFT, fill=tk.BOTH, expand=True, padx=(6, 6))
         self._build_hist_panel(hist_col)
 
-        bz_col = tk.Frame(bottom_row, bg=BG_ROOT)
-        bz_col.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
-        self._build_bz_panel(bz_col)
+        kp_col = tk.Frame(bottom_row, bg=BG_ROOT)
+        kp_col.pack(side=tk.LEFT, fill=tk.BOTH, expand=True, padx=(0, 6))
+        self._build_kp_panel(kp_col)
+
+        bz_xray_col = tk.Frame(bottom_row, bg=BG_ROOT)
+        bz_xray_col.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
+        self._build_bz_xray_panel(bz_xray_col)
 
         # ── Advies: volledige breedte onderin left_area ──────────────────────
         self._build_advice_panel(left_area)
@@ -3783,6 +3977,211 @@ class HAMIOSApp:
         self._bz_canvas.bind("<Motion>", _bz_on_motion)
         self._bz_canvas.bind("<Leave>",  _bz_on_leave)
 
+    def _build_kp_panel(self, parent):
+        """Planetaire Kp-index 48-uurs staafdiagram."""
+        outer = tk.Frame(parent, bg=BG_PANEL)
+        outer.pack(fill=tk.BOTH, expand=True)
+        tk.Frame(outer, bg=ACCENT, height=2).pack(fill=tk.X)
+        _kp_hdr = tk.Label(outer, text=self._tr("kp_chart_hdr"),
+                           font=_font(10, "bold"), bg=BG_PANEL, fg=ACCENT, pady=4)
+        _kp_hdr.pack(anchor='w', padx=10)
+        self._tr_widgets["kp_chart_hdr"] = _kp_hdr
+        self._kp_canvas = tk.Canvas(outer, height=90, bg=BG_SURFACE,
+                                    bd=0, highlightthickness=0)
+        self._kp_canvas.pack(fill=tk.BOTH, expand=True, padx=10, pady=(0, 6))
+        self._kp_canvas.bind("<Configure>",
+                             lambda *_: self._draw_kp_bars(
+                                 getattr(self, "_last_kp_pts", [])))
+
+    def _build_bz_xray_panel(self, parent):
+        """Gecombineerd paneel: Bz 24u (boven) + X-ray 24u (onder)."""
+        outer = tk.Frame(parent, bg=BG_PANEL)
+        outer.pack(fill=tk.BOTH, expand=True)
+        tk.Frame(outer, bg=ACCENT, height=2).pack(fill=tk.X)
+
+        # Bz sectie
+        _bz_hdr = tk.Label(outer, text=self._tr("bz_chart_hdr"),
+                           font=_font(9, "bold"), bg=BG_PANEL, fg=ACCENT, pady=2)
+        _bz_hdr.pack(anchor='w', padx=10)
+        self._tr_widgets["bz_chart_hdr"] = _bz_hdr
+        self._bz_canvas = tk.Canvas(outer, height=80, bg=BG_SURFACE,
+                                    bd=0, highlightthickness=0)
+        self._bz_canvas.pack(fill=tk.BOTH, expand=True, padx=10, pady=(0, 4))
+        self._bz_canvas.bind("<Configure>",
+                             lambda *_: self._draw_bz_graph(
+                                 getattr(self, "_last_bz_pts", [])))
+
+        tk.Frame(outer, bg=BORDER, height=1).pack(fill=tk.X, padx=10)
+
+        # X-ray sectie
+        _xr_hdr = tk.Label(outer, text=self._tr("xray_chart_hdr"),
+                           font=_font(9, "bold"), bg=BG_PANEL, fg=ACCENT, pady=2)
+        _xr_hdr.pack(anchor='w', padx=10)
+        self._tr_widgets["xray_chart_hdr"] = _xr_hdr
+        self._xray_canvas = tk.Canvas(outer, height=80, bg=BG_SURFACE,
+                                      bd=0, highlightthickness=0)
+        self._xray_canvas.pack(fill=tk.BOTH, expand=True, padx=10, pady=(0, 6))
+        self._xray_canvas.bind("<Configure>",
+                               lambda *_: self._draw_xray_graph(
+                                   getattr(self, "_last_xray_pts", [])))
+
+    def _draw_kp_bars(self, pts: list):
+        """Teken planetaire Kp-index als staafdiagram (3u blokken, 48u)."""
+        self._last_kp_pts = pts
+        if not hasattr(self, "_kp_canvas"):
+            return
+        c = self._kp_canvas
+        c.update_idletasks()
+        W = c.winfo_width()  or 200
+        H = c.winfo_height() or 100
+        c.delete("all")
+        c.create_rectangle(0, 0, W, H, fill=BG_SURFACE, outline="")
+
+        if not pts:
+            c.create_text(W // 2, H // 2, text="—", fill=TEXT_DIM,
+                          font=("Consolas", 9))
+            return
+
+        PAD_L, PAD_R, PAD_T, PAD_B = 20, 4, 4, 14
+        gW = W - PAD_L - PAD_R
+        gH = H - PAD_T - PAD_B
+        KP_MAX = 9.0
+
+        # Y-as: 0, 3, 5, 7, 9
+        for kp_ref, lbl in [(0, "0"), (3, "3"), (5, "5"), (7, "7"), (9, "9")]:
+            yr = PAD_T + int(gH * (1.0 - kp_ref / KP_MAX))
+            c.create_line(PAD_L, yr, W - PAD_R, yr, fill=BORDER, dash=(2, 4))
+            c.create_text(PAD_L - 2, yr, text=lbl, fill=TEXT_DIM,
+                          font=("Consolas", 7), anchor='e')
+
+        # Storm-drempel lijn (Kp ≥ 5)
+        y5 = PAD_T + int(gH * (1.0 - 5.0 / KP_MAX))
+        c.create_line(PAD_L, y5, W - PAD_R, y5, fill="#FFA726", dash=(4, 2), width=1)
+
+        # Staafbreedte op basis van tijdsduur (~3u blokken over 48u)
+        n = len(pts)
+        bar_w = max(2, gW // max(n, 1))
+
+        for i, (hours_ago, kp) in enumerate(pts):
+            # Positie: meest recente rechts
+            x_right = PAD_L + int(gW * (1.0 - hours_ago / 48))
+            x_left  = x_right - bar_w + 1
+            if x_left < PAD_L:
+                x_left = PAD_L
+            bar_h = int(gH * min(kp, KP_MAX) / KP_MAX)
+            y_top = PAD_T + gH - bar_h
+
+            if kp >= 7:
+                color = "#EF5350"
+            elif kp >= 5:
+                color = "#FFA726"
+            elif kp >= 3:
+                color = "#FFF176"
+            else:
+                color = "#4FC3F7"
+
+            if bar_h > 0:
+                c.create_rectangle(x_left, y_top, x_right, PAD_T + gH,
+                                   fill=color, outline="")
+
+        # Tijdlabels
+        c.create_text(PAD_L, H - PAD_B + 2, text="48h",
+                      fill=TEXT_DIM, font=("Consolas", 7), anchor='nw')
+        c.create_text(W - PAD_R, H - PAD_B + 2, text="nu",
+                      fill=TEXT_DIM, font=("Consolas", 7), anchor='ne')
+        # Huidige Kp-waarde
+        if pts:
+            last_kp = pts[-1][1]
+            clr = "#EF5350" if last_kp >= 7 else ("#FFA726" if last_kp >= 5 else
+                  ("#FFF176" if last_kp >= 3 else "#4FC3F7"))
+            c.create_text(W - PAD_R - 2, PAD_T,
+                          text=f"{last_kp:.1f}", fill=clr,
+                          font=("Consolas", 7, "bold"), anchor='ne')
+
+    def _draw_xray_graph(self, pts: list):
+        """Teken GOES X-ray flux 24u op log-schaal (0.1-0.8 nm kanaal)."""
+        self._last_xray_pts = pts
+        if not hasattr(self, "_xray_canvas"):
+            return
+        c = self._xray_canvas
+        c.update_idletasks()
+        W = c.winfo_width()  or 200
+        H = c.winfo_height() or 100
+        c.delete("all")
+        c.create_rectangle(0, 0, W, H, fill=BG_SURFACE, outline="")
+
+        if not pts:
+            c.create_text(W // 2, H // 2, text="—", fill=TEXT_DIM,
+                          font=("Consolas", 9))
+            return
+
+        import math as _math
+        PAD_L, PAD_R, PAD_T, PAD_B = 20, 4, 4, 12
+        gW = W - PAD_L - PAD_R
+        gH = H - PAD_T - PAD_B
+
+        # Log-schaal: A=10⁻⁸, B=10⁻⁷, C=10⁻⁶, M=10⁻⁵, X=10⁻⁴
+        LOG_MIN = -8.5   # net onder A-klasse
+        LOG_MAX = -3.5   # net boven X10
+
+        _CLASS_BOUNDS = [("A", -8, TEXT_DIM), ("B", -7, "#4FC3F7"),
+                         ("C", -6, "#66BB6A"), ("M", -5, "#FFA726"),
+                         ("X", -4, "#EF5350")]
+        for cls, log_v, col in _CLASS_BOUNDS:
+            yr = PAD_T + int(gH * (1.0 - (log_v - LOG_MIN) / (LOG_MAX - LOG_MIN)))
+            if PAD_T <= yr <= PAD_T + gH:
+                c.create_line(PAD_L, yr, W - PAD_R, yr, fill=BORDER, dash=(2, 4))
+                c.create_text(PAD_L - 2, yr, text=cls, fill=col,
+                              font=("Consolas", 7), anchor='e')
+
+        def flux_to_y(f):
+            if f <= 0:
+                return PAD_T + gH
+            log_f = _math.log10(f)
+            log_f = max(LOG_MIN, min(LOG_MAX, log_f))
+            return PAD_T + int(gH * (1.0 - (log_f - LOG_MIN) / (LOG_MAX - LOG_MIN)))
+
+        def t_to_x(hours_ago):
+            return PAD_L + int(gW * (1.0 - min(hours_ago, 24) / 24))
+
+        # Lijn tekenen
+        prev = None
+        for hours_ago, flux in pts:
+            x = t_to_x(hours_ago)
+            y = flux_to_y(flux)
+            log_f = _math.log10(flux) if flux > 0 else LOG_MIN
+            if log_f >= -5:
+                color = "#EF5350"   # M/X klasse
+            elif log_f >= -6:
+                color = "#FFA726"   # C klasse
+            else:
+                color = "#66BB6A"   # A/B klasse
+            if prev and abs(x - prev[0]) < 20:
+                c.create_line(prev[0], prev[1], x, y, fill=color, width=1)
+            prev = (x, y)
+
+        # Huidige waarde en klasse
+        if pts:
+            last_flux = pts[-1][1]
+            if last_flux >= 1e-4:
+                cls_str, cls_col = f"X{last_flux/1e-4:.1f}", "#EF5350"
+            elif last_flux >= 1e-5:
+                cls_str, cls_col = f"M{last_flux/1e-5:.1f}", "#FFA726"
+            elif last_flux >= 1e-6:
+                cls_str, cls_col = f"C{last_flux/1e-6:.1f}", "#FFF176"
+            elif last_flux >= 1e-7:
+                cls_str, cls_col = f"B{last_flux/1e-7:.1f}", "#4FC3F7"
+            else:
+                cls_str, cls_col = f"A{last_flux/1e-8:.1f}", TEXT_DIM
+            c.create_text(W - PAD_R - 2, PAD_T,
+                          text=cls_str, fill=cls_col,
+                          font=("Consolas", 7, "bold"), anchor='ne')
+
+        c.create_text(PAD_L, H - PAD_B + 2, text="24h",
+                      fill=TEXT_DIM, font=("Consolas", 7), anchor='nw')
+        c.create_text(W - PAD_R, H - PAD_B + 2, text=self._tr("bz_now_lbl"),
+                      fill=TEXT_DIM, font=("Consolas", 7), anchor='ne')
+
     def _build_prop_panel(self, parent):
         outer = tk.Frame(parent, bg=BG_PANEL)
         outer.pack(fill=tk.BOTH, expand=True, pady=(0, 0))
@@ -3888,9 +4287,11 @@ class HAMIOSApp:
         PCT_W   = 40
         FREQ_W  = 58
         MODES_W = 80
-        FT8_W   = 58
+        FT8_W   = 54
+        WSPR_W  = 34   # kolom voor WSPR spot-teller
         BAR_X   = LABEL_W + 4
-        BAR_MAX = max(40, W - BAR_X - PCT_W - FREQ_W - MODES_W - FT8_W - 10)
+        BAR_MAX = max(40, W - BAR_X - PCT_W - FREQ_W - MODES_W - FT8_W - WSPR_W - 10)
+        wspr_counts = getattr(self, "_wspr_band_counts", {})
 
         def _gradient_fill(x1, y1, x2, y2, color):
             """Gradiëntbalk: heldere bandkleur boven → 50% donkerder onder."""
@@ -3918,7 +4319,8 @@ class HAMIOSApp:
         _hdr(BAR_X + BAR_MAX,                             PCT_W,   "%")
         _hdr(BAR_X + BAR_MAX + PCT_W,                     FREQ_W,  self._tr("hf_col_start"))
         _hdr(BAR_X + BAR_MAX + PCT_W + FREQ_W,            MODES_W, self._tr("hf_col_mode"))
-        _hdr(BAR_X + BAR_MAX + PCT_W + FREQ_W + MODES_W,  FT8_W,   "FT8")
+        _hdr(BAR_X + BAR_MAX + PCT_W + FREQ_W + MODES_W,               FT8_W,  "FT8")
+        _hdr(BAR_X + BAR_MAX + PCT_W + FREQ_W + MODES_W + FT8_W,     WSPR_W, "W")
 
         hf_pct = [(n, f, p) for n, f, p in band_pct if p != -1]
         for i, entry in enumerate(hf_pct):
@@ -3992,6 +4394,18 @@ class HAMIOSApp:
                           y + BAR_H // 2,
                           text=ft8, font=(_FONT_SANS, 8),
                           fill=ACCENT if ft8 != "—" else TEXT_DIM, anchor='center')
+
+            # WSPR spot-teller — klein, grijs als 0, geel als actief
+            w_cnt = wspr_counts.get(name, 0)
+            w_x   = BAR_X + BAR_MAX + PCT_W + FREQ_W + MODES_W + FT8_W + WSPR_W // 2
+            if w_cnt:
+                c.create_text(w_x, y + BAR_H // 2,
+                              text=str(w_cnt), font=(_FONT_SANS, 8, "bold"),
+                              fill=ACCENT, anchor='center')
+            else:
+                c.create_text(w_x, y + BAR_H // 2,
+                              text="·", font=(_FONT_SANS, 8),
+                              fill=TEXT_DIM, anchor='center')
 
             self._bar_rows.append((y, y + BAR_H, tip))
             self._bar_band_rows.append((y, y + BAR_H, name, freq))
@@ -4654,8 +5068,17 @@ class HAMIOSApp:
 
     def _on_wspr_spots(self, spots: list):
         self._wspr_spots = spots
+        # Tel spots per band voor weergave in bandbalken
+        counts: dict = {}
+        for s in spots:
+            b = s.get("band", "")
+            if b:
+                counts[b] = counts.get(b, 0) + 1
+        self._wspr_band_counts = counts
         if self._show_wspr_var.get():
             self._draw_map()
+        # Bandbalken hertekenen zodat WSPR-tellers direct zichtbaar zijn
+        self._draw_prop_bars(self._last_band_pct)
         self._schedule_wspr()
 
     def _schedule_wspr(self):
@@ -5405,6 +5828,10 @@ class HAMIOSApp:
         data["iono_station"] = iono["station"]
         # Bz 24-uurs geschiedenis
         data["bz_history"]   = _fetch_bz_24h()
+        # Nieuwe data: Kp-historiek, X-ray, storm-kansen
+        data["kp_history"]   = _fetch_kp_24h()
+        data["xray_history"] = _fetch_xray_24h()
+        data["storm_probs"]  = _fetch_storm_probs()
         self.root.after(0, lambda: self._update_net_indicator(net_ok))
         self.root.after(0, lambda: self._update_solar(data))
 
@@ -5519,9 +5946,60 @@ class HAMIOSApp:
             self._iono_station_var.set(f"foF2 {short}:")
 
 
+        # ── Kp-kleur: storm-kleuring ─────────────────────────────────────────
+        try:
+            kp_p = float(data.get("kp_planet", "0").replace("—", "0"))
+            if kp_p >= 7:
+                kp_color = "#EF5350"   # rood — severe storm
+            elif kp_p >= 5:
+                kp_color = "#FFA726"   # oranje — storm
+            elif kp_p >= 3:
+                kp_color = "#FFF176"   # geel — onrustig
+            else:
+                kp_color = TEXT_H1
+            if hasattr(self, "_solar_val_lbls") and "kp_planet" in self._solar_val_lbls:
+                self._solar_val_lbls["kp_planet"].config(fg=kp_color)
+        except (ValueError, TypeError):
+            pass
+
+        # ── Solarwind dichtheid — kleur op basis van niveau ─────────────────
+        try:
+            dens = float(data.get("sw_density", "0").replace("—", "0"))
+            if dens > 15:
+                dens_color = "#FFA726"
+            elif dens > 5:
+                dens_color = TEXT_H1
+            else:
+                dens_color = TEXT_DIM
+            if hasattr(self, "_solar_val_lbls") and "sw_density" in self._solar_val_lbls:
+                self._solar_val_lbls["sw_density"].config(fg=dens_color)
+        except (ValueError, TypeError):
+            pass
+
+        # ── 3-daagse storm-kans weergave ─────────────────────────────────────
+        if hasattr(self, "_storm_fc_vars"):
+            probs = data.get("storm_probs", [])
+            days = ["Morgen", "Overmorgen", "Dag 3"]
+            for i, var in enumerate(self._storm_fc_vars):
+                if i < len(probs):
+                    p = probs[i]
+                    d = str(p.get("date", ""))[-5:]  # MM-DD
+                    mn, mo, sv = p.get("minor", 0), p.get("moderate", 0), p.get("severe", 0)
+                    var.set(f"{days[i]} ({d}): K5={mn}% K6={mo}% K7={sv}%")
+                else:
+                    var.set("—")
+
         # ── Bz 24-uurs grafiek ────────────────────────────────────────────────
         if "bz_history" in data:
             self._draw_bz_graph(data["bz_history"])
+
+        # ── Kp 48-uurs staafdiagram ───────────────────────────────────────────
+        if "kp_history" in data:
+            self._draw_kp_bars(data["kp_history"])
+
+        # ── X-ray 24-uurs grafiek ─────────────────────────────────────────────
+        if "xray_history" in data:
+            self._draw_xray_graph(data["xray_history"])
 
         self._recalc_prop(auto_daynight=True)
         self.root.after(0, self._draw_map)
