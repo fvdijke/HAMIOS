@@ -19,109 +19,32 @@ Dependencies:
 ─────────────────────────────────────────────────────────────────────
 Todo
 ─────────────────────────────────────────────────────────────────────
-- [x] UX: Interactieve kaart (klik bestemming → bereken prop + teken hop-lijn)
-- [x] UX: Thema-configuratie (ondersteuning voor meerdere donkere thema's/high-contrast)
-- [x] Data: Uitbreiden ionosonde-netwerk naar wereldwijde stations
-- [x] Data: Voorspellend model toevoegen op basis van 48u trendanalyse
-- [x] Data: WSPR filters implementeren (SNR drempel, band-selectie)
-- [x] Stab: Implementeren van "Offline" indicator bij netwerkuitval
-- [x] Stab: Validatie toevoegen aan HAMIOS.ini loading process
 - [ ] CAT: Retry-mechanisme voor seriële poorten implementeren en _CAT_DISABLED op False zetten
-- [x] Vis: Heatmap implementeren voor historische DX-spot activiteit
-- [x] Vis: We gaan verder met versie 3.0. Deze versie is volledig geent op hetr verbeteren van de interface.
-           Maak een nieuw ontwerp voor de interface waarbij de wereldkaart min of meer centraal staat.
-           Het formaat van deze kaart is altijd hetzelfde. Wel moet je nog steeds kunnen zoomen en pannen.
-           Zet de selectievakjes op logische plekken. Zet data die gerelateerd is aan ellkaar ook bij elkaar.
-           Zorg dat grafieken goed leesbaar zijn. Maak de bandgrafieken mooier.
-           Kijk ook of je de band balken aantrekkelijker kan maken.
-- [x] Vis: Melding selecties kunnen onder de overige selectie vakjes in het map paneel.
-- [x] Vis: Voer een vierde kolom toe voor de DX Spot en zet alle DX spot functies weer aan. Laat de breedte van alle overige kolommen hetzelfde.
-           Het totaal scherm mag dus wel breder worden.
-- [x] Vis: Voeg een tooltip toe aan de Bz grafiek en maak de grafiek ook aantrekkelijker en duidelijker. Formaal moet hetzelfde blijven.
-- [x] Vis: Maak de kolommen in de eerste row net zo breed als de kolommen in de tweede row. De map moet dam wel geresized worden zodat deze neg zo breed is als de tweede kolom.
-- [x] Vis: Schakelen tussen thema's werkt niet goed. Thema's blijven hangen.
-- [x] Vis: Verplaats de solar/ionosfeer info naar het DX paneel en zet een scheidingslijn (goud) tussen de verschillende blokken.
-- [x] Vis: Verwijder de eerste kolom van de bovenste rij (links).
-- [x] Vis: Zet HF band betrouwbaarheid als eerste kolom in bovenste rij en maak deze net zo breed als Band opening schema.
-- [x] Vis: Maak wereldkaart net zo breed als kolom 2 + 3 van de tweede rij.
-- [x] Vis: Zet selectievakjes onder HF betrouwbaarheid met scheidingslijn
 
+- [ ] Vis: Maak voor alle data panels tooltips met een korte uitleg van de gepresenteerde data. Doe dit voor alle talen.
+- [ ] Vis: Voeg een optie toe om de wereldkaart te croppen zodat de graticule-labels altijd zichtbaar zijn (nu verdwijnen ze bij zoom/pan).
+- [ ] Vis: Voeg een optie toe om de DX spots heatmap te tonen in plaats van de lijst (toggle-knop in DX paneel). De heatmap toont spot-activiteit per band × UTC-uur (24h historiekbuffer), met kleurcodering op intensiteit en spottellingen zichtbaar in cellen.
+- [ ] Vis: Verbeter de bandbalken: maak ze 22 px hoog, met een gradient en band-eigen kleur (in plaats van grijs). Voeg ook een tooltip toe aan elke band met uitleg van de huidige betrouwbaarheidsscore en de betekenis van de kleur.
+- [ ] Vis: Voeg een optie toe om de ITU-regio-overlay te tonen (R1/R2/R3 lijnen en labels). De huidige overlay is verouderd en onduidelijk, dus deze moet worden herzien.
+- [ ] Visdesign: Maak een nieuw logo voor HAMIOS en voeg dit toe aan de app-header en systeemtray-icoon. Zorg dat het logo ook goed werkt in verschillende thema's (Midnight/DeepOcean/HighContrast).
+- [ ] Stab: Voeg een foutafhandelingsmechanisme toe voor netwerkfouten bij het ophalen van data, met duidelijke foutmeldingen in de UI en automatische retries. Zorg dat de app niet crasht bij tijdelijke netwerkproblemen.
+- [ ] Stab: Implementeer een geavanceerd caching-mechanisme voor opgehaalde data, zodat de app ook bij netwerkuitval recente data kan tonen. Cache moet automatisch verversen bij succesvolle data-fetches en verouderde cache-items moeten worden verwijderd.
+- [ ] Stab: Voeg een optionele functie toe voor automatische updates van de app, waarbij gebruikers kunnen kiezen om automatisch te updaten naar nieuwe versies of handmatig te controleren op updates. Zorg dat het updateproces veilig en betrouwbaar is, met duidelijke instructies voor gebruikers.
+- [ ] Stab: Implementeer een uitgebreid loggingsysteem voor foutopsporing en gebruikersfeedback, met verschillende logniveaus (info, warning, error) en de mogelijkheid om logbestanden te exporteren voor analyse. Zorg dat gevoelige informatie niet in logs wordt opgenomen.
+- [ ] Stab: Voeg een gebruikershandleiding toe binnen de app, met uitleg van alle functies en instellingen, en een FAQ-sectie voor veelvoorkomende vragen. Zorg dat de handleiding gemakkelijk toegankelijk is vanuit het menu en goed gestructureerd is voor snelle navigatie. In alle talen
+- [ ] Git: Update alle readme's en documentatie op GitHub met de nieuwe functies en wijzigingen in v3.0. Zorg dat de changelog duidelijk de nieuwe features, verbeteringen en bugfixes beschrijft, evenals eventuele breaking changes of belangrijke aandachtspunten voor gebruikers die upgraden van eerdere versies.
+- [ ] Git: Maak een nieuwe release op GitHub voor v3.1, met een gedetailleerde beschrijving van de release en de changelog. Zorg dat de release ook de juiste tags bevat en dat eventuele binaire bestanden (zoals executables) correct zijn geüpload.
+- [ ] Git: Implementeer een CI/CD-pijplijn voor automatische tests en builds bij elke commit, zodat nieuwe versies van de app snel en betrouwbaar kunnen worden uitgebracht. Zorg dat de pijplijn ook automatisch de changelog bijwerkt en een nieuwe release aanmaakt op GitHub wanneer een nieuwe versie wordt gemerged naar de main branch.
+- [ ] Git: Voeg een sectie toe aan de readme met instructies voor ontwikkelaars die willen bijdragen aan het project, inclusief richtlijnen voor code-stijl, pull requests en het gebruik van branches. Zorg dat deze sectie duidelijk en uitnodigend is, om meer bijdragen van de community aan te moedigen.
+- [ ] Git: Implementeer een systeem voor het bijhouden van issues en feature requests op GitHub, met duidelijke labels en een gestructureerde workflow voor het behandelen van nieuwe issues. Zorg dat gebruikers gemakkelijk bugs kunnen melden en nieuwe functies kunnen voorstellen, en dat er een transparant proces is voor het prioriteren en oplossen van deze items.
+- [ ] Info: Pas de applicaite omschrijving aan vanaf regel 5
+- [ ] Info: Vertaal alle Nederlandse verklarende teksten in do code naar engels
+- [ ] 
 
 ─────────────────────────────────────────────────────────────────────
-Change Log (3.0)
+Change Log (3.1)
 ─────────────────────────────────────────────────────────────────────
-· 2026-04-25 16:15 CEST — Cross-platform: platform-detectie (_IS_MAC/_IS_WIN);
-               _FONT_SANS (Helvetica Neue/Segoe UI/DejaVu Sans) en _FONT_MONO
-               (Menlo/Consolas/DejaVu Sans Mono) vervangen alle hardcoded fontnamen.
-               Tooltip-vensters krijgen -topmost True op macOS (Sequoia-fix).
-               DX-canvas scroll: Button-4/5 bindings toegevoegd voor Linux;
-               muiswiel-richting via event.num/delta werkt nu op alle platforms.
 
-· 2026-04-25 15:30 CEST — Versie 3.0 (vervolg): DX Spots als vierde kolom in top_row
-               (breedte 300 px, fill=Y, alle DX-functies actief).
-               Bottom_row kolommen uitgelijnd: sched_col=230 px (=solar), bz_col=310 px
-               (=HF), hist_col expandeert vrij → map en hist visueel gelijkbreedte.
-               Meldingen (K-index/band-alert) verplaatst van solar-paneel naar rij 3 van
-               de kaartoverlays (map panel), onder WSPR/Spots/CS/Locator.
-               Bz grafiek verbeterd: hoogte 90→120 px; area-fill (blauw/rood tint);
-               horizontale gridlijnen bij ±20/±40; tijdgridlijnen 6/12/18h; Y-as lijn;
-               cursor-tooltip bij muisbeweging (Bz-waarde + tijdstip); lijndikte 2 px.
-               Thema-fix: _apply_theme() gebruikt nu kleur-remap van vorig→nieuw thema
-               (THEMES lookup), zodat herhaalschakelingen correct werken. UI gebouwd
-               met Midnight-constanten; na _build_ui() altijd remap naar opgeslagen thema.
-
-· 2026-04-29 14:39 CEST — Versie 3.0 (interface todo-items afgerond):
-               Solar/ionosfeer verplaatst naar DX-paneel (_build_solar_section);
-               gouden scheidingslijnen (ACCENT, 2 px) tussen blokken in DX-paneel.
-               Solar kolom verwijderd uit top_row. top_row omgeschakeld naar
-               tkinter grid (4 gelijke kolommen, uniform="lc"): HF Betrouwbaarheid
-               in col 0 (= breedte Schema), Kaart in col 1-2 (= Bandverloop+Kp),
-               col 3 leeg boven Bz+Xray. Selectievakjes (Weergave/Data/Meldingen)
-               verplaatst van kaartpaneel naar onder HF Betrouwbaarheid met gouden
-               scheidingslijn. Alle 5 open Vis-todo items afgevinkt.
-
-· 2026-04-28 14:13 CEST — Versie 3.0 (data-uitbreiding hoge prioriteit):
-               Nieuwe data: solarwind dichtheid (ρ n/cm³), planetaire Kp-index,
-               Kp 48u staafdiagram, X-ray 24u log-grafiek, 3-daagse storm-kans
-               voorspelling (NOAA SWPC), WSPR spot-teller per band in bandbalken.
-               Bottom row uitgebreid naar 4 kolommen: Schema | Bandverloop |
-               Kp 48u | Bz+X-ray gestapeld. Solar paneel: 2 extra parameter-rijen
-               (sw_density, kp_planet) + kleurcodering. Solar panel ook smaller.
-
-· 2026-04-28 13:15 CEST — Versie 3.0: Interface-redesign: wereldkaart centraal in
-               het midden (vaste hoogte 380 px, zoom/pan intact); solar-paneel
-               verplaatst naar linkerkolom; HF-bandbetrouwbaarheid naar rechterkolom;
-               Onderste rij: 3 gelijke kolommen (Schema | Bandverloop | Bz grafiek),
-               allen expand=True zodat hoogte en breedte automatisch gelijk zijn.
-               Bz-grafiek als zelfstandig paneel (_build_bz_panel), hoogte dynamisch.
-               Map-paneel outer fill=BOTH→gelijke hoogte top-rij; center_col/right_col
-               achtergrond BG_PANEL. Graticule-labels aangepast aan crop_t zodat
-               graden altijd zichtbaar zijn. DX Spots en PCA/flux-meldingen verwijderd.
-               Bandbalken vernieuwd: 22 px, gradient, band-eigen kleur. 2.5 → 3.0.
-
-Change Log (2.5)
-─────────────────────────────────────────────────────────────────────
-· 2026-04-25 11:05 CEST — Versie 2.5: Ionosonde-netwerk uitgebreid van 6 Europese naar
-               21 wereldwijde stations (Europa, Noord- en Zuid-Amerika, Afrika,
-               Azië, Australazië); _nearest_iono_station kiest automatisch het
-               dichtstbijzijnde station op basis van QTH.
-               Offline-indicator: ⚠ OFFLINE-label in header verschijnt bij
-               netwerkfout in solar-fetch; verdwijnt zodra verbinding hersteld is.
-               DX-spot heatmap: toggle-knop "Heatmap" in DX Spots panel wisselt
-               tussen spotenlijst en band × UTC-uur heatmap (24h historiekbuffer).
-               Intensiteitskleur per band; spottellingen zichtbaar in cellen.
-
-Change Log (2.4)
-─────────────────────────────────────────────────────────────────────
-· 2026-04-25 10:58 CEST — Versie 2.4: ThemeManager geïntegreerd (Midnight/DeepOcean/
-               HighContrast); dynamische thema-switching via header-menu; recursieve
-               kleurtoepassing op alle widgets; opslag van thema-keuze in HAMIOS.ini.
-               Interactieve kaart: klik op bestemming toont groot-cirkelpad (kleur
-               bepaald door beste propagatieband) + afstand/richting.
-               Propagatietrend-advieskaart op basis van SFI/K/band-historiek.
-               WSPR SNR-drempel en band-filter instelbaar via _fetch_wspr_spots().
-               CONFIG_SCHEMA validatielaag voor HAMIOS.ini (bereik, type, opties).
-               Checkboxes/radiobuttons uniform: fg=TEXT_BODY, activeforeground=TEXT_H1.
 
 """
 
@@ -3225,7 +3148,7 @@ class HAMIOSApp:
                  anchor='w').pack(side=tk.BOTTOM, fill=tk.X, padx=10, pady=(0, 0))
 
         # ── Canvas vult alle resterende hoogte ──────────────────────────────
-        self._map_canvas = tk.Canvas(outer, height=380, bg="#1B3A5C",
+        self._map_canvas = tk.Canvas(outer, height=600, bg="#1B3A5C",
                                      bd=0, highlightthickness=0)
         self._map_canvas.pack(fill=tk.BOTH, expand=True, padx=10, pady=(2, 2))
         self._map_photo = None
