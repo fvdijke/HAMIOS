@@ -3167,7 +3167,7 @@ class HAMIOSApp:
 
         self._map_canvas = tk.Canvas(outer, height=380, bg="#1B3A5C",
                                      bd=0, highlightthickness=0)
-        self._map_canvas.pack(fill=tk.X, padx=10, pady=(2, 2))
+        self._map_canvas.pack(fill=tk.BOTH, expand=True, padx=10, pady=(2, 2))
         self._map_photo = None
         self._map_canvas.bind("<Configure>",      self._on_map_resize)
         self._map_canvas.bind("<Button-1>",       self._on_map_btn1_press)
