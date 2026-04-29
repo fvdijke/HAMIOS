@@ -3167,7 +3167,7 @@ class HAMIOSApp:
 
         self._map_canvas = tk.Canvas(outer, height=380, bg="#1B3A5C",
                                      bd=0, highlightthickness=0)
-        self._map_canvas.pack(fill=tk.BOTH, expand=True, padx=10, pady=(2, 2))
+        self._map_canvas.pack(fill=tk.X, padx=10, pady=(2, 0))
         self._map_photo = None
         self._map_canvas.bind("<Configure>",      self._on_map_resize)
         self._map_canvas.bind("<Button-1>",       self._on_map_btn1_press)
@@ -3178,21 +3178,24 @@ class HAMIOSApp:
         self._map_canvas.bind("<Button-4>",       self._on_map_scroll)   # Linux scroll up
         self._map_canvas.bind("<Button-5>",       self._on_map_scroll)   # Linux scroll down
 
-        # ── Kaartoverlays onder de kaart ────────────────────────────────────────
-        map_ov = tk.Frame(outer, bg=BG_PANEL)
-        map_ov.pack(fill=tk.X, padx=10, pady=(4, 2))
+        # Spacer duwt alles hieronder naar de onderkant van het paneel
+        tk.Frame(outer, bg=BG_PANEL).pack(fill=tk.BOTH, expand=True)
 
-        def _cb_map(parent_row, tr_key, var, fallback_text=""):
+        # ── Kaartoverlays: één rij onderaan het paneel ───────────────────────
+        map_ov = tk.Frame(outer, bg=BG_PANEL)
+        map_ov.pack(fill=tk.X, padx=10, pady=(2, 2))
+
+        def _cb_map(tr_key, var, fallback_text=""):
             def _on_toggle():
                 self._save_cur_settings()
                 self._draw_map()
-            cb = tk.Checkbutton(parent_row,
+            cb = tk.Checkbutton(map_ov,
                                 text=self._tr(tr_key) if tr_key else fallback_text,
                                 variable=var, command=_on_toggle,
                                 bg=BG_PANEL, fg=TEXT_BODY, selectcolor=BG_SURFACE,
                                 activebackground=BG_PANEL, activeforeground=TEXT_H1,
                                 font=_font(9))
-            cb.pack(side=tk.LEFT, padx=(0, 6))
+            cb.pack(side=tk.LEFT, padx=(0, 4))
             if tr_key:
                 self._tr_widgets.setdefault(tr_key, [])
                 if isinstance(self._tr_widgets[tr_key], list):
@@ -3200,25 +3203,16 @@ class HAMIOSApp:
                 else:
                     self._tr_widgets[tr_key] = [self._tr_widgets[tr_key], cb]
 
-        r1 = tk.Frame(map_ov, bg=BG_PANEL)
-        r1.pack(fill=tk.X, pady=(0, 2))
-        tk.Label(r1, text=self._tr("map_display_lbl"),
-                 font=_font(8), bg=BG_PANEL, fg=TEXT_DIM).pack(side=tk.LEFT, padx=(0, 4))
-        _cb_map(r1, "sun",      self._show_sun_var)
-        _cb_map(r1, "moon",     self._show_moon_var)
-        _cb_map(r1, "graylijn", self._show_graylijn_var)
-        _cb_map(r1, None,       self._show_aurora_var, "Aurora")
-
-        r2 = tk.Frame(map_ov, bg=BG_PANEL)
-        r2.pack(fill=tk.X)
-        tk.Label(r2, text=self._tr("map_data_lbl"),
-                 font=_font(8), bg=BG_PANEL, fg=TEXT_DIM).pack(side=tk.LEFT, padx=(0, 4))
-        _cb_map(r2, None,      self._show_wspr_var,  "WSPR")
-        _cb_map(r2, None,      self._show_spots_var, "Spots")
-        _cb_map(r2, None,      self._show_cs_var,    "CS")
-        _cb_map(r2, "locator", self._show_locator_var)
+        _cb_map("sun",      self._show_sun_var)
+        _cb_map("moon",     self._show_moon_var)
+        _cb_map("graylijn", self._show_graylijn_var)
+        _cb_map(None,       self._show_aurora_var,  "Aurora")
+        _cb_map(None,       self._show_wspr_var,    "WSPR")
+        _cb_map(None,       self._show_spots_var,   "Spots")
+        _cb_map(None,       self._show_cs_var,      "CS")
+        _cb_map("locator",  self._show_locator_var)
         if not _ITU_DISABLED:
-            _cb_map(r2, None, self._show_iaru_var, "ITU")
+            _cb_map(None, self._show_iaru_var, "ITU")
 
         # Info-label voor groot-cirkel (richting/afstand)
         self._gc_info_var = tk.StringVar(value="")
