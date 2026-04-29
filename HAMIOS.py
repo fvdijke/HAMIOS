@@ -99,8 +99,8 @@ MAP_URL       = ("https://eoimages.gsfc.nasa.gov/images/imagerecords/"
                  "57000/57752/land_shallow_topo_2048.jpg")
 
 # ── Thema ──────────────────────────────────────────────────────────────────────
-ADV_CARD_H   = 74    # vaste hoogte per advieskaart (pixels)
-ADV_CARD_GAP = 4    # verticale ruimte tussen rijen
+ADV_CARD_H   = 60    # vaste hoogte per advieskaart (pixels)
+ADV_CARD_GAP = 3    # verticale ruimte tussen rijen
 ADV_ROWS     = 4    # zichtbare rijen bij opstarten
 
 # ── Vaste hoogte-constanten (gebruikt voor fixed-height frames en _center_window) ──
@@ -1958,8 +1958,8 @@ class HAMIOSApp:
         _scr_h = root.winfo_screenheight()
         _DX_EXTRA = 368            # DX-kolom 360 px + padx 8 px
         _ini_w = min(1400 + _DX_EXTRA, _scr_w - 60)
-        _ini_h = 1220
-        _ini_y = max(0, (_scr_h - _ini_h) // 2)
+        _ini_h = _scr_h - 80          # volledig scherm minus OS-balk
+        _ini_y = 40
         root.geometry(f"{_ini_w}x{_ini_h}+{(_scr_w-_ini_w)//2}+{_ini_y}")
         root.minsize(min(900 + _DX_EXTRA, _scr_w - 60), MIN_WINDOW_H)
 
@@ -3148,7 +3148,7 @@ class HAMIOSApp:
                  anchor='w').pack(side=tk.BOTTOM, fill=tk.X, padx=10, pady=(0, 0))
 
         # ── Canvas vult alle resterende hoogte ──────────────────────────────
-        self._map_canvas = tk.Canvas(outer, height=600, bg="#1B3A5C",
+        self._map_canvas = tk.Canvas(outer, height=1, bg="#1B3A5C",
                                      bd=0, highlightthickness=0)
         self._map_canvas.pack(fill=tk.BOTH, expand=True, padx=10, pady=(2, 2))
         self._map_photo = None
