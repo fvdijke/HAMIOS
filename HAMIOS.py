@@ -40,6 +40,11 @@ Todo
 - [x] Vis: Voeg een tooltip toe aan de Bz grafiek en maak de grafiek ook aantrekkelijker en duidelijker. Formaal moet hetzelfde blijven.
 - [x] Vis: Maak de kolommen in de eerste row net zo breed als de kolommen in de tweede row. De map moet dam wel geresized worden zodat deze neg zo breed is als de tweede kolom.
 - [x] Vis: Schakelen tussen thema's werkt niet goed. Thema's blijven hangen.
+- [x] Vis: Verplaats de solar/ionosfeer info naar het DX paneel en zet een scheidingslijn (goud) tussen de verschillende blokken.
+- [x] Vis: Verwijder de eerste kolom van de bovenste rij (links).
+- [x] Vis: Zet HF band betrouwbaarheid als eerste kolom in bovenste rij en maak deze net zo breed als Band opening schema.
+- [x] Vis: Maak wereldkaart net zo breed als kolom 2 + 3 van de tweede rij.
+- [x] Vis: Zet selectievakjes onder HF betrouwbaarheid met scheidingslijn
 
 
 ─────────────────────────────────────────────────────────────────────
@@ -64,6 +69,16 @@ Change Log (3.0)
                Thema-fix: _apply_theme() gebruikt nu kleur-remap van vorig→nieuw thema
                (THEMES lookup), zodat herhaalschakelingen correct werken. UI gebouwd
                met Midnight-constanten; na _build_ui() altijd remap naar opgeslagen thema.
+
+· 2026-04-29 14:39 CEST — Versie 3.0 (interface todo-items afgerond):
+               Solar/ionosfeer verplaatst naar DX-paneel (_build_solar_section);
+               gouden scheidingslijnen (ACCENT, 2 px) tussen blokken in DX-paneel.
+               Solar kolom verwijderd uit top_row. top_row omgeschakeld naar
+               tkinter grid (4 gelijke kolommen, uniform="lc"): HF Betrouwbaarheid
+               in col 0 (= breedte Schema), Kaart in col 1-2 (= Bandverloop+Kp),
+               col 3 leeg boven Bz+Xray. Selectievakjes (Weergave/Data/Meldingen)
+               verplaatst van kaartpaneel naar onder HF Betrouwbaarheid met gouden
+               scheidingslijn. Alle 5 open Vis-todo items afgevinkt.
 
 · 2026-04-28 14:13 CEST — Versie 3.0 (data-uitbreiding hoge prioriteit):
                Nieuwe data: solarwind dichtheid (ρ n/cm³), planetaire Kp-index,
@@ -2977,29 +2992,60 @@ class HAMIOSApp:
         dx_col.pack_propagate(False)
         self._build_dx_panel(dx_col)
 
-        # ── Linker gedeelte: top_row + bottom_row + advies ────────────────────
+        # ── Linker gedeelte: grid-layout voor exacte kolomuitlijning ────────────
+        # 4 gelijke kolommen; top (rij 0) expandeert, bottom (rij 1) + advies (rij 2) vast
         left_area = tk.Frame(body, bg=BG_ROOT)
         left_area.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
 
-        # Bovenste rij: Solar links | Kaart midden | Bandsegment rechts
-        top_row = tk.Frame(left_area, bg=BG_ROOT)
-        top_row.pack(fill=tk.BOTH, expand=True)
+        for _c in range(4):
+            left_area.columnconfigure(_c, weight=1, uniform="lc")
+        left_area.rowconfigure(0, weight=1)   # top_row expandeert verticaal
+        left_area.rowconfigure(1, weight=0)   # bottom_row vaste hoogte
+        left_area.rowconfigure(2, weight=0)   # advies vaste hoogte
 
-        # Solar links (vaste breedte, hoogte vult top_row)
-        solar_col = tk.Frame(top_row, bg=BG_PANEL, width=200)
-        solar_col.pack(side=tk.LEFT, fill=tk.Y)
-        solar_col.pack_propagate(False)
+        # ── Top rij: HF Rel (col 0) | Kaart (col 1-2) | leeg (col 3) ────────
+        prop_f = tk.Frame(left_area, bg=BG_PANEL)
+        prop_f.grid(row=0, column=0, sticky='nsew', padx=(0, 4))
+        self._build_prop_panel(prop_f)
 
-        tk.Frame(solar_col, bg=ACCENT, height=2).pack(fill=tk.X)
-        _solar_hdr_lbl = tk.Label(solar_col, text=self._tr("solar"),
+        map_f = tk.Frame(left_area, bg=BG_PANEL)
+        map_f.grid(row=0, column=1, columnspan=2, sticky='nsew', padx=(0, 4))
+        self._build_map_panel(map_f)
+
+        # ── Onderste rij: Schema | Bandverloop | Kp | Bz+Xray ────────────────
+        sched_f = tk.Frame(left_area, bg=BG_ROOT)
+        sched_f.grid(row=1, column=0, sticky='nsew', padx=(0, 4), pady=(8, 0))
+        self._build_schedule_panel(sched_f)
+
+        hist_f = tk.Frame(left_area, bg=BG_ROOT)
+        hist_f.grid(row=1, column=1, sticky='nsew', padx=(0, 4), pady=(8, 0))
+        self._build_hist_panel(hist_f)
+
+        kp_f = tk.Frame(left_area, bg=BG_ROOT)
+        kp_f.grid(row=1, column=2, sticky='nsew', padx=(0, 4), pady=(8, 0))
+        self._build_kp_panel(kp_f)
+
+        bz_f = tk.Frame(left_area, bg=BG_ROOT)
+        bz_f.grid(row=1, column=3, sticky='nsew', pady=(8, 0))
+        self._build_bz_xray_panel(bz_f)
+
+        # ── Advies: volledige breedte ─────────────────────────────────────────
+        adv_f = tk.Frame(left_area, bg=BG_ROOT)
+        adv_f.grid(row=2, column=0, columnspan=4, sticky='nsew', pady=(8, 0))
+        self._build_advice_panel(adv_f)
+
+    # ── Solar / Ionosfeer sectie (herbruikbaar in DX-paneel) ─────────────────
+    def _build_solar_section(self, parent):
+        """Bouwt solar/ionosfeer info in parent (DX-paneel of elders)."""
+        tk.Frame(parent, bg=ACCENT, height=2).pack(fill=tk.X)
+        _solar_hdr_lbl = tk.Label(parent, text=self._tr("solar"),
                                   font=_font(10, "bold"), bg=BG_PANEL, fg=ACCENT,
-                                  pady=8)
+                                  pady=6)
         _solar_hdr_lbl.pack(anchor='w', padx=10)
         self._tr_widgets["solar"] = _solar_hdr_lbl
 
-        self._solar_frame = tk.Frame(solar_col, bg=BG_PANEL)
-        self._solar_frame.pack(fill=tk.BOTH, expand=True, padx=10)
-
+        self._solar_frame = tk.Frame(parent, bg=BG_PANEL)
+        self._solar_frame.pack(fill=tk.X, padx=10)
 
         def _get_solar_tips(lang: str) -> dict:
             return _SOLAR_TIPS_PACKS.get(lang, _SOLAR_TIPS)
@@ -3008,8 +3054,8 @@ class HAMIOSApp:
             tt = _Tooltip(widget)
             lang = _LANG_CODES.get(self._lang_var.get(), "en")
             tips_dict = _get_solar_tips(lang)
-            title, body = tips_dict.get(key, ("", ""))
-            text = f"{title}\n{'─' * len(title)}\n{body}" if title else ""
+            title, body_txt = tips_dict.get(key, ("", ""))
+            text = f"{title}\n{'─' * len(title)}\n{body_txt}" if title else ""
             widget.bind("<Enter>", lambda e, t=tt, tx=text:
                         t.show(e.widget.winfo_rootx() + e.x,
                                e.widget.winfo_rooty() + e.y, tx)
@@ -3017,32 +3063,26 @@ class HAMIOSApp:
             widget.bind("<Leave>", lambda *_, t=tt: t.hide())
 
         self._solar_vars     = {}
-        self._solar_val_lbls = {}   # key → Label widget (voor kleur-updates)
-        # Dynamisch label voor ionosonde-rij (stationsnaam wordt ingevuld na fetch)
+        self._solar_val_lbls = {}
         self._iono_station_var = tk.StringVar(value="foF2 ms/md:")
         for key, label in [
-            ("sfi",         "Solar Flux (SFI)"),
-            ("ssn",         "Sunspot Nr (SSN)"),
-            ("a_index",     "A-index"),
-            ("k_index",     "K-index"),
-            ("xray",        "X-ray"),
-            ("muf",         "MUF (MHz)"),
-            ("luf",         "LUF (MHz)"),
-            ("sw_speed",    "Solarwind (km/s)"),
-            ("sw_bz",       "Bz (nT)"),
-            ("sw_density",  None),      # None → via tr-sleutel
-            ("kp_planet",   None),      # None → via tr-sleutel
-            ("iono_fof2",   None),      # None → dynamisch label via StringVar
+            ("sfi",        "Solar Flux (SFI)"),
+            ("ssn",        "Sunspot Nr (SSN)"),
+            ("a_index",    "A-index"),
+            ("k_index",    "K-index"),
+            ("xray",       "X-ray"),
+            ("muf",        "MUF (MHz)"),
+            ("luf",        "LUF (MHz)"),
+            ("sw_speed",   "Solarwind (km/s)"),
+            ("sw_bz",      "Bz (nT)"),
+            ("sw_density", None),
+            ("kp_planet",  None),
+            ("iono_fof2",  None),
         ]:
             row = tk.Frame(self._solar_frame, bg=BG_PANEL)
-            row.pack(fill=tk.X, pady=2)
-            # Vertaalde labels voor nieuwe parameters
-            _TR_LABELS = {
-                "sw_density": "sw_density_lbl",
-                "kp_planet":  "kp_planet_lbl",
-            }
+            row.pack(fill=tk.X, pady=1)
+            _TR_LABELS = {"sw_density": "sw_density_lbl", "kp_planet": "kp_planet_lbl"}
             if key == "iono_fof2":
-                # Ionosonde-rij: label tekst is dynamisch
                 lbl = tk.Label(row, textvariable=self._iono_station_var,
                                font=_font(8), bg=BG_PANEL,
                                fg=TEXT_DIM, anchor='w', width=14, cursor="question_arrow")
@@ -3065,12 +3105,11 @@ class HAMIOSApp:
             _bind_tip(val_lbl, key)
             self._solar_val_lbls[key] = val_lbl
 
-        # Scheidingslijn tussen params en bandentabel
-        tk.Frame(self._solar_frame, bg=BORDER, height=1).pack(fill=tk.X, pady=(4, 2))
+        tk.Frame(self._solar_frame, bg=ACCENT, height=1).pack(fill=tk.X, pady=(4, 2))
 
-        # Bandentabel
+        # Bandentabel (dag/nacht condities)
         hdr_row = tk.Frame(self._solar_frame, bg=BG_PANEL)
-        hdr_row.pack(fill=tk.X, pady=(0, 0))
+        hdr_row.pack(fill=tk.X)
         for key, w in [("band_hdr", 5), ("day_hdr", 5), ("night_hdr", 5)]:
             lbl = tk.Label(hdr_row, text=self._tr(key), font=_font(8, "bold"),
                            bg=BG_PANEL, fg=ACCENT, width=w, anchor='w')
@@ -3081,10 +3120,10 @@ class HAMIOSApp:
                                      else [self._tr_widgets[key]])
             self._tr_widgets[key].append(lbl)
 
-        self._band_cond_labels: dict = {}   # band → (day_lbl, ngt_lbl, is_hf)
+        self._band_cond_labels: dict = {}
         for name, _, is_hf in _BANDS:
             if not is_hf:
-                continue   # VHF/UHF niet tonen in solar-panel bandtabel
+                continue
             row = tk.Frame(self._solar_frame, bg=BG_PANEL)
             row.pack(fill=tk.X, pady=1)
             tk.Label(row, text=name, font=_font(8), bg=BG_PANEL,
@@ -3097,10 +3136,9 @@ class HAMIOSApp:
             ngt_lbl.pack(side=tk.LEFT)
             self._band_cond_labels[name] = (day_lbl, ngt_lbl, is_hf)
 
-        # Scheidingslijn onder de bandentabel
-        tk.Frame(self._solar_frame, bg=BORDER, height=1).pack(fill=tk.X, pady=(4, 2))
+        tk.Frame(self._solar_frame, bg=ACCENT, height=1).pack(fill=tk.X, pady=(4, 2))
 
-        # ── 3-daagse storm-kans voorspelling ─────────────────────────────────
+        # 3-daagse storm-kans voorspelling
         _fc_hdr = tk.Label(self._solar_frame, text=self._tr("storm_forecast_hdr"),
                            font=_font(8, "bold"), bg=BG_PANEL, fg=ACCENT, anchor='w')
         _fc_hdr.pack(fill=tk.X, pady=(0, 1))
@@ -3112,41 +3150,6 @@ class HAMIOSApp:
                            font=_font(7), bg=BG_PANEL, fg=TEXT_DIM, anchor='w')
             lbl.pack(fill=tk.X)
             self._storm_fc_vars.append(var)
-        tk.Frame(self._solar_frame, bg=BORDER, height=1).pack(fill=tk.X, pady=(3, 2))
-
-        # ── HF Bandsegment rechts (vaste breedte) ────────────────────────────
-        right_col = tk.Frame(top_row, bg=BG_PANEL, width=420)
-        right_col.pack(side=tk.LEFT, fill=tk.Y, padx=(8, 8))
-        right_col.pack_propagate(False)
-        self._build_prop_panel(right_col)
-
-        # ── Kaart midden (expanderend) ────────────────────────────────────────
-        center_col = tk.Frame(top_row, bg=BG_PANEL)
-        center_col.pack(side=tk.LEFT, fill=tk.BOTH, expand=True, padx=(0, 0))
-        self._build_map_panel(center_col)
-
-        # ── Onderste rij: Schema | Bandverloop | Kp 48u | Bz + X-ray ──────────
-        bottom_row = tk.Frame(left_area, bg=BG_ROOT)
-        bottom_row.pack(fill=tk.X, expand=False, pady=(8, 0))
-
-        sched_col = tk.Frame(bottom_row, bg=BG_ROOT)
-        sched_col.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
-        self._build_schedule_panel(sched_col)
-
-        hist_col = tk.Frame(bottom_row, bg=BG_ROOT)
-        hist_col.pack(side=tk.LEFT, fill=tk.BOTH, expand=True, padx=(6, 6))
-        self._build_hist_panel(hist_col)
-
-        kp_col = tk.Frame(bottom_row, bg=BG_ROOT)
-        kp_col.pack(side=tk.LEFT, fill=tk.BOTH, expand=True, padx=(0, 6))
-        self._build_kp_panel(kp_col)
-
-        bz_xray_col = tk.Frame(bottom_row, bg=BG_ROOT)
-        bz_xray_col.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
-        self._build_bz_xray_panel(bz_xray_col)
-
-        # ── Advies: volledige breedte onderin left_area ──────────────────────
-        self._build_advice_panel(left_area)
 
     # ── Wereldkaart panel ─────────────────────────────────────────────────────
     def _build_map_panel(self, parent):
@@ -3174,95 +3177,6 @@ class HAMIOSApp:
         self._map_canvas.bind("<MouseWheel>",     self._on_map_scroll)   # Windows & Mac
         self._map_canvas.bind("<Button-4>",       self._on_map_scroll)   # Linux scroll up
         self._map_canvas.bind("<Button-5>",       self._on_map_scroll)   # Linux scroll down
-
-        # Kaartoverlays — gegroepeerd per categorie
-        map_controls = tk.Frame(outer, bg=BG_PANEL)
-        map_controls.pack(fill=tk.X, padx=10, pady=(4, 2))
-
-        def _cb(parent_row, tr_key, var, fallback_text=""):
-            def _on_toggle():
-                self._save_cur_settings()
-                self._draw_map()
-            cb = tk.Checkbutton(parent_row,
-                                text=self._tr(tr_key) if tr_key else fallback_text,
-                                variable=var, command=_on_toggle,
-                                bg=BG_PANEL, fg=TEXT_BODY, selectcolor=BG_SURFACE,
-                                activebackground=BG_PANEL, activeforeground=TEXT_H1,
-                                font=_font(9))
-            cb.pack(side=tk.LEFT, padx=(0, 6))
-            if tr_key:
-                self._tr_widgets.setdefault(tr_key, [])
-                if isinstance(self._tr_widgets[tr_key], list):
-                    self._tr_widgets[tr_key].append(cb)
-                else:
-                    self._tr_widgets[tr_key] = [self._tr_widgets[tr_key], cb]
-
-        # Rij 1: Astronomisch / atmosferisch
-        row1 = tk.Frame(map_controls, bg=BG_PANEL)
-        row1.pack(fill=tk.X, pady=(0, 2))
-        tk.Label(row1, text=self._tr("map_display_lbl"),
-                 font=_font(8), bg=BG_PANEL, fg=TEXT_DIM).pack(side=tk.LEFT, padx=(0, 4))
-        _cb(row1, "sun",      self._show_sun_var)
-        _cb(row1, "moon",     self._show_moon_var)
-        _cb(row1, "graylijn", self._show_graylijn_var)
-        _cb(row1, None,       self._show_aurora_var, "Aurora")
-
-        # Rij 2: Datalagen
-        row2 = tk.Frame(map_controls, bg=BG_PANEL)
-        row2.pack(fill=tk.X)
-        tk.Label(row2, text=self._tr("map_data_lbl"),
-                 font=_font(8), bg=BG_PANEL, fg=TEXT_DIM).pack(side=tk.LEFT, padx=(0, 4))
-        _cb(row2, None,      self._show_wspr_var,  "WSPR")
-        _cb(row2, None,      self._show_spots_var, "Spots")
-        _cb(row2, None,      self._show_cs_var,    "CS")
-        _cb(row2, "locator", self._show_locator_var)
-        if not _ITU_DISABLED:
-            _cb(row2, None, self._show_iaru_var, "ITU")
-
-        # Rij 3: Meldingen (K-index + band-opening drempel)
-        row3 = tk.Frame(map_controls, bg=BG_PANEL)
-        row3.pack(fill=tk.X, pady=(2, 0))
-        _alert_hdr_map = tk.Label(row3, text=self._tr("alerts_hdr") + ":",
-                                  font=_font(8), bg=BG_PANEL, fg=TEXT_DIM)
-        _alert_hdr_map.pack(side=tk.LEFT, padx=(0, 4))
-        self._tr_widgets.setdefault("alerts_hdr", [])
-        if not isinstance(self._tr_widgets["alerts_hdr"], list):
-            self._tr_widgets["alerts_hdr"] = [self._tr_widgets["alerts_hdr"]]
-        self._tr_widgets["alerts_hdr"].append(_alert_hdr_map)
-
-        _k_cb_map = tk.Checkbutton(row3, variable=self._alert_k_en_var,
-                                   command=self._save_cur_settings,
-                                   bg=BG_PANEL, fg=TEXT_BODY, selectcolor=BG_SURFACE,
-                                   activebackground=BG_PANEL, activeforeground=TEXT_H1,
-                                   font=_font(9), text=self._tr("k_alert_lbl"), anchor='w')
-        _k_cb_map.pack(side=tk.LEFT, padx=(0, 2))
-        self._tr_widgets.setdefault("k_alert_lbl", [])
-        if not isinstance(self._tr_widgets["k_alert_lbl"], list):
-            self._tr_widgets["k_alert_lbl"] = [self._tr_widgets["k_alert_lbl"]]
-        self._tr_widgets["k_alert_lbl"].append(_k_cb_map)
-
-        tk.Spinbox(row3, from_=1, to=9, width=2, textvariable=self._k_alert_var,
-                   command=self._save_cur_settings,
-                   bg=BG_SURFACE, fg=TEXT_H1, buttonbackground=BG_SURFACE,
-                   relief=tk.FLAT, font=_font(9, "bold")).pack(side=tk.LEFT, padx=(0, 10))
-
-        _b_cb_map = tk.Checkbutton(row3, variable=self._alert_band_en_var,
-                                   command=self._save_cur_settings,
-                                   bg=BG_PANEL, fg=TEXT_BODY, selectcolor=BG_SURFACE,
-                                   activebackground=BG_PANEL, activeforeground=TEXT_H1,
-                                   font=_font(9), text=self._tr("band_alert_lbl"), anchor='w')
-        _b_cb_map.pack(side=tk.LEFT, padx=(0, 2))
-        self._tr_widgets.setdefault("band_alert_lbl", [])
-        if not isinstance(self._tr_widgets["band_alert_lbl"], list):
-            self._tr_widgets["band_alert_lbl"] = [self._tr_widgets["band_alert_lbl"]]
-        self._tr_widgets["band_alert_lbl"].append(_b_cb_map)
-
-        tk.Spinbox(row3, from_=10, to=90, increment=5, width=3,
-                   textvariable=self._band_alert_var, command=self._save_cur_settings,
-                   bg=BG_SURFACE, fg=TEXT_H1, buttonbackground=BG_SURFACE,
-                   relief=tk.FLAT, font=_font(9, "bold")).pack(side=tk.LEFT, padx=(0, 2))
-        tk.Label(row3, text="%", font=_font(9), bg=BG_PANEL,
-                 fg=TEXT_DIM).pack(side=tk.LEFT)
 
         # Info-label voor groot-cirkel (richting/afstand)
         self._gc_info_var = tk.StringVar(value="")
@@ -4271,6 +4185,96 @@ class HAMIOSApp:
 
         self._update_cat_freq_lbl_visibility()
 
+        # ── Kaartoverlays + meldingen onder HF Betrouwbaarheid ───────────────
+        tk.Frame(outer, bg=ACCENT, height=2).pack(fill=tk.X, padx=10, pady=(6, 0))
+        ov_frame = tk.Frame(outer, bg=BG_PANEL)
+        ov_frame.pack(fill=tk.X, padx=10, pady=(4, 6))
+
+        def _cb_ov(parent_row, tr_key, var, fallback_text=""):
+            def _on_toggle():
+                self._save_cur_settings()
+                self._draw_map()
+            cb = tk.Checkbutton(parent_row,
+                                text=self._tr(tr_key) if tr_key else fallback_text,
+                                variable=var, command=_on_toggle,
+                                bg=BG_PANEL, fg=TEXT_BODY, selectcolor=BG_SURFACE,
+                                activebackground=BG_PANEL, activeforeground=TEXT_H1,
+                                font=_font(9))
+            cb.pack(side=tk.LEFT, padx=(0, 4))
+            if tr_key:
+                self._tr_widgets.setdefault(tr_key, [])
+                if isinstance(self._tr_widgets[tr_key], list):
+                    self._tr_widgets[tr_key].append(cb)
+                else:
+                    self._tr_widgets[tr_key] = [self._tr_widgets[tr_key], cb]
+
+        # Weergave
+        r1 = tk.Frame(ov_frame, bg=BG_PANEL)
+        r1.pack(fill=tk.X, pady=(0, 2))
+        tk.Label(r1, text=self._tr("map_display_lbl"),
+                 font=_font(8), bg=BG_PANEL, fg=TEXT_DIM).pack(side=tk.LEFT, padx=(0, 4))
+        _cb_ov(r1, "sun",      self._show_sun_var)
+        _cb_ov(r1, "moon",     self._show_moon_var)
+        _cb_ov(r1, "graylijn", self._show_graylijn_var)
+        _cb_ov(r1, None,       self._show_aurora_var, "Aurora")
+
+        # Data
+        r2 = tk.Frame(ov_frame, bg=BG_PANEL)
+        r2.pack(fill=tk.X, pady=(0, 2))
+        tk.Label(r2, text=self._tr("map_data_lbl"),
+                 font=_font(8), bg=BG_PANEL, fg=TEXT_DIM).pack(side=tk.LEFT, padx=(0, 4))
+        _cb_ov(r2, None,      self._show_wspr_var,  "WSPR")
+        _cb_ov(r2, None,      self._show_spots_var, "Spots")
+        _cb_ov(r2, None,      self._show_cs_var,    "CS")
+        _cb_ov(r2, "locator", self._show_locator_var)
+        if not _ITU_DISABLED:
+            _cb_ov(r2, None, self._show_iaru_var, "ITU")
+
+        # Meldingen
+        r3 = tk.Frame(ov_frame, bg=BG_PANEL)
+        r3.pack(fill=tk.X)
+        _alert_lbl = tk.Label(r3, text=self._tr("alerts_hdr") + ":",
+                              font=_font(8), bg=BG_PANEL, fg=TEXT_DIM)
+        _alert_lbl.pack(side=tk.LEFT, padx=(0, 4))
+        self._tr_widgets.setdefault("alerts_hdr", [])
+        if not isinstance(self._tr_widgets["alerts_hdr"], list):
+            self._tr_widgets["alerts_hdr"] = [self._tr_widgets["alerts_hdr"]]
+        self._tr_widgets["alerts_hdr"].append(_alert_lbl)
+
+        _k_cb = tk.Checkbutton(r3, variable=self._alert_k_en_var,
+                               command=self._save_cur_settings,
+                               bg=BG_PANEL, fg=TEXT_BODY, selectcolor=BG_SURFACE,
+                               activebackground=BG_PANEL, activeforeground=TEXT_H1,
+                               font=_font(9), text=self._tr("k_alert_lbl"))
+        _k_cb.pack(side=tk.LEFT, padx=(0, 2))
+        self._tr_widgets.setdefault("k_alert_lbl", [])
+        if not isinstance(self._tr_widgets["k_alert_lbl"], list):
+            self._tr_widgets["k_alert_lbl"] = [self._tr_widgets["k_alert_lbl"]]
+        self._tr_widgets["k_alert_lbl"].append(_k_cb)
+
+        tk.Spinbox(r3, from_=1, to=9, width=2, textvariable=self._k_alert_var,
+                   command=self._save_cur_settings,
+                   bg=BG_SURFACE, fg=TEXT_H1, buttonbackground=BG_SURFACE,
+                   relief=tk.FLAT, font=_font(9, "bold")).pack(side=tk.LEFT, padx=(0, 8))
+
+        _b_cb = tk.Checkbutton(r3, variable=self._alert_band_en_var,
+                               command=self._save_cur_settings,
+                               bg=BG_PANEL, fg=TEXT_BODY, selectcolor=BG_SURFACE,
+                               activebackground=BG_PANEL, activeforeground=TEXT_H1,
+                               font=_font(9), text=self._tr("band_alert_lbl"))
+        _b_cb.pack(side=tk.LEFT, padx=(0, 2))
+        self._tr_widgets.setdefault("band_alert_lbl", [])
+        if not isinstance(self._tr_widgets["band_alert_lbl"], list):
+            self._tr_widgets["band_alert_lbl"] = [self._tr_widgets["band_alert_lbl"]]
+        self._tr_widgets["band_alert_lbl"].append(_b_cb)
+
+        tk.Spinbox(r3, from_=10, to=90, increment=5, width=3,
+                   textvariable=self._band_alert_var, command=self._save_cur_settings,
+                   bg=BG_SURFACE, fg=TEXT_H1, buttonbackground=BG_SURFACE,
+                   relief=tk.FLAT, font=_font(9, "bold")).pack(side=tk.LEFT, padx=(0, 2))
+        tk.Label(r3, text="%", font=_font(9), bg=BG_PANEL,
+                 fg=TEXT_DIM).pack(side=tk.LEFT)
+
 
     def _draw_prop_bars(self, band_pct):
         self._last_band_pct = band_pct
@@ -4826,7 +4830,12 @@ class HAMIOSApp:
     def _build_dx_panel(self, parent):
         outer = tk.Frame(parent, bg=BG_PANEL)
         outer.pack(fill=tk.BOTH, expand=True)
-        tk.Frame(outer, bg=ACCENT, height=2).pack(fill=tk.X)
+
+        # ── Solar / Ionosfeer sectie bovenin DX-paneel ───────────────────────
+        self._build_solar_section(outer)
+
+        # Gouden scheidingslijn tussen solar en DX spots
+        tk.Frame(outer, bg=ACCENT, height=2).pack(fill=tk.X, pady=(6, 0))
 
         hdr = tk.Frame(outer, bg=BG_PANEL)
         hdr.pack(fill=tk.X, padx=10, pady=(4, 2))
