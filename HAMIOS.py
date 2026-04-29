@@ -3171,11 +3171,11 @@ class HAMIOSApp:
         map_ov = tk.Frame(outer, bg=BG_PANEL)
         map_ov.pack(side=tk.BOTTOM, fill=tk.X, padx=10, pady=(2, 4))
 
-        def _cb_map(tr_key, var, fallback_text=""):
+        def _cb_map(parent, tr_key, var, fallback_text=""):
             def _on_toggle():
                 self._save_cur_settings()
                 self._draw_map()
-            cb = tk.Checkbutton(map_ov,
+            cb = tk.Checkbutton(parent,
                                 text=self._tr(tr_key) if tr_key else fallback_text,
                                 variable=var, command=_on_toggle,
                                 bg=BG_PANEL, fg=TEXT_BODY, selectcolor=BG_SURFACE,
@@ -3189,16 +3189,27 @@ class HAMIOSApp:
                 else:
                     self._tr_widgets[tr_key] = [self._tr_widgets[tr_key], cb]
 
-        _cb_map("sun",      self._show_sun_var)
-        _cb_map("moon",     self._show_moon_var)
-        _cb_map("graylijn", self._show_graylijn_var)
-        _cb_map(None,       self._show_aurora_var,  "Aurora")
-        _cb_map(None,       self._show_wspr_var,    "WSPR")
-        _cb_map(None,       self._show_spots_var,   "Spots")
-        _cb_map(None,       self._show_cs_var,      "CS")
-        _cb_map("locator",  self._show_locator_var)
+        # Weergave-rij
+        r_disp = tk.Frame(map_ov, bg=BG_PANEL)
+        r_disp.pack(fill=tk.X, pady=(0, 2))
+        tk.Label(r_disp, text=self._tr("map_display_lbl"),
+                 font=_font(8), bg=BG_PANEL, fg=TEXT_DIM).pack(side=tk.LEFT, padx=(0, 4))
+        _cb_map(r_disp, "sun",      self._show_sun_var)
+        _cb_map(r_disp, "moon",     self._show_moon_var)
+        _cb_map(r_disp, "graylijn", self._show_graylijn_var)
+        _cb_map(r_disp, None,       self._show_aurora_var, "Aurora")
+
+        # Data-rij
+        r_data = tk.Frame(map_ov, bg=BG_PANEL)
+        r_data.pack(fill=tk.X)
+        tk.Label(r_data, text=self._tr("map_data_lbl"),
+                 font=_font(8), bg=BG_PANEL, fg=TEXT_DIM).pack(side=tk.LEFT, padx=(0, 4))
+        _cb_map(r_data, None,      self._show_wspr_var,  "WSPR")
+        _cb_map(r_data, None,      self._show_spots_var, "Spots")
+        _cb_map(r_data, None,      self._show_cs_var,    "CS")
+        _cb_map(r_data, "locator", self._show_locator_var)
         if not _ITU_DISABLED:
-            _cb_map(None, self._show_iaru_var, "ITU")
+            _cb_map(r_data, None, self._show_iaru_var, "ITU")
 
         # GC-labels net boven de selectievakjes
         self._gc_path_var = tk.StringVar(value="")
@@ -4244,18 +4255,19 @@ class HAMIOSApp:
                 else:
                     self._tr_widgets[tr_key] = [self._tr_widgets[tr_key], cb]
 
-        # Meldingen
-        r3 = tk.Frame(ov_frame, bg=BG_PANEL)
-        r3.pack(fill=tk.X)
-        _alert_lbl = tk.Label(r3, text=self._tr("alerts_hdr") + ":",
-                              font=_font(8), bg=BG_PANEL, fg=TEXT_DIM)
-        _alert_lbl.pack(side=tk.LEFT, padx=(0, 4))
+        # Meldingen header
+        _alert_lbl = tk.Label(ov_frame, text=self._tr("alerts_hdr") + ":",
+                              font=_font(8), bg=BG_PANEL, fg=TEXT_DIM, anchor='w')
+        _alert_lbl.pack(fill=tk.X, pady=(2, 0))
         self._tr_widgets.setdefault("alerts_hdr", [])
         if not isinstance(self._tr_widgets["alerts_hdr"], list):
             self._tr_widgets["alerts_hdr"] = [self._tr_widgets["alerts_hdr"]]
         self._tr_widgets["alerts_hdr"].append(_alert_lbl)
 
-        _k_cb = tk.Checkbutton(r3, variable=self._alert_k_en_var,
+        # K-index drempel (eigen rij)
+        rk = tk.Frame(ov_frame, bg=BG_PANEL)
+        rk.pack(fill=tk.X, pady=(0, 1))
+        _k_cb = tk.Checkbutton(rk, variable=self._alert_k_en_var,
                                command=self._save_cur_settings,
                                bg=BG_PANEL, fg=TEXT_BODY, selectcolor=BG_SURFACE,
                                activebackground=BG_PANEL, activeforeground=TEXT_H1,
@@ -4265,13 +4277,15 @@ class HAMIOSApp:
         if not isinstance(self._tr_widgets["k_alert_lbl"], list):
             self._tr_widgets["k_alert_lbl"] = [self._tr_widgets["k_alert_lbl"]]
         self._tr_widgets["k_alert_lbl"].append(_k_cb)
-
-        tk.Spinbox(r3, from_=1, to=9, width=2, textvariable=self._k_alert_var,
+        tk.Spinbox(rk, from_=1, to=9, width=2, textvariable=self._k_alert_var,
                    command=self._save_cur_settings,
                    bg=BG_SURFACE, fg=TEXT_H1, buttonbackground=BG_SURFACE,
-                   relief=tk.FLAT, font=_font(9, "bold")).pack(side=tk.LEFT, padx=(0, 8))
+                   relief=tk.FLAT, font=_font(9, "bold")).pack(side=tk.LEFT, padx=(2, 0))
 
-        _b_cb = tk.Checkbutton(r3, variable=self._alert_band_en_var,
+        # Band-opening drempel (eigen rij)
+        rb = tk.Frame(ov_frame, bg=BG_PANEL)
+        rb.pack(fill=tk.X)
+        _b_cb = tk.Checkbutton(rb, variable=self._alert_band_en_var,
                                command=self._save_cur_settings,
                                bg=BG_PANEL, fg=TEXT_BODY, selectcolor=BG_SURFACE,
                                activebackground=BG_PANEL, activeforeground=TEXT_H1,
@@ -4281,13 +4295,12 @@ class HAMIOSApp:
         if not isinstance(self._tr_widgets["band_alert_lbl"], list):
             self._tr_widgets["band_alert_lbl"] = [self._tr_widgets["band_alert_lbl"]]
         self._tr_widgets["band_alert_lbl"].append(_b_cb)
-
-        tk.Spinbox(r3, from_=10, to=90, increment=5, width=3,
+        tk.Spinbox(rb, from_=10, to=90, increment=5, width=3,
                    textvariable=self._band_alert_var, command=self._save_cur_settings,
                    bg=BG_SURFACE, fg=TEXT_H1, buttonbackground=BG_SURFACE,
-                   relief=tk.FLAT, font=_font(9, "bold")).pack(side=tk.LEFT, padx=(0, 2))
-        tk.Label(r3, text="%", font=_font(9), bg=BG_PANEL,
-                 fg=TEXT_DIM).pack(side=tk.LEFT)
+                   relief=tk.FLAT, font=_font(9, "bold")).pack(side=tk.LEFT, padx=(2, 0))
+        tk.Label(rb, text="%", font=_font(9), bg=BG_PANEL,
+                 fg=TEXT_DIM).pack(side=tk.LEFT, padx=(2, 0))
 
 
     def _draw_prop_bars(self, band_pct):
