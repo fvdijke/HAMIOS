@@ -1,6 +1,7 @@
 # 📡 HAMIOS v3.0
 
 **HAM-radio propagatie- en DX-monitor voor Windows**
+<img width="2200" height="1521" alt="HAMIOS v3 0" src="https://github.com/user-attachments/assets/ab39f20a-67c5-4819-8b32-96b8fe07e36e" />
 
 > v3.0 — Volledig nieuw interface-ontwerp · Wereldkaart centraal · DX Spots volledige-hoogte kolom · Gradientbalken met bandkleuren · Bz-grafiek als eigen paneel · 14 talen via externe taalpakketten
 
