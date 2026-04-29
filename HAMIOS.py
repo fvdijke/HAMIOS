@@ -3009,7 +3009,7 @@ class HAMIOSApp:
         self._build_prop_panel(prop_f)
 
         map_f = tk.Frame(left_area, bg=BG_PANEL)
-        map_f.grid(row=0, column=1, columnspan=2, sticky='nsew', padx=(0, 4))
+        map_f.grid(row=0, column=1, columnspan=3, sticky='nsew', padx=(0, 4))
         self._build_map_panel(map_f)
 
         # ── Onderste rij: Schema | Bandverloop | Kp | Bz+Xray ────────────────
