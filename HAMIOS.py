@@ -3165,25 +3165,11 @@ class HAMIOSApp:
         map_title.pack(side=tk.LEFT, padx=10)
         self._tr_widgets["worldmap"] = map_title
 
-        self._map_canvas = tk.Canvas(outer, height=380, bg="#1B3A5C",
-                                     bd=0, highlightthickness=0)
-        self._map_canvas.pack(fill=tk.X, padx=10, pady=(2, 0))
-        self._map_photo = None
-        self._map_canvas.bind("<Configure>",      self._on_map_resize)
-        self._map_canvas.bind("<Button-1>",       self._on_map_btn1_press)
-        self._map_canvas.bind("<B1-Motion>",      self._on_map_drag)
-        self._map_canvas.bind("<ButtonRelease-1>", self._on_map_btn1_release)
-        self._map_canvas.bind("<Button-3>",       self._on_map_clear)
-        self._map_canvas.bind("<MouseWheel>",     self._on_map_scroll)   # Windows & Mac
-        self._map_canvas.bind("<Button-4>",       self._on_map_scroll)   # Linux scroll up
-        self._map_canvas.bind("<Button-5>",       self._on_map_scroll)   # Linux scroll down
+        # ── Bottom-items eerst inpakken zodat canvas de rest vult ───────────────
 
-        # Spacer duwt alles hieronder naar de onderkant van het paneel
-        tk.Frame(outer, bg=BG_PANEL).pack(fill=tk.BOTH, expand=True)
-
-        # ── Kaartoverlays: één rij onderaan het paneel ───────────────────────
+        # Selectievakjes: één rij helemaal onderaan
         map_ov = tk.Frame(outer, bg=BG_PANEL)
-        map_ov.pack(fill=tk.X, padx=10, pady=(2, 2))
+        map_ov.pack(side=tk.BOTTOM, fill=tk.X, padx=10, pady=(2, 4))
 
         def _cb_map(tr_key, var, fallback_text=""):
             def _on_toggle():
@@ -3214,18 +3200,32 @@ class HAMIOSApp:
         if not _ITU_DISABLED:
             _cb_map(None, self._show_iaru_var, "ITU")
 
-        # Info-label voor groot-cirkel (richting/afstand)
-        self._gc_info_var = tk.StringVar(value="")
-        tk.Label(outer, textvariable=self._gc_info_var,
-                 font=_font(9), bg=BG_PANEL, fg=ACCENT,
-                 anchor='w').pack(fill=tk.X, padx=10, pady=(0, 1))
-        # Band-kwaliteit voor het specifieke propagatiepad
+        # GC-labels net boven de selectievakjes
         self._gc_path_var = tk.StringVar(value="")
         self._gc_path_best_color = _BAND_COLORS.get("20m", ACCENT)
         self._gc_path_lbl = tk.Label(outer, textvariable=self._gc_path_var,
                                      font=_font(9), bg=BG_PANEL, fg=TEXT_BODY,
                                      anchor='w')
-        self._gc_path_lbl.pack(fill=tk.X, padx=10, pady=(0, 4))
+        self._gc_path_lbl.pack(side=tk.BOTTOM, fill=tk.X, padx=10, pady=(0, 1))
+
+        self._gc_info_var = tk.StringVar(value="")
+        tk.Label(outer, textvariable=self._gc_info_var,
+                 font=_font(9), bg=BG_PANEL, fg=ACCENT,
+                 anchor='w').pack(side=tk.BOTTOM, fill=tk.X, padx=10, pady=(0, 0))
+
+        # ── Canvas vult alle resterende hoogte ──────────────────────────────
+        self._map_canvas = tk.Canvas(outer, height=380, bg="#1B3A5C",
+                                     bd=0, highlightthickness=0)
+        self._map_canvas.pack(fill=tk.BOTH, expand=True, padx=10, pady=(2, 2))
+        self._map_photo = None
+        self._map_canvas.bind("<Configure>",       self._on_map_resize)
+        self._map_canvas.bind("<Button-1>",        self._on_map_btn1_press)
+        self._map_canvas.bind("<B1-Motion>",       self._on_map_drag)
+        self._map_canvas.bind("<ButtonRelease-1>",  self._on_map_btn1_release)
+        self._map_canvas.bind("<Button-3>",        self._on_map_clear)
+        self._map_canvas.bind("<MouseWheel>",      self._on_map_scroll)
+        self._map_canvas.bind("<Button-4>",        self._on_map_scroll)
+        self._map_canvas.bind("<Button-5>",        self._on_map_scroll)
 
     def _on_map_resize(self, _event=None):
         """Kaart herrenderen bij breedte-aanpassing; hoogte is vast (v3.0)."""
