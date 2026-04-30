@@ -3303,9 +3303,11 @@ class HAMIOSApp:
                  anchor='w').pack(side=tk.BOTTOM, fill=tk.X, padx=10, pady=(0, 0))
 
         # ── Canvas vult alle resterende hoogte ──────────────────────────────
-        self._map_canvas = tk.Canvas(outer, width=507, height=256, bg="#1B3A5C",
+        # Vaste breedte 507 px, hoogte = breedte//2 (2:1 → volledige wereldkaart,
+        # geen crop, geen lege randen). _on_map_resize corrigeert de hoogte.
+        self._map_canvas = tk.Canvas(outer, width=507, height=253, bg="#1B3A5C",
                                      bd=0, highlightthickness=0)
-        self._map_canvas.pack(fill=tk.X, padx=10, pady=(2, 2))
+        self._map_canvas.pack(anchor='nw', padx=10, pady=(2, 2))
         self._map_photo = None
         self._map_canvas.bind("<Configure>",       self._on_map_resize)
         self._map_canvas.bind("<Button-1>",        self._on_map_btn1_press)
@@ -3317,12 +3319,12 @@ class HAMIOSApp:
         self._map_canvas.bind("<Button-5>",        self._on_map_scroll)
 
     def _on_map_resize(self, _event=None):
-        """Redraw on width change; maintain 2:1 ratio capped at 256 px."""
+        """Keep canvas height = width // 2 so the full world fits without crop or gaps."""
         w = self._map_canvas.winfo_width()
         if w > 1:
-            new_h = min(w // 2, 256)
-            if self._map_canvas.winfo_height() != new_h:
-                self._map_canvas.config(height=new_h)
+            h = w // 2
+            if self._map_canvas.winfo_height() != h:
+                self._map_canvas.config(height=h)
         self._draw_map()
 
     def _redraw_map(self):
@@ -3848,6 +3850,8 @@ class HAMIOSApp:
             self._map_render_key = render_key
 
         # ── Pan = alleen crop uit gecachede afbeelding (microseconden) ────────
+        # At zoom=1: VW=W, VH=H=W//2 → no crop needed, full world visible.
+        # At zoom>1: pan-crop to show the zoomed viewport.
         img = self._map_render_img
         if zoom > 1.0:
             world_cx = int((self._map_cx + 180) / 360 * VW)
@@ -3857,10 +3861,7 @@ class HAMIOSApp:
             img      = img.crop((crop_l, crop_t, crop_l + W, crop_t + H))
         else:
             crop_l = 0
-            # VH = W//2 maar canvas H kan kleiner zijn → centreer op evenaar
-            crop_t = max(0, (VH - H) // 2)
-            if crop_t > 0:
-                img = img.crop((0, crop_t, W, crop_t + H))
+            crop_t = 0   # H == VH (always exact 2:1), no crop needed
         self._map_crop_left = crop_l
         self._map_crop_top  = crop_t
 
