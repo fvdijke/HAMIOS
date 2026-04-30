@@ -43,6 +43,8 @@ Todo
 - [x] Info: Applicatiebeschrijving bijgewerkt (regel 5 e.v.) — nu Engelstalig en volledig.
 - [x] Info: Nederlandse verklarende teksten in code vertaald naar Engels.
 - [x] Vis: Panelen goed verdeeld — grid-layout met uniform="lc" zorgt voor exacte uitlijning.
+- [ ] Data: Maak meer analyses en adviezen op basis van alle data
+- [ ] 
 
 ─────────────────────────────────────────────────────────────────────
 Change Log (3.1)
@@ -3301,9 +3303,9 @@ class HAMIOSApp:
                  anchor='w').pack(side=tk.BOTTOM, fill=tk.X, padx=10, pady=(0, 0))
 
         # ── Canvas vult alle resterende hoogte ──────────────────────────────
-        self._map_canvas = tk.Canvas(outer, height=1, bg="#1B3A5C",
+        self._map_canvas = tk.Canvas(outer, width=507, height=256, bg="#1B3A5C",
                                      bd=0, highlightthickness=0)
-        self._map_canvas.pack(fill=tk.BOTH, expand=True, padx=10, pady=(2, 2))
+        self._map_canvas.pack(fill=tk.X, padx=10, pady=(2, 2))
         self._map_photo = None
         self._map_canvas.bind("<Configure>",       self._on_map_resize)
         self._map_canvas.bind("<Button-1>",        self._on_map_btn1_press)
@@ -3315,7 +3317,12 @@ class HAMIOSApp:
         self._map_canvas.bind("<Button-5>",        self._on_map_scroll)
 
     def _on_map_resize(self, _event=None):
-        """Kaart herrenderen bij breedte-aanpassing; hoogte is vast (v3.0)."""
+        """Redraw on width change; maintain 2:1 ratio capped at 256 px."""
+        w = self._map_canvas.winfo_width()
+        if w > 1:
+            new_h = min(w // 2, 256)
+            if self._map_canvas.winfo_height() != new_h:
+                self._map_canvas.config(height=new_h)
         self._draw_map()
 
     def _redraw_map(self):
