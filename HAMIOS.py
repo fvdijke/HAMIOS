@@ -3075,11 +3075,15 @@ class HAMIOSApp:
         left_area = tk.Frame(body, bg=BG_ROOT)
         left_area.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
 
-        for _c in range(4):
-            left_area.columnconfigure(_c, weight=1, uniform="lc")
-        left_area.rowconfigure(0, weight=1)   # top_row expandeert verticaal
-        left_area.rowconfigure(1, weight=0)   # bottom_row vaste hoogte
-        left_area.rowconfigure(2, weight=0)   # advies vaste hoogte
+        # col 0 (HF Rel + Schema) krijgt 3/9 breedte → ~460 px op 1380 px left_area
+        # cols 1-3 (Kaart + History/Kp/Bz) elk 2/9 → ~307 px per kolom
+        left_area.columnconfigure(0, weight=3)
+        left_area.columnconfigure(1, weight=2)
+        left_area.columnconfigure(2, weight=2)
+        left_area.columnconfigure(3, weight=2)
+        left_area.rowconfigure(0, weight=1)   # top row expands vertically
+        left_area.rowconfigure(1, weight=0)   # bottom row fixed height
+        left_area.rowconfigure(2, weight=0)   # advice fixed height
 
         # ── Top rij: HF Rel (col 0) | Kaart (col 1-2) | leeg (col 3) ────────
         prop_f = tk.Frame(left_area, bg=BG_PANEL)
@@ -3302,29 +3306,54 @@ class HAMIOSApp:
                  font=_font(9), bg=BG_PANEL, fg=ACCENT,
                  anchor='w').pack(side=tk.BOTTOM, fill=tk.X, padx=10, pady=(0, 0))
 
-        # ── Canvas vult alle resterende hoogte ──────────────────────────────
-        # Vaste breedte 507 px, hoogte = breedte//2 (2:1 → volledige wereldkaart,
-        # geen crop, geen lege randen). _on_map_resize corrigeert de hoogte.
-        self._map_canvas = tk.Canvas(outer, width=507, height=253, bg="#1B3A5C",
+        # Canvas starts small; _on_map_panel_resize sets the exact 2:1 size.
+        self._map_canvas = tk.Canvas(outer, width=400, height=200, bg="#1B3A5C",
                                      bd=0, highlightthickness=0)
         self._map_canvas.pack(anchor='nw', padx=10, pady=(2, 2))
         self._map_photo = None
-        self._map_canvas.bind("<Configure>",       self._on_map_resize)
         self._map_canvas.bind("<Button-1>",        self._on_map_btn1_press)
         self._map_canvas.bind("<B1-Motion>",       self._on_map_drag)
-        self._map_canvas.bind("<ButtonRelease-1>",  self._on_map_btn1_release)
+        self._map_canvas.bind("<ButtonRelease-1>", self._on_map_btn1_release)
         self._map_canvas.bind("<Button-3>",        self._on_map_clear)
         self._map_canvas.bind("<MouseWheel>",      self._on_map_scroll)
         self._map_canvas.bind("<Button-4>",        self._on_map_scroll)
         self._map_canvas.bind("<Button-5>",        self._on_map_scroll)
+        # Drive sizing from the outer panel frame
+        self._map_outer = outer
+        outer.bind("<Configure>", self._on_map_panel_resize)
+
+    # Estimated pixel height of map-panel chrome (header + GC labels + checkboxes)
+    _MAP_CHROME_H = 130
+
+    def _on_map_panel_resize(self, event):
+        """Resize canvas to fill the panel while keeping exact 2:1 ratio.
+
+        avail_w × avail_h determines the largest 2:1 rectangle that fits.
+        Result: full world always visible, no black borders, no crop at zoom=1.
+        """
+        avail_w = max(1, event.width - 22)          # padx=10 each side + 2 margin
+        avail_h = max(1, event.height - self._MAP_CHROME_H)
+
+        # Largest 2:1 canvas that fits in available space
+        if avail_w // 2 <= avail_h:
+            cw, ch = avail_w, avail_w // 2
+        else:
+            ch = avail_h
+            cw = ch * 2
+
+        cw = max(2, cw)
+        ch = max(1, cw // 2)
+
+        cur_w = self._map_canvas.winfo_width()
+        cur_h = self._map_canvas.winfo_height()
+        if cur_w != cw or cur_h != ch:
+            self._map_canvas.config(width=cw, height=ch)
+            # Invalidate base-map cache so it re-renders at new size
+            self._map_base_size = None
+        self._draw_map()
 
     def _on_map_resize(self, _event=None):
-        """Keep canvas height = width // 2 so the full world fits without crop or gaps."""
-        w = self._map_canvas.winfo_width()
-        if w > 1:
-            h = w // 2
-            if self._map_canvas.winfo_height() != h:
-                self._map_canvas.config(height=h)
+        """Legacy stub — sizing is now driven by _on_map_panel_resize."""
         self._draw_map()
 
     def _redraw_map(self):
@@ -3849,19 +3878,22 @@ class HAMIOSApp:
             self._map_render_img = img
             self._map_render_key = render_key
 
-        # ── Pan = alleen crop uit gecachede afbeelding (microseconden) ────────
-        # At zoom=1: VW=W, VH=H=W//2 → no crop needed, full world visible.
-        # At zoom>1: pan-crop to show the zoomed viewport.
-        img = self._map_render_img
+        # ── Pan/crop from cached render image ────────────────────────────────
+        # zoom=1: VW=W, VH=W//2. Canvas H = W//2 (set by _on_map_panel_resize).
+        # No crop needed at zoom=1 — full world always visible.
+        img    = self._map_render_img
+        crop_l = 0
+        crop_t = 0
         if zoom > 1.0:
             world_cx = int((self._map_cx + 180) / 360 * VW)
             world_cy = int((90 - self._map_cy) / 180 * VH)
             crop_l   = max(0, min(VW - W, world_cx - W // 2))
             crop_t   = max(0, min(VH - H, world_cy - H // 2))
             img      = img.crop((crop_l, crop_t, crop_l + W, crop_t + H))
-        else:
-            crop_l = 0
-            crop_t = 0   # H == VH (always exact 2:1), no crop needed
+        elif H < VH:
+            # Canvas shorter than virtual map (e.g. during resize transition)
+            crop_t = max(0, (VH - H) // 2)
+            img = img.crop((0, crop_t, W, crop_t + H))
         self._map_crop_left = crop_l
         self._map_crop_top  = crop_t
 
@@ -3955,7 +3987,7 @@ class HAMIOSApp:
                            font=_font(10, "bold"), bg=BG_PANEL, fg=ACCENT, pady=4)
         _bz_hdr.pack(anchor='w', padx=10)
         self._tr_widgets["bz_chart_hdr"] = _bz_hdr
-        self._bz_canvas = tk.Canvas(outer, height=120, bg=BG_SURFACE,
+        self._bz_canvas = tk.Canvas(outer, height=140, bg=BG_SURFACE,
                                     bd=0, highlightthickness=0)
         self._bz_canvas.pack(fill=tk.BOTH, expand=True, padx=10, pady=(0, 6))
         self._bz_canvas.bind("<Configure>",
@@ -4031,7 +4063,7 @@ class HAMIOSApp:
                            font=_font(10, "bold"), bg=BG_PANEL, fg=ACCENT, pady=4)
         _kp_hdr.pack(anchor='w', padx=10)
         self._tr_widgets["kp_chart_hdr"] = _kp_hdr
-        self._kp_canvas = tk.Canvas(outer, height=90, bg=BG_SURFACE,
+        self._kp_canvas = tk.Canvas(outer, height=120, bg=BG_SURFACE,
                                     bd=0, highlightthickness=0)
         self._kp_canvas.pack(fill=tk.BOTH, expand=True, padx=10, pady=(0, 6))
         self._kp_canvas.bind("<Configure>",
@@ -4049,7 +4081,7 @@ class HAMIOSApp:
                            font=_font(9, "bold"), bg=BG_PANEL, fg=ACCENT, pady=2)
         _bz_hdr.pack(anchor='w', padx=10)
         self._tr_widgets["bz_chart_hdr"] = _bz_hdr
-        self._bz_canvas = tk.Canvas(outer, height=80, bg=BG_SURFACE,
+        self._bz_canvas = tk.Canvas(outer, height=100, bg=BG_SURFACE,
                                     bd=0, highlightthickness=0)
         self._bz_canvas.pack(fill=tk.BOTH, expand=True, padx=10, pady=(0, 4))
         self._bz_canvas.bind("<Configure>",
@@ -4063,7 +4095,7 @@ class HAMIOSApp:
                            font=_font(9, "bold"), bg=BG_PANEL, fg=ACCENT, pady=2)
         _xr_hdr.pack(anchor='w', padx=10)
         self._tr_widgets["xray_chart_hdr"] = _xr_hdr
-        self._xray_canvas = tk.Canvas(outer, height=80, bg=BG_SURFACE,
+        self._xray_canvas = tk.Canvas(outer, height=100, bg=BG_SURFACE,
                                       bd=0, highlightthickness=0)
         self._xray_canvas.pack(fill=tk.BOTH, expand=True, padx=10, pady=(0, 6))
         self._xray_canvas.bind("<Configure>",
@@ -4640,7 +4672,7 @@ class HAMIOSApp:
             rb.pack(side=tk.LEFT, padx=(8, 0))
             self._hist_range_rbs.append((rb, tr_key))
 
-        self._hist_canvas = tk.Canvas(outer, height=90, bg=BG_PANEL,
+        self._hist_canvas = tk.Canvas(outer, height=120, bg=BG_PANEL,
                                       bd=0, highlightthickness=0)
         self._hist_canvas.pack(fill=tk.BOTH, expand=True, padx=10, pady=(0, 6))
         self._hist_canvas.bind("<Configure>", lambda *_: self._draw_hist_graph())
@@ -4764,7 +4796,7 @@ class HAMIOSApp:
                                 font=_font(10, "bold"), bg=BG_PANEL, fg=ACCENT)
         _sched_title.pack(side=tk.LEFT)
         self._tr_widgets["sched_header"] = _sched_title
-        self._sched_canvas = tk.Canvas(outer, height=180, bg=BG_PANEL,
+        self._sched_canvas = tk.Canvas(outer, height=120, bg=BG_PANEL,
                                        bd=0, highlightthickness=0)
         self._sched_canvas.pack(fill=tk.BOTH, expand=True, padx=10, pady=(0, 6))
         self._sched_canvas.bind("<Configure>", lambda *_: self._draw_schedule())
