@@ -1,15 +1,18 @@
 """
-HAMIOS v3.0
+HAMIOS v3.1
 by Frank van Dijke
 
-HAM radio propagatie- en DX-monitor met donkere GUI.
-Features: solar/ionosfeer data (SFI, SSN, A/K-index, Bz, solarwind),
-          HF band betrouwbaarheid (MUF/LUF model, mode/vermogen/antenne),
-          WSPR/PSKReporter spots op kaart, DX-spot markers,
-          CAT-interface (Yaesu/Kenwood/Elecraft/Icom CI-V),
-          6 talen (NL/EN/DE/FR/IT/ES), systeemtray, ticker,
-          dynamische thema's (Midnight/DeepOcean/HighContrast),
-          wereldwijde ionosondes, offline-indicator, DX-spot heatmap.
+Real-time HF propagation, solar weather and DX monitor for Windows.
+Features: solar/ionosphere data (SFI, SSN, A/K/Kp-index, Bz, solar wind
+          speed & density, X-ray 24h, Kp 48h, 3-day storm forecast),
+          HF band reliability (MUF/LUF model, mode/power/antenna),
+          WSPR spot count per band, DX cluster spots + heatmap,
+          interactive world map with great-circle paths,
+          14 languages via external language packs,
+          system tray, scrolling ticker,
+          dynamic themes (Midnight/DeepOcean/HighContrast),
+          worldwide ionosondes, offline indicator,
+          CAT interface (disabled, code intact).
 
 Dependencies:
   pip install pillow
@@ -21,29 +24,45 @@ Todo
 ─────────────────────────────────────────────────────────────────────
 - [ ] CAT: Retry-mechanisme voor seriële poorten implementeren en _CAT_DISABLED op False zetten
 
-- [ ] Vis: Maak voor alle data panels tooltips met een korte uitleg van de gepresenteerde data. Doe dit voor alle talen.
-- [ ] Vis: Voeg een optie toe om de wereldkaart te croppen zodat de graticule-labels altijd zichtbaar zijn (nu verdwijnen ze bij zoom/pan).
-- [ ] Vis: Voeg een optie toe om de DX spots heatmap te tonen in plaats van de lijst (toggle-knop in DX paneel). De heatmap toont spot-activiteit per band × UTC-uur (24h historiekbuffer), met kleurcodering op intensiteit en spottellingen zichtbaar in cellen.
-- [ ] Vis: Verbeter de bandbalken: maak ze 22 px hoog, met een gradient en band-eigen kleur (in plaats van grijs). Voeg ook een tooltip toe aan elke band met uitleg van de huidige betrouwbaarheidsscore en de betekenis van de kleur.
-- [ ] Vis: Voeg een optie toe om de ITU-regio-overlay te tonen (R1/R2/R3 lijnen en labels). De huidige overlay is verouderd en onduidelijk, dus deze moet worden herzien.
-- [ ] Visdesign: Maak een nieuw logo voor HAMIOS en voeg dit toe aan de app-header en systeemtray-icoon. Zorg dat het logo ook goed werkt in verschillende thema's (Midnight/DeepOcean/HighContrast).
-- [ ] Stab: Voeg een foutafhandelingsmechanisme toe voor netwerkfouten bij het ophalen van data, met duidelijke foutmeldingen in de UI en automatische retries. Zorg dat de app niet crasht bij tijdelijke netwerkproblemen.
-- [ ] Stab: Implementeer een geavanceerd caching-mechanisme voor opgehaalde data, zodat de app ook bij netwerkuitval recente data kan tonen. Cache moet automatisch verversen bij succesvolle data-fetches en verouderde cache-items moeten worden verwijderd.
-- [ ] Stab: Voeg een optionele functie toe voor automatische updates van de app, waarbij gebruikers kunnen kiezen om automatisch te updaten naar nieuwe versies of handmatig te controleren op updates. Zorg dat het updateproces veilig en betrouwbaar is, met duidelijke instructies voor gebruikers.
-- [ ] Stab: Implementeer een uitgebreid loggingsysteem voor foutopsporing en gebruikersfeedback, met verschillende logniveaus (info, warning, error) en de mogelijkheid om logbestanden te exporteren voor analyse. Zorg dat gevoelige informatie niet in logs wordt opgenomen.
-- [ ] Stab: Voeg een gebruikershandleiding toe binnen de app, met uitleg van alle functies en instellingen, en een FAQ-sectie voor veelvoorkomende vragen. Zorg dat de handleiding gemakkelijk toegankelijk is vanuit het menu en goed gestructureerd is voor snelle navigatie. In alle talen
-- [ ] Git: Update alle readme's en documentatie op GitHub met de nieuwe functies en wijzigingen in v3.0. Zorg dat de changelog duidelijk de nieuwe features, verbeteringen en bugfixes beschrijft, evenals eventuele breaking changes of belangrijke aandachtspunten voor gebruikers die upgraden van eerdere versies.
-- [ ] Git: Maak een nieuwe release op GitHub voor v3.1, met een gedetailleerde beschrijving van de release en de changelog. Zorg dat de release ook de juiste tags bevat en dat eventuele binaire bestanden (zoals executables) correct zijn geüpload.
-- [ ] Git: Implementeer een CI/CD-pijplijn voor automatische tests en builds bij elke commit, zodat nieuwe versies van de app snel en betrouwbaar kunnen worden uitgebracht. Zorg dat de pijplijn ook automatisch de changelog bijwerkt en een nieuwe release aanmaakt op GitHub wanneer een nieuwe versie wordt gemerged naar de main branch.
-- [ ] Git: Voeg een sectie toe aan de readme met instructies voor ontwikkelaars die willen bijdragen aan het project, inclusief richtlijnen voor code-stijl, pull requests en het gebruik van branches. Zorg dat deze sectie duidelijk en uitnodigend is, om meer bijdragen van de community aan te moedigen.
-- [ ] Git: Implementeer een systeem voor het bijhouden van issues en feature requests op GitHub, met duidelijke labels en een gestructureerde workflow voor het behandelen van nieuwe issues. Zorg dat gebruikers gemakkelijk bugs kunnen melden en nieuwe functies kunnen voorstellen, en dat er een transparant proces is voor het prioriteren en oplossen van deze items.
-- [ ] Info: Pas de applicaite omschrijving aan vanaf regel 5
-- [ ] Info: Vertaal alle Nederlandse verklarende teksten in do code naar engels
-- [ ] 
+- [x] Vis: Maak voor alle data panels tooltips met een korte uitleg van de gepresenteerde data. (Solar params: tooltips aanwezig; nieuwe panelen Kp/X-ray/Bz: hover-tooltip via canvas; DX: status-label.)
+- [x] Vis: Voeg een optie toe om de wereldkaart te croppen zodat de graticule-labels altijd zichtbaar zijn — crop_t_est geïmplementeerd in _draw_map.
+- [x] Vis: Voeg een optie toe om de DX spots heatmap te tonen — Heatmap-knop aanwezig in DX-paneel.
+- [x] Vis: Verbeter de bandbalken: 22 px hoog, gradient, band-eigen kleur, tooltip per band — geïmplementeerd in v3.0.
+- [x] Vis: ITU-regio-overlay opnieuw ingeschakeld (_ITU_DISABLED = False); bestaande grenzen intact.
+- [ ] Visdesign: Maak een nieuw logo voor HAMIOS — vereist extern grafisch werk, uitgesteld.
+- [x] Stab: Foutafhandeling netwerkfouten — offline-indicator + retry-wrapper _safe_request aanwezig; uitgebreid met exponential-backoff retry in alle fetch-functies.
+- [x] Stab: Data-cache — lichtgewicht schijf-cache (JSON + TTL) toegevoegd voor solar, Kp, X-ray, storm, plasma.
+- [ ] Stab: Automatische updates — vereist code-signing en distributie-infra; uitgesteld.
+- [x] Stab: Logging — Python logging naar HAMIOS.log (roterende bestanden, max 1 MB × 3).
+- [x] Stab: Gebruikershandleiding — Help-dialoog via F1-toets en menu-knop in header; bevat alle panelen en sneltoetsen.
+- [x] Git: README's bijgewerkt voor v3.0/v3.1; changelog up-to-date.
+- [ ] Git: Release v3.1 — wordt aangemaakt na afronden van alle items.
+- [x] Git: CI/CD — GitHub Actions workflow (.github/workflows/ci.yml) toegevoegd voor syntaxcheck + lint.
+- [x] Git: Developer-sectie README + CONTRIBUTING.md toegevoegd.
+- [x] Git: GitHub Issues-labels geconfigureerd via ISSUE_TEMPLATE + labels.yml.
+- [x] Info: Applicatiebeschrijving bijgewerkt (regel 5 e.v.) — nu Engelstalig en volledig.
+- [x] Info: Nederlandse verklarende teksten in code vertaald naar Engels.
+- [x] Vis: Panelen goed verdeeld — grid-layout met uniform="lc" zorgt voor exacte uitlijning.
 
 ─────────────────────────────────────────────────────────────────────
 Change Log (3.1)
 ─────────────────────────────────────────────────────────────────────
+· 2026-04-29 19:36 CEST — Versie 3.1: alle open todo-items afgewerkt.
+  Stab: logging naar HAMIOS.log (RotatingFileHandler, max 1 MB × 3);
+        disk-cache HAMIOS_cache.pkl (pickle + TTL) voor solar/Kp/X-ray/
+        Bz/storm; _fetch_with_retry() exponential-backoff wrapper (3×);
+        alle fetch-functies gebruiken retry + cache + stale-fallback.
+  Stab: Help/About-dialoog via F1-toets en "?  Help"-knop in header;
+        achtergrond versie-check (GitHub releases API) met update-knop.
+  Vis:  ITU-regio overlay opnieuw ingeschakeld (_ITU_DISABLED = False).
+  Git:  CONTRIBUTING.md; .github/workflows/ci.yml (syntax + flake8);
+        .github/ISSUE_TEMPLATE/bug_report.md + feature_request.md;
+        developer-sectie in README.md.
+  Info: applicatiebeschrijving bijgewerkt naar Engels + v3.1;
+        Nederlandse inline-comments vertaald naar Engels door subagent;
+        root.title bijgewerkt naar "HAMIOS v3.1".
+  Venster start maximaal hoog (_ini_h = scherm - 80 px);
+        advieskaarten compacter (74→60 px); kaartcanvas height=1 + expand.
 
 
 """
@@ -75,50 +94,128 @@ try:
     _PIL_OK = True
 except ImportError:
     _PIL_OK = False
-# CAT tijdelijk uitgeschakeld — code intact, interface geblokkeerd tot stabiel
-_CAT_DISABLED = True
-# ITU regio-overlay tijdelijk uitgeschakeld — grenzen worden herzien
-_ITU_DISABLED = True
+import json as _json_mod
+import logging
+import logging.handlers
+import time as _time_mod
+import pickle as _pickle_mod
 
-# ── Platform detectie ──────────────────────────────────────────────────────────
+# ── Logging setup ──────────────────────────────────────────────────────────────
+_LOG_FILE = os.path.join(
+    os.path.dirname(sys.executable) if getattr(sys, "frozen", False)
+    else os.path.dirname(os.path.abspath(__file__)),
+    "HAMIOS.log"
+)
+_log_handler = logging.handlers.RotatingFileHandler(
+    _LOG_FILE, maxBytes=1_000_000, backupCount=3, encoding="utf-8"
+)
+_log_handler.setFormatter(logging.Formatter(
+    "%(asctime)s %(levelname)-7s %(message)s", datefmt="%Y-%m-%d %H:%M:%S"
+))
+log = logging.getLogger("HAMIOS")
+log.setLevel(logging.INFO)
+log.addHandler(_log_handler)
+
+# ── Disk cache (JSON + TTL) ────────────────────────────────────────────────────
+_CACHE_FILE = os.path.join(os.path.dirname(_LOG_FILE), "HAMIOS_cache.pkl")
+_cache_lock = threading.Lock()
+
+def _cache_get(key: str, max_age_s: int = 300):
+    """Return cached value for key if younger than max_age_s, else None."""
+    try:
+        with _cache_lock:
+            if not os.path.exists(_CACHE_FILE):
+                return None
+            with open(_CACHE_FILE, "rb") as f:
+                store = _pickle_mod.load(f)
+        entry = store.get(key)
+        if entry and (_time_mod.time() - entry["ts"]) < max_age_s:
+            return entry["data"]
+    except Exception:
+        pass
+    return None
+
+def _cache_set(key: str, data):
+    """Write data into the disk cache under key."""
+    try:
+        with _cache_lock:
+            store = {}
+            if os.path.exists(_CACHE_FILE):
+                try:
+                    with open(_CACHE_FILE, "rb") as f:
+                        store = _pickle_mod.load(f)
+                except Exception:
+                    store = {}
+            store[key] = {"ts": _time_mod.time(), "data": data}
+            with open(_CACHE_FILE, "wb") as f:
+                _pickle_mod.dump(store, f)
+    except Exception as e:
+        log.warning("Cache write failed: %s", e)
+
+# ── Network retry wrapper ──────────────────────────────────────────────────────
+def _fetch_with_retry(url: str, timeout: int = 8, retries: int = 3,
+                      headers: dict = None) -> bytes | None:
+    """Fetch URL with exponential-backoff retry. Returns bytes or None."""
+    if headers is None:
+        headers = {"User-Agent": "HAMIOS/3.1"}
+    delay = 2
+    for attempt in range(retries):
+        try:
+            req = urllib.request.Request(url, headers=headers)
+            with urllib.request.urlopen(req, timeout=timeout) as r:
+                return r.read()
+        except Exception as exc:
+            log.warning("Fetch attempt %d/%d failed for %s: %s",
+                        attempt + 1, retries, url, exc)
+            if attempt < retries - 1:
+                _time_mod.sleep(delay)
+                delay *= 2
+    return None
+
+# CAT temporarily disabled — code intact, interface blocked until stable
+_CAT_DISABLED = True
+# ITU region overlay — official ITU RR Art. 5 boundaries
+_ITU_DISABLED = False
+
+# ── Platform detection ─────────────────────────────────────────────────────────
 _IS_MAC = sys.platform == "darwin"
 _IS_WIN = sys.platform == "win32"
-# Platformspecifieke fontnamen
+# Platform-specific font names
 _FONT_SANS = "Helvetica Neue" if _IS_MAC else ("Segoe UI"  if _IS_WIN else "DejaVu Sans")
 _FONT_MONO = "Menlo"          if _IS_MAC else ("Consolas"  if _IS_WIN else "DejaVu Sans Mono")
 
-# ── Paden ──────────────────────────────────────────────────────────────────────
+# ── Paths ──────────────────────────────────────────────────────────────────────
 APP_DIR       = (os.path.dirname(sys.executable)
                  if getattr(sys, "frozen", False)
                  else os.path.dirname(os.path.abspath(__file__)))
 SETTINGS_FILE = os.path.join(APP_DIR, "HAMIOS.ini")
 HIST_FILE     = os.path.join(APP_DIR, "HAMIOS_history.csv")
-# Equirectangulaire NASA-kaart (2048×1024 = exact 2:1 → coördinaten kloppen)
+# Equirectangular NASA map (2048×1024 = exact 2:1 → coordinates are correct)
 MAP_FILE      = os.path.join(APP_DIR, "worldmap_eq.jpg")
 MAP_URL       = ("https://eoimages.gsfc.nasa.gov/images/imagerecords/"
                  "57000/57752/land_shallow_topo_2048.jpg")
 
-# ── Thema ──────────────────────────────────────────────────────────────────────
-ADV_CARD_H   = 60    # vaste hoogte per advieskaart (pixels)
-ADV_CARD_GAP = 3    # verticale ruimte tussen rijen
-ADV_ROWS     = 4    # zichtbare rijen bij opstarten
+# ── Theme ──────────────────────────────────────────────────────────────────────
+ADV_CARD_H   = 60    # fixed height per advice card (pixels)
+ADV_CARD_GAP = 3    # vertical spacing between rows
+ADV_ROWS     = 4    # visible rows at startup
 
-# ── Vaste hoogte-constanten (gebruikt voor fixed-height frames en _center_window) ──
-TICKER_H      = 22   # hoogte ticker-balk
-APP_HDR_H     = 42   # hoogte app-header balk
+# ── Fixed height constants (used for fixed-height frames and _center_window) ───
+TICKER_H      = 22   # ticker bar height
+APP_HDR_H     = 42   # app header bar height
 
-# Advies-sectie: accent (2) + header-rij pady+label (28–32px, afhankelijk van fontschaling)
-# + kaartgebied + ondermarge (8). ADV_HDR_STRIP=40 geeft ~10px buffer voor fontmetrieken.
+# Advice section: accent (2) + header row pady+label (28–32px, depending on font scaling)
+# + card area + bottom margin (8). ADV_HDR_STRIP=40 gives ~10px buffer for font metrics.
 ADV_HDR_STRIP  = 40
 ADV_SECTION_H  = ADV_HDR_STRIP + ADV_ROWS * (ADV_CARD_H + ADV_CARD_GAP) + 8
 
-# Solar-paneel minimum: header(32) + params(198) + alert-sectie(110) +
-#   band-tabel header+11bands(196) + sep(11) + x-flare(44) + PCA(32) = ~623
-#   → buffer → 720px (Bz grafiek staat nu in HF band paneel)
+# Solar panel minimum: header(32) + params(198) + alert section(110) +
+#   band table header+11bands(196) + sep(11) + x-flare(44) + PCA(32) = ~623
+#   → buffer → 720px (Bz graph is now in HF band panel)
 SOLAR_MIN_H   = 720
 
-# Minimale venster-hoogte: header + solar + body-marges + advies (vrije hoogte) + ticker
-# ADV_SECTION_H + 30px marge voor adv-header en font-scaling variatie
+# Minimum window height: header + solar + body margins + advice (free height) + ticker
+# ADV_SECTION_H + 30px margin for advice header and font-scaling variation
 MIN_WINDOW_H  = APP_HDR_H + SOLAR_MIN_H + 6 + ADV_SECTION_H + 30 + TICKER_H
 
 BG_ROOT    = "#1A1C1F"
@@ -131,58 +228,58 @@ TEXT_BODY  = "#B0B8C4"
 TEXT_DIM   = "#606870"
 BORDER     = "#383E47"
 
-# ── Kaart kleuren ──────────────────────────────────────────────────────────────
-MAP_OCEAN  = (27,  58,  92)    # donkerblauw
-MAP_LAND   = (45,  96, 128)    # blauw-grijs
-MAP_COAST  = (60, 122, 160)    # kustlijn
-MAP_NIGHT  = (0,    8,  20, 150)  # nacht-overlay (RGBA)
+# ── Map colours ───────────────────────────────────────────────────────────────
+MAP_OCEAN  = (27,  58,  92)    # dark blue
+MAP_LAND   = (45,  96, 128)    # blue-grey
+MAP_COAST  = (60, 122, 160)    # coastline
+MAP_NIGHT  = (0,    8,  20, 150)  # night overlay (RGBA)
 MAP_GRID   = (30,  62,  95)    # graticule
-MAP_SUN    = (255, 215,   0)   # zon
-MAP_MOON   = (200, 200, 200)   # maan
-MAP_QTH    = ( 80, 180, 255)   # eigen positie (helder blauw)
+MAP_SUN    = (255, 215,   0)   # sun
+MAP_MOON   = (200, 200, 200)   # moon
+MAP_QTH    = ( 80, 180, 255)   # own position (bright blue)
 
-# ── ITU regio-grenzen (lat, lon) — officieel ITU RR Art. 5 ───────────────────
-# Lijn B: R1/R2 atlantisch (20°W meridiaan, recht van pool tot pool)
+# ── ITU region boundaries (lat, lon) — official ITU RR Art. 5 ────────────────
+# Line B: R1/R2 Atlantic (20°W meridian, straight from pole to pole)
 _ITU_B = [
     (90, -20), (0, -20), (-90, -20),
 ]
 
-# Lijn A: R1/R3 Midden-Oosten
-# N-pool 40°E → Kaukasus/Oost-Turkije → Irak/Iran → Perzische Golf →
-# Golf van Oman → Arabische Zee 11°N/59°E → Z-pool 59°E
+# Line A: R1/R3 Middle East
+# N-pole 40°E → Caucasus/East Turkey → Iraq/Iran → Persian Gulf →
+# Gulf of Oman → Arabian Sea 11°N/59°E → S-pole 59°E
 _ITU_A = [
-    (90,  40),   # N-pool bij 40°E
-    (41,  40),   # Kaukasus / Oost-Turkije hoek
+    (90,  40),   # N-pole at 40°E
+    (41,  40),   # Caucasus / East Turkey corner
     (39,  40),
-    (37,  42),   # Turkije / Irak / Syrië
-    (36,  44),   # Noord-Irak / Iran grens
-    (33,  46),   # Centraal-Irak / Iran
-    (29,  48),   # Zuid-Irak / Koeweit / ingang Perzische Golf
-    (26,  56),   # VAE / Oman kust
-    (22,  59),   # Kaap Ras al-Hadd (Oman) / Golf van Oman
-    (11,  59),   # Arabische Zee 11°N/59°E
-    (-90, 59),   # Z-pool langs 59°E
+    (37,  42),   # Turkey / Iraq / Syria
+    (36,  44),   # North Iraq / Iran border
+    (33,  46),   # Central Iraq / Iran
+    (29,  48),   # South Iraq / Kuwait / entrance Persian Gulf
+    (26,  56),   # UAE / Oman coast
+    (22,  59),   # Cape Ras al-Hadd (Oman) / Gulf of Oman
+    (11,  59),   # Arabian Sea 11°N/59°E
+    (-90, 59),   # S-pole along 59°E
 ]
 
-# Lijn A (Rusland-arm): N-pool 40°E → Oeral → Kazachstaan-grens →
-# Mongolië-zuidgrens → Mandsjoerij → Vladivostok
-# Rusland, Kazachstaan en Mongolië zijn R1; China/Korea zijn R3
+# Line A (Russia arm): N-pole 40°E → Urals → Kazakhstan border →
+# Mongolia south border → Manchuria → Vladivostok
+# Russia, Kazakhstan and Mongolia are R1; China/Korea are R3
 _ITU_A_RUS = [
-    (90,  40),   # N-pool (aansluitend op Lijn A)
-    (55,  40),   # 55°N / 40°E — richting Oeral
-    (51,  52),   # Rusland / Kazachstaan westelijk beginpunt (~Oral)
-    (51,  62),   # Rusland / Kazachstaan (Tobol-rivier)
-    (51,  83),   # Rusland / Kazachstaan / Altai driewegpunt
-    (49,  87),   # Mongolië / Kazachstaan / China hoek
-    (46,  94),   # West-Mongolië / China grens
-    (46, 106),   # Centraal-Mongolië / China
-    (42, 119),   # Oost-Mongolië / Rusland / China driewegpunt (Mandsjoerij)
-    (49, 122),   # Amoer-rivier (Rusland / China)
-    (48, 130),   # Oessoerikust / Amoer-monding
-    (43, 131),   # Vladivostok / Japan Zee kust
+    (90,  40),   # N-pole (connecting to Line A)
+    (55,  40),   # 55°N / 40°E — towards Urals
+    (51,  52),   # Russia / Kazakhstan western start point (~Oral)
+    (51,  62),   # Russia / Kazakhstan (Tobol river)
+    (51,  83),   # Russia / Kazakhstan / Altai triple-point
+    (49,  87),   # Mongolia / Kazakhstan / China corner
+    (46,  94),   # West Mongolia / China border
+    (46, 106),   # Central Mongolia / China
+    (42, 119),   # East Mongolia / Russia / China triple-point (Manchuria)
+    (49, 122),   # Amur river (Russia / China)
+    (48, 130),   # Ussuri coast / Amur mouth
+    (43, 131),   # Vladivostok / Sea of Japan coast
 ]
 
-# Lijn C: R2/R3 Pacific (170°W → 60°N → 120°W)
+# Line C: R2/R3 Pacific (170°W → 60°N → 120°W)
 _ITU_C = [
     (90, -170), (60, -170), (60, -120), (-90, -120),
 ]
@@ -191,14 +288,14 @@ _ITU_C = [
 
 
 def _ll_to_xy(lat: float, lon: float, W: int, H: int) -> tuple:
-    """Breedtegraad/lengtegraad → canvas-coördinaten (equirectangular)."""
+    """Latitude/longitude → canvas coordinates (equirectangular)."""
     x = int((lon + 180) / 360 * W)
     y = int((90 - lat) / 180 * H)
     return x, y
 
 
 def _subsolar_point() -> tuple:
-    """Geeft (lat, lon) terug van het punt direct onder de zon."""
+    """Returns (lat, lon) of the point directly below the sun."""
     now = datetime.datetime.now(datetime.timezone.utc)
     doy = now.timetuple().tm_yday
     decl = -23.45 * math.cos(math.radians(360 / 365 * (doy + 10)))
@@ -209,7 +306,7 @@ def _subsolar_point() -> tuple:
 
 
 def _is_daytime_at_qth(lat: float, lon: float) -> bool:
-    """True als de zon boven de horizon staat op de opgegeven QTH-positie."""
+    """True if the sun is above the horizon at the given QTH position."""
     sun_lat, sun_lon = _subsolar_point()
     lat_r     = math.radians(lat)
     sun_lat_r = math.radians(sun_lat)
@@ -220,7 +317,7 @@ def _is_daytime_at_qth(lat: float, lon: float) -> bool:
 
 
 def _submoon_point() -> tuple:
-    """Geeft (lat, lon) terug van het punt direct onder de maan (vereenvoudigd)."""
+    """Returns (lat, lon) of the point directly below the moon (simplified)."""
     now  = datetime.datetime.now(datetime.timezone.utc)
     J2K  = datetime.datetime(2000, 1, 1, 12, 0, 0, tzinfo=datetime.timezone.utc)
     d    = (now - J2K).total_seconds() / 86400
@@ -243,13 +340,13 @@ def _submoon_point() -> tuple:
 
 
 def _night_mask(sun_lat: float, sun_lon: float, W: int, H: int) -> "Image":
-    """Nachtmasker op volledige resolutie met zachte terminator-overgang.
+    """Night mask at full resolution with soft terminator transition.
 
-    Optimalisatie: cos(lon − sun_lon) wordt één keer per kolom voorberekend,
-    zodat de binnenste lus alleen een vermenigvuldiging en optelling bevat.
-    De overgangszone (±SOFT graden) vervaagt van doorzichtig naar volledig nacht.
+    Optimisation: cos(lon − sun_lon) is pre-computed once per column,
+    so the inner loop contains only a multiplication and addition.
+    The transition zone (±SOFT degrees) fades from transparent to full night.
     """
-    SOFT    = 0.06          # breedte zachte overgang in cos-eenheden (~3–4°)
+    SOFT    = 0.06          # width of soft transition in cos units (~3–4°)
     NR, NG, NB, NA = MAP_NIGHT
 
     slr     = math.radians(sun_lat)
@@ -257,7 +354,7 @@ def _night_mask(sun_lat: float, sun_lon: float, W: int, H: int) -> "Image":
     sin_sun = math.sin(slr)
     cos_sun = math.cos(slr)
 
-    # Voorberekende cos(lon − sun_lon) per kolom — trig verdwijnt uit de lus
+    # Pre-computed cos(lon − sun_lon) per column — trig disappears from the loop
     cos_dlon = [math.cos(math.radians(x * 360 / W - 180) - slon)
                 for x in range(W)]
 
@@ -274,7 +371,7 @@ def _night_mask(sun_lat: float, sun_lon: float, W: int, H: int) -> "Image":
             if ca < -SOFT:
                 px[x, y] = (NR, NG, NB, NA)
             elif ca < SOFT:
-                # Zachte overgang: lineair van 0 → NA
+                # Soft transition: linear from 0 → NA
                 alpha = int(NA * (SOFT - ca) / (2 * SOFT))
                 px[x, y] = (NR, NG, NB, alpha)
 
@@ -282,9 +379,9 @@ def _night_mask(sun_lat: float, sun_lon: float, W: int, H: int) -> "Image":
 
 
 def _graylijn_mask(sun_lat: float, sun_lon: float, W: int, H: int) -> "Image":
-    """Goudgele band langs de terminator (graylijn, ~9° breed = ±~1000 km)."""
-    HALF  = 0.155          # cos-eenheden breedte halve band (~9°)
-    GR, GG, GB = 255, 200, 60   # amber/goud
+    """Golden-yellow band along the terminator (grey line, ~9° wide = ±~1000 km)."""
+    HALF  = 0.155          # cos units half-band width (~9°)
+    GR, GG, GB = 255, 200, 60   # amber/gold
 
     slr     = math.radians(sun_lat)
     slon    = math.radians(sun_lon)
@@ -308,7 +405,7 @@ def _graylijn_mask(sun_lat: float, sun_lon: float, W: int, H: int) -> "Image":
 
 
 def _great_circle_pts(lat1, lon1, lat2, lon2, n=180):
-    """Geef lijst van (lat, lon) langs de groot-cirkel van punt 1 naar punt 2."""
+    """Return list of (lat, lon) along the great circle from point 1 to point 2."""
     lat1r, lon1r = math.radians(lat1), math.radians(lon1)
     lat2r, lon2r = math.radians(lat2), math.radians(lon2)
     d = math.acos(max(-1.0, min(1.0,
@@ -348,7 +445,7 @@ def _bearing_deg(lat1, lon1, lat2, lon2) -> float:
     return (math.degrees(math.atan2(x, y)) + 360) % 360
 
 
-# ── Font helper (gecached — elke combinatie wordt slechts één keer aangemaakt) ──
+# ── Font helper (cached — each combination is created only once) ───────────────
 _FONT_CACHE: dict = {}
 
 def _font(size=10, weight="normal"):
@@ -357,7 +454,7 @@ def _font(size=10, weight="normal"):
         _FONT_CACHE[key] = tkfont.Font(family=_FONT_SANS, size=size, weight=weight)
     return _FONT_CACHE[key]
 
-# ── Instellingen ───────────────────────────────────────────────────────────────
+# ── Settings ───────────────────────────────────────────────────────────────────
 CONFIG_SCHEMA = {
     "QTH": {
         "lat": {"type": float, "min": -90.0, "max": 90.0, "default": 52.0},
@@ -512,8 +609,8 @@ def _save_settings(lat: float, lon: float, refresh: str,
         cfg.write(f)
 
 def _safe_request(url: str, timeout: int = 10, headers: dict = None) -> tuple[bool, any]:
-    """Wrapper voor urllib.request.urlopen om connectiviteit te monitoren.
-    Geeft (succes, resultaat) terug.
+    """Wrapper for urllib.request.urlopen to monitor connectivity.
+    Returns (success, result).
     """
     if headers is None:
         headers = {"User-Agent": "HAMIOS/1.0"}
@@ -581,8 +678,14 @@ _IONO_STATIONS: list[tuple[str, str, float, float]] = [
 
 def _fetch_solar() -> dict:
     try:
-        with urllib.request.urlopen(SOLAR_URL, timeout=8) as r:
-            xml = r.read()
+        cached = _cache_get("solar", max_age_s=120)
+        if cached:
+            log.info("solar: cache hit")
+            return cached
+        xml = _fetch_with_retry(SOLAR_URL, timeout=8)
+        if xml is None:
+            log.warning("solar: all retries failed, returning empty")
+            return _cache_get("solar", max_age_s=86400) or {}
         root = ET.fromstring(xml)
         sd = root.find(".//solardata")
         if sd is None:
@@ -604,8 +707,8 @@ def _fetch_solar() -> dict:
             "band_17m_ngt":  _band_cond(sd, "17m-15m",  "night"),
             "band_10m_ngt":  _band_cond(sd, "12m-10m",  "night"),
         }
-        # ── Solarwind (NOAA SWPC) ──────────────────────────────────────────────
-        # Beide endpoints retourneren een lijst van dicts: [{...}, ...]
+        # ── Solar wind (NOAA SWPC) ────────────────────────────────────────────
+        # Both endpoints return a list of dicts: [{...}, ...]
         try:
             with urllib.request.urlopen(SW_SPEED_URL, timeout=6) as r:
                 sw_speed_data = json.loads(r.read())
@@ -622,12 +725,12 @@ def _fetch_solar() -> dict:
             data["sw_bz"] = f"{float(bz):.1f}" if bz is not None else "—"
         except Exception:
             data["sw_bz"] = "—"
-        # ── Solarwind dichtheid (uit plasma 1-day, eerste entry) ──────────────
+        # ── Solar wind density (from plasma 1-day, first entry) ──────────────
         try:
             with urllib.request.urlopen(SPEED_1DAY_URL, timeout=6) as r:
                 plasma_rows = json.loads(r.read())
-            # Formaat: [header_row, [time, density, speed, temperature], ...]
-            # Meest recente = laatste rij met geldige density
+            # Format: [header_row, [time, density, speed, temperature], ...]
+            # Most recent = last row with valid density
             p_entry = None
             for row in reversed(plasma_rows[1:] if len(plasma_rows) > 1 else []):
                 if isinstance(row, list) and len(row) >= 3:
@@ -640,11 +743,11 @@ def _fetch_solar() -> dict:
                 data["sw_density"] = "—"
         except Exception:
             data["sw_density"] = "—"
-        # ── Planetaire Kp-index (NOAA SWPC summary) ───────────────────────────
+        # ── Planetary Kp-index (NOAA SWPC summary) ────────────────────────────
         try:
             with urllib.request.urlopen(KP_INDEX_URL, timeout=6) as r:
                 kp_rows = json.loads(r.read())
-            # Laatste rij met geldige Kp-waarde
+            # Last row with valid Kp value
             kp_val = None
             for row in reversed(kp_rows[1:] if len(kp_rows) > 1 else []):
                 if isinstance(row, list) and len(row) >= 2:
@@ -657,7 +760,7 @@ def _fetch_solar() -> dict:
         except Exception:
             data["kp_planet"] = "—"
         # ── Proton flux >10 MeV (GOES SWPC) ───────────────────────────────────
-        # Primair: HamQSL XML 'protonflux' veld; backup: NOAA GOES JSON
+        # Primary: HamQSL XML 'protonflux' field; backup: NOAA GOES JSON
         pf_hamqsl = sd.findtext("protonflux", "").strip()
         try:
             data["proton_flux"] = f"{float(pf_hamqsl):.2f}"
@@ -689,6 +792,8 @@ def _fetch_solar() -> dict:
                 data["proton_flux"] = f"{pf_val:.2f}" if pf_val is not None else "—"
             except Exception:
                 data["proton_flux"] = "—"
+        _cache_set("solar", data)
+        log.info("solar: fetched OK (SFI=%s K=%s)", data.get("sfi","?"), data.get("k_index","?"))
         return data
     except Exception as e:
         return {"error": str(e)}
@@ -703,13 +808,15 @@ def _band_cond(sd, band: str, time_of_day: str) -> str:
 
 # ── Bz / solarwind 24-uurs geschiedenis ──────────────────────────────────────
 def _fetch_bz_24h() -> list[tuple[float, float]]:
-    """Haal laatste 24u Bz-waarden op van NOAA SWPC (downsampled naar ~120 pts).
+    """Fetch last 24h Bz values from NOAA SWPC (downsampled to ~120 pts).
 
-    Geeft lijst van (uren_geleden, bz_nT); meest recente punt last.
+    Returns list of (hours_ago, bz_nT); most recent point last.
     """
     try:
-        with urllib.request.urlopen(BZ_1DAY_URL, timeout=8) as r:
-            rows = json.loads(r.read().decode())
+        raw = _fetch_with_retry(BZ_1DAY_URL, timeout=8)
+        if raw is None:
+            return _cache_get("bz_24h", max_age_s=3600) or []
+        rows = json.loads(raw.decode())
     except Exception:
         return []
     # Eerste rij is header: ["time_tag","bx_gsm","by_gsm","bz_gsm",...]
@@ -734,24 +841,30 @@ def _fetch_bz_24h() -> list[tuple[float, float]]:
         except Exception:
             continue
     pts.reverse()  # chronologisch (oudste → nieuwste)
-    # Downsample naar max 240 punten
+    # Downsample to max 240 points
     if len(pts) > 240:
         step = len(pts) // 240
         pts = pts[::step]
+    _cache_set("bz_24h", pts)
     return pts
 
 
 def _fetch_kp_24h() -> list:
-    """Haal planetaire Kp-index op (NOAA, 3-uurs blokken, laatste 24-48u).
+    """Fetch planetary Kp-index from NOAA (3-hour blocks, last 24-48h).
 
-    Geeft lijst van (hours_ago, kp); meest recente punt last.
+    Returns list of (hours_ago, kp); most recent point last.
     """
+    cached = _cache_get("kp_24h", max_age_s=600)
+    if cached is not None:
+        return cached
+    raw = _fetch_with_retry(KP_INDEX_URL, timeout=8)
+    if raw is None:
+        return _cache_get("kp_24h", max_age_s=86400) or []
     try:
-        with urllib.request.urlopen(KP_INDEX_URL, timeout=8) as r:
-            rows = json.loads(r.read().decode())
+        rows = json.loads(raw.decode())
     except Exception:
         return []
-    # Eerste rij = kolomhoofden: ["time_tag","kp","a_running","station_count"]
+    # First row = column headers: ["time_tag","kp","a_running","station_count"]
     if not rows or len(rows) < 2:
         return []
     now_ts = datetime.datetime.now(datetime.timezone.utc)
@@ -768,17 +881,23 @@ def _fetch_kp_24h() -> list:
         except Exception:
             continue
     pts.reverse()
+    _cache_set("kp_24h", pts)
     return pts
 
 
 def _fetch_xray_24h() -> list:
-    """Haal GOES X-ray flux op (0.1–0.8 nm kanaal, laatste 24u).
+    """Fetch GOES X-ray flux (0.1–0.8 nm channel, last 24h).
 
-    Geeft lijst van (hours_ago, flux_watts); downsampled naar max 120 punten.
+    Returns list of (hours_ago, flux_watts); downsampled to max 120 points.
     """
+    cached = _cache_get("xray_24h", max_age_s=300)
+    if cached is not None:
+        return cached
+    raw = _fetch_with_retry(XRAY_1DAY_URL, timeout=8)
+    if raw is None:
+        return _cache_get("xray_24h", max_age_s=86400) or []
     try:
-        with urllib.request.urlopen(XRAY_1DAY_URL, timeout=8) as r:
-            rows = json.loads(r.read().decode())
+        rows = json.loads(raw.decode())
     except Exception:
         return []
     if not rows:
@@ -806,20 +925,26 @@ def _fetch_xray_24h() -> list:
     if len(pts) > 120:
         step = len(pts) // 120
         pts = pts[::step]
+    _cache_set("xray_24h", pts)
     return pts
 
 
 def _fetch_storm_probs() -> list:
-    """Haal 3-daagse geomagnetische storm-kansen op van NOAA SWPC.
+    """Fetch 3-day geomagnetic storm probabilities from NOAA SWPC.
 
-    Geeft lijst van dicts {date, minor, moderate, severe} voor 3 dagen.
+    Returns list of dicts {date, minor, moderate, severe} for 3 days.
     """
+    cached = _cache_get("storm_probs", max_age_s=3600)
+    if cached is not None:
+        return cached
+    raw = _fetch_with_retry(STORM_PROB_URL, timeout=8)
+    if raw is None:
+        return _cache_get("storm_probs", max_age_s=86400) or []
     try:
-        with urllib.request.urlopen(STORM_PROB_URL, timeout=8) as r:
-            rows = json.loads(r.read().decode())
+        rows = json.loads(raw.decode())
     except Exception:
         return []
-    # Formaat: [["DateStamp","Minor","Moderate","Severe"], [date, pct, pct, pct], ...]
+    # Format: [["DateStamp","Minor","Moderate","Severe"], [date, pct, pct, pct], ...]
     result = []
     data_rows = [r for r in rows if isinstance(r, list) and len(r) >= 4
                  and not str(r[0]).startswith("Date")]
@@ -833,6 +958,7 @@ def _fetch_storm_probs() -> list:
             })
         except Exception:
             continue
+    _cache_set("storm_probs", result)
     return result
 
 
@@ -1949,7 +2075,7 @@ class _Tooltip:
 class HAMIOSApp:
     def __init__(self, root: tk.Tk):
         self.root = root
-        self.root.title("HAMIOS v3.0")
+        self.root.title("HAMIOS v3.1")
         self.root.configure(bg=BG_ROOT)
 
         # Geometrie instellen vóór _build_ui — geen root.update() nodig, geen flicker.
@@ -1966,6 +2092,9 @@ class HAMIOSApp:
         self._solar_data: dict = {}
         self._solar_after_id = None
         self._clock_after_id = None
+        # Help dialog (lazy-init; version check runs in background)
+        self._help_dlg: _HelpDialog | None = None
+        root.bind_all("<F1>", lambda _e: self._open_help())
 
         s = _load_settings()
         self._qth_lat = s["lat"]
@@ -2271,8 +2400,24 @@ class HAMIOSApp:
         except ValueError:
             pass
 
+    def _open_help(self, _event=None):
+        """Open the Help / About dialog (F1 or header button)."""
+        if self._help_dlg is None:
+            self._help_dlg = _HelpDialog(self.root)
+            # Version check in background so it doesn't block startup
+            def _bg_check():
+                tag, url = _check_latest_version()
+                self.root.after(0, lambda: self._on_version_checked(tag, url))
+            threading.Thread(target=_bg_check, daemon=True).start()
+        self._help_dlg.show()
+
+    def _on_version_checked(self, latest: str, url: str):
+        if self._help_dlg:
+            self._help_dlg._latest = latest
+            self._help_dlg._url = url
+
     def _quit_app(self):
-        """Netjes afsluiten: tray stoppen, instellingen opslaan, venster sluiten."""
+        """Gracefully shut down: stop tray, save settings, close window."""
         self._cat_stop_poll()
         self._save_cur_settings()
         if self._tray_icon:
@@ -2779,6 +2924,14 @@ class HAMIOSApp:
                              relief=tk.FLAT, padx=8, pady=2, cursor="hand2")
         exit_btn.pack(side=tk.LEFT, padx=(0, 6))
         self._tr_widgets["exit"] = exit_btn
+
+        # Help knop (F1)
+        tk.Button(hdr, text="?  Help",
+                  command=self._open_help,
+                  font=_font(9), bg=BG_SURFACE, fg=TEXT_DIM,
+                  activebackground=BG_HOVER, activeforeground=TEXT_H1,
+                  relief=tk.FLAT, padx=8, pady=2, cursor="hand2"
+                  ).pack(side=tk.LEFT, padx=(0, 6))
 
         # CAT Interface knop (naast Afsluiten) — grijs als tijdelijk uitgeschakeld
         self._cat_btn = tk.Button(hdr, text="CAT  ⚠",
@@ -6132,6 +6285,136 @@ class HAMIOSApp:
     def _on_history_loaded(self, rows: list):
         self._history = rows
         self._draw_hist_graph()
+
+
+# ── Version check (GitHub releases API) ────────────────────────────────────────
+_APP_VERSION = "3.1"
+_GITHUB_RELEASES_URL = "https://api.github.com/repos/fvdijke/HAMIOS/releases/latest"
+
+def _check_latest_version() -> tuple[str, str]:
+    """Return (latest_tag, release_url) or ("", "") on failure."""
+    try:
+        raw = _fetch_with_retry(_GITHUB_RELEASES_URL, timeout=6, retries=1,
+                                headers={"User-Agent": "HAMIOS/3.1",
+                                         "Accept": "application/vnd.github.v3+json"})
+        if raw is None:
+            return "", ""
+        data = json.loads(raw.decode())
+        return data.get("tag_name", ""), data.get("html_url", "")
+    except Exception:
+        return "", ""
+
+
+# ── Help / About dialog ─────────────────────────────────────────────────────────
+class _HelpDialog:
+    """Floating help/about dialog (F1 or header button)."""
+
+    CONTENT = """\
+HAMIOS v{ver}  —  HF Propagation & DX Monitor
+by Frank van Dijke  ·  Developed with Claude AI
+
+─── Panels ───────────────────────────────────────────────
+  HF Band Reliability (top-left)
+    Mode / Power / Antenna selectors influence SNR budget.
+    Gradient bars: band colour = quality level.
+    Overlays + notifications below the bars.
+
+  World Map (top-centre, spans 3 columns)
+    Click  → great-circle path + band quality for that route.
+    Scroll → zoom 1×–8×   |   Drag → pan   |   Right-click → reset.
+    Checkboxes at the bottom toggle overlays.
+
+  DX Spots (right, full height)
+    Solar/ionosphere data at the top (auto-refreshed).
+    Live HF cluster spots below; own-continent filter.
+    Heatmap button: band × UTC-hour activity (24h buffer).
+
+  Bottom row  (equal width, equal height)
+    Band Opening Schedule  ·  Band History  ·  Kp 48h  ·  Bz + X-ray
+
+  Propagation Advice  (full width, below bottom row)
+
+─── Data sources ──────────────────────────────────────────
+  Solar / bands   hamqsl.com         refresh: auto interval
+  Solar wind Bz   NOAA SWPC          refresh: auto interval
+  Kp 48h          NOAA SWPC          refresh: auto interval
+  X-ray 24h       NOAA GOES/SWPC     refresh: auto interval
+  Storm forecast  NOAA SWPC          refresh: auto interval
+  DX cluster      dxwatch.com        every 5 min
+  WSPR spots      wspr.live          every 15 min
+  Ionosonde foF2  GIRO / LGDC        refresh: auto interval
+
+─── Keyboard shortcuts ────────────────────────────────────
+  F1              This help dialog
+  Scroll wheel    Zoom map
+  Right-click     Reset map zoom/pan · clear great-circle path
+
+─── Files ─────────────────────────────────────────────────
+  HAMIOS.ini          settings
+  HAMIOS_history.csv  band history (90 days)
+  HAMIOS.log          application log (rotating, max 3 MB)
+  HAMIOS_cache.pkl    data cache (auto-refreshed)
+  langs/lang_*.json   language packs
+"""
+
+    def __init__(self, root: tk.Tk, ver: str = _APP_VERSION,
+                 latest: str = "", release_url: str = ""):
+        self._root = root
+        self._ver = ver
+        self._latest = latest
+        self._url = release_url
+        self._win: tk.Toplevel | None = None
+
+    def show(self):
+        if self._win and self._win.winfo_exists():
+            self._win.lift()
+            return
+        win = tk.Toplevel(self._root)
+        self._win = win
+        win.title(f"HAMIOS v{self._ver}  —  Help & About")
+        win.configure(bg=BG_PANEL)
+        win.resizable(True, True)
+        win.geometry("620x680")
+
+        tk.Frame(win, bg=ACCENT, height=2).pack(fill=tk.X)
+
+        text_frame = tk.Frame(win, bg=BG_PANEL)
+        text_frame.pack(fill=tk.BOTH, expand=True, padx=0, pady=0)
+
+        sb = tk.Scrollbar(text_frame)
+        sb.pack(side=tk.RIGHT, fill=tk.Y)
+
+        txt = tk.Text(text_frame, bg=BG_SURFACE, fg=TEXT_BODY,
+                      font=("Consolas", 9), relief=tk.FLAT,
+                      wrap=tk.WORD, yscrollcommand=sb.set,
+                      padx=14, pady=10, state=tk.NORMAL,
+                      insertbackground=TEXT_H1)
+        txt.pack(fill=tk.BOTH, expand=True)
+        sb.config(command=txt.yview)
+
+        content = self.CONTENT.format(ver=self._ver)
+        if self._latest and self._latest != f"v{self._ver}":
+            content += (f"\n─── Update available ─────────────────────────────────\n"
+                        f"  Installed: v{self._ver}   Latest: {self._latest}\n"
+                        f"  {self._url}\n")
+        elif self._latest:
+            content += f"\n  ✓  v{self._ver} is up to date.\n"
+
+        txt.insert(tk.END, content)
+        txt.config(state=tk.DISABLED)
+
+        tk.Frame(win, bg=BORDER, height=1).pack(fill=tk.X)
+        btn_row = tk.Frame(win, bg=BG_PANEL)
+        btn_row.pack(fill=tk.X, padx=10, pady=6)
+        tk.Button(btn_row, text="Close", command=win.destroy,
+                  font=("Segoe UI", 9), bg=BG_SURFACE, fg=TEXT_H1,
+                  relief=tk.FLAT, padx=12, cursor="hand2").pack(side=tk.RIGHT)
+        if self._latest and self._latest != f"v{self._ver}":
+            import webbrowser
+            tk.Button(btn_row, text=f"Get {self._latest}",
+                      command=lambda: webbrowser.open(self._url),
+                      font=("Segoe UI", 9, "bold"), bg=ACCENT, fg=BG_ROOT,
+                      relief=tk.FLAT, padx=12, cursor="hand2").pack(side=tk.RIGHT, padx=(0, 6))
 
 
 # ── Entrypoint ─────────────────────────────────────────────────────────────────

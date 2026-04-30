@@ -277,6 +277,21 @@ LUF  = (3.5 + K × 0.8) × auroraal-factor / 10^(SNR/20)
 
 ---
 
+## 👨‍💻 Bijdragen / Contributing
+
+Bijdragen zijn welkom! Zie [CONTRIBUTING.md](CONTRIBUTING.md) voor richtlijnen.
+
+```bash
+git clone https://github.com/fvdijke/HAMIOS.git
+cd HAMIOS
+pip install pillow pystray
+python HAMIOS.py
+```
+
+Bugs melden of functies voorstellen via [GitHub Issues](https://github.com/fvdijke/HAMIOS/issues).
+
+---
+
 ## 📜 Licentie
 
 Vrij te gebruiken voor persoonlijk, niet-commercieel amateur radio gebruik.
