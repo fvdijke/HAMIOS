@@ -3091,7 +3091,7 @@ class HAMIOSApp:
         self._build_prop_panel(prop_f)
 
         map_f = tk.Frame(left_area, bg=BG_PANEL)
-        map_f.grid(row=0, column=1, columnspan=3, sticky='nsew', padx=(0, 4))
+        map_f.grid(row=0, column=1, columnspan=3, sticky='new', padx=(0, 4))
         self._build_map_panel(map_f)
 
         # ── Onderste rij: Schema | Bandverloop | Kp | Bz+Xray ────────────────
@@ -3236,7 +3236,7 @@ class HAMIOSApp:
     # ── Wereldkaart panel ─────────────────────────────────────────────────────
     def _build_map_panel(self, parent):
         outer = tk.Frame(parent, bg=BG_PANEL)
-        outer.pack(fill=tk.BOTH, expand=True, pady=(0, 0))
+        outer.pack(fill=tk.X, pady=(0, 0))
         tk.Frame(outer, bg=ACCENT, height=2).pack(fill=tk.X)
 
         map_hdr = tk.Frame(outer, bg=BG_PANEL)
@@ -3326,30 +3326,19 @@ class HAMIOSApp:
     _MAP_CHROME_H = 130
 
     def _on_map_panel_resize(self, event):
-        """Resize canvas to fill the panel while keeping exact 2:1 ratio.
+        """Size canvas to panel width × (width // 2) — full world, no gaps.
 
-        avail_w × avail_h determines the largest 2:1 rectangle that fits.
-        Result: full world always visible, no black borders, no crop at zoom=1.
+        Only uses event.width; the panel height follows naturally from the
+        canvas size + fixed chrome elements (header, GC labels, checkboxes).
         """
-        avail_w = max(1, event.width - 22)          # padx=10 each side + 2 margin
-        avail_h = max(1, event.height - self._MAP_CHROME_H)
-
-        # Largest 2:1 canvas that fits in available space
-        if avail_w // 2 <= avail_h:
-            cw, ch = avail_w, avail_w // 2
-        else:
-            ch = avail_h
-            cw = ch * 2
-
-        cw = max(2, cw)
+        cw = max(2, event.width - 22)   # padx=10 each side + 2 px margin
         ch = max(1, cw // 2)
 
         cur_w = self._map_canvas.winfo_width()
         cur_h = self._map_canvas.winfo_height()
         if cur_w != cw or cur_h != ch:
             self._map_canvas.config(width=cw, height=ch)
-            # Invalidate base-map cache so it re-renders at new size
-            self._map_base_size = None
+            self._map_base_size = None   # invalidate base-map cache
         self._draw_map()
 
     def _on_map_resize(self, _event=None):
