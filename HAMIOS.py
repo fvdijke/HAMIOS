@@ -2277,15 +2277,19 @@ class _SatelliteDialog:
     """
 
     def __init__(self, root: tk.Tk, tle_data: dict,
-                 selected: set, path_selected: set, on_close):
+                 selected: set, path_selected: set, fp_selected: set,
+                 on_close):
         self._root         = root
         self._tle          = tle_data
         self._sel          = set(selected)
         self._path_sel     = set(path_selected)
+        self._fp_sel       = set(fp_selected)
         self._on_close     = on_close
         self._pos_vars:  dict[str, tk.BooleanVar] = {}
         self._path_vars: dict[str, tk.BooleanVar] = {}
+        self._fp_vars:   dict[str, tk.BooleanVar] = {}
         self._path_cbs:  dict[str, tk.Checkbutton] = {}
+        self._fp_cbs:    dict[str, tk.Checkbutton] = {}
         self._status_var = None
         self._win: tk.Toplevel | None = None
 
@@ -2307,7 +2311,7 @@ class _SatelliteDialog:
         tk.Label(hdr_row, text="🛰  Satellite Tracking",
                  font=_font(11, "bold"), bg=BG_PANEL,
                  fg=ACCENT).pack(side=tk.LEFT)
-        tk.Label(hdr_row, text="●  pos    ∿  path",
+        tk.Label(hdr_row, text="●  pos    ∿  path    ○  footprint",
                  font=_font(8), bg=BG_PANEL,
                  fg=TEXT_DIM).pack(side=tk.RIGHT, padx=(0, 4))
 
@@ -2357,19 +2361,35 @@ class _SatelliteDialog:
                 # Path checkbox (∿) — disabled if position not checked
                 pathv = tk.BooleanVar(value=name in self._path_sel)
                 self._path_vars[name] = pathv
-                path_state = tk.NORMAL if name in self._sel else tk.DISABLED
+                dep_state = tk.NORMAL if name in self._sel else tk.DISABLED
                 pcb = tk.Checkbutton(row, variable=pathv, text="",
                                      command=lambda n=name, v=pathv: self._toggle_path(n, v),
                                      bg=BG_SURFACE,
-                                     fg=TEXT_BODY if path_state == tk.NORMAL else TEXT_DIM,
+                                     fg=TEXT_BODY if dep_state == tk.NORMAL else TEXT_DIM,
                                      disabledforeground=TEXT_DIM,
                                      selectcolor=BG_ROOT,
                                      activebackground=BG_SURFACE,
                                      activeforeground=TEXT_H1,
                                      font=_font(8),
-                                     state=path_state)
-                pcb.pack(side=tk.LEFT, padx=(0, 4))
+                                     state=dep_state)
+                pcb.pack(side=tk.LEFT, padx=(0, 2))
                 self._path_cbs[name] = pcb
+
+                # Footprint checkbox (○) — disabled if position not checked
+                fpv = tk.BooleanVar(value=name in self._fp_sel)
+                self._fp_vars[name] = fpv
+                fpcb = tk.Checkbutton(row, variable=fpv, text="",
+                                      command=lambda n=name, v=fpv: self._toggle_fp(n, v),
+                                      bg=BG_SURFACE,
+                                      fg=TEXT_BODY if dep_state == tk.NORMAL else TEXT_DIM,
+                                      disabledforeground=TEXT_DIM,
+                                      selectcolor=BG_ROOT,
+                                      activebackground=BG_SURFACE,
+                                      activeforeground=TEXT_H1,
+                                      font=_font(8),
+                                      state=dep_state)
+                fpcb.pack(side=tk.LEFT, padx=(0, 4))
+                self._fp_cbs[name] = fpcb
 
                 tk.Label(row, text=name,
                          bg=BG_SURFACE, fg=TEXT_BODY,
@@ -2396,8 +2416,8 @@ class _SatelliteDialog:
                   ).pack(side=tk.RIGHT)
 
     def _status_text(self):
-        return (f"{len(self._sel)} position{'s' if len(self._sel) != 1 else ''}  ·  "
-                f"{len(self._path_sel)} path{'s' if len(self._path_sel) != 1 else ''}")
+        p = len(self._sel); pa = len(self._path_sel); fp = len(self._fp_sel)
+        return (f"{p} pos  ·  {pa} path  ·  {fp} footprint")
 
     def _update_status(self):
         if self._status_var:
@@ -2406,19 +2426,21 @@ class _SatelliteDialog:
     def _toggle_pos(self, name: str, var: tk.BooleanVar):
         if var.get():
             self._sel.add(name)
-            # Enable path checkbox
-            if name in self._path_cbs:
-                self._path_cbs[name].config(state=tk.NORMAL, fg=TEXT_BODY)
+            for cb_dict in (self._path_cbs, self._fp_cbs):
+                if name in cb_dict:
+                    cb_dict[name].config(state=tk.NORMAL, fg=TEXT_BODY)
         else:
             self._sel.discard(name)
-            # Uncheck and disable path
-            if name in self._path_vars:
-                self._path_vars[name].set(False)
-            self._path_sel.discard(name)
-            if name in self._path_cbs:
-                self._path_cbs[name].config(state=tk.DISABLED, fg=TEXT_DIM)
+            for v_dict, s_set, cb_dict in (
+                    (self._path_vars, self._path_sel, self._path_cbs),
+                    (self._fp_vars,   self._fp_sel,   self._fp_cbs)):
+                if name in v_dict:
+                    v_dict[name].set(False)
+                s_set.discard(name)
+                if name in cb_dict:
+                    cb_dict[name].config(state=tk.DISABLED, fg=TEXT_DIM)
         self._update_status()
-        self._on_close(self._sel, self._path_sel)
+        self._on_close(self._sel, self._path_sel, self._fp_sel)
 
     def _toggle_path(self, name: str, var: tk.BooleanVar):
         if var.get():
@@ -2426,22 +2448,29 @@ class _SatelliteDialog:
         else:
             self._path_sel.discard(name)
         self._update_status()
-        self._on_close(self._sel, self._path_sel)
+        self._on_close(self._sel, self._path_sel, self._fp_sel)
+
+    def _toggle_fp(self, name: str, var: tk.BooleanVar):
+        if var.get():
+            self._fp_sel.add(name)
+        else:
+            self._fp_sel.discard(name)
+        self._update_status()
+        self._on_close(self._sel, self._path_sel, self._fp_sel)
 
     def _clear(self):
-        self._sel.clear()
-        self._path_sel.clear()
-        for v in self._pos_vars.values():
+        self._sel.clear(); self._path_sel.clear(); self._fp_sel.clear()
+        for v in (*self._pos_vars.values(),
+                  *self._path_vars.values(),
+                  *self._fp_vars.values()):
             v.set(False)
-        for v in self._path_vars.values():
-            v.set(False)
-        for cb in self._path_cbs.values():
+        for cb in (*self._path_cbs.values(), *self._fp_cbs.values()):
             cb.config(state=tk.DISABLED, fg=TEXT_DIM)
         self._update_status()
-        self._on_close(self._sel, self._path_sel)
+        self._on_close(self._sel, self._path_sel, self._fp_sel)
 
     def _close(self):
-        self._on_close(self._sel, self._path_sel)
+        self._on_close(self._sel, self._path_sel, self._fp_sel)
         if self._win:
             self._win.destroy()
 
@@ -2472,13 +2501,16 @@ class HAMIOSApp:
         root.bind_all("<F1>", lambda _e: self._open_help())
 
         # Satellite tracking state
-        self._tle_data:       dict          = _load_tle_cache()
-        self._sat_selected:   set           = set()
-        self._sat_path_sel:   set           = set()   # subset: show path
-        self._sat_positions:  dict          = {}   # name → (lat, lon, alt)
-        self._sat_paths:      dict          = {}   # name → [(lat,lon),…]
+        self._tle_data:       dict = _load_tle_cache()
+        self._sat_selected:   set  = set()
+        self._sat_path_sel:   set  = set()   # show orbital path
+        self._sat_fp_sel:     set  = set()   # show footprint
+        self._sat_positions:  dict = {}      # name → (lat, lon, alt)
+        self._sat_paths:      dict = {}      # name → [(lat,lon),…]
         self._sat_dlg: _SatelliteDialog | None = None
-        self._sat_after_id                 = None
+        self._sat_after_id = None
+        # Restore saved selections from INI (after s = _load_settings() above)
+        self.root.after(10, self._load_sat_ini)
 
         s = _load_settings()
         self._qth_lat = s["lat"]
@@ -2837,34 +2869,34 @@ class HAMIOSApp:
                  for g, v in self._tle_data.items()},
                 self._sat_selected,
                 self._sat_path_sel,
+                self._sat_fp_sel,
                 self._on_sat_selection_change)
         self._sat_dlg.show()
 
-    def _on_sat_selection_change(self, selected: set, path_sel: set):
+    def _on_sat_selection_change(self, selected: set, path_sel: set,
+                                 fp_sel: set):
         self._sat_selected  = set(selected)
         self._sat_path_sel  = set(path_sel)
-        n = len(selected)
-        p = len(path_sel)
+        self._sat_fp_sel    = set(fp_sel)
+        self._save_sat_ini()
+        n = len(selected); p = len(path_sel); f = len(fp_sel)
         parts = []
-        if n:
-            parts.append(f"{n} sat")
-        if p:
-            parts.append(f"{p} path")
+        if n: parts.append(f"{n}●")
+        if p: parts.append(f"{p}∿")
+        if f: parts.append(f"{f}○")
         self._sat_btn.config(
-            fg=ACCENT if n else TEXT_DIM,
-            text="🛰  " + " · ".join(parts) if parts else "🛰  Sat")
+            text="🛰  " + "  ".join(parts) if parts else "🛰  Sat")
         self._refresh_sat_positions()
         self.root.after(0, self._draw_map)
 
     def _refresh_sat_positions(self):
         """Compute current positions and paths for selected satellites."""
-        # Build TLE lookup: name → (line1, line2)
         tle_lookup: dict[str, tuple[str, str]] = {}
         for sats in self._tle_data.values():
             for row in sats:
                 tle_lookup[row[0]] = (row[1], row[2])
 
-        # Positions
+        # Positions (all selected satellites)
         pos: dict = {}
         for name in self._sat_selected:
             if name in tle_lookup:
@@ -2873,7 +2905,7 @@ class HAMIOSApp:
                     pos[name] = r
         self._sat_positions = pos
 
-        # Paths (−1h … +12h, calculated in background to avoid UI freeze)
+        # Paths (−1h … +12h)
         paths: dict = {}
         for name in self._sat_path_sel:
             if name in tle_lookup:
@@ -2882,8 +2914,34 @@ class HAMIOSApp:
                     back_min=60, fwd_min=720, step_min=4)
         self._sat_paths = paths
 
-        # Invalidate render cache so overlay refreshes
         self._map_render_key = None
+
+    # ── Satellite INI persistence ─────────────────────────────────────────────
+    def _save_sat_ini(self):
+        """Save satellite selections to HAMIOS.ini under [Satellites]."""
+        import configparser as _cp
+        cfg = _cp.ConfigParser()
+        cfg.read(SETTINGS_FILE, encoding="utf-8")
+        if "Satellites" not in cfg:
+            cfg["Satellites"] = {}
+        cfg["Satellites"]["selected"]  = ",".join(sorted(self._sat_selected))
+        cfg["Satellites"]["path_sel"]  = ",".join(sorted(self._sat_path_sel))
+        cfg["Satellites"]["fp_sel"]    = ",".join(sorted(self._sat_fp_sel))
+        with open(SETTINGS_FILE, "w", encoding="utf-8") as f:
+            cfg.write(f)
+
+    def _load_sat_ini(self):
+        """Load satellite selections from HAMIOS.ini."""
+        import configparser as _cp
+        cfg = _cp.ConfigParser()
+        cfg.read(SETTINGS_FILE, encoding="utf-8")
+        s = cfg["Satellites"] if "Satellites" in cfg else {}
+        def _parse(key):
+            raw = s.get(key, "")
+            return set(x for x in raw.split(",") if x.strip())
+        self._sat_selected = _parse("selected")
+        self._sat_path_sel = _parse("path_sel")
+        self._sat_fp_sel   = _parse("fp_sel")
 
     def _schedule_sat_refresh(self):
         """Re-schedule satellite position refresh every 30 s."""
@@ -3413,10 +3471,10 @@ class HAMIOSApp:
                   relief=tk.FLAT, padx=8, pady=2, cursor="hand2"
                   ).pack(side=tk.LEFT, padx=(0, 4))
 
-        # Satellite button
+        # Satellite button (always amber)
         self._sat_btn = tk.Button(hdr, text="🛰  Sat",
                                   command=self._open_sat_dialog,
-                                  font=_font(9), bg=BG_SURFACE, fg=TEXT_DIM,
+                                  font=_font(9), bg=BG_SURFACE, fg=ACCENT,
                                   activebackground=BG_HOVER,
                                   activeforeground=TEXT_H1,
                                   relief=tk.FLAT, padx=8, pady=2,
@@ -4338,45 +4396,80 @@ class HAMIOSApp:
             draw.line([(qx, qy - 10), (qx, qy + 10)], fill=MAP_QTH, width=2)
 
             # ── Satellite orbital paths ───────────────────────────────────────
-            PATH_PAST  = (180, 160, 60, 140)   # dim amber (past, semi-transparent)
-            PATH_FWD   = (255, 220, 60, 200)   # bright amber (future)
-            _now_offset = 0  # we split past/future at offset=0 = "now"
+            # Past: solid dim amber line | Future: loose dots (no connecting lines)
+            PATH_PAST = (180, 160, 60, 150)   # dim amber solid line
+            PATH_FWD  = (255, 220, 60, 220)   # bright amber dots
+            FP_CLR    = (200, 160, 40, 80)    # dimmed amber footprint fill
+            FP_OUT    = (220, 180, 60, 160)   # footprint outline
+
+            # back_min=60 → split index ≈ 60//4 = 15
+            BACK_STEPS = 60 // 4
+
             for sname, pts in getattr(self, "_sat_paths", {}).items():
                 if not pts:
                     continue
-                # Determine approximate split index (closest to "now" = first point ≥ 0)
-                # pts are ordered from −back_min to +fwd_min; split is in the middle
-                split = max(0, len(pts) // (1 + 720 // 60))  # ≈ index at t=0
-                past_seg:  list = []
-                fwd_seg:   list = []
+                # Split into past (idx < BACK_STEPS) and future (idx ≥ BACK_STEPS)
+                past_pts: list = []
+                fwd_pts:  list = []
                 for i, p in enumerate(pts):
-                    if p[0] is None:
-                        past_seg.append(None); fwd_seg.append(None)
-                    elif i < split:
-                        past_seg.append(p)
-                    else:
-                        fwd_seg.append(p)
+                    target = past_pts if i < BACK_STEPS else fwd_pts
+                    target.append(p)
 
-                path_img = Image.new("RGBA", (VW, VH), (0, 0, 0, 0))
-                pd = ImageDraw.Draw(path_img)
+                sat_img = Image.new("RGBA", (VW, VH), (0, 0, 0, 0))
+                sd = ImageDraw.Draw(sat_img)
 
-                def _draw_seg(seg, clr):
-                    prev = None
-                    for pt in seg:
-                        if pt is None:
-                            prev = None
-                            continue
-                        cx, cy = _ll_to_xy(pt[0], pt[1], VW, VH)
-                        if prev:
-                            pd.line([prev, (cx, cy)], fill=clr, width=2)
-                        pd.ellipse([(cx-2, cy-2), (cx+2, cy+2)], fill=clr)
-                        prev = (cx, cy)
+                # Past — solid connected line
+                prev = None
+                for pt in past_pts:
+                    if pt[0] is None:
+                        prev = None
+                        continue
+                    cx, cy = _ll_to_xy(pt[0], pt[1], VW, VH)
+                    if prev:
+                        sd.line([prev, (cx, cy)], fill=PATH_PAST, width=2)
+                    prev = (cx, cy)
 
-                _draw_seg(past_seg, PATH_PAST)
-                _draw_seg(fwd_seg,  PATH_FWD)
+                # Future — loose dots only (no connecting lines)
+                for pt in fwd_pts:
+                    if pt[0] is None:
+                        continue
+                    cx, cy = _ll_to_xy(pt[0], pt[1], VW, VH)
+                    sd.ellipse([(cx-3, cy-3), (cx+3, cy+3)], fill=PATH_FWD)
+
                 img = Image.alpha_composite(img.convert("RGBA"),
-                                            path_img).convert("RGB")
+                                            sat_img).convert("RGB")
                 draw = ImageDraw.Draw(img)
+
+            # ── Satellite footprints ──────────────────────────────────────────
+            R_EARTH = 6371.0
+            for sname, (flat, flon, falt) in getattr(
+                    self, "_sat_positions", {}).items():
+                if sname not in getattr(self, "_sat_fp_sel", set()):
+                    continue
+                if falt <= 0:
+                    continue
+                rho = math.acos(min(1.0, R_EARTH / (R_EARTH + falt)))
+                lat0_r = math.radians(flat)
+                lon0_r = math.radians(flon)
+                fp_pts = []
+                for az_deg in range(0, 361, 5):
+                    theta = math.radians(az_deg)
+                    fp_lat = math.degrees(
+                        math.asin(math.sin(lat0_r) * math.cos(rho)
+                                  + math.cos(lat0_r) * math.sin(rho) * math.cos(theta)))
+                    dlon = math.atan2(
+                        math.sin(theta) * math.sin(rho) * math.cos(lat0_r),
+                        math.cos(rho) - math.sin(lat0_r) * math.sin(math.radians(fp_lat)))
+                    fp_lon = math.degrees(lon0_r + dlon)
+                    fp_lon = ((fp_lon + 180) % 360) - 180
+                    fp_pts.append(_ll_to_xy(fp_lat, fp_lon, VW, VH))
+                if len(fp_pts) > 2:
+                    fp_img = Image.new("RGBA", (VW, VH), (0, 0, 0, 0))
+                    fd = ImageDraw.Draw(fp_img)
+                    fd.polygon(fp_pts, fill=FP_CLR, outline=FP_OUT)
+                    img = Image.alpha_composite(img.convert("RGBA"),
+                                                fp_img).convert("RGB")
+                    draw = ImageDraw.Draw(img)
 
             # ── Satellite positions ───────────────────────────────────────────
             SAT_CLR = (255, 220, 60)   # yellow
