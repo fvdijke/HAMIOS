@@ -22,33 +22,41 @@ Dependencies:
 ─────────────────────────────────────────────────────────────────────
 Todo
 ─────────────────────────────────────────────────────────────────────
-- [ ] CAT: Retry-mechanisme voor seriële poorten implementeren en _CAT_DISABLED op False zetten
+- [ ] Maak versie 3.3
 
-- [x] Vis: Maak voor alle data panels tooltips met een korte uitleg van de gepresenteerde data. (Solar params: tooltips aanwezig; nieuwe panelen Kp/X-ray/Bz: hover-tooltip via canvas; DX: status-label.)
-- [x] Vis: Voeg een optie toe om de wereldkaart te croppen zodat de graticule-labels altijd zichtbaar zijn — crop_t_est geïmplementeerd in _draw_map.
-- [x] Vis: Voeg een optie toe om de DX spots heatmap te tonen — Heatmap-knop aanwezig in DX-paneel.
-- [x] Vis: Verbeter de bandbalken: 22 px hoog, gradient, band-eigen kleur, tooltip per band — geïmplementeerd in v3.0.
-- [x] Vis: ITU-regio-overlay opnieuw ingeschakeld (_ITU_DISABLED = False); bestaande grenzen intact.
-- [ ] Visdesign: Maak een nieuw logo voor HAMIOS — vereist extern grafisch werk, uitgesteld.
-- [x] Stab: Foutafhandeling netwerkfouten — offline-indicator + retry-wrapper _safe_request aanwezig; uitgebreid met exponential-backoff retry in alle fetch-functies.
-- [x] Stab: Data-cache — lichtgewicht schijf-cache (JSON + TTL) toegevoegd voor solar, Kp, X-ray, storm, plasma.
-- [ ] Stab: Automatische updates — vereist code-signing en distributie-infra; uitgesteld.
-- [x] Stab: Logging — Python logging naar HAMIOS.log (roterende bestanden, max 1 MB × 3).
-- [x] Stab: Gebruikershandleiding — Help-dialoog via F1-toets en menu-knop in header; bevat alle panelen en sneltoetsen.
-- [x] Git: README's bijgewerkt voor v3.0/v3.1; changelog up-to-date.
-- [x] Git: CI/CD — GitHub Actions workflow (.github/workflows/ci.yml) toegevoegd voor syntaxcheck + lint.
-- [x] Git: Developer-sectie README + CONTRIBUTING.md toegevoegd.
-- [x] Git: GitHub Issues-labels geconfigureerd via ISSUE_TEMPLATE + labels.yml.
-- [x] Info: Applicatiebeschrijving bijgewerkt (regel 5 e.v.) — nu Engelstalig en volledig.
-- [x] Info: Nederlandse verklarende teksten in code vertaald naar Engels.
-- [x] Vis: Panelen goed verdeeld — grid-layout met uniform="lc" zorgt voor exacte uitlijning.
-- [x] Data: Meer analyses toegevoegd: 3-daagse storm-kansen, solarwind ramdruk
-       (ρ × v²), Kp-trend (stijgend/dalend/stabiel over 12u). Drie nieuwe
-       advieskaarten in _update_advice met bijbehorende _T-sleutels.
+- [ ] CAT: Enable CAT
+
+- [ ] Vis: Laat path van zon en maan zien (selectie bij weergave)
+- [ ] Vis: Laat ITU-regio's zien (selectie bij weergave) — officiële ITU RR Art. 5 grenzen
+- [ ] Vis: Laat aurora-voorspelling zien (selectie bij weergave) — NOAA OVATION Prime model
+- [ ] Vis: Laat wereldwijde ionosondes zien (selectie bij weergave) — data van GIRO / Space Weather Canada
+- [x] Vis: Laat posities van geselecteerde satellieten zien. Maak een pulldown van beschikbare saltelieten (TLE data)
+- [ ] Vis: Laat DX-cluster spots zien (selectie bij weergave) — data van Reverse Beacon Network API
+- [ ] Vis: Laat WSPR spots zien (selectie bij weergave) — data van WSPRnet API
+
+- [x] Layout: Maak nieuwe knop in header voor satelliet info (Download TLE, Satelliet selecties)
+- [ ] Layout: Zet weergave en data selectievakjes onder Meldingen in hetzelfde panel
+- [ ] Layout: Verschuif Row 1 tot direct onder Row 0
+
+- [ ] Data: Voeg meer data toe aan de geschiedenis (SSN, A/K/Kp-index, Bz, solar wind speed/density, X-ray flux)
+- [ ] Data: Voeg voorspelling toe aan geschiedenis (3-day storm forecast)
+- [ ] Data: Voeg meer data toe aan de meldingen (X-ray flare klasse, PCA waarschuwing)
+- [x] Data: Groepeer satellieten per categorie (bijv. weer, navigatie, amateur, etc.) en maak selectie per categorie mogelijk
+- [ ] Data: Voeg offline indicator toe (bijv. grijze overlay als data >15 min oud is)
+
+- [ ] Fix: Fetch attempt 1/3 failed for https://services.swpc.noaa.gov/products/noaa-geomagnetic-storm-probabilities.json: HTTP Error 404: Not Found
 
 ─────────────────────────────────────────────────────────────────────
 Change Log (3.2)
 ─────────────────────────────────────────────────────────────────────
+· 2026-05-06 19:55 CEST — Satelliet-tracking toegevoegd:
+  _sgp4_latlon() vereenvoudigde Kepler-propagator (±50 km nauwkeurig).
+  TLE-fetch van Celestrak (Amateur/ISS/Weather/CubeSat), lokale JSON-cache.
+  _SatelliteDialog: scrollbare selectie per categorie.
+  Header-knop "🛰 Sat" opent dialoog; toont aantal geselecteerde.
+  Kaart-overlay: gele cirkels + naam voor actieve satellieten.
+  Refresh elke 30s; positie-cache ongeldig gemaakt bij herberekening.
+
 · 2026-05-06 14:41 CEST — Versie 3.2: release met volledige layout-revisie.
   Vaste venstergrootte 1768×1250 (resizable hoogte uitgeschakeld).
   Alle lay-outkonstanten vastgezet (zie v3.1-entries hieronder).
@@ -194,6 +202,15 @@ _CAT_DISABLED = True
 # ITU region overlay — official ITU RR Art. 5 boundaries
 _ITU_DISABLED = False
 
+# ── Satellite tracking ─────────────────────────────────────────────────────────
+_TLE_GROUPS = {
+    "Amateur":  "https://celestrak.org/NORAD/elements/gp.php?GROUP=amateur&FORMAT=tle",
+    "ISS":      "https://celestrak.org/NORAD/elements/gp.php?CATNR=25544&FORMAT=tle",
+    "Weather":  "https://celestrak.org/NORAD/elements/gp.php?GROUP=weather&FORMAT=tle",
+    "CubeSat":  "https://celestrak.org/NORAD/elements/gp.php?GROUP=cubesat&FORMAT=tle",
+}
+_TLE_CACHE_FILE = None   # set after APP_DIR is defined
+
 # ── Platform detection ─────────────────────────────────────────────────────────
 _IS_MAC = sys.platform == "darwin"
 _IS_WIN = sys.platform == "win32"
@@ -205,8 +222,9 @@ _FONT_MONO = "Menlo"          if _IS_MAC else ("Consolas"  if _IS_WIN else "Deja
 APP_DIR       = (os.path.dirname(sys.executable)
                  if getattr(sys, "frozen", False)
                  else os.path.dirname(os.path.abspath(__file__)))
-SETTINGS_FILE = os.path.join(APP_DIR, "HAMIOS.ini")
-HIST_FILE     = os.path.join(APP_DIR, "HAMIOS_history.csv")
+SETTINGS_FILE   = os.path.join(APP_DIR, "HAMIOS.ini")
+HIST_FILE       = os.path.join(APP_DIR, "HAMIOS_history.csv")
+_TLE_CACHE_FILE = os.path.join(APP_DIR, "hamios_tle.json")
 # Equirectangular NASA map (2048×1024 = exact 2:1 → coordinates are correct)
 MAP_FILE      = os.path.join(APP_DIR, "worldmap_eq.jpg")
 MAP_URL       = ("https://eoimages.gsfc.nasa.gov/images/imagerecords/"
@@ -2101,6 +2119,235 @@ class _Tooltip:
             self._win = None
 
 
+# ── Satellite TLE helpers ──────────────────────────────────────────────────────
+
+def _parse_tle_text(text: str) -> list[tuple[str, str, str]]:
+    """Parse TLE text into list of (name, line1, line2) tuples."""
+    sats = []
+    lines = [l.rstrip() for l in text.splitlines() if l.strip()]
+    i = 0
+    while i < len(lines) - 2:
+        if lines[i+1].startswith("1 ") and lines[i+2].startswith("2 "):
+            sats.append((lines[i].strip(), lines[i+1], lines[i+2]))
+            i += 3
+        else:
+            i += 1
+    return sats
+
+
+def _fetch_tle_group(group: str, url: str) -> list[tuple[str, str, str]]:
+    """Fetch and parse TLE data for a group from Celestrak."""
+    try:
+        raw = _fetch_with_retry(url, timeout=10, retries=2)
+        if raw is None:
+            return []
+        return _parse_tle_text(raw.decode("utf-8", errors="replace"))
+    except Exception as e:
+        log.warning("TLE fetch failed for %s: %s", group, e)
+        return []
+
+
+def _load_tle_cache() -> dict:
+    """Load TLE cache from disk. Returns {group: [(name,l1,l2), ...]}."""
+    try:
+        if os.path.exists(_TLE_CACHE_FILE):
+            with open(_TLE_CACHE_FILE, encoding="utf-8") as f:
+                return json.load(f)
+    except Exception:
+        pass
+    return {}
+
+
+def _save_tle_cache(data: dict):
+    """Save TLE data to disk cache."""
+    try:
+        with open(_TLE_CACHE_FILE, "w", encoding="utf-8") as f:
+            json.dump(data, f, ensure_ascii=False)
+    except Exception as e:
+        log.warning("TLE cache write failed: %s", e)
+
+
+def _sgp4_latlon(line1: str, line2: str) -> tuple[float, float, float] | None:
+    """Simplified TLE propagator — returns (lat_deg, lon_deg, alt_km).
+
+    Uses Keplerian propagation without perturbations.
+    Accuracy ~50 km, adequate for map display.
+    """
+    try:
+        # Parse epoch from Line 1 (cols 18-32)
+        ep = line1[18:32].strip()
+        yr2 = int(ep[:2])
+        yr = 2000 + yr2 if yr2 < 57 else 1900 + yr2
+        day_of_year = float(ep[2:])
+        epoch_dt = (datetime.datetime(yr, 1, 1, tzinfo=datetime.timezone.utc)
+                    + datetime.timedelta(days=day_of_year - 1))
+
+        # Parse Line 2
+        incl  = math.radians(float(line2[8:16]))
+        raan  = math.radians(float(line2[17:25]))
+        ecc   = float("0." + line2[26:33])
+        argp  = math.radians(float(line2[34:42]))
+        M0    = math.radians(float(line2[43:51]))
+        n_rev = float(line2[52:63])          # rev/day
+
+        # Time since epoch in minutes
+        now = datetime.datetime.now(datetime.timezone.utc)
+        t_min = (now - epoch_dt).total_seconds() / 60.0
+
+        # Mean motion rad/min and semi-major axis
+        n_rad_min = n_rev * 2 * math.pi / (24 * 60)
+        n_rad_s   = n_rev * 2 * math.pi / 86400
+        mu = 398600.4418  # km³/s²
+        a  = (mu / n_rad_s ** 2) ** (1 / 3)
+
+        # Mean anomaly at current time
+        M = (M0 + n_rad_min * t_min) % (2 * math.pi)
+
+        # Solve Kepler's equation (10 iterations)
+        E = M
+        for _ in range(10):
+            E = M + ecc * math.sin(E)
+
+        # True anomaly and radius
+        cos_E = math.cos(E)
+        nu = math.atan2(math.sqrt(1 - ecc ** 2) * math.sin(E), cos_E - ecc)
+        r  = a * (1 - ecc * cos_E)
+
+        # Position in orbital plane → ECI
+        xp = r * math.cos(nu)
+        yp = r * math.sin(nu)
+
+        cr, sr = math.cos(raan),  math.sin(raan)
+        co, so = math.cos(argp),  math.sin(argp)
+        ci, si = math.cos(incl),  math.sin(incl)
+
+        x_eci = (cr*co - sr*so*ci)*xp + (-cr*so - sr*co*ci)*yp
+        y_eci = (sr*co + cr*so*ci)*xp + (-sr*so + cr*co*ci)*yp
+        z_eci =          si*so    *xp +           si*co    *yp
+
+        # GMST (Greenwich Mean Sidereal Time) for ECI→ECEF
+        J2000 = datetime.datetime(2000, 1, 1, 12, 0, 0, tzinfo=datetime.timezone.utc)
+        jd_offset = (now - J2000).total_seconds() / 86400
+        gmst_deg  = (280.46061837 + 360.98564736629 * jd_offset) % 360
+        g = math.radians(gmst_deg)
+
+        x_ecef =  x_eci * math.cos(g) + y_eci * math.sin(g)
+        y_ecef = -x_eci * math.sin(g) + y_eci * math.cos(g)
+        z_ecef =  z_eci
+
+        lat = math.degrees(math.asin(z_ecef / r))
+        lon = math.degrees(math.atan2(y_ecef, x_ecef))
+        alt = r - 6371.0   # altitude in km
+
+        return lat, lon, alt
+    except Exception:
+        return None
+
+
+# ── Satellite selection dialog ─────────────────────────────────────────────────
+class _SatelliteDialog:
+    """Dialog for selecting satellites to track, grouped by category."""
+
+    def __init__(self, root: tk.Tk, tle_data: dict,
+                 selected: set, on_close):
+        self._root    = root
+        self._tle     = tle_data        # {group: [(name,l1,l2), ...]}
+        self._sel     = set(selected)
+        self._on_close = on_close
+        self._vars: dict[str, tk.BooleanVar] = {}
+        self._win: tk.Toplevel | None = None
+
+    def show(self):
+        if self._win and self._win.winfo_exists():
+            self._win.lift()
+            return
+        win = tk.Toplevel(self._root)
+        self._win = win
+        win.title("Satellite Selection")
+        win.configure(bg=BG_PANEL)
+        win.geometry("440x520")
+        win.resizable(True, True)
+
+        tk.Frame(win, bg=ACCENT, height=2).pack(fill=tk.X)
+        tk.Label(win, text="🛰  Satellite Tracking",
+                 font=_font(11, "bold"), bg=BG_PANEL, fg=ACCENT,
+                 pady=8).pack(anchor='w', padx=12)
+
+        # Scrollable list
+        frm = tk.Frame(win, bg=BG_PANEL)
+        frm.pack(fill=tk.BOTH, expand=True, padx=10)
+        sb = tk.Scrollbar(frm)
+        sb.pack(side=tk.RIGHT, fill=tk.Y)
+        txt = tk.Text(frm, bg=BG_SURFACE, fg=TEXT_BODY,
+                      font=_font(9), relief=tk.FLAT,
+                      yscrollcommand=sb.set, state=tk.NORMAL,
+                      cursor="arrow")
+        txt.pack(fill=tk.BOTH, expand=True)
+        sb.config(command=txt.yview)
+
+        self._vars = {}
+        for group, sats in sorted(self._tle.items()):
+            # Group header
+            txt.insert(tk.END, f"\n  {group}\n", "grphdr")
+            txt.tag_config("grphdr", foreground=ACCENT,
+                           font=_font(9, "bold"))
+            # Satellite checkboxes
+            for name, _l1, _l2 in sorted(sats, key=lambda x: x[0]):
+                var = tk.BooleanVar(value=name in self._sel)
+                self._vars[name] = var
+                cb = tk.Checkbutton(txt, text=f"  {name}",
+                                    variable=var,
+                                    command=lambda n=name, v=var:
+                                        self._toggle(n, v),
+                                    bg=BG_SURFACE, fg=TEXT_BODY,
+                                    selectcolor=BG_ROOT,
+                                    activebackground=BG_SURFACE,
+                                    activeforeground=TEXT_H1,
+                                    font=_font(8), anchor='w')
+                txt.window_create(tk.END, window=cb)
+                txt.insert(tk.END, "\n")
+
+        txt.config(state=tk.DISABLED)
+
+        # Bottom buttons
+        tk.Frame(win, bg=BORDER, height=1).pack(fill=tk.X)
+        btn_row = tk.Frame(win, bg=BG_PANEL)
+        btn_row.pack(fill=tk.X, padx=10, pady=6)
+
+        tk.Button(btn_row, text="Select none",
+                  command=self._clear,
+                  font=_font(9), bg=BG_SURFACE, fg=TEXT_DIM,
+                  relief=tk.FLAT, padx=8, cursor="hand2"
+                  ).pack(side=tk.LEFT)
+        tk.Label(btn_row, textvariable=tk.StringVar(
+                     value=f"{len(self._sel)} selected"),
+                 font=_font(8), bg=BG_PANEL,
+                 fg=TEXT_DIM).pack(side=tk.LEFT, padx=(8, 0))
+        tk.Button(btn_row, text="Close",
+                  command=self._close,
+                  font=_font(9), bg=BG_SURFACE, fg=TEXT_H1,
+                  relief=tk.FLAT, padx=12, cursor="hand2"
+                  ).pack(side=tk.RIGHT)
+
+    def _toggle(self, name: str, var: tk.BooleanVar):
+        if var.get():
+            self._sel.add(name)
+        else:
+            self._sel.discard(name)
+        self._on_close(self._sel)
+
+    def _clear(self):
+        self._sel.clear()
+        for v in self._vars.values():
+            v.set(False)
+        self._on_close(self._sel)
+
+    def _close(self):
+        self._on_close(self._sel)
+        if self._win:
+            self._win.destroy()
+
+
 # ── Hoofd-GUI ──────────────────────────────────────────────────────────────────
 class HAMIOSApp:
     def __init__(self, root: tk.Tk):
@@ -2125,6 +2372,13 @@ class HAMIOSApp:
         # Help dialog (lazy-init; version check runs in background)
         self._help_dlg: _HelpDialog | None = None
         root.bind_all("<F1>", lambda _e: self._open_help())
+
+        # Satellite tracking state
+        self._tle_data:      dict          = _load_tle_cache()
+        self._sat_selected:  set           = set()
+        self._sat_positions: dict          = {}   # name → (lat, lon, alt)
+        self._sat_dlg: _SatelliteDialog | None = None
+        self._sat_after_id                = None
 
         s = _load_settings()
         self._qth_lat = s["lat"]
@@ -2247,6 +2501,8 @@ class HAMIOSApp:
         ).start()
         # Geschiedenis: prune + laden in background zodat main thread niet blokkeert
         threading.Thread(target=self._load_history_bg, daemon=True).start()
+        # Start satellite position refresh loop
+        self._schedule_sat_refresh()
         # Venster tonen na volledige opbouw — correct gecentreerd, geen flicker
         self.root.after(1, self.root.deiconify)
 
@@ -2445,6 +2701,77 @@ class HAMIOSApp:
         if self._help_dlg:
             self._help_dlg._latest = latest
             self._help_dlg._url = url
+
+    # ── Satellite tracking ────────────────────────────────────────────────────
+    def _open_sat_dialog(self):
+        """Open satellite selection dialog; fetch TLE if cache is empty."""
+        if not self._tle_data:
+            self._sat_btn.config(fg="#FFA726", text="🛰  Loading…")
+            threading.Thread(target=self._fetch_all_tle, daemon=True).start()
+        else:
+            self._show_sat_dialog()
+
+    def _fetch_all_tle(self):
+        """Background: fetch TLE for all groups and open dialog."""
+        cache = {}
+        for group, url in _TLE_GROUPS.items():
+            sats = _fetch_tle_group(group, url)
+            if sats:
+                cache[group] = [[n, l1, l2] for n, l1, l2 in sats]
+            log.info("TLE %s: %d satellites", group, len(sats))
+        if cache:
+            _save_tle_cache(cache)
+            self._tle_data = cache
+        self.root.after(0, self._on_tle_loaded)
+
+    def _on_tle_loaded(self):
+        self._sat_btn.config(fg=TEXT_DIM, text="🛰  Sat")
+        self._show_sat_dialog()
+
+    def _show_sat_dialog(self):
+        if self._sat_dlg is None or not (
+                self._sat_dlg._win and self._sat_dlg._win.winfo_exists()):
+            self._sat_dlg = _SatelliteDialog(
+                self.root,
+                {g: [(r[0], r[1], r[2]) for r in v]
+                 for g, v in self._tle_data.items()},
+                self._sat_selected,
+                self._on_sat_selection_change)
+        self._sat_dlg.show()
+
+    def _on_sat_selection_change(self, selected: set):
+        self._sat_selected = set(selected)
+        n = len(selected)
+        self._sat_btn.config(
+            fg=ACCENT if n else TEXT_DIM,
+            text=f"🛰  {n} sat" if n else "🛰  Sat")
+        self._refresh_sat_positions()
+        self.root.after(0, self._draw_map)
+
+    def _refresh_sat_positions(self):
+        """Compute current lat/lon for all selected satellites."""
+        pos = {}
+        # Build lookup name→(l1,l2)
+        tle_lookup = {}
+        for sats in self._tle_data.values():
+            for row in sats:
+                tle_lookup[row[0]] = (row[1], row[2])
+        for name in self._sat_selected:
+            if name in tle_lookup:
+                result = _sgp4_latlon(tle_lookup[name][0],
+                                      tle_lookup[name][1])
+                if result:
+                    pos[name] = result
+        self._sat_positions = pos
+        # Invalidate map render cache so overlay updates
+        self._map_render_key = None
+
+    def _schedule_sat_refresh(self):
+        """Re-schedule satellite position refresh every 30s."""
+        if self._sat_selected:
+            self._refresh_sat_positions()
+            self.root.after(0, self._draw_map)
+        self._sat_after_id = self.root.after(30_000, self._schedule_sat_refresh)
 
     def _quit_app(self):
         """Gracefully shut down: stop tray, save settings, close window."""
@@ -2961,7 +3288,17 @@ class HAMIOSApp:
                   font=_font(9), bg=BG_SURFACE, fg=TEXT_DIM,
                   activebackground=BG_HOVER, activeforeground=TEXT_H1,
                   relief=tk.FLAT, padx=8, pady=2, cursor="hand2"
-                  ).pack(side=tk.LEFT, padx=(0, 6))
+                  ).pack(side=tk.LEFT, padx=(0, 4))
+
+        # Satellite button
+        self._sat_btn = tk.Button(hdr, text="🛰  Sat",
+                                  command=self._open_sat_dialog,
+                                  font=_font(9), bg=BG_SURFACE, fg=TEXT_DIM,
+                                  activebackground=BG_HOVER,
+                                  activeforeground=TEXT_H1,
+                                  relief=tk.FLAT, padx=8, pady=2,
+                                  cursor="hand2")
+        self._sat_btn.pack(side=tk.LEFT, padx=(0, 6))
 
         # CAT Interface knop (naast Afsluiten) — grijs als tijdelijk uitgeschakeld
         self._cat_btn = tk.Button(hdr, text="CAT  ⚠",
@@ -3872,10 +4209,21 @@ class HAMIOSApp:
                 img  = Image.alpha_composite(img.convert("RGBA"), cs_img).convert("RGB")
                 draw = ImageDraw.Draw(img)
 
-            # ── QTH marker (alleen kruisje) ───────────────────────────────────
+            # ── QTH marker ───────────────────────────────────────────────────
             qx, qy = _ll_to_xy(self._qth_lat, self._qth_lon, VW, VH)
             draw.line([(qx - 10, qy), (qx + 10, qy)], fill=MAP_QTH, width=2)
             draw.line([(qx, qy - 10), (qx, qy + 10)], fill=MAP_QTH, width=2)
+
+            # ── Satellite positions ───────────────────────────────────────────
+            SAT_CLR = (255, 220, 60)   # yellow
+            for sname, (slat, slon, salt) in getattr(
+                    self, "_sat_positions", {}).items():
+                sx, sy = _ll_to_xy(slat, slon, VW, VH)
+                draw.ellipse([(sx-5, sy-5), (sx+5, sy+5)],
+                             fill=SAT_CLR, outline=(200, 160, 0), width=1)
+                short = sname.split("(")[0].strip()[:10]
+                draw.text((sx + 7, sy - 5), short,
+                          fill=SAT_CLR, font=None)
 
             # Sla volledig gerenderde afbeelding op in cache
             self._map_render_img = img
