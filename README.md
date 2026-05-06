@@ -298,4 +298,3 @@ Vrij te gebruiken voor persoonlijk, niet-commercieel amateur radio gebruik.
 
 ---
 
-*73 de PA3FVD*
