@@ -1,8 +1,8 @@
-# 📡 HAMIOS v3.0
+# 📡 HAMIOS v3.2
 
 **HAM radio propagation and DX monitor for Windows**
 
-> v3.0 — Complete interface redesign · World map centred · Full-height DX Spots column · Gradient band bars in band colours · Bz chart as dedicated panel · 14 languages via external language packs
+> v3.2 — Complete interface redesign · World map centred · Full-height DX Spots column · Gradient band bars in band colours · Bz chart as dedicated panel · 14 languages via external language packs
 
 *Conceived by Frank van Dijke · Developed with Claude AI*
 

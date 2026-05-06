@@ -1,5 +1,5 @@
 """
-HAMIOS v3.1
+HAMIOS v3.2
 by Frank van Dijke
 
 Real-time HF propagation, solar weather and DX monitor for Windows.
@@ -47,6 +47,12 @@ Todo
        advieskaarten in _update_advice met bijbehorende _T-sleutels.
 
 ─────────────────────────────────────────────────────────────────────
+Change Log (3.2)
+─────────────────────────────────────────────────────────────────────
+· 2026-05-06 14:41 CEST — Versie 3.2: release met volledige layout-revisie.
+  Vaste venstergrootte 1768×1250 (resizable hoogte uitgeschakeld).
+  Alle lay-outkonstanten vastgezet (zie v3.1-entries hieronder).
+
 Change Log (3.1)
 ─────────────────────────────────────────────────────────────────────
 · 2026-05-06 14:38 CEST — Layout vastgezet (v3.1 final):
@@ -71,7 +77,7 @@ Change Log (3.1)
         developer-sectie in README.md.
   Info: applicatiebeschrijving bijgewerkt naar Engels + v3.1;
         Nederlandse inline-comments vertaald naar Engels door subagent;
-        root.title bijgewerkt naar "HAMIOS v3.1".
+        root.title bijgewerkt naar "HAMIOS v3.2".
   Venster start maximaal hoog (_ini_h = scherm - 80 px);
         advieskaarten compacter (74→60 px); kaartcanvas height=1 + expand.
 
@@ -2099,7 +2105,7 @@ class _Tooltip:
 class HAMIOSApp:
     def __init__(self, root: tk.Tk):
         self.root = root
-        self.root.title("HAMIOS v3.1")
+        self.root.title("HAMIOS v3.2")
         self.root.configure(bg=BG_ROOT)
 
         # Geometrie instellen vóór _build_ui — geen root.update() nodig, geen flicker.
@@ -2930,7 +2936,7 @@ class HAMIOSApp:
         hdr = tk.Frame(self.root, bg=BG_PANEL, height=42)
         hdr.pack(fill=tk.X)
         tk.Frame(hdr, bg=ACCENT, width=4).pack(side=tk.LEFT, fill=tk.Y)
-        tk.Label(hdr, text="📡  HAMIOS v3.0",
+        tk.Label(hdr, text="📡  HAMIOS v3.2",
                  font=_font(13, "bold"), bg=BG_PANEL, fg=ACCENT,
                  pady=8).pack(side=tk.LEFT, padx=10)
 
@@ -5961,7 +5967,7 @@ class HAMIOSApp:
             pystray.Menu.SEPARATOR,
             pystray.MenuItem(self._tr("tray_exit"), self._tray_quit),
         )
-        self._tray_icon = pystray.Icon("HAMIOS", tray_img, "HAMIOS v3.0", menu)
+        self._tray_icon = pystray.Icon("HAMIOS", tray_img, "HAMIOS v3.2", menu)
         threading.Thread(target=self._tray_icon.run, daemon=True).start()
 
     def _tray_show(self, icon=None, item=None):
