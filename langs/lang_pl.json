@@ -217,7 +217,21 @@
     "ant_delta_loop": "Petla delta ~3dBi",
     "ant_quad": "Quad ~8dBi",
     "ant_yagi": "Yagi ~7dBi",
-    "ant_beam": "Kierunkowa ~10dBi"
+    "ant_beam": "Kierunkowa ~10dBi",
+    "kp_planet_lbl": "Kp (planetarny)",
+    "sw_density_lbl": "Gęstość SW (n/cm³)",
+    "storm_forecast_hdr": "Prognoza burzy (3d)",
+    "kp_chart_hdr": "Kp  48h (bloki 3h)",
+    "xray_chart_hdr": "Rentgen  24h",
+    "wspr_lbl": "W",
+    "adv_storm_fc_quiet": "Prognoza 3-dniowa: spokojnie (prawdopodobieństwo K5 ≤5% każdego dnia). Oczekiwane stabilne HF.",
+    "adv_storm_fc_watch": "Prognoza 3-dniowa: obserwacja burzy — {day} K5={mn}% K6={mo}% K7={sv}%. Zaplanuj sesje DX na spokojniejsze dni.",
+    "adv_storm_fc_likely": "Prognoza 3-dniowa: burza prawdopodobna — {day} K5={mn}% K6={mo}%. Przygotuj alternatywne trasy na niższych pasmach.",
+    "adv_sw_ram_high": "Ciśnienie dynamiczne wiatru słonecznego podwyższone — prędkość {spd} km/s, gęstość {dens} n/cm³ (P={pram:.0f} nPa). Możliwy wpływ CME; monitoruj indeks K.",
+    "adv_sw_ram_normal": "Wiatr słoneczny nominalny — prędkość {spd} km/s, gęstość {dens} n/cm³. Nie oczekuje się bezpośrednich efektów geomagnetycznych.",
+    "adv_kp_rising": "Kp rośnie przez ostatnie {h}h: {old:.1f}→{new:.1f} — aktywność geomagnetyczna wzrasta. Przejdź na niższe pasma; unikaj tras polarnych.",
+    "adv_kp_falling": "Kp spada przez ostatnie {h}h: {old:.1f}→{new:.1f} — trwa odbudowa po burzy. Wyższe pasma się odbudowują; 20m poprawia się.",
+    "adv_kp_stable": "Kp stabilny przez ostatnie {h}h na poziomie {kp:.1f} — warunki geomagnetyczne stabilne."
   },
   "solar_tips": {
     "sfi": [

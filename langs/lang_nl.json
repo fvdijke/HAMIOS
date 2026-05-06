@@ -217,7 +217,21 @@
     "ant_delta_loop": "Deltaloop ~3dBi",
     "ant_quad": "Quad ~8dBi",
     "ant_yagi": "Yagi ~7dBi",
-    "ant_beam": "Beam ~10dBi"
+    "ant_beam": "Beam ~10dBi",
+    "kp_planet_lbl": "Kp (planetair)",
+    "sw_density_lbl": "ZW-dichtheid (n/cm³)",
+    "storm_forecast_hdr": "Stormprognose (3d)",
+    "kp_chart_hdr": "Kp  48u (3u-blokken)",
+    "xray_chart_hdr": "X-straling  24u",
+    "wspr_lbl": "W",
+    "adv_storm_fc_quiet": "3-daagse prognose: rustig (K5-kans ≤5% per dag). Stabiele HF verwacht.",
+    "adv_storm_fc_watch": "3-daagse prognose: stormwacht — {day} K5={mn}% K6={mo}% K7={sv}%. Plan DX-sessies op rustigere dagen.",
+    "adv_storm_fc_likely": "3-daagse prognose: storm waarschijnlijk — {day} K5={mn}% K6={mo}%. Bereid lagere-band alternatieve routes voor.",
+    "adv_sw_ram_high": "Solarwind-stuwdruk verhoogd — snelheid {spd} km/s, dichtheid {dens} n/cm³ (P={pram:.0f} nPa). CME-impact mogelijk; monitor K-index.",
+    "adv_sw_ram_normal": "Solarwind nominaal — snelheid {spd} km/s, dichtheid {dens} n/cm³. Geen directe geomagnetische effecten verwacht.",
+    "adv_kp_rising": "Kp stijgt laatste {h}u: {old:.1f}→{new:.1f} — geomagnetische activiteit neemt toe. Schakel over naar lagere banden; vermijd poolroutes.",
+    "adv_kp_falling": "Kp daalt laatste {h}u: {old:.1f}→{new:.1f} — stormherstel in gang. Hogere banden herstellen; 20m verbetert.",
+    "adv_kp_stable": "Kp stabiel laatste {h}u op {kp:.1f} — geomagnetische condities stabiel."
   },
   "solar_tips": {
     "sfi": [

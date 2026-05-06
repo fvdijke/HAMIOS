@@ -217,7 +217,21 @@
     "ant_delta_loop": "Deltaloop ~3dBi",
     "ant_quad": "Quad ~8dBi",
     "ant_yagi": "Yagi ~7dBi",
-    "ant_beam": "Riktantenn ~10dBi"
+    "ant_beam": "Riktantenn ~10dBi",
+    "kp_planet_lbl": "Kp (planetarisk)",
+    "sw_density_lbl": "SV-densitet (n/cm³)",
+    "storm_forecast_hdr": "Stormprognos (3d)",
+    "kp_chart_hdr": "Kp  48h (3h-block)",
+    "xray_chart_hdr": "Röntgen  24h",
+    "wspr_lbl": "W",
+    "adv_storm_fc_quiet": "3-dygnsprognos: lugnt (K5-sannolikhet ≤5% per dag). Stabilt HF förväntas.",
+    "adv_storm_fc_watch": "3-dygnsprognos: stormbevakning — {day} K5={mn}% K6={mo}% K7={sv}%. Planera DX-sessioner för lugnare dagar.",
+    "adv_storm_fc_likely": "3-dygnsprognos: storm trolig — {day} K5={mn}% K6={mo}%. Förbered alternativa rutter på lägre band.",
+    "adv_sw_ram_high": "Solvindsstagnationstryck förhöjt — hastighet {spd} km/s, densitet {dens} n/cm³ (P={pram:.0f} nPa). CME-träff möjlig; övervaka K-index.",
+    "adv_sw_ram_normal": "Solvind nominell — hastighet {spd} km/s, densitet {dens} n/cm³. Inga omedelbara geomagnetiska effekter förväntas.",
+    "adv_kp_rising": "Kp stiger senaste {h}h: {old:.1f}→{new:.1f} — geomagnetisk aktivitet ökar. Byt till lägre band; undvik polrutter.",
+    "adv_kp_falling": "Kp sjunker senaste {h}h: {old:.1f}→{new:.1f} — stormåterhämtning pågår. Höga band återhämtar sig; 20m förbättras.",
+    "adv_kp_stable": "Kp stabilt senaste {h}h vid {kp:.1f} — geomagnetiska förhållanden stabila."
   },
   "solar_tips": {
     "sfi": [

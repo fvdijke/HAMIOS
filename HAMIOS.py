@@ -36,19 +36,28 @@ Todo
 - [x] Stab: Logging — Python logging naar HAMIOS.log (roterende bestanden, max 1 MB × 3).
 - [x] Stab: Gebruikershandleiding — Help-dialoog via F1-toets en menu-knop in header; bevat alle panelen en sneltoetsen.
 - [x] Git: README's bijgewerkt voor v3.0/v3.1; changelog up-to-date.
-- [ ] Git: Release v3.1 — wordt aangemaakt na afronden van alle items.
 - [x] Git: CI/CD — GitHub Actions workflow (.github/workflows/ci.yml) toegevoegd voor syntaxcheck + lint.
 - [x] Git: Developer-sectie README + CONTRIBUTING.md toegevoegd.
 - [x] Git: GitHub Issues-labels geconfigureerd via ISSUE_TEMPLATE + labels.yml.
 - [x] Info: Applicatiebeschrijving bijgewerkt (regel 5 e.v.) — nu Engelstalig en volledig.
 - [x] Info: Nederlandse verklarende teksten in code vertaald naar Engels.
 - [x] Vis: Panelen goed verdeeld — grid-layout met uniform="lc" zorgt voor exacte uitlijning.
-- [ ] Data: Maak meer analyses en adviezen op basis van alle data
-- [ ] 
+- [x] Data: Meer analyses toegevoegd: 3-daagse storm-kansen, solarwind ramdruk
+       (ρ × v²), Kp-trend (stijgend/dalend/stabiel over 12u). Drie nieuwe
+       advieskaarten in _update_advice met bijbehorende _T-sleutels.
 
 ─────────────────────────────────────────────────────────────────────
 Change Log (3.1)
 ─────────────────────────────────────────────────────────────────────
+· 2026-05-06 14:38 CEST — Layout vastgezet (v3.1 final):
+  Vaste hoogte-constanten: WINDOW_H=1250, ROW_0_H=551, ROW_1_H=275,
+  ROW_2_H=340 (ADV_CARD_H=70, GAP=3). resizable(True, False).
+  Kolommen 3:2:2:2 (HF Rel 460px, map 898x449, bottom 3x306px).
+  Bandtabel in grid-frame voor exacte uitlijning header vs data.
+  Solar params padx=(8,0) inspring. DX kolommen compacter.
+  Graticule-labels zonder crop_t_est offset (altijd bij y=3/gy+2).
+  Taalbestanden: 14 nieuwe sleutels vertaald in alle 13 packs.
+
 · 2026-04-29 19:36 CEST — Versie 3.1: alle open todo-items afgewerkt.
   Stab: logging naar HAMIOS.log (RotatingFileHandler, max 1 MB × 3);
         disk-cache HAMIOS_cache.pkl (pickle + TTL) voor solar/Kp/X-ray/
@@ -198,18 +207,23 @@ MAP_URL       = ("https://eoimages.gsfc.nasa.gov/images/imagerecords/"
                  "57000/57752/land_shallow_topo_2048.jpg")
 
 # ── Theme ──────────────────────────────────────────────────────────────────────
-ADV_CARD_H   = 60    # fixed height per advice card (pixels)
-ADV_CARD_GAP = 3    # vertical spacing between rows
-ADV_ROWS     = 4    # visible rows at startup
+# ── Fixed layout row heights ───────────────────────────────────────────────────
+APP_HDR_H  = 42    # header bar
+TICKER_H   = 22    # ticker bar
+ROW_0_H    = 551   # top row:    map canvas (449) + chrome (102)
+ROW_1_H    = 275   # bottom row: schema / hist / kp / bz+xray
+ROW_2_H    = 380   # advice row
+LAYOUT_PAD = 20    # body pady + grid paddings
+WINDOW_H   = APP_HDR_H + ROW_0_H + ROW_1_H + ROW_2_H + TICKER_H + LAYOUT_PAD  # 1250
 
-# ── Fixed height constants (used for fixed-height frames and _center_window) ───
-TICKER_H      = 22   # ticker bar height
-APP_HDR_H     = 42   # app header bar height
-
-# Advice section: accent (2) + header row pady+label (28–32px, depending on font scaling)
-# + card area + bottom margin (8). ADV_HDR_STRIP=40 gives ~10px buffer for font metrics.
+# Advice card sizing derived from ROW_2_H
+# ROW_2_H = ADV_HDR_STRIP + ADV_ROWS*(ADV_CARD_H+ADV_CARD_GAP) + 8
+# 340 = 40 + 4*(ADV_CARD_H+ADV_CARD_GAP) + 8  →  ADV_CARD_H+GAP = 73
+ADV_ROWS     = 4
+ADV_CARD_H   = 70   # 70 + 3 = 73  →  4*73+48 = 340 ✓
+ADV_CARD_GAP = 3
 ADV_HDR_STRIP  = 40
-ADV_SECTION_H  = ADV_HDR_STRIP + ADV_ROWS * (ADV_CARD_H + ADV_CARD_GAP) + 8
+ADV_SECTION_H  = ADV_HDR_STRIP + ADV_ROWS * (ADV_CARD_H + ADV_CARD_GAP) + 8  # 340
 
 # Solar panel minimum: header(32) + params(198) + alert section(110) +
 #   band table header+11bands(196) + sep(11) + x-flare(44) + PCA(32) = ~623
@@ -1412,6 +1426,14 @@ _T: dict[str, dict[str, str]] = {
     'adv_dx_asia': {"en": 'Asia ({n}×) well represented. '},
     'adv_dx_routes': {"en": 'Optimal DX routes now: {routes}.'},
     'adv_overall_score': {"en": 'Overall propagation score: {overall}  (SFI {sfi} · K {k} · {open} bands open). {daynight} conditions, QTH {lat}°N.'},
+    'adv_storm_fc_quiet':  {"en": '3-day forecast: quiet (K5 probability ≤5% each day). Stable HF expected.'},
+    'adv_storm_fc_watch':  {"en": '3-day forecast: storm watch — {day} K5={mn}% K6={mo}% K7={sv}%. Plan DX sessions for calmer days.'},
+    'adv_storm_fc_likely': {"en": '3-day forecast: storm likely — {day} K5={mn}% K6={mo}%. Prepare lower-band alternative routes.'},
+    'adv_sw_ram_high':     {"en": 'Solar wind ram pressure elevated — speed {spd} km/s, density {dens} n/cm³ (P={pram:.0f} nPa). CME impact possible; monitor K-index.'},
+    'adv_sw_ram_normal':   {"en": 'Solar wind nominal — speed {spd} km/s, density {dens} n/cm³. No immediate geomagnetic effects expected.'},
+    'adv_kp_rising':       {"en": 'Kp rising last {h}h: {old:.1f}→{new:.1f} — geomagnetic activity increasing. Switch to lower bands; avoid polar routes.'},
+    'adv_kp_falling':      {"en": 'Kp falling last {h}h: {old:.1f}→{new:.1f} — storm recovery in progress. Higher bands recovering; 20m improving.'},
+    'adv_kp_stable':       {"en": 'Kp stable last {h}h at {kp:.1f} — geomagnetic conditions steady.'},
     'dx_route_eu_ja_day': {"en": 'EU→JA (Asia) via long path, 14–21 MHz'},
     'dx_route_eu_w_day': {"en": 'EU→W (North America) short path, 14–21 MHz'},
     'dx_route_eu_af_day': {"en": 'EU→Africa short path, 14–28 MHz'},
@@ -2086,10 +2108,10 @@ class HAMIOSApp:
         _scr_h = root.winfo_screenheight()
         _DX_EXTRA = 368            # DX-kolom 360 px + padx 8 px
         _ini_w = min(1400 + _DX_EXTRA, _scr_w - 60)
-        _ini_h = _scr_h - 80          # volledig scherm minus OS-balk
-        _ini_y = 40
-        root.geometry(f"{_ini_w}x{_ini_h}+{(_scr_w-_ini_w)//2}+{_ini_y}")
-        root.minsize(min(900 + _DX_EXTRA, _scr_w - 60), MIN_WINDOW_H)
+        _ini_y = max(0, (_scr_h - WINDOW_H) // 2)
+        root.geometry(f"{_ini_w}x{WINDOW_H}+{(_scr_w-_ini_w)//2}+{_ini_y}")
+        root.minsize(min(900 + _DX_EXTRA, _scr_w - 60), WINDOW_H)
+        root.resizable(True, False)   # breedte aanpasbaar, hoogte vast
 
         self._solar_data: dict = {}
         self._solar_after_id = None
@@ -3081,7 +3103,7 @@ class HAMIOSApp:
         left_area.columnconfigure(1, weight=2)
         left_area.columnconfigure(2, weight=2)
         left_area.columnconfigure(3, weight=2)
-        left_area.rowconfigure(0, weight=1)   # top row expands vertically
+        left_area.rowconfigure(0, weight=0)   # top row: natural height (map = W//2)
         left_area.rowconfigure(1, weight=0)   # bottom row fixed height
         left_area.rowconfigure(2, weight=0)   # advice fixed height
 
@@ -3162,26 +3184,26 @@ class HAMIOSApp:
             ("iono_fof2",  None),
         ]:
             row = tk.Frame(self._solar_frame, bg=BG_PANEL)
-            row.pack(fill=tk.X, pady=1)
+            row.pack(fill=tk.X, pady=1, padx=(8, 0))
             _TR_LABELS = {"sw_density": "sw_density_lbl", "kp_planet": "kp_planet_lbl"}
             if key == "iono_fof2":
                 lbl = tk.Label(row, textvariable=self._iono_station_var,
                                font=_font(8), bg=BG_PANEL,
-                               fg=TEXT_DIM, anchor='w', width=14, cursor="question_arrow")
+                               fg=TEXT_DIM, anchor='w', width=27, cursor="question_arrow")
             elif key in _TR_LABELS:
                 lbl = tk.Label(row, text=self._tr(_TR_LABELS[key]) + ":",
                                font=_font(8), bg=BG_PANEL,
-                               fg=TEXT_DIM, anchor='w', width=14, cursor="question_arrow")
+                               fg=TEXT_DIM, anchor='w', width=27, cursor="question_arrow")
                 self._tr_widgets[_TR_LABELS[key]] = lbl
             else:
                 lbl = tk.Label(row, text=label + ":", font=_font(8), bg=BG_PANEL,
-                               fg=TEXT_DIM, anchor='w', width=14, cursor="question_arrow")
+                               fg=TEXT_DIM, anchor='w', width=27, cursor="question_arrow")
             lbl.pack(side=tk.LEFT)
             _bind_tip(lbl, key)
             var = tk.StringVar(value="—")
             self._solar_vars[key] = var
             val_lbl = tk.Label(row, textvariable=var, font=_font(8, "bold"),
-                               bg=BG_PANEL, fg=TEXT_H1, anchor='w', width=7,
+                               bg=BG_PANEL, fg=TEXT_H1, anchor='w', width=9,
                                cursor="question_arrow")
             val_lbl.pack(side=tk.LEFT)
             _bind_tip(val_lbl, key)
@@ -3189,34 +3211,42 @@ class HAMIOSApp:
 
         tk.Frame(self._solar_frame, bg=ACCENT, height=1).pack(fill=tk.X, pady=(4, 2))
 
-        # Bandentabel (dag/nacht condities)
-        hdr_row = tk.Frame(self._solar_frame, bg=BG_PANEL)
-        hdr_row.pack(fill=tk.X)
-        for key, w in [("band_hdr", 5), ("day_hdr", 5), ("night_hdr", 5)]:
-            lbl = tk.Label(hdr_row, text=self._tr(key), font=_font(8, "bold"),
-                           bg=BG_PANEL, fg=ACCENT, width=w, anchor='w')
-            lbl.pack(side=tk.LEFT)
+        # Bandentabel — grid zodat headers en data mechanisch uitlijnen
+        band_tbl = tk.Frame(self._solar_frame, bg=BG_PANEL)
+        band_tbl.pack(fill=tk.X, pady=(0, 2), padx=(8, 0))
+        # Drie kolommen met vaste minimumbreedte (pixels) voor exacte uitlijning
+        band_tbl.columnconfigure(0, minsize=52)
+        band_tbl.columnconfigure(1, minsize=72)
+        band_tbl.columnconfigure(2, minsize=72)
+
+        # Headers (rij 0)
+        hdr_keys = [("band_hdr", 0), ("day_hdr", 1), ("night_hdr", 2)]
+        for key, col in hdr_keys:
+            lbl = tk.Label(band_tbl, text=self._tr(key), font=_font(8, "bold"),
+                           bg=BG_PANEL, fg=ACCENT, anchor='w')
+            lbl.grid(row=0, column=col, sticky='w', pady=(0, 1))
             self._tr_widgets.setdefault(key, [])
             self._tr_widgets[key] = (self._tr_widgets[key]
                                      if isinstance(self._tr_widgets[key], list)
                                      else [self._tr_widgets[key]])
             self._tr_widgets[key].append(lbl)
 
+        # Data (rijen 1..N)
         self._band_cond_labels: dict = {}
+        grid_row = 1
         for name, _, is_hf in _BANDS:
             if not is_hf:
                 continue
-            row = tk.Frame(self._solar_frame, bg=BG_PANEL)
-            row.pack(fill=tk.X, pady=1)
-            tk.Label(row, text=name, font=_font(8), bg=BG_PANEL,
-                     fg=TEXT_DIM, width=5, anchor='w').pack(side=tk.LEFT)
-            day_lbl = tk.Label(row, text="—", font=_font(8, "bold"),
-                               bg=BG_PANEL, fg=TEXT_DIM, width=5, anchor='w')
-            day_lbl.pack(side=tk.LEFT)
-            ngt_lbl = tk.Label(row, text="—", font=_font(8, "bold"),
-                               bg=BG_PANEL, fg=TEXT_DIM, width=5, anchor='w')
-            ngt_lbl.pack(side=tk.LEFT)
+            tk.Label(band_tbl, text=name, font=_font(8), bg=BG_PANEL,
+                     fg=TEXT_DIM, anchor='w').grid(row=grid_row, column=0, sticky='w')
+            day_lbl = tk.Label(band_tbl, text="—", font=_font(8, "bold"),
+                               bg=BG_PANEL, fg=TEXT_DIM, anchor='w')
+            day_lbl.grid(row=grid_row, column=1, sticky='w')
+            ngt_lbl = tk.Label(band_tbl, text="—", font=_font(8, "bold"),
+                               bg=BG_PANEL, fg=TEXT_DIM, anchor='w')
+            ngt_lbl.grid(row=grid_row, column=2, sticky='w')
             self._band_cond_labels[name] = (day_lbl, ngt_lbl, is_hf)
+            grid_row += 1
 
         tk.Frame(self._solar_frame, bg=ACCENT, height=1).pack(fill=tk.X, pady=(4, 2))
 
@@ -3249,7 +3279,7 @@ class HAMIOSApp:
 
         # ── Bottom-items eerst inpakken zodat canvas de rest vult ───────────────
 
-        # Selectievakjes: één rij helemaal onderaan
+        # Selectievakjes: één rij — groeplabels + vakjes naast elkaar
         map_ov = tk.Frame(outer, bg=BG_PANEL)
         map_ov.pack(side=tk.BOTTOM, fill=tk.X, padx=10, pady=(2, 4))
 
@@ -3263,7 +3293,7 @@ class HAMIOSApp:
                                 bg=BG_PANEL, fg=TEXT_BODY, selectcolor=BG_SURFACE,
                                 activebackground=BG_PANEL, activeforeground=TEXT_H1,
                                 font=_font(9))
-            cb.pack(side=tk.LEFT, padx=(0, 4))
+            cb.pack(side=tk.LEFT, padx=(0, 3))
             if tr_key:
                 self._tr_widgets.setdefault(tr_key, [])
                 if isinstance(self._tr_widgets[tr_key], list):
@@ -3271,27 +3301,28 @@ class HAMIOSApp:
                 else:
                     self._tr_widgets[tr_key] = [self._tr_widgets[tr_key], cb]
 
-        # Weergave-rij
-        r_disp = tk.Frame(map_ov, bg=BG_PANEL)
-        r_disp.pack(fill=tk.X, pady=(0, 2))
-        tk.Label(r_disp, text=self._tr("map_display_lbl"),
-                 font=_font(8), bg=BG_PANEL, fg=TEXT_DIM).pack(side=tk.LEFT, padx=(0, 4))
-        _cb_map(r_disp, "sun",      self._show_sun_var)
-        _cb_map(r_disp, "moon",     self._show_moon_var)
-        _cb_map(r_disp, "graylijn", self._show_graylijn_var)
-        _cb_map(r_disp, None,       self._show_aurora_var, "Aurora")
+        # Eén horizontale rij: [Display: cb cb cb cb] [separator] [Data: cb cb cb cb]
+        row = tk.Frame(map_ov, bg=BG_PANEL)
+        row.pack(fill=tk.X)
 
-        # Data-rij
-        r_data = tk.Frame(map_ov, bg=BG_PANEL)
-        r_data.pack(fill=tk.X)
-        tk.Label(r_data, text=self._tr("map_data_lbl"),
-                 font=_font(8), bg=BG_PANEL, fg=TEXT_DIM).pack(side=tk.LEFT, padx=(0, 4))
-        _cb_map(r_data, None,      self._show_wspr_var,  "WSPR")
-        _cb_map(r_data, None,      self._show_spots_var, "Spots")
-        _cb_map(r_data, None,      self._show_cs_var,    "CS")
-        _cb_map(r_data, "locator", self._show_locator_var)
+        tk.Label(row, text=self._tr("map_display_lbl"),
+                 font=_font(8), bg=BG_PANEL, fg=TEXT_DIM).pack(side=tk.LEFT, padx=(0, 3))
+        _cb_map(row, "sun",      self._show_sun_var)
+        _cb_map(row, "moon",     self._show_moon_var)
+        _cb_map(row, "graylijn", self._show_graylijn_var)
+        _cb_map(row, None,       self._show_aurora_var, "Aurora")
+
+        # Subtiele verticale scheidingslijn
+        tk.Frame(row, bg=BORDER, width=1).pack(side=tk.LEFT, fill=tk.Y, padx=(8, 8))
+
+        tk.Label(row, text=self._tr("map_data_lbl"),
+                 font=_font(8), bg=BG_PANEL, fg=TEXT_DIM).pack(side=tk.LEFT, padx=(0, 3))
+        _cb_map(row, None,      self._show_wspr_var,  "WSPR")
+        _cb_map(row, None,      self._show_spots_var, "Spots")
+        _cb_map(row, None,      self._show_cs_var,    "CS")
+        _cb_map(row, "locator", self._show_locator_var)
         if not _ITU_DISABLED:
-            _cb_map(r_data, None, self._show_iaru_var, "ITU")
+            _cb_map(row, None, self._show_iaru_var, "ITU")
 
         # GC-labels net boven de selectievakjes
         self._gc_path_var = tk.StringVar(value="")
@@ -3306,11 +3337,12 @@ class HAMIOSApp:
                  font=_font(9), bg=BG_PANEL, fg=ACCENT,
                  anchor='w').pack(side=tk.BOTTOM, fill=tk.X, padx=10, pady=(0, 0))
 
-        # Canvas starts small; _on_map_panel_resize sets the exact 2:1 size.
-        self._map_canvas = tk.Canvas(outer, width=400, height=200, bg="#1B3A5C",
+        # Canvas fills column width; height = width // 2 (exact 2:1, set by _on_map_resize).
+        self._map_canvas = tk.Canvas(outer, bg="#1B3A5C",
                                      bd=0, highlightthickness=0)
-        self._map_canvas.pack(anchor='nw', padx=10, pady=(2, 2))
+        self._map_canvas.pack(fill=tk.X, padx=10, pady=(2, 2))
         self._map_photo = None
+        self._map_canvas.bind("<Configure>",       self._on_map_resize)
         self._map_canvas.bind("<Button-1>",        self._on_map_btn1_press)
         self._map_canvas.bind("<B1-Motion>",       self._on_map_drag)
         self._map_canvas.bind("<ButtonRelease-1>", self._on_map_btn1_release)
@@ -3318,31 +3350,15 @@ class HAMIOSApp:
         self._map_canvas.bind("<MouseWheel>",      self._on_map_scroll)
         self._map_canvas.bind("<Button-4>",        self._on_map_scroll)
         self._map_canvas.bind("<Button-5>",        self._on_map_scroll)
-        # Drive sizing from the outer panel frame
-        self._map_outer = outer
-        outer.bind("<Configure>", self._on_map_panel_resize)
-
-    # Estimated pixel height of map-panel chrome (header + GC labels + checkboxes)
-    _MAP_CHROME_H = 130
-
-    def _on_map_panel_resize(self, event):
-        """Size canvas to panel width × (width // 2) — full world, no gaps.
-
-        Only uses event.width; the panel height follows naturally from the
-        canvas size + fixed chrome elements (header, GC labels, checkboxes).
-        """
-        cw = max(2, event.width - 22)   # padx=10 each side + 2 px margin
-        ch = max(1, cw // 2)
-
-        cur_w = self._map_canvas.winfo_width()
-        cur_h = self._map_canvas.winfo_height()
-        if cur_w != cw or cur_h != ch:
-            self._map_canvas.config(width=cw, height=ch)
-            self._map_base_size = None   # invalidate base-map cache
-        self._draw_map()
 
     def _on_map_resize(self, _event=None):
-        """Legacy stub — sizing is now driven by _on_map_panel_resize."""
+        """Canvas height = width // 2 — exact 2:1, no black bars, no distortion."""
+        w = self._map_canvas.winfo_width()
+        if w > 1:
+            h = w // 2
+            if self._map_canvas.winfo_height() != h:
+                self._map_canvas.config(height=h)
+                self._map_base_size = None
         self._draw_map()
 
     def _redraw_map(self):
@@ -3354,7 +3370,7 @@ class HAMIOSApp:
         self._draw_map()
 
     def _viewport_to_latlon(self, vx: int, vy: int) -> tuple[float, float]:
-        """Viewport pixel → (lat, lon) met zoom/pan."""
+        """Viewport pixel → (lat, lon) with zoom/pan."""
         W  = self._map_canvas.winfo_width()  or 960
         VW = int(W * max(1.0, self._map_zoom))
         VH = int(W // 2 * max(1.0, self._map_zoom))
@@ -3487,16 +3503,13 @@ class HAMIOSApp:
         new_zoom = max(1.0, min(8.0, old_zoom * factor))
         if new_zoom == old_zoom:
             return
-        # Bepaal lat/lon onder cursor vóór zoom (VH altijd 2:1)
-        VW_old   = int(W * old_zoom)
-        VH_old   = int(W // 2 * old_zoom)
+        # Determine lat/lon under cursor before zoom (always width-based 2:1)
+        VW_old = int(W * old_zoom);  VH_old = int(W // 2 * old_zoom)
+        VW_new = int(W * new_zoom);  VH_new = int(W // 2 * new_zoom)
         wx_old   = self._map_crop_left + event.x
         wy_old   = self._map_crop_top  + event.y
         lon_cur  = wx_old / VW_old * 360 - 180
         lat_cur  = 90 - wy_old / VH_old * 180
-        # Nieuw center zodat cursor dezelfde lat/lon wijst
-        VW_new   = int(W * new_zoom)
-        VH_new   = int(W // 2 * new_zoom)
         new_cl   = (lon_cur + 180) / 360 * VW_new - event.x
         new_ct   = (90 - lat_cur)  / 180 * VH_new - event.y
         new_cx   = (new_cl + W / 2) / VW_new * 360 - 180
@@ -3528,8 +3541,8 @@ class HAMIOSApp:
         c = self._map_canvas
         W = c.winfo_width()  or 960
         H = c.winfo_height() or 400
-        # Virtuele wereld-afmetingen: altijd 2:1 ongeacht canvas-hoogte
         zoom = max(1.0, self._map_zoom)
+        # Virtual map always width-based (2:1). Height = W//2 (set by _on_map_resize).
         VW   = max(2, int(W * zoom))
         VH   = max(1, int(W // 2 * zoom))
 
@@ -3559,23 +3572,18 @@ class HAMIOSApp:
                 ImageDraw.Draw(src).text(
                     (6, 4), self._tr("map_downloading"), fill=MAP_GRID)
 
-            # Graticule + graden-labels
-            # crop_t_est: hoeveel pixels van de bovenkant worden weggesneden
-            # zodat labels altijd zichtbaar zijn in het canvas-venster
-            crop_t_est = max(0, (VH - H) // 2)
+            # Graticule + degree labels
+            # Canvas height = VH (W//2) so no crop offset needed — draw at natural positions.
             d   = ImageDraw.Draw(src)
-            LBL = (180, 200, 220)   # contrasterende lichtblauwe kleur
+            LBL = (180, 200, 220)
             for lat in range(-60, 90, 30):
                 gy = int((90 - lat) / 180 * VH)
                 d.line([(0, gy), (VW, gy)], fill=MAP_GRID, width=1)
-                # label net onder de lijn, maar nooit boven de crop-rand
-                text_y = max(gy + 2, crop_t_est + 4)
-                d.text((3, text_y), f"{lat:+d}°", fill=LBL)
+                d.text((3, gy + 2), f"{lat:+d}°", fill=LBL)
             for lon in range(-150, 180, 30):
                 gx = int((lon + 180) / 360 * VW)
                 d.line([(gx, 0), (gx, VH)], fill=MAP_GRID, width=1)
-                # altijd binnen het zichtbare gebied (crop_t_est + 4px marge)
-                d.text((gx + 2, crop_t_est + 4), f"{lon:+d}°", fill=LBL)
+                d.text((gx + 2, 3), f"{lon:+d}°", fill=LBL)
 
             self._map_base_img  = src
             self._map_base_size = cache_key
@@ -3868,8 +3876,6 @@ class HAMIOSApp:
             self._map_render_key = render_key
 
         # ── Pan/crop from cached render image ────────────────────────────────
-        # zoom=1: VW=W, VH=W//2. Canvas H = W//2 (set by _on_map_panel_resize).
-        # No crop needed at zoom=1 — full world always visible.
         img    = self._map_render_img
         crop_l = 0
         crop_t = 0
@@ -3879,10 +3885,12 @@ class HAMIOSApp:
             crop_l   = max(0, min(VW - W, world_cx - W // 2))
             crop_t   = max(0, min(VH - H, world_cy - H // 2))
             img      = img.crop((crop_l, crop_t, crop_l + W, crop_t + H))
-        elif H < VH:
-            # Canvas shorter than virtual map (e.g. during resize transition)
+        else:
+            # Center image in canvas (handles both tall-canvas and wide-canvas)
+            crop_l = max(0, (VW - W) // 2)
             crop_t = max(0, (VH - H) // 2)
-            img = img.crop((0, crop_t, W, crop_t + H))
+            if crop_l > 0 or crop_t > 0:
+                img = img.crop((crop_l, crop_t, crop_l + W, crop_t + H))
         self._map_crop_left = crop_l
         self._map_crop_top  = crop_t
 
@@ -5131,8 +5139,8 @@ class HAMIOSApp:
 
         spots = getattr(self, "_dx_filtered", [])
         ROW_H = 16
-        C_UTC  = 38;  C_BAND = 38;  C_DX = 84
-        C_FREQ = 68;  C_SPOT = 74
+        C_UTC  = 34;  C_BAND = 34;  C_DX = 76
+        C_FREQ = 60;  C_SPOT = 66
         C_CMT  = max(40, W - C_UTC - C_BAND - C_DX - C_FREQ - C_SPOT - 12)
 
         # Kolomkoppen
@@ -5143,7 +5151,7 @@ class HAMIOSApp:
                        (self._tr("dx_col_spotter"),     4 + C_UTC + C_BAND + C_DX + C_FREQ),
                        (self._tr("dx_col_comment"),     4 + C_UTC + C_BAND + C_DX + C_FREQ + C_SPOT)]:
             c.create_text(x, 2, text=txt, fill=ACCENT,
-                          font=(_FONT_MONO, 8, "bold"), anchor='nw')
+                          font=(_FONT_MONO, 7, "bold"), anchor='nw')
         c.create_line(0, ROW_H + 2, W, ROW_H + 2, fill=BORDER)
 
         if not spots:
@@ -5587,6 +5595,75 @@ class HAMIOSApp:
                          open=open_cnt, daynight=dn_label,
                          lat=f"{self._qth_lat:.1f}"),
                      overall_clr))
+
+        # ── 3-day storm probability forecast ─────────────────────────────
+        storm_probs = data.get("storm_probs", [])
+        if storm_probs:
+            worst = max(storm_probs, key=lambda p: p.get("minor", 0))
+            mn_max = worst.get("minor", 0)
+            mo_max = worst.get("moderate", 0)
+            sv_max = worst.get("severe", 0)
+            day_s  = str(worst.get("date", ""))[-5:]
+            if mn_max >= 40 or mo_max >= 20:
+                tips.append(("🌩",
+                    self._tr("adv_storm_fc_likely").format(
+                        day=day_s, mn=mn_max, mo=mo_max),
+                    "#F44336"))
+            elif mn_max >= 15 or mo_max >= 5:
+                tips.append(("⚠️",
+                    self._tr("adv_storm_fc_watch").format(
+                        day=day_s, mn=mn_max, mo=mo_max, sv=sv_max),
+                    "#FFC107"))
+            else:
+                tips.append(("🛡",
+                    self._tr("adv_storm_fc_quiet"),
+                    "#4CAF50"))
+
+        # ── Solar wind ram pressure ────────────────────────────────────────
+        try:
+            spd_f  = float(data.get("sw_speed", "0").replace("—", "0"))
+            dens_f = float(data.get("sw_density", "0").replace("—", "0"))
+            # Ram pressure P = 0.5 × m_p × n × v² ≈ 1.67e-27 × n×1e6 × v²×1e6 / 1e-9
+            # Simplified: P [nPa] ≈ 1.67e-6 × dens [n/cm³] × (spd [km/s])²
+            pram = 1.67e-6 * dens_f * (spd_f ** 2)
+            if pram > 5.0 or dens_f > 15:
+                tips.append(("💥",
+                    self._tr("adv_sw_ram_high").format(
+                        spd=int(spd_f), dens=f"{dens_f:.1f}", pram=pram),
+                    "#FFA726"))
+            else:
+                tips.append(("💨",
+                    self._tr("adv_sw_ram_normal").format(
+                        spd=int(spd_f), dens=f"{dens_f:.1f}"),
+                    TEXT_BODY))
+        except (ValueError, TypeError):
+            pass
+
+        # ── Kp trend (rising / falling / stable over last 12h) ────────────
+        kp_hist = getattr(self, "_last_kp_pts", [])
+        if len(kp_hist) >= 4:
+            # Compare first and last 2 points over ~12h window
+            pts_12h = [(h, k) for h, k in kp_hist if h <= 12]
+            if len(pts_12h) >= 4:
+                old_kp = sum(k for _, k in pts_12h[:2]) / 2
+                new_kp = sum(k for _, k in pts_12h[-2:]) / 2
+                delta  = new_kp - old_kp
+                h_span = int(pts_12h[0][0])
+                if delta > 1.0:
+                    tips.append(("📈",
+                        self._tr("adv_kp_rising").format(
+                            h=h_span, old=old_kp, new=new_kp),
+                        "#F44336"))
+                elif delta < -1.0:
+                    tips.append(("📉",
+                        self._tr("adv_kp_falling").format(
+                            h=h_span, old=old_kp, new=new_kp),
+                        "#4CAF50"))
+                else:
+                    tips.append(("📊",
+                        self._tr("adv_kp_stable").format(
+                            h=h_span, kp=new_kp),
+                        TEXT_DIM))
 
         # ── Weergave: 3 gelijke kolommen, vaste kaartengrootte ───────────
         COLS       = 3

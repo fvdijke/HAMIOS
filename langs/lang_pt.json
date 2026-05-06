@@ -217,7 +217,21 @@
     "ant_delta_loop": "Loop delta ~3dBi",
     "ant_quad": "Quad ~8dBi",
     "ant_yagi": "Yagi ~7dBi",
-    "ant_beam": "Diretiva ~10dBi"
+    "ant_beam": "Diretiva ~10dBi",
+    "kp_planet_lbl": "Kp (planetário)",
+    "sw_density_lbl": "Densidade VS (n/cm³)",
+    "storm_forecast_hdr": "Previsão tempestade (3d)",
+    "kp_chart_hdr": "Kp  48h (blocos 3h)",
+    "xray_chart_hdr": "Raios X  24h",
+    "wspr_lbl": "W",
+    "adv_storm_fc_quiet": "Previsão 3 dias: calmo (probabilidade K5 ≤5% por dia). HF estável esperado.",
+    "adv_storm_fc_watch": "Previsão 3 dias: vigilância de tempestade — {day} K5={mn}% K6={mo}% K7={sv}%. Planear sessões DX para dias mais calmos.",
+    "adv_storm_fc_likely": "Previsão 3 dias: tempestade provável — {day} K5={mn}% K6={mo}%. Preparar rotas alternativas nas bandas mais baixas.",
+    "adv_sw_ram_high": "Pressão dinâmica do vento solar elevada — velocidade {spd} km/s, densidade {dens} n/cm³ (P={pram:.0f} nPa). Impacto CME possível; monitorar índice K.",
+    "adv_sw_ram_normal": "Vento solar nominal — velocidade {spd} km/s, densidade {dens} n/cm³. Nenhum efeito geomagnético imediato esperado.",
+    "adv_kp_rising": "Kp a subir últimas {h}h: {old:.1f}→{new:.1f} — atividade geomagnética a aumentar. Mudar para bandas mais baixas; evitar rotas polares.",
+    "adv_kp_falling": "Kp a descer últimas {h}h: {old:.1f}→{new:.1f} — recuperação de tempestade em curso. Bandas altas a recuperar; 20m a melhorar.",
+    "adv_kp_stable": "Kp estável últimas {h}h em {kp:.1f} — condições geomagnéticas estáveis."
   },
   "solar_tips": {
     "sfi": [
