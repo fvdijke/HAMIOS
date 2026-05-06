@@ -622,6 +622,7 @@ def _save_settings(lat: float, lon: float, refresh: str,
                       cat_radio: str = "Yaesu CAT",
                       cat_civ_addr: str = "0x70") -> None:
     cfg = configparser.ConfigParser()
+    cfg.read(SETTINGS_FILE, encoding="utf-8")   # preserve extra sections (e.g. [Satellites])
     cfg["QTH"]   = {"lat": str(lat), "lon": str(lon)}
     cfg["App"]   = {"refresh": refresh, "mode": mode, "power": power,
                     "antenna": antenna, "dst": str(dst),
@@ -2924,7 +2925,7 @@ class HAMIOSApp:
             cfg.write(f)
 
     def _load_sat_ini(self):
-        """Load satellite selections from HAMIOS.ini."""
+        """Load satellite selections from HAMIOS.ini and trigger refresh."""
         import configparser as _cp
         cfg = _cp.ConfigParser()
         cfg.read(SETTINGS_FILE, encoding="utf-8")
@@ -2935,6 +2936,9 @@ class HAMIOSApp:
         self._sat_selected = _parse("selected")
         self._sat_path_sel = _parse("path_sel")
         self._sat_fp_sel   = _parse("fp_sel")
+        # Immediately compute positions / paths if any selections were restored
+        if self._sat_selected or self._sat_path_sel or self._sat_fp_sel:
+            threading.Thread(target=self._bg_sat_refresh, daemon=True).start()
 
     def _schedule_sat_refresh(self):
         """Re-schedule satellite position refresh every 30 s."""
@@ -4411,7 +4415,7 @@ class HAMIOSApp:
                 sat_img = Image.new("RGBA", (VW, VH), (0, 0, 0, 0))
                 sd = ImageDraw.Draw(sat_img)
 
-                # Past — solid connected line
+                    # Past — dim amber solid curve
                 prev = None
                 for pt in past_pts:
                     if pt[0] is None:
@@ -4419,15 +4423,15 @@ class HAMIOSApp:
                         continue
                     cx, cy = _ll_to_xy(pt[0], pt[1], VW, VH)
                     if prev:
-                        sd.line([prev, (cx, cy)], fill=PATH_PAST, width=2)
+                        sd.line([prev, (cx, cy)], fill=PATH_PAST, width=1)
                     prev = (cx, cy)
 
-                # Future — loose dots only (no connecting lines)
+                # Future — very small bright amber dots (1-px radius)
                 for pt in fwd_pts:
                     if pt[0] is None:
                         continue
                     cx, cy = _ll_to_xy(pt[0], pt[1], VW, VH)
-                    sd.ellipse([(cx-3, cy-3), (cx+3, cy+3)], fill=PATH_FWD)
+                    sd.ellipse([(cx-1, cy-1), (cx+1, cy+1)], fill=PATH_FWD)
 
                 img = Image.alpha_composite(img.convert("RGBA"),
                                             sat_img).convert("RGB")
