@@ -2879,13 +2879,6 @@ class HAMIOSApp:
         self._sat_path_sel  = set(path_sel)
         self._sat_fp_sel    = set(fp_sel)
         self._save_sat_ini()
-        n = len(selected); p = len(path_sel); f = len(fp_sel)
-        parts = []
-        if n: parts.append(f"{n}●")
-        if p: parts.append(f"{p}∿")
-        if f: parts.append(f"{f}○")
-        self._sat_btn.config(
-            text="🛰  " + "  ".join(parts) if parts else "🛰  Sat")
         self._refresh_sat_positions()
         self.root.after(0, self._draw_map)
 
