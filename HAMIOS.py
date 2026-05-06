@@ -3466,7 +3466,7 @@ class HAMIOSApp:
         # Help knop (F1)
         tk.Button(hdr, text="?  Help",
                   command=self._open_help,
-                  font=_font(9), bg=BG_SURFACE, fg=TEXT_DIM,
+                  font=_font(9), bg=BG_SURFACE, fg=ACCENT,
                   activebackground=BG_HOVER, activeforeground=TEXT_H1,
                   relief=tk.FLAT, padx=8, pady=2, cursor="hand2"
                   ).pack(side=tk.LEFT, padx=(0, 4))
