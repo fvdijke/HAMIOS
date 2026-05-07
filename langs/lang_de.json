@@ -233,7 +233,18 @@
     "adv_kp_falling": "Kp fällt letzte {h}h: {old:.1f}→{new:.1f} — Sturmerholung im Gange. Hohe Bänder erholen sich; 20m verbessert sich.",
     "adv_kp_stable": "Kp stabil letzte {h}h bei {kp:.1f} — geomagnetische Bedingungen gleichmäßig.",
     "sat_zone_hdr": "🛰  Satellit in QTH-Zone:",
-    "sat_zone_none": "—"
+    "sat_zone_none": "—",
+    "hist_bands_lbl": "Bandzuverlässigkeit",
+    "hist_solar_lbl": "Solarindizes",
+    "hist_click_hint": "← Klick auf Grafik zum Filtern",
+    "map_pad_lbl": "Pfad",
+    "map_aurora_lbl": "Aurora",
+    "map_sat_lbl": "Sat",
+    "map_wspr_lbl": "WSPR",
+    "map_spots_lbl": "Spots",
+    "map_cs_lbl": "CS",
+    "map_iono_lbl": "Iono",
+    "map_itu_lbl": "ITU"
   },
   "solar_tips": {
     "sfi": [

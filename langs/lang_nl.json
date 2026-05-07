@@ -233,7 +233,18 @@
     "adv_kp_falling": "Kp daalt laatste {h}u: {old:.1f}→{new:.1f} — stormherstel in gang. Hogere banden herstellen; 20m verbetert.",
     "adv_kp_stable": "Kp stabiel laatste {h}u op {kp:.1f} — geomagnetische condities stabiel.",
     "sat_zone_hdr": "🛰  Satelliet in QTH-zone:",
-    "sat_zone_none": "—"
+    "sat_zone_none": "—",
+    "hist_bands_lbl": "Bandbetrouwbaarheid",
+    "hist_solar_lbl": "Solar-indices",
+    "hist_click_hint": "← klik op grafiek om band te filteren",
+    "map_pad_lbl": "Pad",
+    "map_aurora_lbl": "Aurora",
+    "map_sat_lbl": "Sat",
+    "map_wspr_lbl": "WSPR",
+    "map_spots_lbl": "Spots",
+    "map_cs_lbl": "CS",
+    "map_iono_lbl": "Iono",
+    "map_itu_lbl": "ITU"
   },
   "solar_tips": {
     "sfi": [

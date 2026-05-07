@@ -233,7 +233,18 @@
     "adv_kp_falling": "Kp が過去 {h}h で低下中: {old:.1f}→{new:.1f} — 磁気嵐からの回復中。高いバンドが回復中、20m が改善中。",
     "adv_kp_stable": "Kp が過去 {h}h で {kp:.1f} で安定 — 地磁気状態は安定しています。",
     "sat_zone_hdr": "🛰  QTH圏内の衛星:",
-    "sat_zone_none": "—"
+    "sat_zone_none": "—",
+    "hist_bands_lbl": "バンド信頼性",
+    "hist_solar_lbl": "太陽インデックス",
+    "hist_click_hint": "← クリックでバンドをフィルター",
+    "map_pad_lbl": "軌跡",
+    "map_aurora_lbl": "オーロラ",
+    "map_sat_lbl": "衛星",
+    "map_wspr_lbl": "WSPR",
+    "map_spots_lbl": "スポット",
+    "map_cs_lbl": "CS",
+    "map_iono_lbl": "電離層",
+    "map_itu_lbl": "ITU"
   },
   "solar_tips": {
     "sfi": [

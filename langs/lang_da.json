@@ -233,7 +233,18 @@
     "adv_kp_falling": "Kp falder seneste {h}t: {old:.1f}→{new:.1f} — stormgenopretning i gang. Høje bånd genoprets; 20m forbedres.",
     "adv_kp_stable": "Kp stabilt seneste {h}t ved {kp:.1f} — geomagnetiske forhold stabile.",
     "sat_zone_hdr": "🛰  Satellit i QTH-zone:",
-    "sat_zone_none": "—"
+    "sat_zone_none": "—",
+    "hist_bands_lbl": "Båndpålidelighed",
+    "hist_solar_lbl": "Solarindekser",
+    "hist_click_hint": "← klik på grafen for at filtrere",
+    "map_pad_lbl": "Bane",
+    "map_aurora_lbl": "Aurora",
+    "map_sat_lbl": "Sat",
+    "map_wspr_lbl": "WSPR",
+    "map_spots_lbl": "Spots",
+    "map_cs_lbl": "CS",
+    "map_iono_lbl": "Iono",
+    "map_itu_lbl": "ITU"
   },
   "solar_tips": {
     "sfi": [

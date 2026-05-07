@@ -233,7 +233,18 @@
     "adv_kp_falling": "Kp spada przez ostatnie {h}h: {old:.1f}→{new:.1f} — trwa odbudowa po burzy. Wyższe pasma się odbudowują; 20m poprawia się.",
     "adv_kp_stable": "Kp stabilny przez ostatnie {h}h na poziomie {kp:.1f} — warunki geomagnetyczne stabilne.",
     "sat_zone_hdr": "🛰  Satelita w strefie QTH:",
-    "sat_zone_none": "—"
+    "sat_zone_none": "—",
+    "hist_bands_lbl": "Niezawodność pasm",
+    "hist_solar_lbl": "Indeksy słoneczne",
+    "hist_click_hint": "← kliknij wykres, aby filtrować",
+    "map_pad_lbl": "Ścieżka",
+    "map_aurora_lbl": "Aurora",
+    "map_sat_lbl": "Sat",
+    "map_wspr_lbl": "WSPR",
+    "map_spots_lbl": "Spoty",
+    "map_cs_lbl": "CS",
+    "map_iono_lbl": "Iono",
+    "map_itu_lbl": "ITU"
   },
   "solar_tips": {
     "sfi": [

@@ -233,7 +233,18 @@
     "adv_kp_falling": "Kp bajando últimas {h}h: {old:.1f}→{new:.1f} — recuperación de tormenta en curso. Bandas altas recuperándose; 20m mejorando.",
     "adv_kp_stable": "Kp estable últimas {h}h en {kp:.1f} — condiciones geomagnéticas estables.",
     "sat_zone_hdr": "🛰  Satélite en zona QTH:",
-    "sat_zone_none": "—"
+    "sat_zone_none": "—",
+    "hist_bands_lbl": "Fiabilidad de bandas",
+    "hist_solar_lbl": "Índices solares",
+    "hist_click_hint": "← clic en gráfica para filtrar",
+    "map_pad_lbl": "Trayectoria",
+    "map_aurora_lbl": "Aurora",
+    "map_sat_lbl": "Sat",
+    "map_wspr_lbl": "WSPR",
+    "map_spots_lbl": "Spots",
+    "map_cs_lbl": "CS",
+    "map_iono_lbl": "Iono",
+    "map_itu_lbl": "UIT"
   },
   "solar_tips": {
     "sfi": [

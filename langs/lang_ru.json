@@ -233,7 +233,18 @@
     "adv_kp_falling": "Kp падает последние {h}ч: {old:.1f}→{new:.1f} — восстановление после бури идёт. Высокие диапазоны восстанавливаются; 20м улучшается.",
     "adv_kp_stable": "Kp стабилен последние {h}ч на уровне {kp:.1f} — геомагнитные условия устойчивы.",
     "sat_zone_hdr": "🛰  Спутник в зоне QTH:",
-    "sat_zone_none": "—"
+    "sat_zone_none": "—",
+    "hist_bands_lbl": "Надёжность диапазонов",
+    "hist_solar_lbl": "Солнечные индексы",
+    "hist_click_hint": "← нажмите на график для фильтрации",
+    "map_pad_lbl": "Траектория",
+    "map_aurora_lbl": "Аврора",
+    "map_sat_lbl": "Спут",
+    "map_wspr_lbl": "WSPR",
+    "map_spots_lbl": "Споты",
+    "map_cs_lbl": "CS",
+    "map_iono_lbl": "Ионо",
+    "map_itu_lbl": "МСЭ"
   },
   "solar_tips": {
     "sfi": [

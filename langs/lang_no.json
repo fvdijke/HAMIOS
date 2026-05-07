@@ -233,7 +233,18 @@
     "adv_kp_falling": "Kp synker siste {h}t: {old:.1f}→{new:.1f} — stormgjenoppretting pågår. Høye bånd bedrer seg; 20m forbedres.",
     "adv_kp_stable": "Kp stabilt siste {h}t på {kp:.1f} — geomagnetiske forhold stabile.",
     "sat_zone_hdr": "🛰  Satellitt i QTH-sone:",
-    "sat_zone_none": "—"
+    "sat_zone_none": "—",
+    "hist_bands_lbl": "Båndpålitelighet",
+    "hist_solar_lbl": "Solarindekser",
+    "hist_click_hint": "← klikk på grafen for å filtrere",
+    "map_pad_lbl": "Bane",
+    "map_aurora_lbl": "Aurora",
+    "map_sat_lbl": "Sat",
+    "map_wspr_lbl": "WSPR",
+    "map_spots_lbl": "Spots",
+    "map_cs_lbl": "CS",
+    "map_iono_lbl": "Iono",
+    "map_itu_lbl": "ITU"
   },
   "solar_tips": {
     "sfi": [
