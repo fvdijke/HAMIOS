@@ -1,6 +1,8 @@
-# 📡 HAMIOS v3.2
+# 📡 HAMIOS v3.3
 
-<img width="2200" height="1607" alt="HAMIOS v3 0" src="https://github.com/user-attachments/assets/b604743e-255d-4f34-9301-2f4b1bd00414" />
+<img width="2198" height="1606" alt="HAMIOS v3 0-b" src="https://github.com/user-attachments/assets/9d3ba4c1-7085-4295-b04c-2edcae62d237" />
+<img width="2203" height="1617" alt="HAMIOS v3 0-a" src="https://github.com/user-attachments/assets/e7616442-9e7e-4b33-ac90-7741f0ec8797" />
+
 
 **HAM radio propagation and DX monitor for Windows**
 
