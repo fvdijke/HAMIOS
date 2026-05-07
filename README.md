@@ -1,4 +1,4 @@
-# 📡 HAMIOS v3.3
+# 📡 HAMIOS v3.4
 
 <img width="2203" height="1617" alt="HAMIOS v3 0-a" src="https://github.com/user-attachments/assets/e7616442-9e7e-4b33-ac90-7741f0ec8797" />
 -  
@@ -6,7 +6,7 @@
      
 **HAM radio propagation and DX monitor for Windows**
 
-> v3.3 — Satellite tracking with footprint overlay · Spy/Numbers Stations database · Storm forecast fix · Theme improvements · Performance
+> v3.4 — Satellite tracking with footprint overlay · Spy/Numbers Stations database · Storm forecast fix · Theme improvements · Performance
 
 *Conceived by Frank van Dijke · Developed with Claude AI*
 
