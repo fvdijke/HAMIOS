@@ -1,0 +1,218 @@
+[
+  {
+    "name": "UVB-76 (The Buzzer)",
+    "country": "Rusland",
+    "frequencies": ["4625 kHz"],
+    "mode": "AM/USB",
+    "active": true,
+    "schedule": "Continu 24/7. Spraakberichten onregelmatig, geen vast patroon.",
+    "info": "Continu 24/7 brom-toon, af en toe onderbroken door gesproken boodschappen in het Russisch (5-cijferige groepen). Vermoedelijk Russisch militair / GRU. Uitzendlocatie nabij Sint-Petersburg."
+  },
+  {
+    "name": "M14a (The Pip)",
+    "country": "Rusland",
+    "frequencies": ["3756 kHz", "5448 kHz"],
+    "mode": "USB",
+    "active": true,
+    "schedule": "Continu 24/7. Pip-toon elke ~2 seconden; spraak onregelmatig.",
+    "info": "Korte 'pip'-toon elke twee seconden, af en toe spraakberichten. Russisch militair. Verwant aan UVB-76."
+  },
+  {
+    "name": "S30 (The Alarm / Squeaky Wheel)",
+    "country": "Rusland",
+    "frequencies": ["3828 kHz", "4770 kHz", "7039 kHz"],
+    "mode": "USB",
+    "active": true,
+    "schedule": "Continu 24/7 op wisselende frequenties.",
+    "info": "Regelmatige 'piep'-toon vergelijkbaar met een alarmbel. Vermoedelijk Russische marine of GRU."
+  },
+  {
+    "name": "M12a (The Lincolnshire Poacher)",
+    "country": "Verenigd Koninkrijk",
+    "frequencies": ["5765 kHz", "11545 kHz"],
+    "mode": "AM/USB",
+    "active": false,
+    "schedule": "Was actief: dagelijks ~06:00, 10:00, 14:00, 18:00, 22:00 UTC (± 30 min). Gestopt ca. 2008.",
+    "info": "Muziekintro 'Lincolnshire Poacher', gevolgd door 5-cijferige Engelse nummers. Geopereerd vanuit Akrotiri, Cyprus (GCHQ/MI6). Gestopt ca. 2008."
+  },
+  {
+    "name": "SK01 (Cherry Ripe)",
+    "country": "Verenigd Koninkrijk",
+    "frequencies": ["4350 kHz", "8500 kHz"],
+    "mode": "USB",
+    "active": false,
+    "schedule": "Was actief: onregelmatig, veelal 's nachts UTC. Gestopt ca. 2009.",
+    "info": "Melodie 'Cherry Ripe' als intro, gevolgd door getelde nummers. Vermoedelijk GCHQ/MI6, gestopt ca. 2009."
+  },
+  {
+    "name": "V24 / XM (Atencion)",
+    "country": "Cuba",
+    "frequencies": ["7887 kHz", "9955 kHz", "14872 kHz"],
+    "mode": "AM/USB",
+    "active": true,
+    "schedule": "Di/Do/Za: 21:30-22:00 UTC op 7887 kHz; extra uitzendingen op onregelmatige tijden.",
+    "info": "Begint met 'Atencion, Atencion', gevolgd door Spaanstalige 5-cijferige groepen. Cubaanse inlichtingendienst (DGI). Richt zich op CIA-activa in Cuba en Latijns-Amerika."
+  },
+  {
+    "name": "HM01",
+    "country": "Noord-Korea",
+    "frequencies": ["6400 kHz", "9100 kHz", "11545 kHz"],
+    "mode": "AM",
+    "active": true,
+    "schedule": "Ma/Wo/Vr: 00:00-00:30 UTC op 6400 kHz; 02:00-02:30 UTC op 9100 kHz. Aanvullende uitzendingen wisselend.",
+    "info": "Koreaanse vrouwenstem met nummers, voorafgegaan door muziek. Reconnaissancebureau Noord-Korea. Uitzendingen regelmatig gemeld."
+  },
+  {
+    "name": "E10 (Swedish Rhapsody)",
+    "country": "Oost-Duitsland / onbekend",
+    "frequencies": ["5765 kHz", "9157 kHz"],
+    "mode": "AM",
+    "active": false,
+    "schedule": "Was actief: wisselend, voornamelijk avonduren CET. Gestopt eind jaren '90.",
+    "info": "Muziekdoosje speelt 'Swedish Rhapsody', kinderstem leest 3-cijferige groepen. DDR Stasi-gebruik vermoedelijk. Gestopt eind jaren '90."
+  },
+  {
+    "name": "E11 (Oblique)",
+    "country": "Onbekend (West-Europa?)",
+    "frequencies": ["6959 kHz", "8149 kHz"],
+    "mode": "USB",
+    "active": false,
+    "schedule": "Was actief: onregelmatig, geen vast patroon bekend. Gestopt ca. 2000.",
+    "info": "Schuine streep '/' gevolgd door lettergroepen in fonetisch alfabet. Vermoedelijk Duits of Tsjechisch."
+  },
+  {
+    "name": "E03 (Czech Lady)",
+    "country": "Tsjecho-Slowakije / Tsjechië",
+    "frequencies": ["6840 kHz", "7485 kHz", "9350 kHz"],
+    "mode": "AM",
+    "active": false,
+    "schedule": "Was actief: dagelijks meerdere blokken, o.a. 08:00, 13:00, 19:00 UTC. Gestopt ca. 1997.",
+    "info": "Tsjechische vrouwenstem met 5-cijferige groepen. StB (Tsjechische geheime dienst). Gestopt ca. 1997."
+  },
+  {
+    "name": "V07 (Cuban Numbers – Spaanstalig)",
+    "country": "Cuba",
+    "frequencies": ["9330 kHz", "11530 kHz"],
+    "mode": "AM/USB",
+    "active": true,
+    "schedule": "Ma/Wo/Vr: 01:00-01:30 UTC op 9330 kHz; frequenties wisselend per seizoen.",
+    "info": "Variant van Atencion-familie. Spaanstalige 5-cijferige groepen. DGI Cuba. Actief op wisselende frequenties."
+  },
+  {
+    "name": "M03 (Russian Man)",
+    "country": "Rusland",
+    "frequencies": ["4583 kHz", "6998 kHz", "9131 kHz"],
+    "mode": "USB",
+    "active": true,
+    "schedule": "Onregelmatig; waarnemingen voornamelijk 04:00-08:00 UTC en 16:00-20:00 UTC.",
+    "info": "Russische mannenstem met 5-cijferige groepen. Vermoedelijk FSB of SVR. Actief op wisselende frequenties."
+  },
+  {
+    "name": "G06 (Russian Lady)",
+    "country": "Rusland",
+    "frequencies": ["7344 kHz", "9057 kHz"],
+    "mode": "USB",
+    "active": true,
+    "schedule": "Onregelmatig; vaker in ochtend- en avonduren UTC. Verwant patroon aan M03.",
+    "info": "Russische vrouwenstem met getallen. Vermoedelijk SVR of GRU. Sterk verwant aan M03."
+  },
+  {
+    "name": "P03 (Attention!)",
+    "country": "Cuba / onbekend",
+    "frequencies": ["5765 kHz", "7887 kHz"],
+    "mode": "AM",
+    "active": false,
+    "schedule": "Was actief: wisselend, geen regelmatig schema gedocumenteerd. Gestopt ca. 2010.",
+    "info": "Gelijkend op Atencion-station maar met afwijkende toonhoogte. Verwantschap met Cubaanse inlichtingendienst."
+  },
+  {
+    "name": "S11a (Cynthia)",
+    "country": "Rusland / Cuba",
+    "frequencies": ["11464 kHz", "14489 kHz"],
+    "mode": "USB",
+    "active": false,
+    "schedule": "Was actief: onregelmatig, vaker in avonduren UTC. Gestopt ca. 2000.",
+    "info": "Muziekintro gevolgd door 5-cijferige Russische nummers. Vermoedelijk KGB-dochterorganisatie. Gestopt ca. 2000."
+  },
+  {
+    "name": "V02a (The Counting Station)",
+    "country": "Onbekend",
+    "frequencies": ["10145 kHz", "14670 kHz"],
+    "mode": "USB",
+    "active": false,
+    "schedule": "Was actief: geen vast schema, sporadische waarnemingen. Gestopt ca. 2005.",
+    "info": "Vrouwenstem telt langzaam getallen in het Engels. Oorsprong onduidelijk; mogelijke CIA-link."
+  },
+  {
+    "name": "M98",
+    "country": "Rusland",
+    "frequencies": ["8507.5 kHz"],
+    "mode": "USB",
+    "active": true,
+    "schedule": "Continu aanwezig op 8507.5 kHz; berichten op onregelmatige tijden.",
+    "info": "Moderne Russische numbers station met geautomatiseerde stem. Actief op vaste frequentie. FSB/GRU vermoedelijk."
+  },
+  {
+    "name": "VC01 (Cuban Lady Counts)",
+    "country": "Cuba",
+    "frequencies": ["9955 kHz", "15175 kHz"],
+    "mode": "AM",
+    "active": true,
+    "schedule": "Di/Do/Za: 03:00-03:30 UTC op 9955 kHz; aanvullend op 15175 kHz overdag.",
+    "info": "Spaanstalige vrouwenstem telt langzame 5-cijferige groepen. Verwant aan Atencion-familie. DGI Cuba."
+  },
+  {
+    "name": "F06 (Magnetic Fields / Numbers)",
+    "country": "Onbekend",
+    "frequencies": ["5765 kHz", "6325 kHz"],
+    "mode": "USB",
+    "active": false,
+    "schedule": "Was actief: geen regelmatig schema gedocumenteerd. Gestopt ca. 2005.",
+    "info": "Toon-reeksen die getallen coderen. Exacte herkomst onbekend. Europese of Russische origine vermoedelijk."
+  },
+  {
+    "name": "4XZ (Israëlische marine)",
+    "country": "Israël",
+    "frequencies": ["5810 kHz", "8137 kHz", "12157 kHz"],
+    "mode": "CW",
+    "active": true,
+    "schedule": "Continu 24/7; weerberichten elke 3 uur op XX:20 en XX:50 UTC.",
+    "info": "IDF Marine seinstation. Morse-code navigatie- en operationele berichten. Roepnaam 4XZ. Actief."
+  },
+  {
+    "name": "CHU (Canadese tijdsignaal)",
+    "country": "Canada",
+    "frequencies": ["3330 kHz", "7850 kHz", "14670 kHz"],
+    "mode": "AM/USB",
+    "active": true,
+    "schedule": "Continu 24/7; tijdaankondiging elke minuut, gesproken aankondiging elk uur.",
+    "info": "Officieel tijdsignaalstation van Canada (NRC). Tijdcodes + gesproken aankondigingen in Engels/Frans. Niet strikt 'spy', wel veelvuldig gebruikt voor bearingkalibratie door inlichtingendiensten."
+  },
+  {
+    "name": "E06 (Yosemite Sam)",
+    "country": "USA (USAF vermoedelijk)",
+    "frequencies": ["4316 kHz", "8992 kHz"],
+    "mode": "USB",
+    "active": false,
+    "schedule": "Was actief: sporadisch, geen regelmatig schema. Gestopt ca. 2004.",
+    "info": "Fragment uit Looney Tunes (Yosemite Sam) gevolgd door data-bursts. Vermoedelijk test-uitzending USAF. Gestopt ca. 2004."
+  },
+  {
+    "name": "XSL (Chinese marinestation)",
+    "country": "China",
+    "frequencies": ["8408 kHz", "12578 kHz", "16806 kHz"],
+    "mode": "CW/USB",
+    "active": true,
+    "schedule": "Dagelijks meerdere uitzendblokken; CW-oproepen op vaste tijden rond 00:00, 06:00, 12:00, 18:00 UTC.",
+    "info": "PLAN (Peoples Liberation Army Navy) maritiem communicatiestation. CW en digitale modes. Actief op meerdere frequenties."
+  },
+  {
+    "name": "RDL (Russische marine, Moskou)",
+    "country": "Rusland",
+    "frequencies": ["12649 kHz", "16432 kHz"],
+    "mode": "CW",
+    "active": true,
+    "schedule": "Dagelijks; CW-berichten op onregelmatige maar vaste terugkerende blokken, veelal 08:00-10:00 en 14:00-16:00 UTC.",
+    "info": "Russisch marineseinstation. CW orders en navigatieberichten. Nauw verbonden met Russische onderzeebootoperaties."
+  }
+]

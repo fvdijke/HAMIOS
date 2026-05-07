@@ -1,5 +1,5 @@
 """
-HAMIOS v3.2
+HAMIOS v3.3
 by Frank van Dijke
 
 Real-time HF propagation, solar weather and DX monitor for Windows.
@@ -22,7 +22,7 @@ Dependencies:
 ─────────────────────────────────────────────────────────────────────
 Todo
 ─────────────────────────────────────────────────────────────────────
-- [ ] Maak versie 3.3
+- [x] Maak versie 3.3
 
 - [ ] CAT: Enable CAT
 
@@ -35,59 +35,124 @@ Todo
 - [ ] Vis: Laat WSPR spots zien (selectie bij weergave) — data van WSPRnet API
 
 - [x] Layout: Maak nieuwe knop in header voor satelliet info (Download TLE, Satelliet selecties)
-- [ ] Layout: Zet weergave en data selectievakjes onder Meldingen in hetzelfde panel
-- [ ] Layout: Verschuif Row 1 tot direct onder Row 0
+- [x] Layout: Zet weergave en data selectievakjes onder Meldingen in hetzelfde panel
+- [x] Layout: Verschuif Row 1 tot direct onder Row 0
 
 - [ ] Data: Voeg meer data toe aan de geschiedenis (SSN, A/K/Kp-index, Bz, solar wind speed/density, X-ray flux)
 - [ ] Data: Voeg voorspelling toe aan geschiedenis (3-day storm forecast)
 - [ ] Data: Voeg meer data toe aan de meldingen (X-ray flare klasse, PCA waarschuwing)
 - [x] Data: Groepeer satellieten per categorie (bijv. weer, navigatie, amateur, etc.) en maak selectie per categorie mogelijk
 - [ ] Data: Voeg offline indicator toe (bijv. grijze overlay als data >15 min oud is)
+- [x] Data: Knop "🕵 Spy" in header naast Sat; data in hamios_spy_stations.json (24 stations, naam/land/frequenties/info/actief).
 
-- [ ] Fix: Fetch attempt 1/3 failed for https://services.swpc.noaa.gov/products/noaa-geomagnetic-storm-probabilities.json: HTTP Error 404: Not Found
+- [x] Fix: storm_probs 404 — fallback naar alternatieve SWPC URL (geomag-storm-probabilities.json)
+- [x] Fix: footprint aan de boven- en onderkant van de kaart gaat nog niet goed. Footprint stop te snel
+- [x] Fix: onthou de selectie van own continent / eigen continent(DX Spots) in ini file
+
+- [x] Lang: Update alle teksten in alle talen op basis van de nieuwe functionaliteiten. Pas ook de Helpfunctie aan, de tooltips, readme's enz.
+
 
 ─────────────────────────────────────────────────────────────────────
+Change Log (3.3)
+─────────────────────────────────────────────────────────────────────
+· 2026-05-07 14:11 CEST — Versie 3.3: release met uitgebreide satelliet- en
+  spy-functionaliteit, theme-fixes, performance en layout-verbeteringen.
+  Alle wijzigingen staan gedocumenteerd in de onderstaande 3.2 changelog-entries.
+
 Change Log (3.2)
 ─────────────────────────────────────────────────────────────────────
-· 2026-05-06 19:55 CEST — Satelliet-tracking toegevoegd:
-  _sgp4_latlon() vereenvoudigde Kepler-propagator (±50 km nauwkeurig).
-  TLE-fetch van Celestrak (Amateur/ISS/Weather/CubeSat), lokale JSON-cache.
-  _SatelliteDialog: scrollbare selectie per categorie.
-  Header-knop "🛰 Sat" opent dialoog; toont aantal geselecteerde.
-  Kaart-overlay: gele cirkels + naam voor actieve satellieten.
-  Refresh elke 30s; positie-cache ongeldig gemaakt bij herberekening.
+· 2026-05-07 14:05 CEST — DX Spots paneel: kolommen en scrollbar:
+  C_DX 76→68 px: MHz/Spotter/Comment schuiven 8 px naar links.
+  Scrollbar (self._dx_sb) verborgen als alle spots binnen canvas passen;
+  verschijnt automatisch zodra total_h > canvas H.
 
-· 2026-05-06 14:41 CEST — Versie 3.2: release met volledige layout-revisie.
-  Vaste venstergrootte 1768×1250 (resizable hoogte uitgeschakeld).
-  Alle lay-outkonstanten vastgezet (zie v3.1-entries hieronder).
+· 2026-05-07 14:00 CEST — Fix: satelliet-selectie ontkoppeld van globale refresh:
+  render_key bevatte geen satellietstate → cache-hit bij ongewijzigde zon/maan →
+  satelliet overlay pas zichtbaar bij volgende globale refresh.
+  Opgelost: frozenset(_sat_selected/_sat_path_sel/_sat_fp_sel) + show_sat_var
+  toegevoegd aan render_key zodat elke selectie-wijziging de cache invalideert.
+  Volgorde in _bg_sat_save_refresh: refresh+draw eerst, OneDrive-write daarna.
 
-Change Log (3.1)
-─────────────────────────────────────────────────────────────────────
-· 2026-05-06 14:38 CEST — Layout vastgezet (v3.1 final):
-  Vaste hoogte-constanten: WINDOW_H=1250, ROW_0_H=551, ROW_1_H=275,
-  ROW_2_H=340 (ADV_CARD_H=70, GAP=3). resizable(True, False).
-  Kolommen 3:2:2:2 (HF Rel 460px, map 898x449, bottom 3x306px).
-  Bandtabel in grid-frame voor exacte uitlijning header vs data.
-  Solar params padx=(8,0) inspring. DX kolommen compacter.
-  Graticule-labels zonder crop_t_est offset (altijd bij y=3/gy+2).
-  Taalbestanden: 14 nieuwe sleutels vertaald in alle 13 packs.
+· 2026-05-07 13:55 CEST — Fix: satelliet-selectie traagheid (oorzaak):
+  _save_sat_ini() leest+schrijft HAMIOS.ini op OneDrive bij ELKE checkbox-klik,
+  synchroon in de main thread → vertraging 1–3s per klik.
+  Opgelost: _save_sat_ini() + _refresh_sat_positions() allebei in achtergrond-
+  thread (_bg_sat_save_refresh). Main thread doet na klik niets meer dan de
+  sets updaten en 150 ms debounce plannen.
 
-· 2026-04-29 19:36 CEST — Versie 3.1: alle open todo-items afgewerkt.
-  Stab: logging naar HAMIOS.log (RotatingFileHandler, max 1 MB × 3);
-        disk-cache HAMIOS_cache.pkl (pickle + TTL) voor solar/Kp/X-ray/
-        Bz/storm; _fetch_with_retry() exponential-backoff wrapper (3×);
-        alle fetch-functies gebruiken retry + cache + stale-fallback.
-  Stab: Help/About-dialoog via F1-toets en "?  Help"-knop in header;
-        achtergrond versie-check (GitHub releases API) met update-knop.
-  Vis:  ITU-regio overlay opnieuw ingeschakeld (_ITU_DISABLED = False).
-  Git:  CONTRIBUTING.md; .github/workflows/ci.yml (syntax + flake8);
-        .github/ISSUE_TEMPLATE/bug_report.md + feature_request.md;
-        developer-sectie in README.md.
-  Info: applicatiebeschrijving bijgewerkt naar Engels + v3.1;
-        Nederlandse inline-comments vertaald naar Engels door subagent;
-        root.title bijgewerkt naar "HAMIOS v3.2".
-  Venster start maximaal hoog (_ini_h = scherm - 80 px);
-        advieskaarten compacter (74→60 px); kaartcanvas height=1 + expand.
+· 2026-05-07 13:49 CEST — Fix: satelliet-selectie traagheid:
+  _refresh_sat_positions() + pad-berekening liepen synchroon in de main thread →
+  UI bevroor bij elke checkbox-klik.  Vervangen door debounce (150 ms) +
+  threading.Thread(target=_bg_sat_refresh): main thread is direct vrij, één
+  achtergrond-berekening start na 150 ms stilte.
+
+· 2026-05-07 13:45 CEST — Kaart Display: "Sat"-checkbox voor satelliet-overlay:
+  Checkbox "Sat" toegevoegd aan Display-rij van het kaartpaneel (naast Aurora).
+  _show_sat_var bepaalt of paden/footprints/posities worden getekend.
+  Status opgeslagen in HAMIOS.ini (Map.show_sat). Default: aan.
+  Fix: horizontale pool-outline verwijderd (veroorzaakte lijn bij zuidpool).
+
+· 2026-05-07 13:34 CEST — Lang: vertalingen bijgewerkt voor alle 13 talen:
+  Nieuwe sleutels sat_zone_hdr / sat_zone_none toegevoegd aan _T en alle 13
+  taalbestanden (NL/DE/FR/IT/ES/NO/SV/DA/FI/PL/PT/RU/JA).
+  Hardcoded "Satelliet in QTH-zone:" vervangen door _tr("sat_zone_hdr").
+  Help-tekst uitgebreid: satelliet-tracking, spy-stations, nieuwe bestanden,
+  TLE-bron en storm-forecast-URL beschreven.
+
+· 2026-05-07 11:00 CEST — Meldingen: satelliet in QTH-zone indicator:
+  Nieuw label "🛰 Satelliet in QTH-zone" onderaan het meldingen-paneel.
+  _update_sat_zone_label() berekent voor elke geselecteerde satelliet of het QTH
+  binnen de footprint valt (sferische cosinusregel, zelfde logica als kaart-overlay).
+  Toont naam + elevatie in groen; "—" in dimkleur als geen enkel satellieten boven.
+  Wordt aangeroepen na elke 30s positie-refresh via root.after(0, ...).
+
+· 2026-05-07 10:55 CEST — Fix: theme wordt nu opgeslagen in INI:
+  "theme" ontbrak in CONFIG_SCHEMA → werd nooit teruggelezen.
+  In _save_cur_settings ontbrak self._theme_var.get() tussen language en cat_port,
+  waardoor alle CAT-parameters één positie verschoven werden opgeslagen.
+  Beide fixes toegepast; options-validatie toegevoegd aan schema.
+
+· 2026-05-07 10:52 CEST — Fix: theme-wissel vanuit HighContrast:
+  HighContrast heeft TEXT_H1 = BORDER = "#FFFFFF"; één gecombineerde color_map
+  liet de laatste key (BORDER) de eerste (TEXT_H1) overschrijven, waardoor
+  tekst- en kaderkleur verwisseld werden.  Opgelost door aparte bg_map / fg_map
+  te bouwen en in walk() eigenschap-bewust te remappen:
+  bg → remap_bg, fg → remap_fg, active/select → remap_act (fg eerst, dan bg).
+
+· 2026-05-07 10:29 CEST — Fix: theme-wissel header-teksten:
+  walk() had configure en child-recursie in hetzelfde try-blok: exception bij
+  één widget sloeg het hele subtree over. Recursie verplaatst naar eigen try-blok.
+  Toegevoegde widget-klassen: Menu (dropdown-kleuren), Text (helpvenster),
+  Listbox (selectkleuren). Menubutton en Menu samengevoegd in één elif.
+
+· 2026-05-07 10:24 CEST — Fix: theme-wissel herstelt nu alle kleuren:
+  Module-globals (BG_PANEL/BG_SURFACE/ACCENT/TEXT_H1/…) werden nooit bijgewerkt
+  na een theme-wissel; alle herteken-code gebruikte daardoor stale kleuren.
+  Fix: globals direct updaten in _apply_theme(); basiskaart-cache (_map_base_size,
+  _map_render_key) geïnvalideerd; Kp/Bz/X-ray/kaart/propbars opnieuw getekend.
+
+· 2026-05-07 10:14 CEST — Fix: footprint afkapping bij pool (noord én zuid):
+  Polaire kap-correctie: als de pool binnen de footprint valt (dist_pole < rho),
+  wordt een rechthoekige band van lat_full tot de poolrand gevuld.
+  lat_full (breedtegraad waarop footprint alle lengtes beslaat) berekend als
+  rho° − 180° − flat (zuidpool) resp. 180° − rho° − flat (noordpool).
+  Outline-lijn getrokken langs lat_full voor heldere begrenzing.
+  Tevens: "Own continent" DX-filter opgeslagen in INI (Map.dx_own_cont).
+
+· 2026-05-07 09:45 CEST — Satelliet path tijden in lokale tijd (CEST/CET):
+  Path-hover tooltip toont tijden in CEST (UTC+2) of CET (UTC+1) op basis van
+  _dst_var, inclusief tijdzone-label. Was UTC.
+
+· 2026-05-07 09:40 CEST — Footprint groen als QTH binnen bereik valt:
+  Hoekafstand QTH↔satelliet vergeleken met rho; fill/outline wisselen naar
+  groen (FP_CLR_QTH / FP_OUT_QTH) als QTH binnen de footprint valt.
+
+· 2026-05-07 09:31 CEST — Satelliet dialoog: categorie-filter toegevoegd:
+  Radiobuttons "All / Amateur / CubeSat / ISS / Weather" boven de lijst;
+  _build_table() filtert groepen op basis van _cat_var; selectie blijft bewaard
+  bij heropenen.
+
+
 
 
 """
@@ -224,7 +289,8 @@ APP_DIR       = (os.path.dirname(sys.executable)
                  else os.path.dirname(os.path.abspath(__file__)))
 SETTINGS_FILE   = os.path.join(APP_DIR, "HAMIOS.ini")
 HIST_FILE       = os.path.join(APP_DIR, "HAMIOS_history.csv")
-_TLE_CACHE_FILE = os.path.join(APP_DIR, "hamios_tle.json")
+_TLE_CACHE_FILE  = os.path.join(APP_DIR, "hamios_tle.json")
+_SPY_FILE        = os.path.join(APP_DIR, "hamios_spy_stations.json")
 # Equirectangular NASA map (2048×1024 = exact 2:1 → coordinates are correct)
 MAP_FILE      = os.path.join(APP_DIR, "worldmap_eq.jpg")
 MAP_URL       = ("https://eoimages.gsfc.nasa.gov/images/imagerecords/"
@@ -509,6 +575,7 @@ CONFIG_SCHEMA = {
         "show_tips": {"type": bool, "default": True},
         "show_ticker": {"type": bool, "default": True},
         "language": {"type": str, "default": "English"},
+        "theme":    {"type": str, "options": ["Midnight", "DeepOcean", "HighContrast"], "default": "Midnight"},
     },
     "Map": {
         "show_sun": {"type": bool, "default": True},
@@ -520,6 +587,8 @@ CONFIG_SCHEMA = {
         "show_spots": {"type": bool, "default": False},
         "show_wspr": {"type": bool, "default": False},
         "show_aurora": {"type": bool, "default": True},
+        "show_sat":    {"type": bool, "default": True},
+        "dx_own_cont": {"type": bool, "default": True},
     },
     "Graph": {
         "hist_range": {"type": str, "options": ["Uren", "Dagen", "Weken", "Maanden"], "default": "Uren"},
@@ -604,6 +673,8 @@ def _save_settings(lat: float, lon: float, refresh: str,
                       show_spots: bool = False,
                       show_wspr: bool = False,
                       show_aurora: bool = True,
+                      show_sat: bool = True,
+                      dx_own_cont: bool = True,
                       hist_range: str = "Uren",
                       hist_sel: set = None,
                       k_alert: int = 4,
@@ -635,7 +706,9 @@ def _save_settings(lat: float, lon: float, refresh: str,
                     "show_cs": str(show_cs),
                     "show_spots": str(show_spots),
                     "show_wspr": str(show_wspr),
-                    "show_aurora": str(show_aurora)}
+                    "show_aurora": str(show_aurora),
+                    "show_sat":    str(show_sat),
+                    "dx_own_cont": str(dx_own_cont)}
     cfg["Graph"]  = {"hist_range": hist_range,
                      "selected_bands": ",".join(sorted(hist_sel)) if hist_sel else ""}
     cfg["Alerts"] = {"k_alert": str(k_alert), "band_alert": str(band_alert),
@@ -676,8 +749,8 @@ KP_INDEX_URL   = "https://services.swpc.noaa.gov/products/noaa-planetary-k-index
 # Formaat: [{time_tag, satellite, current_class, current_ratio, ...}, ...]
 XRAY_1DAY_URL  = "https://services.swpc.noaa.gov/json/goes/primary/xrays-1-day.json"
 # 3-daagse geomagnetische storm-kansen — minor (K≥5) / moderate (K≥6) / severe (K≥7)
-# Formaat: [[date_str, minor_pct, moderate_pct, severe_pct], ...]
-STORM_PROB_URL = "https://services.swpc.noaa.gov/products/noaa-geomagnetic-storm-probabilities.json"
+# JSON endpoints zijn 404 per 2026; gebruik de text-forecast URL
+STORM_PROB_URL  = "https://services.swpc.noaa.gov/text/3-day-geomag-forecast.txt"
 # GIRO/LGDC DIDBase — foF2 van wereldwijde ionosondes
 # Formaat antwoord: TSV met commentaarregels (#); kolommen: Time(UTC)  foF2  QD
 IONO_URL     = ("https://lgdc.uml.edu/common/DIDBGetValues"
@@ -790,13 +863,19 @@ def _fetch_solar() -> dict:
                 kp_rows = json.loads(r.read())
             # Last row with valid Kp value
             kp_val = None
-            for row in reversed(kp_rows[1:] if len(kp_rows) > 1 else []):
-                if isinstance(row, list) and len(row) >= 2:
-                    try:
+            for row in reversed(kp_rows):
+                try:
+                    if isinstance(row, dict):
+                        kp_val = float(row.get("Kp") or row.get("kp") or 0)
+                    elif isinstance(row, list) and len(row) >= 2:
+                        if str(row[0]).lower().startswith("time"):
+                            continue
                         kp_val = float(row[1])
-                        break
-                    except (ValueError, TypeError):
+                    else:
                         continue
+                    break
+                except (ValueError, TypeError):
+                    continue
             data["kp_planet"] = f"{kp_val:.2f}" if kp_val is not None else "—"
         except Exception:
             data["kp_planet"] = "—"
@@ -905,16 +984,26 @@ def _fetch_kp_24h() -> list:
         rows = json.loads(raw.decode())
     except Exception:
         return []
-    # First row = column headers: ["time_tag","kp","a_running","station_count"]
-    if not rows or len(rows) < 2:
+    # API returns list-of-dicts {'time_tag','Kp'} or legacy list-of-arrays
+    if not rows:
         return []
     now_ts = datetime.datetime.now(datetime.timezone.utc)
     pts = []
-    for row in rows[1:]:
+    for row in rows:
         try:
-            ts = datetime.datetime.strptime(row[0][:19], "%Y-%m-%d %H:%M:%S")
+            if isinstance(row, dict):
+                ts_raw = str(row.get("time_tag", ""))
+                kp     = float(row.get("Kp") or row.get("kp") or 0)
+            elif isinstance(row, list) and len(row) >= 2:
+                if str(row[0]).lower().startswith("time"):
+                    continue   # header row
+                ts_raw = str(row[0])
+                kp     = float(row[1])
+            else:
+                continue
+            ts = datetime.datetime.strptime(
+                ts_raw[:19].replace("T", " "), "%Y-%m-%d %H:%M:%S")
             ts = ts.replace(tzinfo=datetime.timezone.utc)
-            kp = float(row[1])
             hours_ago = (now_ts - ts).total_seconds() / 3600
             if hours_ago > 48:
                 continue
@@ -947,13 +1036,15 @@ def _fetch_xray_24h() -> list:
     pts = []
     for entry in rows:
         try:
-            # Kies het 0.1-0.8nm (short) kanaal: energy "0.1-0.8nm" of "short"
-            if entry.get("energy", "") not in ("0.1-0.8nm", "0.05-0.4nm", "short", ""):
+            # Use only 0.1-0.8nm channel (standard SXR); timestamps may use T or space
+            if entry.get("energy", "") not in ("0.1-0.8nm", "short", ""):
                 continue
             flux = float(entry.get("flux") or entry.get("observed_flux") or 0)
             if flux <= 0:
                 continue
-            ts = datetime.datetime.strptime(entry["time_tag"][:19], "%Y-%m-%d %H:%M:%S")
+            ts_raw = entry.get("time_tag", "")
+            ts = datetime.datetime.strptime(
+                ts_raw[:19].replace("T", " "), "%Y-%m-%d %H:%M:%S")
             ts = ts.replace(tzinfo=datetime.timezone.utc)
             hours_ago = (now_ts - ts).total_seconds() / 3600
             if hours_ago > 24:
@@ -971,35 +1062,62 @@ def _fetch_xray_24h() -> list:
 
 
 def _fetch_storm_probs() -> list:
-    """Fetch 3-day geomagnetic storm probabilities from NOAA SWPC.
+    """Fetch 3-day geomagnetic storm probabilities from NOAA SWPC text forecast.
 
     Returns list of dicts {date, minor, moderate, severe} for 3 days.
     """
     cached = _cache_get("storm_probs", max_age_s=3600)
     if cached is not None:
         return cached
-    raw = _fetch_with_retry(STORM_PROB_URL, timeout=8)
+    raw = _fetch_with_retry(STORM_PROB_URL, timeout=8, retries=2)
     if raw is None:
+        log.info("storm_probs: fetch failed, using cache/empty")
         return _cache_get("storm_probs", max_age_s=86400) or []
     try:
-        rows = json.loads(raw.decode())
-    except Exception:
+        result = _parse_storm_probs_txt(raw.decode("utf-8", errors="replace"))
+    except Exception as e:
+        log.warning("storm_probs parse error: %s", e)
         return []
-    # Format: [["DateStamp","Minor","Moderate","Severe"], [date, pct, pct, pct], ...]
-    result = []
-    data_rows = [r for r in rows if isinstance(r, list) and len(r) >= 4
-                 and not str(r[0]).startswith("Date")]
-    for row in data_rows[:3]:
-        try:
-            result.append({
-                "date":     str(row[0]),
-                "minor":    int(row[1]),
-                "moderate": int(row[2]),
-                "severe":   int(row[3]),
-            })
-        except Exception:
-            continue
     _cache_set("storm_probs", result)
+    return result
+
+
+def _parse_storm_probs_txt(text: str) -> list:
+    """Parse NOAA 3-day geomag forecast text into [{date, minor, moderate, severe}]."""
+    import re
+    result = []
+
+    # "NOAA Geomagnetic Activity Probabilities 07 May-09 May"
+    date_m = re.search(r'Probabilities\s+(\d{1,2}\s+\w+)', text)
+    if date_m:
+        try:
+            year = datetime.datetime.utcnow().year
+            start = datetime.datetime.strptime(f"{date_m.group(1)} {year}", "%d %b %Y")
+            dates = [(start + datetime.timedelta(days=i)).strftime("%m-%d")
+                     for i in range(3)]
+        except Exception:
+            dates = ["", "", ""]
+    else:
+        dates = ["", "", ""]
+
+    minor_m    = re.search(r'Minor storm\s+([\d/]+)',         text)
+    moderate_m = re.search(r'Moderate storm\s+([\d/]+)',      text)
+    severe_m   = re.search(r'Strong-Extreme storm\s+([\d/]+)', text)
+
+    if not (minor_m and moderate_m and severe_m):
+        return []
+
+    minor_v    = [int(v) for v in minor_m.group(1).split('/')]
+    moderate_v = [int(v) for v in moderate_m.group(1).split('/')]
+    severe_v   = [int(v) for v in severe_m.group(1).split('/')]
+
+    for i in range(min(3, len(minor_v), len(moderate_v), len(severe_v))):
+        result.append({
+            "date":     dates[i] if i < len(dates) else "",
+            "minor":    minor_v[i],
+            "moderate": moderate_v[i],
+            "severe":   severe_v[i],
+        })
     return result
 
 
@@ -1299,6 +1417,8 @@ _T: dict[str, dict[str, str]] = {
     'alerts_hdr':       {"en": 'Notifications'},
     'alert_xflare_lbl': {"en": 'X-flare / SWF'},
     'alert_pca_lbl':    {"en": 'PCA / Proton'},
+    'sat_zone_hdr':     {"en": '🛰  Satellite in QTH zone:'},
+    'sat_zone_none':    {"en": '—'},
     'bz_chart_hdr':     {"en": 'Bz  24h (nT)'},
     'bz_now_lbl':       {"en": 'now'},
     'day_hdr': {"en": 'Day'},
@@ -2228,9 +2348,10 @@ def _sgp4_latlon(line1: str, line2: str,
         y_eci = (sr*co + cr*so*ci)*xp + (-sr*so + cr*co*ci)*yp
         z_eci =          si*so    *xp +           si*co    *yp
 
-        # GMST (Greenwich Mean Sidereal Time) for ECI→ECEF
-        J2000 = datetime.datetime(2000, 1, 1, 12, 0, 0, tzinfo=datetime.timezone.utc)
-        jd_offset = (now - J2000).total_seconds() / 86400
+        # GMST at the actual position time (now + offset_min), not just now.
+        # Without this correction the Earth appears frozen → track doesn't shift.
+        J2000     = datetime.datetime(2000, 1, 1, 12, 0, 0, tzinfo=datetime.timezone.utc)
+        jd_offset = (now - J2000).total_seconds() / 86400 + offset_min / 1440.0
         gmst_deg  = (280.46061837 + 360.98564736629 * jd_offset) % 360
         g = math.radians(gmst_deg)
 
@@ -2238,7 +2359,8 @@ def _sgp4_latlon(line1: str, line2: str,
         y_ecef = -x_eci * math.sin(g) + y_eci * math.cos(g)
         z_ecef =  z_eci
 
-        lat = math.degrees(math.asin(z_ecef / r))
+        # Clamp to avoid asin domain error from floating-point rounding
+        lat = math.degrees(math.asin(max(-1.0, min(1.0, z_ecef / r))))
         lon = math.degrees(math.atan2(y_ecef, x_ecef))
         alt = r - 6371.0   # altitude in km
 
@@ -2249,24 +2371,322 @@ def _sgp4_latlon(line1: str, line2: str,
 
 def _calc_sat_path(line1: str, line2: str,
                    back_min: int = 60, fwd_min: int = 720,
-                   step_min: int = 4) -> list[list[float]]:
-    """Calculate orbital path: back_min in past → fwd_min in future.
+                   back_step: int = 1, fwd_step: int = 10
+                   ) -> tuple[list, list]:
+    """Calculate orbital path segments.
 
-    Returns list of [lat, lon] samples (step_min apart).
-    Antimeridian crossings are marked by inserting [None, None].
+    Returns (past_pts, fwd_pts) each as list of [lat, lon].
+    back_step=1 min  → smooth past curve (60 points).
+    fwd_step=10 min  → sparse future dots (72 points).
+    [None, None] marks antimeridian breaks in each list.
     """
-    pts: list[list[float]] = []
-    prev_lon: float | None = None
-    for offset in range(-back_min, fwd_min + step_min, step_min):
-        r = _sgp4_latlon(line1, line2, float(offset))
-        if r is None:
-            continue
-        lat, lon, _ = r
-        if prev_lon is not None and abs(lon - prev_lon) > 180:
-            pts.append([None, None])   # antimeridian break
-        pts.append([lat, lon])
-        prev_lon = lon
-    return pts
+    def _segment(start, end, step):
+        """Returns list of [lat, lon, offset_min] or [None, None, None] for breaks.
+        step may be fractional (e.g. 0.5 min)."""
+        seg: list = []
+        prev_lon: float | None = None
+        n = int((end - start) / step) + 1
+        for i in range(n):
+            offset = start + i * step
+            if offset > end + 1e-9:
+                break
+            r = _sgp4_latlon(line1, line2, offset)
+            if r is None:
+                seg.append([None, None, None])
+                prev_lon = None
+                continue
+            lat, lon, _ = r
+            if prev_lon is not None and abs(lon - prev_lon) > 180:
+                seg.append([None, None, None])   # antimeridian break
+            seg.append([lat, lon, offset])
+            prev_lon = lon
+        return seg
+
+    past_pts = _segment(-back_min, 0,       back_step)
+    fwd_pts  = _segment(fwd_step,  fwd_min, fwd_step)
+    return past_pts, fwd_pts
+
+
+# ── Spy stations helpers ───────────────────────────────────────────────────────
+
+_SPY_STATIONS_DEFAULT = [
+    {"name": "UVB-76 (The Buzzer)", "country": "Rusland", "frequencies": ["4625 kHz"], "mode": "AM/USB", "active": True, "schedule": "Continu 24/7. Spraakberichten onregelmatig, geen vast patroon.", "info": "Continu 24/7 brom-toon, af en toe onderbroken door gesproken boodschappen in het Russisch (5-cijferige groepen). Vermoedelijk Russisch militair / GRU. Uitzendlocatie nabij Sint-Petersburg."},
+    {"name": "M14a (The Pip)", "country": "Rusland", "frequencies": ["3756 kHz", "5448 kHz"], "mode": "USB", "active": True, "schedule": "Continu 24/7. Pip-toon elke ~2 seconden; spraak onregelmatig.", "info": "Korte 'pip'-toon elke twee seconden, af en toe spraakberichten. Russisch militair. Verwant aan UVB-76."},
+    {"name": "S30 (The Alarm / Squeaky Wheel)", "country": "Rusland", "frequencies": ["3828 kHz", "4770 kHz", "7039 kHz"], "mode": "USB", "active": True, "schedule": "Continu 24/7 op wisselende frequenties.", "info": "Regelmatige 'piep'-toon vergelijkbaar met een alarmbel. Vermoedelijk Russische marine of GRU."},
+    {"name": "M12a (The Lincolnshire Poacher)", "country": "Verenigd Koninkrijk", "frequencies": ["5765 kHz", "11545 kHz"], "mode": "AM/USB", "active": False, "schedule": "Was actief: dagelijks ~06:00, 10:00, 14:00, 18:00, 22:00 UTC (± 30 min). Gestopt ca. 2008.", "info": "Muziekintro 'Lincolnshire Poacher', gevolgd door 5-cijferige Engelse nummers. Geopereerd vanuit Akrotiri, Cyprus (GCHQ/MI6). Gestopt ca. 2008."},
+    {"name": "SK01 (Cherry Ripe)", "country": "Verenigd Koninkrijk", "frequencies": ["4350 kHz", "8500 kHz"], "mode": "USB", "active": False, "schedule": "Was actief: onregelmatig, veelal 's nachts UTC. Gestopt ca. 2009.", "info": "Melodie 'Cherry Ripe' als intro, gevolgd door getelde nummers. Vermoedelijk GCHQ/MI6, gestopt ca. 2009."},
+    {"name": "V24 / XM (Atencion)", "country": "Cuba", "frequencies": ["7887 kHz", "9955 kHz", "14872 kHz"], "mode": "AM/USB", "active": True, "schedule": "Di/Do/Za: 21:30-22:00 UTC op 7887 kHz; extra uitzendingen op onregelmatige tijden.", "info": "Begint met 'Atencion, Atencion', gevolgd door Spaanstalige 5-cijferige groepen. Cubaanse inlichtingendienst (DGI). Richt zich op CIA-activa in Cuba en Latijns-Amerika."},
+    {"name": "HM01", "country": "Noord-Korea", "frequencies": ["6400 kHz", "9100 kHz", "11545 kHz"], "mode": "AM", "active": True, "schedule": "Ma/Wo/Vr: 00:00-00:30 UTC op 6400 kHz; 02:00-02:30 UTC op 9100 kHz. Aanvullende uitzendingen wisselend.", "info": "Koreaanse vrouwenstem met nummers, voorafgegaan door muziek. Reconnaissancebureau Noord-Korea. Uitzendingen regelmatig gemeld."},
+    {"name": "E10 (Swedish Rhapsody)", "country": "Oost-Duitsland / onbekend", "frequencies": ["5765 kHz", "9157 kHz"], "mode": "AM", "active": False, "schedule": "Was actief: wisselend, voornamelijk avonduren CET. Gestopt eind jaren '90.", "info": "Muziekdoosje speelt 'Swedish Rhapsody', kinderstem leest 3-cijferige groepen. DDR Stasi-gebruik vermoedelijk. Gestopt eind jaren '90."},
+    {"name": "E11 (Oblique)", "country": "Onbekend (West-Europa?)", "frequencies": ["6959 kHz", "8149 kHz"], "mode": "USB", "active": False, "schedule": "Was actief: onregelmatig, geen vast patroon bekend. Gestopt ca. 2000.", "info": "Schuine streep '/' gevolgd door lettergroepen in fonetisch alfabet. Vermoedelijk Duits of Tsjechisch."},
+    {"name": "E03 (Czech Lady)", "country": "Tsjecho-Slowakije / Tsjechië", "frequencies": ["6840 kHz", "7485 kHz", "9350 kHz"], "mode": "AM", "active": False, "schedule": "Was actief: dagelijks meerdere blokken, o.a. 08:00, 13:00, 19:00 UTC. Gestopt ca. 1997.", "info": "Tsjechische vrouwenstem met 5-cijferige groepen. StB (Tsjechische geheime dienst). Gestopt ca. 1997."},
+    {"name": "V07 (Cuban Numbers – Spaanstalig)", "country": "Cuba", "frequencies": ["9330 kHz", "11530 kHz"], "mode": "AM/USB", "active": True, "schedule": "Ma/Wo/Vr: 01:00-01:30 UTC op 9330 kHz; frequenties wisselend per seizoen.", "info": "Variant van Atencion-familie. Spaanstalige 5-cijferige groepen. DGI Cuba. Actief op wisselende frequenties."},
+    {"name": "M03 (Russian Man)", "country": "Rusland", "frequencies": ["4583 kHz", "6998 kHz", "9131 kHz"], "mode": "USB", "active": True, "schedule": "Onregelmatig; waarnemingen voornamelijk 04:00-08:00 UTC en 16:00-20:00 UTC.", "info": "Russische mannenstem met 5-cijferige groepen. Vermoedelijk FSB of SVR. Actief op wisselende frequenties."},
+    {"name": "G06 (Russian Lady)", "country": "Rusland", "frequencies": ["7344 kHz", "9057 kHz"], "mode": "USB", "active": True, "schedule": "Onregelmatig; vaker in ochtend- en avonduren UTC. Verwant patroon aan M03.", "info": "Russische vrouwenstem met getallen. Vermoedelijk SVR of GRU. Sterk verwant aan M03."},
+    {"name": "P03 (Attention!)", "country": "Cuba / onbekend", "frequencies": ["5765 kHz", "7887 kHz"], "mode": "AM", "active": False, "schedule": "Was actief: wisselend, geen regelmatig schema gedocumenteerd. Gestopt ca. 2010.", "info": "Gelijkend op Atencion-station maar met afwijkende toonhoogte. Verwantschap met Cubaanse inlichtingendienst."},
+    {"name": "S11a (Cynthia)", "country": "Rusland / Cuba", "frequencies": ["11464 kHz", "14489 kHz"], "mode": "USB", "active": False, "schedule": "Was actief: onregelmatig, vaker in avonduren UTC. Gestopt ca. 2000.", "info": "Muziekintro gevolgd door 5-cijferige Russische nummers. Vermoedelijk KGB-dochterorganisatie. Gestopt ca. 2000."},
+    {"name": "V02a (The Counting Station)", "country": "Onbekend", "frequencies": ["10145 kHz", "14670 kHz"], "mode": "USB", "active": False, "schedule": "Was actief: geen vast schema, sporadische waarnemingen. Gestopt ca. 2005.", "info": "Vrouwenstem telt langzaam getallen in het Engels. Oorsprong onduidelijk; mogelijke CIA-link."},
+    {"name": "M98", "country": "Rusland", "frequencies": ["8507.5 kHz"], "mode": "USB", "active": True, "schedule": "Continu aanwezig op 8507.5 kHz; berichten op onregelmatige tijden.", "info": "Moderne Russische numbers station met geautomatiseerde stem. Actief op vaste frequentie. FSB/GRU vermoedelijk."},
+    {"name": "VC01 (Cuban Lady Counts)", "country": "Cuba", "frequencies": ["9955 kHz", "15175 kHz"], "mode": "AM", "active": True, "schedule": "Di/Do/Za: 03:00-03:30 UTC op 9955 kHz; aanvullend op 15175 kHz overdag.", "info": "Spaanstalige vrouwenstem telt langzame 5-cijferige groepen. Verwant aan Atencion-familie. DGI Cuba."},
+    {"name": "F06 (Magnetic Fields / Numbers)", "country": "Onbekend", "frequencies": ["5765 kHz", "6325 kHz"], "mode": "USB", "active": False, "schedule": "Was actief: geen regelmatig schema gedocumenteerd. Gestopt ca. 2005.", "info": "Toon-reeksen die getallen coderen. Exacte herkomst onbekend. Europese of Russische origine vermoedelijk."},
+    {"name": "4XZ (Israëlische marine)", "country": "Israël", "frequencies": ["5810 kHz", "8137 kHz", "12157 kHz"], "mode": "CW", "active": True, "schedule": "Continu 24/7; weerberichten elke 3 uur op XX:20 en XX:50 UTC.", "info": "IDF Marine seinstation. Morse-code navigatie- en operationele berichten. Roepnaam 4XZ. Actief."},
+    {"name": "CHU (Canadese tijdsignaal)", "country": "Canada", "frequencies": ["3330 kHz", "7850 kHz", "14670 kHz"], "mode": "AM/USB", "active": True, "schedule": "Continu 24/7; tijdaankondiging elke minuut, gesproken aankondiging elk uur.", "info": "Officieel tijdsignaalstation van Canada (NRC). Tijdcodes + gesproken aankondigingen in Engels/Frans. Niet strikt 'spy', wel veelvuldig gebruikt voor bearingkalibratie door inlichtingendiensten."},
+    {"name": "E06 (Yosemite Sam)", "country": "USA (USAF vermoedelijk)", "frequencies": ["4316 kHz", "8992 kHz"], "mode": "USB", "active": False, "schedule": "Was actief: sporadisch, geen regelmatig schema. Gestopt ca. 2004.", "info": "Fragment uit Looney Tunes (Yosemite Sam) gevolgd door data-bursts. Vermoedelijk test-uitzending USAF. Gestopt ca. 2004."},
+    {"name": "XSL (Chinese marinestation)", "country": "China", "frequencies": ["8408 kHz", "12578 kHz", "16806 kHz"], "mode": "CW/USB", "active": True, "schedule": "Dagelijks meerdere uitzendblokken; CW-oproepen op vaste tijden rond 00:00, 06:00, 12:00, 18:00 UTC.", "info": "PLAN (Peoples Liberation Army Navy) maritiem communicatiestation. CW en digitale modes. Actief op meerdere frequenties."},
+    {"name": "RDL (Russische marine, Moskou)", "country": "Rusland", "frequencies": ["12649 kHz", "16432 kHz"], "mode": "CW", "active": True, "schedule": "Dagelijks; CW-berichten op onregelmatige maar vaste terugkerende blokken, veelal 08:00-10:00 en 14:00-16:00 UTC.", "info": "Russisch marineseinstation. CW orders en navigatieberichten. Nauw verbonden met Russische onderzeebootoperaties."},
+]
+
+
+def _load_spy_stations() -> list:
+    """Load spy stations from JSON file; create the file from defaults if absent."""
+    if not os.path.exists(_SPY_FILE):
+        try:
+            with open(_SPY_FILE, "w", encoding="utf-8") as f:
+                json.dump(_SPY_STATIONS_DEFAULT, f, ensure_ascii=False, indent=2)
+            log.info("spy stations: created default file at %s", _SPY_FILE)
+        except Exception as e:
+            log.warning("spy stations: could not create file: %s", e)
+            return list(_SPY_STATIONS_DEFAULT)
+    try:
+        with open(_SPY_FILE, encoding="utf-8") as f:
+            return json.load(f)
+    except Exception as e:
+        log.warning("spy stations: load failed (%s), using built-in defaults", e)
+        return list(_SPY_STATIONS_DEFAULT)
+
+
+# ── Spy stations dialog ────────────────────────────────────────────────────────
+
+class _SpyDialog:
+    """Tabel-dialoog voor spy/numbers stations met sorteerbare kolommen en actief-filter."""
+
+    _AMBER = "#FFA726"
+    # (kolomlabel, sort-sleutel, breedte)
+    _COLS = [
+        ("●",      "_active", 28),
+        ("Naam",   "name",   220),
+        ("Land",   "country",150),
+        ("Freq.",  "freq",   160),
+        ("Mode",   "mode",    60),
+    ]
+
+    def __init__(self, root: tk.Tk, stations: list):
+        self._root      = root
+        self._stations  = stations
+        self._win: tk.Toplevel | None = None
+        self._filter_var: tk.StringVar | None  = None
+        self._active_var: tk.StringVar | None  = None
+        self._tbl:  tk.Frame | None = None
+        self._cvs:  tk.Canvas | None = None
+        self._detail_var: tk.StringVar | None  = None
+        self._hdr_btns: dict[str, tk.Button]   = {}
+        self._sort_col  = "name"
+        self._sort_asc  = True
+
+    # ── helpers ───────────────────────────────────────────────────────────────
+
+    def _bind_scroll(self, widget, handler):
+        widget.bind("<MouseWheel>", handler)
+        widget.bind("<Button-4>",   handler)
+        widget.bind("<Button-5>",   handler)
+        for child in widget.winfo_children():
+            self._bind_scroll(child, handler)
+
+    def _sort_key(self, st: dict) -> str:
+        k = self._sort_col
+        if k == "_active":
+            return "0" if st.get("active") else "1"
+        if k == "freq":
+            freqs = st.get("frequencies", [])
+            return freqs[0] if freqs else ""
+        return st.get(k, "").lower()
+
+    def _filtered(self) -> list:
+        q    = (self._filter_var.get() if self._filter_var else "").lower().strip()
+        show = (self._active_var.get() if self._active_var else "alle")
+        out  = []
+        for s in self._stations:
+            active = s.get("active", False)
+            if show == "actief"   and not active: continue
+            if show == "inactief" and active:     continue
+            if q and not (
+                q in s.get("name",    "").lower() or
+                q in s.get("country", "").lower() or
+                any(q in f.lower() for f in s.get("frequencies", []))
+            ):
+                continue
+            out.append(s)
+        out.sort(key=self._sort_key, reverse=not self._sort_asc)
+        return out
+
+    def _refresh(self, *_):
+        if self._tbl:
+            self._build_table()
+
+    def _set_sort(self, col: str):
+        if self._sort_col == col:
+            self._sort_asc = not self._sort_asc
+        else:
+            self._sort_col = col
+            self._sort_asc = True
+        self._update_hdr_labels()
+        self._build_table()
+
+    def _update_hdr_labels(self):
+        for col_lbl, col_key, _ in self._COLS:
+            btn = self._hdr_btns.get(col_key)
+            if btn is None:
+                continue
+            if col_key == self._sort_col:
+                arrow = " ↑" if self._sort_asc else " ↓"
+                btn.config(text=col_lbl + arrow, fg=self._AMBER)
+            else:
+                btn.config(text=col_lbl, fg=ACCENT)
+
+    def _build_table(self):
+        tbl = self._tbl
+        for w in tbl.winfo_children():
+            w.destroy()
+
+        rows = self._filtered()
+        if not rows:
+            tk.Label(tbl, text="Geen resultaten.", font=_font(9),
+                     bg=BG_SURFACE, fg=TEXT_DIM
+                     ).grid(row=0, column=0, columnspan=len(self._COLS),
+                            padx=12, pady=8, sticky='w')
+        else:
+            for ri, st in enumerate(rows):
+                row_bg = BG_SURFACE if ri % 2 == 0 else BG_PANEL
+                active = st.get("active", False)
+                info     = st.get("info", "")
+                schedule = st.get("schedule", "")
+                detail   = (f"{info}\n\n🕐 Schema: {schedule}"
+                            if info and schedule else info or schedule or "—")
+                freq_str = " · ".join(st.get("frequencies", []))
+                vals = [
+                    ("●",                       _font(9, "bold"), "#66BB6A" if active else "#EF5350"),
+                    (st.get("name",    ""),      _font(9),        TEXT_H1),
+                    (st.get("country", ""),      _font(9),        TEXT_BODY),
+                    (freq_str,                   _font(8),        self._AMBER),
+                    (st.get("mode",    ""),      _font(8),        TEXT_DIM),
+                ]
+                for ci, (txt, fnt, fg) in enumerate(vals):
+                    lbl = tk.Label(tbl, text=txt, font=fnt, bg=row_bg,
+                                   fg=fg, anchor='w', padx=4, pady=2)
+                    lbl.grid(row=ri, column=ci, sticky='ew')
+                    lbl.bind("<Enter>", lambda _, d=detail: self._detail_var.set(d))
+                    lbl.bind("<Leave>", lambda _: self._detail_var.set(
+                        "Beweeg de muis over een rij voor meer informatie."))
+
+        for ci, (_, _, w) in enumerate(self._COLS):
+            tbl.columnconfigure(ci, minsize=w)
+
+        tbl.update_idletasks()
+        self._cvs.config(scrollregion=self._cvs.bbox("all"))
+        scroll_h = lambda e: self._cvs.yview_scroll(
+            -1 if (e.delta > 0 or e.num == 4) else 1, "units")
+        self._bind_scroll(tbl, scroll_h)
+
+    # ── public ────────────────────────────────────────────────────────────────
+
+    def show(self):
+        if self._win and self._win.winfo_exists():
+            self._win.lift()
+            return
+
+        win = tk.Toplevel(self._root)
+        self._win = win
+        win.title("Spy / Numbers Stations")
+        win.configure(bg=BG_PANEL)
+        win.geometry("700x620")
+        win.resizable(True, True)
+
+        tk.Frame(win, bg=self._AMBER, height=2).pack(fill=tk.X)
+        tk.Label(win, text="🕵  Spy / Numbers Stations",
+                 font=_font(11, "bold"), bg=BG_PANEL,
+                 fg=self._AMBER, pady=6).pack(anchor='w', padx=12)
+
+        # ── Toolbar ───────────────────────────────────────────────────────────
+        toolbar = tk.Frame(win, bg=BG_PANEL)
+        toolbar.pack(fill=tk.X, padx=10, pady=(0, 4))
+
+        # Text filter
+        tk.Label(toolbar, text="Zoek:", font=_font(9),
+                 bg=BG_PANEL, fg=TEXT_DIM).pack(side=tk.LEFT)
+        self._filter_var = tk.StringVar()
+        tk.Entry(toolbar, textvariable=self._filter_var,
+                 font=_font(9), bg=BG_SURFACE, fg=TEXT_H1,
+                 insertbackground=TEXT_H1, relief=tk.FLAT, width=20
+                 ).pack(side=tk.LEFT, padx=(4, 16))
+        self._filter_var.trace_add("write", self._refresh)
+
+        # Active/inactive filter
+        tk.Label(toolbar, text="Toon:", font=_font(9),
+                 bg=BG_PANEL, fg=TEXT_DIM).pack(side=tk.LEFT)
+        self._active_var = tk.StringVar(value="alle")
+        for val, lbl in [("alle", "Alle"), ("actief", "Actief"), ("inactief", "Inactief")]:
+            tk.Radiobutton(toolbar, text=lbl, variable=self._active_var,
+                           value=val, command=self._refresh,
+                           font=_font(9), bg=BG_PANEL, fg=TEXT_BODY,
+                           selectcolor=BG_SURFACE, activebackground=BG_PANEL,
+                           activeforeground=TEXT_H1
+                           ).pack(side=tk.LEFT, padx=(4, 0))
+
+        # ── Column headers ────────────────────────────────────────────────────
+        hdr_frame = tk.Frame(win, bg=BG_SURFACE)
+        hdr_frame.pack(fill=tk.X, padx=10)
+        self._hdr_btns = {}
+        for ci, (col_lbl, col_key, col_w) in enumerate(self._COLS):
+            btn = tk.Button(hdr_frame, text=col_lbl,
+                            font=_font(8, "bold"),
+                            bg=BG_SURFACE, fg=ACCENT,
+                            relief=tk.FLAT, anchor='w', padx=4,
+                            cursor="hand2",
+                            command=lambda k=col_key: self._set_sort(k))
+            btn.grid(row=0, column=ci, sticky='ew', ipady=3)
+            hdr_frame.columnconfigure(ci, minsize=col_w)
+            self._hdr_btns[col_key] = btn
+        tk.Frame(hdr_frame, bg=BORDER, height=1).grid(
+            row=1, column=0, columnspan=len(self._COLS), sticky='ew')
+        self._update_hdr_labels()
+
+        # ── Scrollable table ──────────────────────────────────────────────────
+        frm = tk.Frame(win, bg=BG_PANEL)
+        frm.pack(fill=tk.BOTH, expand=True, padx=10)
+        sb = tk.Scrollbar(frm)
+        sb.pack(side=tk.RIGHT, fill=tk.Y)
+        cvs = tk.Canvas(frm, bg=BG_SURFACE, highlightthickness=0,
+                        yscrollcommand=sb.set)
+        cvs.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
+        sb.config(command=cvs.yview)
+        self._cvs = cvs
+
+        tbl = tk.Frame(cvs, bg=BG_SURFACE)
+        cvs.create_window((0, 0), window=tbl, anchor='nw')
+        tbl.bind("<Configure>",
+                 lambda _: cvs.config(scrollregion=cvs.bbox("all")))
+        self._tbl = tbl
+        self._build_table()
+
+        # ── Detail panel ──────────────────────────────────────────────────────
+        tk.Frame(win, bg=BORDER, height=1).pack(fill=tk.X, pady=(4, 0))
+        self._detail_var = tk.StringVar(value="Beweeg de muis over een rij voor meer informatie.")
+        tk.Label(win, textvariable=self._detail_var,
+                 font=_font(8), bg=BG_PANEL, fg=TEXT_H1,
+                 anchor='w', wraplength=660, justify=tk.LEFT, pady=4
+                 ).pack(fill=tk.X, padx=12)
+
+        # ── Bottom bar ────────────────────────────────────────────────────────
+        tk.Frame(win, bg=BORDER, height=1).pack(fill=tk.X)
+        btn_row = tk.Frame(win, bg=BG_PANEL)
+        btn_row.pack(fill=tk.X, padx=10, pady=6)
+        tk.Label(btn_row, text=f"{len(self._stations)} stations  ·  hamios_spy_stations.json",
+                 font=_font(8), bg=BG_PANEL, fg=TEXT_DIM).pack(side=tk.LEFT)
+        tk.Button(btn_row, text="Close",
+                  command=win.destroy,
+                  font=_font(9), bg=BG_SURFACE, fg=self._AMBER,
+                  relief=tk.FLAT, padx=12, cursor="hand2"
+                  ).pack(side=tk.RIGHT)
 
 
 # ── Satellite selection dialog ─────────────────────────────────────────────────
@@ -2279,122 +2699,208 @@ class _SatelliteDialog:
 
     def __init__(self, root: tk.Tk, tle_data: dict,
                  selected: set, path_selected: set, fp_selected: set,
-                 on_close):
+                 on_close, app_ref=None):
         self._root         = root
         self._tle          = tle_data
         self._sel          = set(selected)
         self._path_sel     = set(path_selected)
         self._fp_sel       = set(fp_selected)
         self._on_close     = on_close
+        self._app_ref      = app_ref   # HAMIOSApp ref for hours settings
         self._pos_vars:  dict[str, tk.BooleanVar] = {}
         self._path_vars: dict[str, tk.BooleanVar] = {}
         self._fp_vars:   dict[str, tk.BooleanVar] = {}
         self._path_cbs:  dict[str, tk.Checkbutton] = {}
         self._fp_cbs:    dict[str, tk.Checkbutton] = {}
         self._status_var = None
+        self._refresh_btn: tk.Button | None = None
+        self._cat_var: tk.StringVar | None = None
         self._win: tk.Toplevel | None = None
 
-    def show(self):
+    # ── helpers ───────────────────────────────────────────────────────────────
+    def _bind_scroll(self, widget, handler):
+        """Recursively bind MouseWheel on widget and all children."""
+        widget.bind("<MouseWheel>", handler)
+        widget.bind("<Button-4>",   handler)
+        widget.bind("<Button-5>",   handler)
+        for child in widget.winfo_children():
+            self._bind_scroll(child, handler)
+
+    def _build_table(self, tbl, cvs):
+        """(Re)build satellite rows inside tbl. Clears old widgets first."""
+        for w in tbl.winfo_children():
+            w.destroy()
+
+        C_NAME = 220
+        C_CB   = 72
+        tbl.columnconfigure(0, minsize=C_NAME)
+        for c in range(1, 4):
+            tbl.columnconfigure(c, minsize=C_CB)
+
+        # Column headers
+        for col, txt in enumerate(["Satelliet", "Positie", "Path", "Footprint"]):
+            tk.Label(tbl, text=txt, font=_font(8, "bold"),
+                     bg=BG_SURFACE, fg=ACCENT, anchor='center'
+                     ).grid(row=0, column=col, sticky='ew',
+                            padx=(6 if col == 0 else 0, 0), pady=(4, 2))
+        tk.Frame(tbl, bg=BORDER, height=1).grid(
+            row=1, column=0, columnspan=4, sticky='ew', pady=(0, 2))
+
+        self._pos_vars  = {}
+        self._path_vars = {}
+        self._fp_vars   = {}
+        self._path_cbs  = {}
+        self._fp_cbs    = {}
+
+        cat_filter = self._cat_var.get() if self._cat_var else "All"
+
+        grid_row = 2
+        for group, sats in sorted(self._tle.items()):
+            if cat_filter != "All" and group != cat_filter:
+                continue
+            tk.Label(tbl, text=f"  {group}", font=_font(9, "bold"),
+                     bg=BG_SURFACE, fg=ACCENT, anchor='w'
+                     ).grid(row=grid_row, column=0, columnspan=4,
+                            sticky='w', pady=(6, 1), padx=4)
+            grid_row += 1
+
+            for name, _l1, _l2 in sorted(sats, key=lambda x: x[0]):
+                dep = tk.NORMAL if name in self._sel else tk.DISABLED
+
+                tk.Label(tbl, text=name, bg=BG_SURFACE,
+                         fg=TEXT_BODY, font=_font(8), anchor='w'
+                         ).grid(row=grid_row, column=0, sticky='w', padx=(8, 0))
+
+                pv = tk.BooleanVar(value=name in self._sel)
+                self._pos_vars[name] = pv
+                tk.Checkbutton(tbl, variable=pv, text="",
+                               command=lambda n=name, v=pv: self._toggle_pos(n, v),
+                               bg=BG_SURFACE, fg=TEXT_H1,
+                               selectcolor="#505560",
+                               activebackground=BG_SURFACE,
+                               activeforeground=TEXT_H1,
+                               state=tk.NORMAL
+                               ).grid(row=grid_row, column=1)
+
+                pathv = tk.BooleanVar(value=name in self._path_sel)
+                self._path_vars[name] = pathv
+                pcb = tk.Checkbutton(tbl, variable=pathv, text="",
+                                     command=lambda n=name, v=pathv: self._toggle_path(n, v),
+                                     bg=BG_SURFACE, fg=TEXT_H1,
+                                     selectcolor="#505560",
+                                     disabledforeground=TEXT_DIM,
+                                     activebackground=BG_SURFACE,
+                                     activeforeground=TEXT_H1,
+                                     state=dep)
+                pcb.grid(row=grid_row, column=2)
+                self._path_cbs[name] = pcb
+
+                fpv = tk.BooleanVar(value=name in self._fp_sel)
+                self._fp_vars[name] = fpv
+                fpcb = tk.Checkbutton(tbl, variable=fpv, text="",
+                                      command=lambda n=name, v=fpv: self._toggle_fp(n, v),
+                                      bg=BG_SURFACE, fg=TEXT_H1,
+                                      selectcolor="#505560",
+                                      disabledforeground=TEXT_DIM,
+                                      activebackground=BG_SURFACE,
+                                      activeforeground=TEXT_H1,
+                                      state=dep)
+                fpcb.grid(row=grid_row, column=3)
+                self._fp_cbs[name] = fpcb
+                grid_row += 1
+
+        # Bind scrollwheel on every widget so cursor position doesn't matter
+        scroll_h = lambda e: cvs.yview_scroll(
+            -1 if (e.delta > 0 or e.num == 4) else 1, "units")
+        self._bind_scroll(tbl, scroll_h)
+        tbl.update_idletasks()
+        cvs.config(scrollregion=cvs.bbox("all"))
+
+    # ── public ────────────────────────────────────────────────────────────────
+    def show(self, selected: set = None, path_sel: set = None,
+             fp_sel: set = None):
+        """Open dialog (or re-sync if already open). Always reflects current state."""
+        if selected  is not None: self._sel      = set(selected)
+        if path_sel  is not None: self._path_sel = set(path_sel)
+        if fp_sel    is not None: self._fp_sel   = set(fp_sel)
+
         if self._win and self._win.winfo_exists():
+            self._build_table(self._tbl, self._cvs)
             self._win.lift()
             return
+
         win = tk.Toplevel(self._root)
         self._win = win
         win.title("Satellite Tracking")
         win.configure(bg=BG_PANEL)
-        win.geometry("480x560")
+        win.geometry("560x580")
         win.resizable(True, True)
 
         tk.Frame(win, bg=ACCENT, height=2).pack(fill=tk.X)
-
-        hdr_row = tk.Frame(win, bg=BG_PANEL)
-        hdr_row.pack(fill=tk.X, padx=12, pady=(6, 0))
-        tk.Label(hdr_row, text="🛰  Satellite Tracking",
+        tk.Label(win, text="🛰  Satellite Tracking",
                  font=_font(11, "bold"), bg=BG_PANEL,
-                 fg=ACCENT).pack(side=tk.LEFT)
-        tk.Label(hdr_row, text="●  pos    ∿  path    ○  footprint",
-                 font=_font(8), bg=BG_PANEL,
-                 fg=TEXT_DIM).pack(side=tk.RIGHT, padx=(0, 4))
+                 fg=ACCENT, pady=6).pack(anchor='w', padx=12)
 
-        # Scrollable body
+        # Category filter
+        self._cat_var = tk.StringVar(value="All")
+        cat_row = tk.Frame(win, bg=BG_PANEL)
+        cat_row.pack(fill=tk.X, padx=10, pady=(0, 4))
+        tk.Label(cat_row, text="Categorie:", font=_font(9),
+                 bg=BG_PANEL, fg=TEXT_DIM).pack(side=tk.LEFT)
+        categories = ["All"] + sorted(self._tle.keys())
+        for cat in categories:
+            tk.Radiobutton(cat_row, text=cat, variable=self._cat_var,
+                           value=cat,
+                           command=lambda: self._build_table(self._tbl, self._cvs),
+                           font=_font(9), bg=BG_PANEL, fg=TEXT_BODY,
+                           selectcolor=BG_SURFACE, activebackground=BG_PANEL,
+                           activeforeground=TEXT_H1
+                           ).pack(side=tk.LEFT, padx=(4, 0))
+
         frm = tk.Frame(win, bg=BG_PANEL)
-        frm.pack(fill=tk.BOTH, expand=True, padx=10, pady=(4, 0))
+        frm.pack(fill=tk.BOTH, expand=True, padx=10)
         sb = tk.Scrollbar(frm)
         sb.pack(side=tk.RIGHT, fill=tk.Y)
-        canvas = tk.Canvas(frm, bg=BG_SURFACE, highlightthickness=0,
-                           yscrollcommand=sb.set)
-        canvas.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
-        sb.config(command=canvas.yview)
+        cvs = tk.Canvas(frm, bg=BG_SURFACE, highlightthickness=0,
+                        yscrollcommand=sb.set)
+        cvs.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
+        sb.config(command=cvs.yview)
 
-        inner = tk.Frame(canvas, bg=BG_SURFACE)
-        canvas.create_window((0, 0), window=inner, anchor='nw')
+        tbl = tk.Frame(cvs, bg=BG_SURFACE)
+        cvs.create_window((0, 0), window=tbl, anchor='nw')
+        tbl.bind("<Configure>",
+                 lambda _: cvs.config(scrollregion=cvs.bbox("all")))
 
-        def _on_inner_resize(_e=None):
-            canvas.config(scrollregion=canvas.bbox("all"))
-        inner.bind("<Configure>", _on_inner_resize)
-        canvas.bind("<MouseWheel>",
-                    lambda e: canvas.yview_scroll(-1 if e.delta > 0 else 1, "units"))
+        self._tbl = tbl
+        self._cvs = cvs
+        self._build_table(tbl, cvs)
 
-        self._pos_vars  = {}
-        self._path_vars = {}
-        self._path_cbs  = {}
+        # Hours controls
+        tk.Frame(win, bg=BORDER, height=1).pack(fill=tk.X, pady=(4, 0))
+        hrs_row = tk.Frame(win, bg=BG_PANEL)
+        hrs_row.pack(fill=tk.X, padx=10, pady=(4, 0))
 
-        for group, sats in sorted(self._tle.items()):
-            tk.Label(inner, text=f"  {group}",
-                     font=_font(9, "bold"), bg=BG_SURFACE,
-                     fg=ACCENT, anchor='w').pack(fill=tk.X, pady=(6, 1))
+        def _make_hours(parent, label, initial, on_change):
+            tk.Label(parent, text=label, font=_font(8), bg=BG_PANEL,
+                     fg=TEXT_DIM).pack(side=tk.LEFT)
+            var = tk.IntVar(value=initial)
+            sb = tk.Spinbox(parent, from_=1, to=24, width=3,
+                            textvariable=var,
+                            command=lambda: on_change(var.get()),
+                            bg=BG_SURFACE, fg=TEXT_H1,
+                            buttonbackground=BG_SURFACE,
+                            relief=tk.FLAT, font=_font(9, "bold"))
+            sb.bind("<Return>",    lambda _: on_change(var.get()))
+            sb.bind("<FocusOut>",  lambda _: on_change(var.get()))
+            sb.pack(side=tk.LEFT, padx=(2, 12))
+            return var
 
-            for name, _l1, _l2 in sorted(sats, key=lambda x: x[0]):
-                row = tk.Frame(inner, bg=BG_SURFACE)
-                row.pack(fill=tk.X)
-
-                # Position checkbox (●)
-                pv = tk.BooleanVar(value=name in self._sel)
-                self._pos_vars[name] = pv
-                tk.Checkbutton(row, variable=pv, text="",
-                               command=lambda n=name, v=pv: self._toggle_pos(n, v),
-                               bg=BG_SURFACE, fg=TEXT_BODY,
-                               selectcolor=BG_ROOT,
-                               activebackground=BG_SURFACE,
-                               activeforeground=TEXT_H1,
-                               font=_font(8)).pack(side=tk.LEFT, padx=(4, 0))
-
-                # Path checkbox (∿) — disabled if position not checked
-                pathv = tk.BooleanVar(value=name in self._path_sel)
-                self._path_vars[name] = pathv
-                dep_state = tk.NORMAL if name in self._sel else tk.DISABLED
-                pcb = tk.Checkbutton(row, variable=pathv, text="",
-                                     command=lambda n=name, v=pathv: self._toggle_path(n, v),
-                                     bg=BG_SURFACE,
-                                     fg=TEXT_BODY if dep_state == tk.NORMAL else TEXT_DIM,
-                                     disabledforeground=TEXT_DIM,
-                                     selectcolor=BG_ROOT,
-                                     activebackground=BG_SURFACE,
-                                     activeforeground=TEXT_H1,
-                                     font=_font(8),
-                                     state=dep_state)
-                pcb.pack(side=tk.LEFT, padx=(0, 2))
-                self._path_cbs[name] = pcb
-
-                # Footprint checkbox (○) — disabled if position not checked
-                fpv = tk.BooleanVar(value=name in self._fp_sel)
-                self._fp_vars[name] = fpv
-                fpcb = tk.Checkbutton(row, variable=fpv, text="",
-                                      command=lambda n=name, v=fpv: self._toggle_fp(n, v),
-                                      bg=BG_SURFACE,
-                                      fg=TEXT_BODY if dep_state == tk.NORMAL else TEXT_DIM,
-                                      disabledforeground=TEXT_DIM,
-                                      selectcolor=BG_ROOT,
-                                      activebackground=BG_SURFACE,
-                                      activeforeground=TEXT_H1,
-                                      font=_font(8),
-                                      state=dep_state)
-                fpcb.pack(side=tk.LEFT, padx=(0, 4))
-                self._fp_cbs[name] = fpcb
-
-                tk.Label(row, text=name,
-                         bg=BG_SURFACE, fg=TEXT_BODY,
-                         font=_font(8), anchor='w').pack(side=tk.LEFT)
+        self._back_h_var = _make_hours(
+            hrs_row, "Verleden (uur):", self._app_ref._sat_back_h,
+            lambda v: self._set_hours(v, "back"))
+        self._fwd_h_var = _make_hours(
+            hrs_row, "Toekomst (uur):", self._app_ref._sat_fwd_h,
+            lambda v: self._set_hours(v, "fwd"))
 
         # Bottom bar
         tk.Frame(win, bg=BORDER, height=1).pack(fill=tk.X, pady=(4, 0))
@@ -2403,16 +2909,21 @@ class _SatelliteDialog:
 
         tk.Button(btn_row, text="Clear all",
                   command=self._clear,
-                  font=_font(9), bg=BG_SURFACE, fg=TEXT_DIM,
+                  font=_font(9), bg=BG_SURFACE, fg="#FFA726",
                   relief=tk.FLAT, padx=8, cursor="hand2"
                   ).pack(side=tk.LEFT)
+        self._refresh_btn = tk.Button(btn_row, text="↻  TLE",
+                  command=self._refresh_tle,
+                  font=_font(9), bg=BG_SURFACE, fg="#FFA726",
+                  relief=tk.FLAT, padx=8, cursor="hand2")
+        self._refresh_btn.pack(side=tk.LEFT, padx=(6, 0))
         self._status_var = tk.StringVar(value=self._status_text())
         tk.Label(btn_row, textvariable=self._status_var,
                  font=_font(8), bg=BG_PANEL,
                  fg=TEXT_DIM).pack(side=tk.LEFT, padx=(8, 0))
         tk.Button(btn_row, text="Close",
                   command=self._close,
-                  font=_font(9), bg=BG_SURFACE, fg=TEXT_H1,
+                  font=_font(9), bg=BG_SURFACE, fg="#FFA726",
                   relief=tk.FLAT, padx=12, cursor="hand2"
                   ).pack(side=tk.RIGHT)
 
@@ -2475,12 +2986,55 @@ class _SatelliteDialog:
         if self._win:
             self._win.destroy()
 
+    def _set_hours(self, value: int, which: str):
+        """Update path hours in the app and recompute paths."""
+        if self._app_ref is None:
+            return
+        v = max(1, min(24, int(value)))
+        if which == "back":
+            self._app_ref._sat_back_h = v
+        else:
+            self._app_ref._sat_fwd_h = v
+        self._app_ref._save_sat_ini()
+        if self._app_ref._sat_path_sel:
+            import threading as _thr
+            _thr.Thread(target=self._app_ref._bg_sat_refresh,
+                        daemon=True).start()
+
+    def _refresh_tle(self):
+        """Force-fetch fresh TLE from Celestrak and rebuild the satellite list."""
+        if self._refresh_btn:
+            self._refresh_btn.config(state=tk.DISABLED, text="Laden…", fg=TEXT_DIM)
+        threading.Thread(target=self._do_refresh_tle, daemon=True).start()
+
+    def _do_refresh_tle(self):
+        cache = {}
+        for group, url in _TLE_GROUPS.items():
+            sats = _fetch_tle_group(group, url)
+            if sats:
+                cache[group] = [[n, l1, l2] for n, l1, l2 in sats]
+            log.info("TLE refresh %s: %d satellites", group, len(sats))
+        if cache:
+            _save_tle_cache(cache)
+        self._root.after(0, self._on_tle_done, cache)
+
+    def _on_tle_done(self, cache: dict):
+        if self._refresh_btn:
+            self._refresh_btn.config(state=tk.NORMAL, text="↻  TLE", fg="#FFA726")
+        if not cache:
+            return
+        if self._app_ref is not None:
+            self._app_ref._tle_data = cache
+        self._tle = {g: [(r[0], r[1], r[2]) for r in v] for g, v in cache.items()}
+        if self._win and self._win.winfo_exists():
+            self._build_table(self._tbl, self._cvs)
+
 
 # ── Hoofd-GUI ──────────────────────────────────────────────────────────────────
 class HAMIOSApp:
     def __init__(self, root: tk.Tk):
         self.root = root
-        self.root.title("HAMIOS v3.2")
+        self.root.title("HAMIOS v3.3")
         self.root.configure(bg=BG_ROOT)
 
         # Geometrie instellen vóór _build_ui — geen root.update() nodig, geen flicker.
@@ -2506,12 +3060,20 @@ class HAMIOSApp:
         self._sat_selected:   set  = set()
         self._sat_path_sel:   set  = set()   # show orbital path
         self._sat_fp_sel:     set  = set()   # show footprint
-        self._sat_positions:  dict = {}      # name → (lat, lon, alt)
-        self._sat_paths:      dict = {}      # name → [(lat,lon),…]
+        self._sat_back_h:     int  = 1       # hours of past path
+        self._sat_fwd_h:      int  = 12      # hours of future path
+        self._sat_positions:     dict = {}   # name → (lat, lon, alt)
+        self._sat_paths:         dict = {}   # name → (past_pts, fwd_pts)
+        self._sat_path_hits:     list = []   # [(lat, lon, dt_str), ...]
+        self._sat_tip_win: tk.Toplevel | None = None
         self._sat_dlg: _SatelliteDialog | None = None
         self._sat_after_id = None
         # Restore saved selections from INI (after s = _load_settings() above)
         self.root.after(10, self._load_sat_ini)
+
+        # Spy stations
+        self._spy_stations: list = _load_spy_stations()
+        self._spy_dlg: _SpyDialog | None = None
 
         s = _load_settings()
         self._qth_lat = s["lat"]
@@ -2541,6 +3103,7 @@ class HAMIOSApp:
         self._show_iaru_var     = tk.BooleanVar(value=s["show_iaru"])
         self._show_cs_var       = tk.BooleanVar(value=s["show_cs"])
         self._show_aurora_var   = tk.BooleanVar(value=s["show_aurora"])
+        self._show_sat_var      = tk.BooleanVar(value=s.get("show_sat", True))
         self._show_spots_var    = tk.BooleanVar(value=s["show_spots"])
         self._spot_hit_areas:   list = []   # [{x, y, r, spot}, ...] voor klik-detectie
         self._show_wspr_var     = tk.BooleanVar(value=s["show_wspr"])
@@ -2585,7 +3148,7 @@ class HAMIOSApp:
         self._dx_spot_history: list = []     # [(datetime_utc, band_str), ...] — 24h buffer
         self._dx_heatmap_mode: bool = False  # True = heatmap, False = lijst
         self._dx_next_at: datetime.datetime | None = None
-        self._dx_own_cont_var       = tk.BooleanVar(value=True)
+        self._dx_own_cont_var       = tk.BooleanVar(value=s.get("dx_own_cont", True))
         self._advice_card_hashes: dict = {}   # kaart-index → hash, voor nieuw-stip per kaartje
 
         # CAT interface instellingen
@@ -2742,54 +3305,80 @@ class HAMIOSApp:
         prev = THEMES[prev_name]
         new  = THEMES[new_name]
 
-        # Bouw kleur-remap: {oud_hex_lower → nieuw_hex}
-        color_map: dict[str, str] = {}
-        for key in new:
-            if prev[key].lower() != new[key].lower():
-                color_map[prev[key].lower()] = new[key]
+        # Aparte maps voor achtergrond- vs. voorgrondkleuren.
+        # In HighContrast zijn TEXT_H1 en BORDER beide "#FFFFFF"; één gecombineerde
+        # map zou de ene entry door de andere laten overschrijven waardoor tekst-
+        # en kaderkleur verwisseld worden.  Door type te scheiden krijgt elke widget-
+        # eigenschap de juiste nieuwe kleur.
+        _BG_KEYS = ("BG_ROOT", "BG_PANEL", "BG_SURFACE", "BG_HOVER", "BORDER")
+        _FG_KEYS = ("ACCENT", "TEXT_H1", "TEXT_BODY", "TEXT_DIM")
+
+        bg_map = {prev[k].lower(): new[k] for k in _BG_KEYS
+                  if prev[k].lower() != new[k].lower()}
+        fg_map = {prev[k].lower(): new[k] for k in _FG_KEYS
+                  if prev[k].lower() != new[k].lower()}
+
+        def remap_bg(c: str) -> str:
+            return bg_map.get(c.lower(), c) if c else c
+
+        def remap_fg(c: str) -> str:
+            return fg_map.get(c.lower(), c) if c else c
+
+        def remap_act(c: str) -> str:
+            """Active-/select-kleuren kunnen fg of bg zijn — probeer fg eerst."""
+            lc = c.lower() if c else ""
+            return fg_map.get(lc, bg_map.get(lc, c)) if c else c
 
         self.root.configure(bg=new["BG_ROOT"])
 
-        def remap(c: str) -> str:
-            return color_map.get(c.lower(), c) if c else c
-
         def walk(widget):
+            # Widget configureren en recursie in APARTE try-blokken zodat een
+            # exception bij het configureren de kinderen niet overslaat.
             try:
                 wc = widget.winfo_class()
                 if wc in ("Frame", "Toplevel", "LabelFrame"):
-                    widget.configure(bg=remap(widget.cget("bg")))
+                    widget.configure(bg=remap_bg(widget.cget("bg")))
                 elif wc == "Label":
-                    widget.configure(bg=remap(widget.cget("bg")),
-                                     fg=remap(widget.cget("fg")))
+                    widget.configure(bg=remap_bg(widget.cget("bg")),
+                                     fg=remap_fg(widget.cget("fg")))
                 elif wc == "Button":
-                    widget.configure(bg=remap(widget.cget("bg")),
-                                     fg=remap(widget.cget("fg")),
-                                     activebackground=remap(widget.cget("activebackground")),
-                                     activeforeground=remap(widget.cget("activeforeground")))
+                    widget.configure(bg=remap_bg(widget.cget("bg")),
+                                     fg=remap_fg(widget.cget("fg")),
+                                     activebackground=remap_bg(widget.cget("activebackground")),
+                                     activeforeground=remap_act(widget.cget("activeforeground")))
                 elif wc in ("Checkbutton", "Radiobutton"):
-                    widget.configure(bg=remap(widget.cget("bg")),
-                                     fg=remap(widget.cget("fg")),
-                                     selectcolor=remap(widget.cget("selectcolor")),
-                                     activebackground=remap(widget.cget("activebackground")),
-                                     activeforeground=remap(widget.cget("activeforeground")))
-                elif wc == "Menubutton":
-                    widget.configure(bg=remap(widget.cget("bg")),
-                                     fg=remap(widget.cget("fg")),
-                                     activebackground=remap(widget.cget("activebackground")),
-                                     activeforeground=remap(widget.cget("activeforeground")))
+                    widget.configure(bg=remap_bg(widget.cget("bg")),
+                                     fg=remap_fg(widget.cget("fg")),
+                                     selectcolor=remap_bg(widget.cget("selectcolor")),
+                                     activebackground=remap_bg(widget.cget("activebackground")),
+                                     activeforeground=remap_act(widget.cget("activeforeground")))
+                elif wc in ("Menubutton", "Menu"):
+                    widget.configure(bg=remap_bg(widget.cget("bg")),
+                                     fg=remap_fg(widget.cget("fg")),
+                                     activebackground=remap_bg(widget.cget("activebackground")),
+                                     activeforeground=remap_act(widget.cget("activeforeground")))
                 elif wc == "Canvas":
-                    widget.configure(bg=remap(widget.cget("bg")))
+                    widget.configure(bg=remap_bg(widget.cget("bg")))
                 elif wc == "Scrollbar":
-                    widget.configure(bg=remap(widget.cget("bg")),
-                                     troughcolor=remap(widget.cget("troughcolor")))
+                    widget.configure(bg=remap_bg(widget.cget("bg")),
+                                     troughcolor=remap_bg(widget.cget("troughcolor")))
                 elif wc == "Spinbox":
-                    widget.configure(bg=remap(widget.cget("bg")),
-                                     fg=remap(widget.cget("fg")),
-                                     buttonbackground=remap(widget.cget("buttonbackground")))
-                elif wc == "Entry":
-                    widget.configure(bg=remap(widget.cget("bg")),
-                                     fg=remap(widget.cget("fg")),
-                                     insertbackground=remap(widget.cget("insertbackground")))
+                    widget.configure(bg=remap_bg(widget.cget("bg")),
+                                     fg=remap_fg(widget.cget("fg")),
+                                     buttonbackground=remap_bg(widget.cget("buttonbackground")))
+                elif wc in ("Entry", "Text"):
+                    widget.configure(bg=remap_bg(widget.cget("bg")),
+                                     fg=remap_fg(widget.cget("fg")),
+                                     insertbackground=remap_fg(widget.cget("insertbackground")))
+                elif wc == "Listbox":
+                    widget.configure(bg=remap_bg(widget.cget("bg")),
+                                     fg=remap_fg(widget.cget("fg")),
+                                     selectbackground=remap_bg(widget.cget("selectbackground")),
+                                     selectforeground=remap_fg(widget.cget("selectforeground")))
+            except Exception:
+                pass
+            # Altijd recurseren, ook als het configureren van de widget zelf mislukte
+            try:
                 for child in widget.winfo_children():
                     walk(child)
             except Exception:
@@ -2797,8 +3386,27 @@ class HAMIOSApp:
 
         walk(self.root)
         self._applied_theme_name = new_name
-        # Canvas-inhoud opnieuw tekenen met nieuwe kleuren
+
+        # ── Module-globals bijwerken zodat alle herteken-code de juiste kleuren gebruikt ──
+        global BG_ROOT, BG_PANEL, BG_SURFACE, BG_HOVER
+        global ACCENT, TEXT_H1, TEXT_BODY, TEXT_DIM, BORDER
+        BG_ROOT    = new["BG_ROOT"]
+        BG_PANEL   = new["BG_PANEL"]
+        BG_SURFACE = new["BG_SURFACE"]
+        BG_HOVER   = new["BG_HOVER"]
+        ACCENT     = new["ACCENT"]
+        TEXT_H1    = new["TEXT_H1"]
+        TEXT_BODY  = new["TEXT_BODY"]
+        TEXT_DIM   = new["TEXT_DIM"]
+        BORDER     = new["BORDER"]
+
+        # ── Alle canvassen opnieuw tekenen met nieuwe kleuren ──
+        self._map_base_size = None          # invalideert gecachede basiskaart
+        self._map_render_key = None         # invalideert satelliet-overlay cache
+        self.root.after(0, self._draw_map)
         self._draw_bz_graph(getattr(self, "_last_bz_pts", []))
+        self._draw_kp_bars(getattr(self, "_last_kp_pts", []))
+        self._draw_xray_graph(getattr(self, "_last_xray_pts", []))
         if hasattr(self, "_last_band_pct"):
             self._draw_prop_bars(self._last_band_pct)
 
@@ -2861,27 +3469,50 @@ class HAMIOSApp:
         self._sat_btn.config(fg=TEXT_DIM, text="🛰  Sat")
         self._show_sat_dialog()
 
+    def _open_spy_dialog(self):
+        """Open spy/numbers stations dialog."""
+        if self._spy_dlg is None or not (
+                self._spy_dlg._win and self._spy_dlg._win.winfo_exists()):
+            self._spy_dlg = _SpyDialog(self.root, self._spy_stations)
+        self._spy_dlg.show()
+
     def _show_sat_dialog(self):
+        tle = {g: [(r[0], r[1], r[2]) for r in v]
+               for g, v in self._tle_data.items()}
         if self._sat_dlg is None or not (
                 self._sat_dlg._win and self._sat_dlg._win.winfo_exists()):
             self._sat_dlg = _SatelliteDialog(
-                self.root,
-                {g: [(r[0], r[1], r[2]) for r in v]
-                 for g, v in self._tle_data.items()},
-                self._sat_selected,
-                self._sat_path_sel,
-                self._sat_fp_sel,
-                self._on_sat_selection_change)
-        self._sat_dlg.show()
+                self.root, tle,
+                self._sat_selected, self._sat_path_sel, self._sat_fp_sel,
+                self._on_sat_selection_change, app_ref=self)
+        # Always pass current selections so dialog reflects INI/state correctly
+        self._sat_dlg.show(
+            selected=self._sat_selected,
+            path_sel=self._sat_path_sel,
+            fp_sel=self._sat_fp_sel)
 
     def _on_sat_selection_change(self, selected: set, path_sel: set,
                                  fp_sel: set):
         self._sat_selected  = set(selected)
         self._sat_path_sel  = set(path_sel)
         self._sat_fp_sel    = set(fp_sel)
-        self._save_sat_ini()
-        self._refresh_sat_positions()
-        self.root.after(0, self._draw_map)
+        # Debounce: snel achter elkaar aangevinkte satellieten starten slechts
+        # één achtergrond-berekening.  _save_sat_ini + _refresh zitten in de
+        # thread zodat de main thread nooit blokkeert (ook niet door schijf-I/O
+        # op OneDrive).
+        if getattr(self, "_sat_change_id", None):
+            self.root.after_cancel(self._sat_change_id)
+        self._sat_change_id = self.root.after(
+            150, lambda: threading.Thread(
+                target=self._bg_sat_save_refresh, daemon=True).start())
+
+    def _bg_sat_save_refresh(self):
+        """Achtergrond: herbereken posities/paden → teken kaart → sla INI op.
+        Volgorde is bewust: kaart-update mag niet wachten op trage OneDrive-write.
+        """
+        self._refresh_sat_positions()          # snel: posities berekenen
+        self.root.after(0, self._draw_map)     # kaart updaten (main thread)
+        self._save_sat_ini()                   # traag: OneDrive write (kan wachten)
 
     def _refresh_sat_positions(self):
         """Compute current positions and paths for selected satellites."""
@@ -2899,16 +3530,52 @@ class HAMIOSApp:
                     pos[name] = r
         self._sat_positions = pos
 
-        # Paths (−1h … +12h)
+        # Paths (−1h past, +12h future, separate step sizes)
         paths: dict = {}
         for name in self._sat_path_sel:
             if name in tle_lookup:
-                paths[name] = _calc_sat_path(
+                past, fwd = _calc_sat_path(
                     tle_lookup[name][0], tle_lookup[name][1],
-                    back_min=60, fwd_min=720, step_min=4)
+                    back_min=self._sat_back_h * 60,
+                    fwd_min=self._sat_fwd_h * 60,
+                    back_step=1, fwd_step=0.5)
+                paths[name] = (past, fwd)
         self._sat_paths = paths
 
         self._map_render_key = None
+        self.root.after(0, self._update_sat_zone_label)
+
+    def _update_sat_zone_label(self):
+        """Bereken welke geselecteerde satellieten boven het QTH vliegen en
+        update het label in het meldingen-paneel."""
+        if not hasattr(self, "_sat_zone_var"):
+            return
+        R_EARTH   = 6371.0
+        qth_lat_r = math.radians(getattr(self, "_qth_lat", 52.0))
+        qth_lon_r = math.radians(getattr(self, "_qth_lon",  5.0))
+        visible   = []
+        for name, (flat, flon, falt) in getattr(self, "_sat_positions", {}).items():
+            if falt <= 0:
+                continue
+            rho = math.acos(min(1.0, R_EARTH / (R_EARTH + falt)))
+            lat0_r = math.radians(flat)
+            lon0_r = math.radians(flon)
+            dist = math.acos(min(1.0,
+                math.sin(lat0_r) * math.sin(qth_lat_r) +
+                math.cos(lat0_r) * math.cos(qth_lat_r) *
+                math.cos(qth_lon_r - lon0_r)))
+            if dist < rho:
+                elev = math.degrees(math.asin(min(1.0,
+                    (math.cos(dist) - R_EARTH / (R_EARTH + falt)) /
+                    math.sin(rho))))
+                short = name.split("(")[0].strip()
+                visible.append(f"{short} ({elev:.0f}°)")
+        if visible:
+            self._sat_zone_var.set("\n".join(visible))
+            self._sat_zone_lbl.config(fg="#66BB6A")
+        else:
+            self._sat_zone_var.set("—")
+            self._sat_zone_lbl.config(fg=TEXT_DIM)
 
     # ── Satellite INI persistence ─────────────────────────────────────────────
     def _save_sat_ini(self):
@@ -2921,6 +3588,8 @@ class HAMIOSApp:
         cfg["Satellites"]["selected"]  = ",".join(sorted(self._sat_selected))
         cfg["Satellites"]["path_sel"]  = ",".join(sorted(self._sat_path_sel))
         cfg["Satellites"]["fp_sel"]    = ",".join(sorted(self._sat_fp_sel))
+        cfg["Satellites"]["back_h"]    = str(self._sat_back_h)
+        cfg["Satellites"]["fwd_h"]     = str(self._sat_fwd_h)
         with open(SETTINGS_FILE, "w", encoding="utf-8") as f:
             cfg.write(f)
 
@@ -2936,6 +3605,10 @@ class HAMIOSApp:
         self._sat_selected = _parse("selected")
         self._sat_path_sel = _parse("path_sel")
         self._sat_fp_sel   = _parse("fp_sel")
+        try: self._sat_back_h = int(s.get("back_h", "1"))
+        except ValueError: self._sat_back_h = 1
+        try: self._sat_fwd_h  = int(s.get("fwd_h",  "12"))
+        except ValueError: self._sat_fwd_h  = 12
         # Immediately compute positions / paths if any selections were restored
         if self._sat_selected or self._sat_path_sel or self._sat_fp_sel:
             threading.Thread(target=self._bg_sat_refresh, daemon=True).start()
@@ -3441,7 +4114,7 @@ class HAMIOSApp:
         hdr = tk.Frame(self.root, bg=BG_PANEL, height=42)
         hdr.pack(fill=tk.X)
         tk.Frame(hdr, bg=ACCENT, width=4).pack(side=tk.LEFT, fill=tk.Y)
-        tk.Label(hdr, text="📡  HAMIOS v3.2",
+        tk.Label(hdr, text="📡  HAMIOS v3.3",
                  font=_font(13, "bold"), bg=BG_PANEL, fg=ACCENT,
                  pady=8).pack(side=tk.LEFT, padx=10)
 
@@ -3471,12 +4144,20 @@ class HAMIOSApp:
         # Satellite button (always amber)
         self._sat_btn = tk.Button(hdr, text="🛰  Sat",
                                   command=self._open_sat_dialog,
-                                  font=_font(9), bg=BG_SURFACE, fg=ACCENT,
+                                  font=_font(9), bg=BG_SURFACE, fg="#FFA726",
                                   activebackground=BG_HOVER,
                                   activeforeground=TEXT_H1,
                                   relief=tk.FLAT, padx=8, pady=2,
                                   cursor="hand2")
-        self._sat_btn.pack(side=tk.LEFT, padx=(0, 6))
+        self._sat_btn.pack(side=tk.LEFT, padx=(0, 4))
+
+        # Spy stations button
+        tk.Button(hdr, text="🕵  Spy",
+                  command=self._open_spy_dialog,
+                  font=_font(9), bg=BG_SURFACE, fg="#FFA726",
+                  activebackground=BG_HOVER, activeforeground=TEXT_H1,
+                  relief=tk.FLAT, padx=8, pady=2,
+                  cursor="hand2").pack(side=tk.LEFT, padx=(0, 6))
 
         # CAT Interface knop (naast Afsluiten) — grijs als tijdelijk uitgeschakeld
         self._cat_btn = tk.Button(hdr, text="CAT  ⚠",
@@ -3780,7 +4461,7 @@ class HAMIOSApp:
         for _ in range(3):
             var = tk.StringVar(value="—")
             lbl = tk.Label(self._solar_frame, textvariable=var,
-                           font=_font(7), bg=BG_PANEL, fg=TEXT_DIM, anchor='w')
+                           font=_font(7), bg=BG_PANEL, fg=TEXT_BODY, anchor='w')
             lbl.pack(fill=tk.X)
             self._storm_fc_vars.append(var)
 
@@ -3832,6 +4513,7 @@ class HAMIOSApp:
         _cb_map(row, "moon",     self._show_moon_var)
         _cb_map(row, "graylijn", self._show_graylijn_var)
         _cb_map(row, None,       self._show_aurora_var, "Aurora")
+        _cb_map(row, None,       self._show_sat_var,    "Sat")
 
         # Subtiele verticale scheidingslijn
         tk.Frame(row, bg=BORDER, width=1).pack(side=tk.LEFT, fill=tk.Y, padx=(8, 8))
@@ -3871,6 +4553,64 @@ class HAMIOSApp:
         self._map_canvas.bind("<MouseWheel>",      self._on_map_scroll)
         self._map_canvas.bind("<Button-4>",        self._on_map_scroll)
         self._map_canvas.bind("<Button-5>",        self._on_map_scroll)
+        self._map_canvas.bind("<Motion>",          self._on_map_motion)
+        self._map_canvas.bind("<Leave>",           lambda _: self._hide_sat_tip())
+
+    def _on_map_motion(self, event):
+        """Show satellite path time-tooltip when cursor is near a path point."""
+        if not self._sat_path_hits:
+            self._hide_sat_tip()
+            return
+        c  = self._map_canvas
+        W  = c.winfo_width() or 960
+        zoom = max(1.0, self._map_zoom)
+        VW   = max(2, int(W * zoom))
+        VH   = max(1, int(W // 2 * zoom))
+        cl   = self._map_crop_left
+        ct   = self._map_crop_top
+        THRESH = 8   # pixel radius for hit detection
+        best_d, best_s = THRESH + 1, None
+        for lat, lon, dt_s in self._sat_path_hits:
+            mx, my = _ll_to_xy(lat, lon, VW, VH)
+            dx = event.x - (mx - cl)
+            dy = event.y - (my - ct)
+            d  = (dx*dx + dy*dy) ** 0.5
+            if d < best_d:
+                best_d, best_s = d, dt_s
+        if best_s:
+            self._show_sat_tip(event, best_s)
+        else:
+            self._hide_sat_tip()
+
+    def _show_sat_tip(self, event, text: str):
+        """Create or update the satellite path tooltip near the cursor."""
+        if self._sat_tip_win is None:
+            win = tk.Toplevel(self.root)
+            win.wm_overrideredirect(True)
+            if _IS_MAC:
+                win.wm_attributes("-topmost", True)
+            win.configure(bg=BORDER)
+            tk.Label(win, text=text,
+                     font=(_FONT_MONO, 8), bg=BG_SURFACE,
+                     fg="#B8A050",   # dimmed amber
+                     padx=6, pady=3).pack(padx=1, pady=1)
+            self._sat_tip_win = win
+        else:
+            try:
+                self._sat_tip_win.winfo_children()[0].config(text=text)
+            except Exception:
+                pass
+        rx = self._map_canvas.winfo_rootx() + event.x + 14
+        ry = self._map_canvas.winfo_rooty() + event.y - 22
+        self._sat_tip_win.wm_geometry(f"+{rx}+{ry}")
+
+    def _hide_sat_tip(self):
+        if self._sat_tip_win:
+            try:
+                self._sat_tip_win.destroy()
+            except Exception:
+                pass
+            self._sat_tip_win = None
 
     def _on_map_resize(self, _event=None):
         """Canvas height = width // 2 — exact 2:1, no black bars, no distortion."""
@@ -4130,6 +4870,12 @@ class HAMIOSApp:
             int(k_val),
             round(self._qth_lat, 2), round(self._qth_lon, 2),
             self._gc_dest,
+            # Satelliet-state: selectie-wijziging invalideert de cache direct.
+            bool(getattr(self, "_show_sat_var", None)
+                 and self._show_sat_var.get()),
+            frozenset(getattr(self, "_sat_selected", set())),
+            frozenset(getattr(self, "_sat_path_sel", set())),
+            frozenset(getattr(self, "_sat_fp_sel",   set())),
         )
 
         if getattr(self, "_map_render_key", None) != render_key:
@@ -4392,30 +5138,22 @@ class HAMIOSApp:
             draw.line([(qx - 10, qy), (qx + 10, qy)], fill=MAP_QTH, width=2)
             draw.line([(qx, qy - 10), (qx, qy + 10)], fill=MAP_QTH, width=2)
 
-            # ── Satellite orbital paths ───────────────────────────────────────
-            # Past: solid dim amber line | Future: loose dots (no connecting lines)
-            PATH_PAST = (180, 160, 60, 150)   # dim amber solid line
-            PATH_FWD  = (255, 220, 60, 220)   # bright amber dots
-            FP_CLR    = (200, 160, 40, 80)    # dimmed amber footprint fill
-            FP_OUT    = (220, 180, 60, 160)   # footprint outline
+            # ── Satellite overlay (paths / footprints / positions) ───────────
+            _draw_sat  = (getattr(self, "_show_sat_var", None) is not None
+                          and self._show_sat_var.get())
+            PATH_PAST  = (160, 140,  45)
+            PATH_FWD   = (255, 215,  50, 220)
+            FP_CLR     = (200, 160,  40,  80)
+            FP_CLR_QTH = ( 40, 200,  80,  90)
+            FP_OUT     = (220, 180,  60, 160)
+            FP_OUT_QTH = ( 60, 220, 100, 180)
 
-            # back_min=60 → split index ≈ 60//4 = 15
-            BACK_STEPS = 60 // 4
-
-            for sname, pts in getattr(self, "_sat_paths", {}).items():
-                if not pts:
+            for sname, path_tuple in (getattr(self, "_sat_paths", {}) if _draw_sat else {}).items():
+                if not path_tuple or len(path_tuple) != 2:
                     continue
-                # Split into past (idx < BACK_STEPS) and future (idx ≥ BACK_STEPS)
-                past_pts: list = []
-                fwd_pts:  list = []
-                for i, p in enumerate(pts):
-                    target = past_pts if i < BACK_STEPS else fwd_pts
-                    target.append(p)
+                past_pts, fwd_pts = path_tuple
 
-                sat_img = Image.new("RGBA", (VW, VH), (0, 0, 0, 0))
-                sd = ImageDraw.Draw(sat_img)
-
-                    # Past — dim amber solid curve
+                # Past — draw directly on img (RGB) for solid, crisp line
                 prev = None
                 for pt in past_pts:
                     if pt[0] is None:
@@ -4423,24 +5161,25 @@ class HAMIOSApp:
                         continue
                     cx, cy = _ll_to_xy(pt[0], pt[1], VW, VH)
                     if prev:
-                        sd.line([prev, (cx, cy)], fill=PATH_PAST, width=1)
+                        draw.line([prev, (cx, cy)], fill=PATH_PAST, width=2)
                     prev = (cx, cy)
 
-                # Future — very small bright amber dots (1-px radius)
+                # Future — tiny dots on transparent overlay
+                fwd_img = Image.new("RGBA", (VW, VH), (0, 0, 0, 0))
+                fd = ImageDraw.Draw(fwd_img)
                 for pt in fwd_pts:
                     if pt[0] is None:
                         continue
                     cx, cy = _ll_to_xy(pt[0], pt[1], VW, VH)
-                    sd.ellipse([(cx-1, cy-1), (cx+1, cy+1)], fill=PATH_FWD)
-
-                img = Image.alpha_composite(img.convert("RGBA"),
-                                            sat_img).convert("RGB")
+                    fd.point([(cx, cy)], fill=PATH_FWD)
+                img  = Image.alpha_composite(img.convert("RGBA"),
+                                             fwd_img).convert("RGB")
                 draw = ImageDraw.Draw(img)
 
             # ── Satellite footprints ──────────────────────────────────────────
             R_EARTH = 6371.0
-            for sname, (flat, flon, falt) in getattr(
-                    self, "_sat_positions", {}).items():
+            for sname, (flat, flon, falt) in (
+                    getattr(self, "_sat_positions", {}) if _draw_sat else {}).items():
                 if sname not in getattr(self, "_sat_fp_sel", set()):
                     continue
                 if falt <= 0:
@@ -4448,8 +5187,26 @@ class HAMIOSApp:
                 rho = math.acos(min(1.0, R_EARTH / (R_EARTH + falt)))
                 lat0_r = math.radians(flat)
                 lon0_r = math.radians(flon)
+
+                # Check of QTH binnen de footprint valt
+                qth_lat_r = math.radians(getattr(self, "_qth_lat", 52.0))
+                qth_lon_r = math.radians(getattr(self, "_qth_lon",  5.0))
+                qth_dist  = math.acos(min(1.0,
+                    math.sin(lat0_r) * math.sin(qth_lat_r) +
+                    math.cos(lat0_r) * math.cos(qth_lat_r) *
+                    math.cos(qth_lon_r - lon0_r)))
+                qth_in_fp = qth_dist < rho
+                fill_clr  = FP_CLR_QTH if qth_in_fp else FP_CLR
+                out_clr   = FP_OUT_QTH if qth_in_fp else FP_OUT
+                # Compute footprint with lons unwrapped relative to the
+                # satellite position.  No wrapping means no lon-jump > 180°,
+                # so the polygon is always convex in pixel space and Pillow
+                # fills it correctly.  A second pass at x±VW makes the
+                # footprint appear on the opposite map edge when it crosses
+                # the antimeridian.
                 fp_pts = []
-                for az_deg in range(0, 361, 5):
+                ref_lon = flon
+                for az_deg in range(0, 360, 5):
                     theta = math.radians(az_deg)
                     fp_lat = math.degrees(
                         math.asin(math.sin(lat0_r) * math.cos(rho)
@@ -4458,20 +5215,49 @@ class HAMIOSApp:
                         math.sin(theta) * math.sin(rho) * math.cos(lat0_r),
                         math.cos(rho) - math.sin(lat0_r) * math.sin(math.radians(fp_lat)))
                     fp_lon = math.degrees(lon0_r + dlon)
-                    fp_lon = ((fp_lon + 180) % 360) - 180
-                    fp_pts.append(_ll_to_xy(fp_lat, fp_lon, VW, VH))
-                if len(fp_pts) > 2:
+                    # Unwrap to stay within 180° of the satellite
+                    while fp_lon - ref_lon >  180: fp_lon -= 360
+                    while ref_lon - fp_lon >  180: fp_lon += 360
+                    fp_pts.append((int((fp_lon + 180) / 360 * VW),
+                                   int((90 - fp_lat) / 180 * VH)))
+
+                if len(fp_pts) >= 3:
+                    rho_deg    = math.degrees(rho)
+                    dist_south = 90.0 + flat   # ° van satelliet tot zuidpool
+                    dist_north = 90.0 - flat   # ° van satelliet tot noordpool
+
                     fp_img = Image.new("RGBA", (VW, VH), (0, 0, 0, 0))
                     fd = ImageDraw.Draw(fp_img)
-                    fd.polygon(fp_pts, fill=FP_CLR, outline=FP_OUT)
+                    fd.polygon(fp_pts, fill=fill_clr, outline=out_clr)
+                    # Wrapped copies for footprints that straddle ±180°
+                    for dx in (-VW, VW):
+                        fd.polygon([(x + dx, y) for x, y in fp_pts],
+                                   fill=fill_clr, outline=out_clr)
+
+                    # Polaire kap: als de pool binnen de footprint valt, vul
+                    # de rechthoekige band van lat_full naar de poolrand.
+                    # lat_full = breedste op het equirectangulaire kaart waarop
+                    # de footprint alle lengtes beslaat.
+                    if dist_south < rho_deg:
+                        lat_full = rho_deg - 180.0 - flat
+                        yf = max(0, min(VH - 1,
+                                        int((90.0 - lat_full) / 180.0 * VH)))
+                        fd.rectangle([0, yf, VW - 1, VH - 1], fill=fill_clr)
+
+                    if dist_north < rho_deg:
+                        lat_full = 180.0 - rho_deg - flat
+                        yf = max(0, min(VH - 1,
+                                        int((90.0 - lat_full) / 180.0 * VH)))
+                        fd.rectangle([0, 0, VW - 1, yf], fill=fill_clr)
+
                     img = Image.alpha_composite(img.convert("RGBA"),
                                                 fp_img).convert("RGB")
                     draw = ImageDraw.Draw(img)
 
             # ── Satellite positions ───────────────────────────────────────────
             SAT_CLR = (255, 220, 60)   # yellow
-            for sname, (slat, slon, salt) in getattr(
-                    self, "_sat_positions", {}).items():
+            for sname, (slat, slon, salt) in (
+                    getattr(self, "_sat_positions", {}) if _draw_sat else {}).items():
                 sx, sy = _ll_to_xy(slat, slon, VW, VH)
                 draw.ellipse([(sx-6, sy-6), (sx+6, sy+6)],
                              fill=SAT_CLR, outline=(200, 160, 0), width=1)
@@ -4501,6 +5287,25 @@ class HAMIOSApp:
                 img = img.crop((crop_l, crop_t, crop_l + W, crop_t + H))
         self._map_crop_left = crop_l
         self._map_crop_top  = crop_t
+
+        # ── Build satellite path hit areas for hover tooltip ──────────────────
+        _now    = datetime.datetime.now(datetime.timezone.utc)
+        tz_off  = 2 if getattr(self, "_dst_var", None) and self._dst_var.get() else 1
+        tz_name = "CEST" if tz_off == 2 else "CET"
+        tz_local = datetime.timezone(datetime.timedelta(hours=tz_off))
+        hits = []
+        for _, ptuple in getattr(self, "_sat_paths", {}).items():
+            if not ptuple or len(ptuple) != 2:
+                continue
+            for seg in ptuple:          # past_pts, fwd_pts
+                for pt in seg:
+                    if pt[0] is None or len(pt) < 3:
+                        continue
+                    dt_local = (_now + datetime.timedelta(minutes=float(pt[2]))
+                                ).astimezone(tz_local)
+                    hits.append((pt[0], pt[1],
+                                 dt_local.strftime(f"%d %b  %H:%M {tz_name}")))
+        self._sat_path_hits = hits
 
         # ── Tonen ────────────────────────────────────────────────────────────
         self._map_photo = ImageTk.PhotoImage(img)
@@ -5022,6 +5827,19 @@ class HAMIOSApp:
                    relief=tk.FLAT, font=_font(9, "bold")).pack(side=tk.LEFT, padx=(2, 0))
         tk.Label(rb, text="%", font=_font(9), bg=BG_PANEL,
                  fg=TEXT_DIM).pack(side=tk.LEFT, padx=(2, 0))
+
+        # Satelliet in QTH-zone
+        tk.Frame(ov_frame, bg=BORDER, height=1).pack(fill=tk.X, pady=(4, 2))
+        _sz_lbl = tk.Label(ov_frame, text=self._tr("sat_zone_hdr"),
+                           font=_font(8), bg=BG_PANEL, fg=TEXT_DIM, anchor='w')
+        _sz_lbl.pack(fill=tk.X)
+        self._tr_widgets["sat_zone_hdr"] = _sz_lbl
+        self._sat_zone_var = tk.StringVar(value="—")
+        self._sat_zone_lbl = tk.Label(ov_frame, textvariable=self._sat_zone_var,
+                                      font=_font(8, "bold"), bg=BG_PANEL,
+                                      fg="#66BB6A", anchor='w', wraplength=190,
+                                      justify=tk.LEFT)
+        self._sat_zone_lbl.pack(fill=tk.X, pady=(0, 2))
 
 
     def _draw_prop_bars(self, band_pct):
@@ -5622,11 +6440,11 @@ class HAMIOSApp:
         dx_wrap.pack(fill=tk.BOTH, expand=True, padx=10, pady=(2, 6))
         self._dx_canvas = tk.Canvas(dx_wrap, height=180, bg=BG_PANEL,
                                     bd=0, highlightthickness=0)
-        dx_sb = tk.Scrollbar(dx_wrap, orient=tk.VERTICAL,
-                             command=self._dx_canvas.yview,
-                             bg=BG_SURFACE, troughcolor=BG_ROOT, width=8)
-        self._dx_canvas.configure(yscrollcommand=dx_sb.set)
-        dx_sb.pack(side=tk.RIGHT, fill=tk.Y)
+        self._dx_sb = tk.Scrollbar(dx_wrap, orient=tk.VERTICAL,
+                                   command=self._dx_canvas.yview,
+                                   bg=BG_SURFACE, troughcolor=BG_ROOT, width=8)
+        self._dx_canvas.configure(yscrollcommand=self._dx_sb.set)
+        # Scrollbar wordt pas getoond als de inhoud de canvas overschrijdt
         self._dx_canvas.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
         self._dx_canvas.bind("<Configure>", lambda *_: self._draw_dx_panel())
         def _dx_scroll(e):
@@ -5747,7 +6565,7 @@ class HAMIOSApp:
 
         spots = getattr(self, "_dx_filtered", [])
         ROW_H = 16
-        C_UTC  = 34;  C_BAND = 34;  C_DX = 76
+        C_UTC  = 34;  C_BAND = 34;  C_DX = 68
         C_FREQ = 60;  C_SPOT = 66
         C_CMT  = max(40, W - C_UTC - C_BAND - C_DX - C_FREQ - C_SPOT - 12)
 
@@ -5767,6 +6585,8 @@ class HAMIOSApp:
                           text=self._tr("no_dx_spots"),
                           fill=TEXT_DIM, font=(_FONT_SANS, 9), anchor='center')
             c.configure(scrollregion=(0, 0, W, H))
+            if hasattr(self, "_dx_sb"):
+                self._dx_sb.pack_forget()
             return
 
         max_ch = max(4, C_CMT // 6)
@@ -5787,6 +6607,11 @@ class HAMIOSApp:
                           fill=TEXT_DIM, font=(_FONT_MONO, 8), anchor='nw')
         total_h = ROW_H + 4 + len(spots) * ROW_H
         c.configure(scrollregion=(0, 0, W, total_h))
+        if hasattr(self, "_dx_sb"):
+            if total_h > H:
+                self._dx_sb.pack(side=tk.RIGHT, fill=tk.Y, before=c)
+            else:
+                self._dx_sb.pack_forget()
 
     def _refresh_dx(self):
         spots = _fetch_dx_spots()
@@ -6532,6 +7357,8 @@ class HAMIOSApp:
                        self._show_spots_var.get(),
                        self._show_wspr_var.get(),
                        self._show_aurora_var.get(),
+                       self._show_sat_var.get(),
+                       self._dx_own_cont_var.get(),
                        self._hist_range_var.get(),
                        self._hist_sel,
                        self._k_alert_var.get(),
@@ -6541,6 +7368,7 @@ class HAMIOSApp:
                        self._alert_xflare_en_var.get(),
                        self._alert_pca_en_var.get(),
                        self._lang_var.get(),
+                       self._theme_var.get(),
                        self._cat_port_var.get(),
                        self._cat_baud_var.get(),
                        self._cat_bits_var.get(),
@@ -6569,7 +7397,7 @@ class HAMIOSApp:
             pystray.Menu.SEPARATOR,
             pystray.MenuItem(self._tr("tray_exit"), self._tray_quit),
         )
-        self._tray_icon = pystray.Icon("HAMIOS", tray_img, "HAMIOS v3.2", menu)
+        self._tray_icon = pystray.Icon("HAMIOS", tray_img, "HAMIOS v3.3", menu)
         threading.Thread(target=self._tray_icon.run, daemon=True).start()
 
     def _tray_show(self, icon=None, item=None):
@@ -7002,7 +7830,7 @@ class HAMIOSApp:
 
 
 # ── Version check (GitHub releases API) ────────────────────────────────────────
-_APP_VERSION = "3.1"
+_APP_VERSION = "3.3"
 _GITHUB_RELEASES_URL = "https://api.github.com/repos/fvdijke/HAMIOS/releases/latest"
 
 def _check_latest_version() -> tuple[str, str]:
@@ -7032,6 +7860,9 @@ by Frank van Dijke  ·  Developed with Claude AI
     Mode / Power / Antenna selectors influence SNR budget.
     Gradient bars: band colour = quality level.
     Overlays + notifications below the bars.
+    Notifications section shows K-alert, band-open threshold,
+    and which selected satellites are currently above the QTH
+    (green, with elevation angle).
 
   World Map (top-centre, spans 3 columns)
     Click  → great-circle path + band quality for that route.
@@ -7048,15 +7879,34 @@ by Frank van Dijke  ·  Developed with Claude AI
 
   Propagation Advice  (full width, below bottom row)
 
+─── Satellite Tracking (🛰 Sat) ──────────────────────────
+  Opens the Satellite Tracking dialog.
+  Category filter: All / Amateur / ISS / Weather / CubeSat.
+  Per satellite: toggle position dot (●), orbital path (~),
+  and footprint on the map.
+  Footprint turns green when your QTH is inside it.
+  Notifications panel shows which satellites are overhead.
+  ↻ TLE button fetches fresh TLE data from Celestrak.
+  Path times shown in local time (CEST / CET).
+
+─── Spy / Numbers Stations (🕵 Spy) ──────────────────────
+  Scrollable table of known numbers stations and spy radios.
+  Columns: status (● active/inactive), name, country,
+  frequencies (amber), mode.  Click a column header to sort.
+  Filter by name / country / frequency, or by active status.
+  Hover a row to see description + broadcast schedule.
+  Data stored in hamios_spy_stations.json (editable).
+
 ─── Data sources ──────────────────────────────────────────
-  Solar / bands   hamqsl.com         refresh: auto interval
-  Solar wind Bz   NOAA SWPC          refresh: auto interval
-  Kp 48h          NOAA SWPC          refresh: auto interval
-  X-ray 24h       NOAA GOES/SWPC     refresh: auto interval
-  Storm forecast  NOAA SWPC          refresh: auto interval
-  DX cluster      dxwatch.com        every 5 min
-  WSPR spots      wspr.live          every 15 min
-  Ionosonde foF2  GIRO / LGDC        refresh: auto interval
+  Solar / bands   hamqsl.com                  auto interval
+  Solar wind Bz   NOAA SWPC                   auto interval
+  Kp 48h          NOAA SWPC                   auto interval
+  X-ray 24h       NOAA GOES/SWPC              auto interval
+  Storm forecast  NOAA 3-day-geomag-forecast  auto interval
+  DX cluster      dxwatch.com                 every 5 min
+  WSPR spots      wspr.live                   every 15 min
+  Ionosonde foF2  GIRO / LGDC                 auto interval
+  TLE (satellite) Celestrak                   on demand / ↻ TLE
 
 ─── Keyboard shortcuts ────────────────────────────────────
   F1              This help dialog
@@ -7064,11 +7914,13 @@ by Frank van Dijke  ·  Developed with Claude AI
   Right-click     Reset map zoom/pan · clear great-circle path
 
 ─── Files ─────────────────────────────────────────────────
-  HAMIOS.ini          settings
-  HAMIOS_history.csv  band history (90 days)
-  HAMIOS.log          application log (rotating, max 3 MB)
-  HAMIOS_cache.pkl    data cache (auto-refreshed)
-  langs/lang_*.json   language packs
+  HAMIOS.ini                settings (theme, language, QTH, …)
+  HAMIOS_history.csv        band history (90 days)
+  HAMIOS.log                application log (rotating, max 3 MB)
+  HAMIOS_cache.pkl          data cache (auto-refreshed)
+  hamios_tle.json           TLE cache (satellites)
+  hamios_spy_stations.json  spy / numbers stations database
+  langs/lang_*.json         language packs
 """
 
     def __init__(self, root: tk.Tk, ver: str = _APP_VERSION,

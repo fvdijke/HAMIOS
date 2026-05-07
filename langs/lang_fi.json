@@ -231,7 +231,9 @@
     "adv_sw_ram_normal": "Aurinkotuuli normaali — nopeus {spd} km/s, tiheys {dens} n/cm³. Välittömiä geomagneettisia vaikutuksia ei odoteta.",
     "adv_kp_rising": "Kp nousee viimeiset {h}h: {old:.1f}→{new:.1f} — geomagneettinen aktiivisuus kasvaa. Vaihda alemmille kaistoille; vältä polaarisia reittejä.",
     "adv_kp_falling": "Kp laskee viimeiset {h}h: {old:.1f}→{new:.1f} — myrskytoipuminen käynnissä. Korkeat kaistat toipuvat; 20m paranee.",
-    "adv_kp_stable": "Kp vakaa viimeiset {h}h arvolla {kp:.1f} — geomageneettiset olosuhteet vakaat."
+    "adv_kp_stable": "Kp vakaa viimeiset {h}h arvolla {kp:.1f} — geomageneettiset olosuhteet vakaat.",
+    "sat_zone_hdr": "🛰  Satelliitti QTH-alueella:",
+    "sat_zone_none": "—"
   },
   "solar_tips": {
     "sfi": [

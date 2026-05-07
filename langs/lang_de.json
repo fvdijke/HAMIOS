@@ -231,7 +231,9 @@
     "adv_sw_ram_normal": "Sonnenwind nominal — Geschwindigkeit {spd} km/s, Dichte {dens} n/cm³. Keine unmittelbaren geomagnetischen Auswirkungen erwartet.",
     "adv_kp_rising": "Kp steigt letzte {h}h: {old:.1f}→{new:.1f} — geomagnetische Aktivität nimmt zu. Auf niedrigere Bänder wechseln; Polarrouten meiden.",
     "adv_kp_falling": "Kp fällt letzte {h}h: {old:.1f}→{new:.1f} — Sturmerholung im Gange. Hohe Bänder erholen sich; 20m verbessert sich.",
-    "adv_kp_stable": "Kp stabil letzte {h}h bei {kp:.1f} — geomagnetische Bedingungen gleichmäßig."
+    "adv_kp_stable": "Kp stabil letzte {h}h bei {kp:.1f} — geomagnetische Bedingungen gleichmäßig.",
+    "sat_zone_hdr": "🛰  Satellit in QTH-Zone:",
+    "sat_zone_none": "—"
   },
   "solar_tips": {
     "sfi": [

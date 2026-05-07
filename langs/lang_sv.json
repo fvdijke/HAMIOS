@@ -231,7 +231,9 @@
     "adv_sw_ram_normal": "Solvind nominell — hastighet {spd} km/s, densitet {dens} n/cm³. Inga omedelbara geomagnetiska effekter förväntas.",
     "adv_kp_rising": "Kp stiger senaste {h}h: {old:.1f}→{new:.1f} — geomagnetisk aktivitet ökar. Byt till lägre band; undvik polrutter.",
     "adv_kp_falling": "Kp sjunker senaste {h}h: {old:.1f}→{new:.1f} — stormåterhämtning pågår. Höga band återhämtar sig; 20m förbättras.",
-    "adv_kp_stable": "Kp stabilt senaste {h}h vid {kp:.1f} — geomagnetiska förhållanden stabila."
+    "adv_kp_stable": "Kp stabilt senaste {h}h vid {kp:.1f} — geomagnetiska förhållanden stabila.",
+    "sat_zone_hdr": "🛰  Satellit i QTH-zon:",
+    "sat_zone_none": "—"
   },
   "solar_tips": {
     "sfi": [

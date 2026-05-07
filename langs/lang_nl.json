@@ -231,7 +231,9 @@
     "adv_sw_ram_normal": "Solarwind nominaal — snelheid {spd} km/s, dichtheid {dens} n/cm³. Geen directe geomagnetische effecten verwacht.",
     "adv_kp_rising": "Kp stijgt laatste {h}u: {old:.1f}→{new:.1f} — geomagnetische activiteit neemt toe. Schakel over naar lagere banden; vermijd poolroutes.",
     "adv_kp_falling": "Kp daalt laatste {h}u: {old:.1f}→{new:.1f} — stormherstel in gang. Hogere banden herstellen; 20m verbetert.",
-    "adv_kp_stable": "Kp stabiel laatste {h}u op {kp:.1f} — geomagnetische condities stabiel."
+    "adv_kp_stable": "Kp stabiel laatste {h}u op {kp:.1f} — geomagnetische condities stabiel.",
+    "sat_zone_hdr": "🛰  Satelliet in QTH-zone:",
+    "sat_zone_none": "—"
   },
   "solar_tips": {
     "sfi": [

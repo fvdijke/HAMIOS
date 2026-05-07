@@ -231,7 +231,9 @@
     "adv_sw_ram_normal": "Vento solare nominale — velocità {spd} km/s, densità {dens} n/cm³. Nessun effetto geomagnetico immediato atteso.",
     "adv_kp_rising": "Kp in aumento ultime {h}h: {old:.1f}→{new:.1f} — attività geomagnetica in aumento. Passare a bande più basse; evitare rotte polari.",
     "adv_kp_falling": "Kp in calo ultime {h}h: {old:.1f}→{new:.1f} — recupero dopo tempesta in corso. Bande alte in recupero; 20m in miglioramento.",
-    "adv_kp_stable": "Kp stabile ultime {h}h a {kp:.1f} — condizioni geomagnetiche stabili."
+    "adv_kp_stable": "Kp stabile ultime {h}h a {kp:.1f} — condizioni geomagnetiche stabili.",
+    "sat_zone_hdr": "🛰  Satellite nella zona QTH:",
+    "sat_zone_none": "—"
   },
   "solar_tips": {
     "sfi": [

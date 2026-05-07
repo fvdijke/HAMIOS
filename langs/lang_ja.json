@@ -231,7 +231,9 @@
     "adv_sw_ram_normal": "太陽風正常 — 速度 {spd} km/s、密度 {dens} n/cm³。直接的な地磁気効果は期待されません。",
     "adv_kp_rising": "Kp が過去 {h}h で上昇中: {old:.1f}→{new:.1f} — 地磁気活動が増加しています。低いバンドに切り替え、極ルートを避けてください。",
     "adv_kp_falling": "Kp が過去 {h}h で低下中: {old:.1f}→{new:.1f} — 磁気嵐からの回復中。高いバンドが回復中、20m が改善中。",
-    "adv_kp_stable": "Kp が過去 {h}h で {kp:.1f} で安定 — 地磁気状態は安定しています。"
+    "adv_kp_stable": "Kp が過去 {h}h で {kp:.1f} で安定 — 地磁気状態は安定しています。",
+    "sat_zone_hdr": "🛰  QTH圏内の衛星:",
+    "sat_zone_none": "—"
   },
   "solar_tips": {
     "sfi": [

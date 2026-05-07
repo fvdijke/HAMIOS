@@ -231,7 +231,9 @@
     "adv_sw_ram_normal": "Wiatr słoneczny nominalny — prędkość {spd} km/s, gęstość {dens} n/cm³. Nie oczekuje się bezpośrednich efektów geomagnetycznych.",
     "adv_kp_rising": "Kp rośnie przez ostatnie {h}h: {old:.1f}→{new:.1f} — aktywność geomagnetyczna wzrasta. Przejdź na niższe pasma; unikaj tras polarnych.",
     "adv_kp_falling": "Kp spada przez ostatnie {h}h: {old:.1f}→{new:.1f} — trwa odbudowa po burzy. Wyższe pasma się odbudowują; 20m poprawia się.",
-    "adv_kp_stable": "Kp stabilny przez ostatnie {h}h na poziomie {kp:.1f} — warunki geomagnetyczne stabilne."
+    "adv_kp_stable": "Kp stabilny przez ostatnie {h}h na poziomie {kp:.1f} — warunki geomagnetyczne stabilne.",
+    "sat_zone_hdr": "🛰  Satelita w strefie QTH:",
+    "sat_zone_none": "—"
   },
   "solar_tips": {
     "sfi": [
