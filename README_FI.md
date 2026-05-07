@@ -1,8 +1,8 @@
-# 📡 HAMIOS v3.2
+# 📡 HAMIOS v3.3
 
 **LB-etenemis- ja DX-monitori Windowsille**
 
-> v3.2 — Täydellinen käyttöliittymäuudistus · Maailmankartta keskitettynä · DX-Spots koko korkeus -sarake · Gradienttikaistapalkit · Bz-kaavio omana paneelina · 14 kieltä ulkoisten pakettien kautta
+> v3.3 — Satelliittiseuranta jalanjälkipäällysteellä · Vakoilu-/numerosasemien tietokanta · Myrskyennusteen korjaus · Temaparannukset · Suorituskyky
 
 *Conceived by Frank van Dijke · Developed with Claude AI*
 
@@ -25,7 +25,7 @@ HAMIOS tarjoaa radioamatööreille reaaliaikaisen näkemyksen LB-etenemisestä, 
 - **Kutsutunnusprefiksikerros** (~110 DXCC-kohdetta)
 - **Zoomaus/panorointi**: hiirenpyörä 1×–8×, klikkaa+vedä panoroimiseksi, oikeaklikki nollauksen
 - **Karttapäällysteet ryhmitelty** kartan alle:
-  - *Display:* Sun · Moon · Gray line · Aurora
+  - *Display:* Sun · Moon · Gray line · Aurora · Sat
   - *Data:* WSPR · Spots · CS · Locator
 
 ### 🛰️ Propagation Path Map
@@ -38,6 +38,24 @@ HAMIOS tarjoaa radioamatööreille reaaliaikaisen näkemyksen LB-etenemisestä, 
 ### 🌌 Aurora Ring Overlay
 - Magnetic aurora oval based on K-index (Feldstein/Holzworth, IGRF-2025)
 - **Colour by K-index**: green (K < 3) · yellow (K 3–5) · red (K ≥ 6)
+
+### 🛰 Satelliittiseuranta *(🛰 Sat-painike otsikossa)*
+- TLE-data ladattu **Celestrak**-palvelusta (Amateur / ISS / Weather / CubeSat)
+- **Kategoriasuodatin**: Kaikki · Amateur · ISS · Weather · CubeSat
+- Per satelliitti: vaihda **sijaintipiste** (●), **kiertorata** (~) ja **jalanjälki** kartalla
+- **Jalanjälki muuttuu vihreäksi** kun QTH on satelliitin peittoalueen sisällä
+- **Ilmoituspaneeli** näyttää satelliitit jotka ovat tällä hetkellä QTH:n yläpuolella elevaatiokulmalla
+- Ratareittien ajat näytetään paikallisessa ajassa (CEST / CET)
+- **↻ TLE**-painike rataelementtien manuaalista päivitystä varten
+- Välimuistissa `hamios_tle.json`
+
+### 🕵 Vakoilu-/numerosasemat *(🕵 Spy-painike otsikossa)*
+- Vieritettävä taulukko 24 tunnetusta numeroasemasta ja vakoiluradiosta
+- Sarakkeet: tila (● aktiivinen / historiallinen), nimi, maa, taajuudet, tila
+- **Lajiteltavat sarakkeet** — napsauta otsikkoa lajitellaksesi; napsauta uudelleen kääntääksesi
+- **Suodatin** aktiivinen/inaktiivinen tilan ja vapaan tekstihaun mukaan (nimi, maa, taajuus)
+- **Vie hiiri** rivin päälle nähdäksesi täydellinen kuvaus + lähetysaikataulu
+- Datatiedosto: `hamios_spy_stations.json` (muokattava)
 
 ### 🔵 WSPR / PSKReporter Spots on Map
 - Live propagation paths from **wspr.rocks** (WSPR) and **pskreporter.info** (FT8/FT4)
@@ -79,6 +97,7 @@ HAMIOS tarjoaa radioamatööreille reaaliaikaisen näkemyksen LB-etenemisestä, 
 |-------------|---------|-------------|
 | ⚠️ K-index storm | Checkbox + threshold (1–9) | Alert when K rises above threshold |
 | 📡 Band open | Checkbox + threshold (10–90 %) | Alert when band opens |
+| 🛰 Satelliitti QTH:n yläpuolella | Aina aktiivinen | Näyttää mitkä valitut satelliitit ovat QTH:n yläpuolella elevaatiokulmalla |
 
 Thresholds are saved to `HAMIOS.ini`.
 
@@ -145,7 +164,7 @@ Thresholds are saved to `HAMIOS.ini`.
 
 ```
 ┌─────────────────────────────────────────────────────────────────────────┐
-│ HEADER  (title · exit · CAT · interval · lang · QTH · theme · time)     │
+│ HEADER  (title · exit · CAT · interval · lang · QTH · theme · Sat · Spy · time) │
 ├──────────┬──────────────────────────────────┬────────────┬──────────────┤
 │  Solar   │      World Map (central)         │    HF      │              │
 │ Ionosph. │      380 px tall, zoom/pan       │    Band    │   DX Spots   │
@@ -272,7 +291,6 @@ LUF  = (3.5 + K × 0.8) × auroral-factor / 10^(SNR/20)
 - Stabilise CAT interface (Yaesu/Kenwood/Icom)
 - SDR integration
 - Logging connection (ADIF/WSJTX)
-- Satellite tracking
 
 ---
 

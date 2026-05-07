@@ -7,7 +7,7 @@
 
 **HAM radio propagation and DX monitor for Windows**
 
-> v3.2 — Complete interface redesign · World map centred · Full-height DX Spots column · Gradient band bars in band colours · Bz chart as dedicated panel · 14 languages via external language packs
+> v3.3 — Satellite tracking with footprint overlay · Spy/Numbers Stations database · Storm forecast fix · Theme improvements · Performance
 
 *Conceived by Frank van Dijke · Developed with Claude AI*
 
@@ -30,7 +30,7 @@ HAMIOS gives radio amateurs real-time insight into HF propagation, solar activit
 - **Callsign prefix layer** (~110 DXCC entities)
 - **Zoom/pan**: scroll wheel 1×–8×, click+drag to pan, right-click to reset
 - **Map overlays grouped** below the map:
-  - *Display:* Sun · Moon · Gray line · Aurora
+  - *Display:* Sun · Moon · Gray line · Aurora · Sat
   - *Data:* WSPR · Spots · CS · Locator
 
 ### 🛰️ Propagation Path Map
@@ -43,6 +43,24 @@ HAMIOS gives radio amateurs real-time insight into HF propagation, solar activit
 ### 🌌 Aurora Ring Overlay
 - Magnetic aurora oval based on K-index (Feldstein/Holzworth, IGRF-2025)
 - **Colour by K-index**: green (K < 3) · yellow (K 3–5) · red (K ≥ 6)
+
+### 🛰 Satellite Tracking *(🛰 Sat button in header)*
+- TLE data downloaded from **Celestrak** (Amateur / ISS / Weather / CubeSat)
+- **Category filter**: All · Amateur · ISS · Weather · CubeSat
+- Per satellite: toggle **position dot** (●), **orbital path** (~) and **footprint** on map
+- **Footprint turns green** when your QTH is inside the satellite's coverage zone
+- **Notifications panel** shows satellites currently overhead with elevation angle
+- Orbital path times displayed in local time (CEST / CET)
+- **↻ TLE** button for on-demand refresh of orbital elements
+- Cached in `hamios_tle.json`
+
+### 🕵 Spy / Numbers Stations *(🕵 Spy button in header)*
+- Scrollable table of 24 known numbers stations and spy radio stations
+- Columns: status (● active / historical), name, country, frequencies, mode
+- **Sortable columns** — click any header to sort; click again to reverse
+- **Filter** by active/inactive status and free-text search (name, country, frequency)
+- **Hover** over a row to see full description + broadcast schedule
+- Data file: `hamios_spy_stations.json` (editable)
 
 ### 🔵 WSPR / PSKReporter Spots on Map
 - Live propagation paths from **wspr.rocks** (WSPR) and **pskreporter.info** (FT8/FT4)
@@ -84,6 +102,7 @@ HAMIOS gives radio amateurs real-time insight into HF propagation, solar activit
 |-------------|---------|-------------|
 | ⚠️ K-index storm | Checkbox + threshold (1–9) | Alert when K rises above threshold |
 | 📡 Band open | Checkbox + threshold (10–90 %) | Alert when band opens |
+| 🛰 Satellite overhead | Always active | Shows which selected satellites are above QTH with elevation |
 
 Thresholds are saved to `HAMIOS.ini`.
 
@@ -150,7 +169,7 @@ Thresholds are saved to `HAMIOS.ini`.
 
 ```
 ┌─────────────────────────────────────────────────────────────────────────┐
-│ HEADER  (title · exit · CAT · interval · lang · QTH · theme · time)     │
+│ HEADER  (title · exit · CAT · interval · lang · QTH · theme · Sat · Spy · time) │
 ├──────────┬──────────────────────────────────┬────────────┬──────────────┤
 │  Solar   │      World Map (central)         │    HF      │              │
 │ Ionosph. │      380 px tall, zoom/pan       │    Band    │   DX Spots   │
@@ -277,7 +296,6 @@ LUF  = (3.5 + K × 0.8) × auroral-factor / 10^(SNR/20)
 - Stabilise CAT interface (Yaesu/Kenwood/Icom)
 - SDR integration
 - Logging connection (ADIF/WSJTX)
-- Satellite tracking
 
 ---
 

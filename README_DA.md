@@ -1,8 +1,8 @@
-# 📡 HAMIOS v3.2
+# 📡 HAMIOS v3.3
 
 **KV udbrednings- og DX-monitor til Windows**
 
-> v3.2 — Komplet grænsefladeomdesign · Verdenskort centreret · DX-Spots fuld højde kolonne · Gradientbåndstænger · Bz-diagram dedikeret panel · 14 sprog via eksterne pakker
+> v3.3 — Satellitsporing med fodaftryks-overlay · Spion-/talstationsdatabase · Stormprognose-rettelse · Temaforbedringer · Ydeevne
 
 *Conceived by Frank van Dijke · Developed with Claude AI*
 
@@ -25,7 +25,7 @@ HAMIOS giver radioamatører realtidsindsigt i KV-udbredning, solaktivitet og DX-
 - **Kaldesignalspræfiks-lag** (~110 DXCC-enheder)
 - **Zoom/panorering**: mushjul 1×–8×, klik+træk for panorering, højreklik for nulstilling
 - **Kortoverlejringer grupperet** under kortet:
-  - *Display:* Sun · Moon · Gray line · Aurora
+  - *Display:* Sun · Moon · Gray line · Aurora · Sat
   - *Data:* WSPR · Spots · CS · Locator
 
 ### 🛰️ Propagation Path Map
@@ -38,6 +38,24 @@ HAMIOS giver radioamatører realtidsindsigt i KV-udbredning, solaktivitet og DX-
 ### 🌌 Aurora Ring Overlay
 - Magnetic aurora oval based on K-index (Feldstein/Holzworth, IGRF-2025)
 - **Colour by K-index**: green (K < 3) · yellow (K 3–5) · red (K ≥ 6)
+
+### 🛰 Satellitsporing *(🛰 Sat-knap i overskrift)*
+- TLE-data downloadet fra **Celestrak** (Amateur / ISS / Weather / CubeSat)
+- **Kategorifilter**: Alle · Amateur · ISS · Weather · CubeSat
+- Per satellit: slå **positionspunkt** (●), **kredsløbssti** (~) og **fodaftryk** til/fra på kortet
+- **Fodaftrykket bliver grønt** når QTH er inden for satellittens dækningszone
+- **Notifikationspanel** viser satellitter der aktuelt er over QTH med elevationsvinkel
+- Banestier vist i lokal tid (CEST / CET)
+- **↻ TLE**-knap til manuel opdatering af baneelementer
+- Cachet i `hamios_tle.json`
+
+### 🕵 Spion-/talstationer *(🕵 Spy-knap i overskrift)*
+- Rulbar tabel med 24 kendte talstationer og spionradiostationer
+- Kolonner: status (● aktiv / historisk), navn, land, frekvenser, mode
+- **Sorterbare kolonner** — klik på en kolonneoverskrift for at sortere; klik igen for at vende om
+- **Filter** efter aktiv/inaktiv status og fritekstsøgning (navn, land, frekvens)
+- **Hold musen** over en række for at se fuld beskrivelse + udsendelsesplan
+- Datafil: `hamios_spy_stations.json` (redigerbar)
 
 ### 🔵 WSPR / PSKReporter Spots on Map
 - Live propagation paths from **wspr.rocks** (WSPR) and **pskreporter.info** (FT8/FT4)
@@ -79,6 +97,7 @@ HAMIOS giver radioamatører realtidsindsigt i KV-udbredning, solaktivitet og DX-
 |-------------|---------|-------------|
 | ⚠️ K-index storm | Checkbox + threshold (1–9) | Alert when K rises above threshold |
 | 📡 Band open | Checkbox + threshold (10–90 %) | Alert when band opens |
+| 🛰 Satellit over QTH | Altid aktiv | Viser hvilke valgte satellitter er over QTH med elevationsvinkel |
 
 Thresholds are saved to `HAMIOS.ini`.
 
@@ -145,7 +164,7 @@ Thresholds are saved to `HAMIOS.ini`.
 
 ```
 ┌─────────────────────────────────────────────────────────────────────────┐
-│ HEADER  (title · exit · CAT · interval · lang · QTH · theme · time)     │
+│ HEADER  (title · exit · CAT · interval · lang · QTH · theme · Sat · Spy · time) │
 ├──────────┬──────────────────────────────────┬────────────┬──────────────┤
 │  Solar   │      World Map (central)         │    HF      │              │
 │ Ionosph. │      380 px tall, zoom/pan       │    Band    │   DX Spots   │
@@ -272,7 +291,6 @@ LUF  = (3.5 + K × 0.8) × auroral-factor / 10^(SNR/20)
 - Stabilise CAT interface (Yaesu/Kenwood/Icom)
 - SDR integration
 - Logging connection (ADIF/WSJTX)
-- Satellite tracking
 
 ---
 

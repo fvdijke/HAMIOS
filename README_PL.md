@@ -1,8 +1,8 @@
-# 📡 HAMIOS v3.2
+# 📡 HAMIOS v3.3
 
 **Monitor propagacji KF i DX dla Windows**
 
-> v3.2 — Całkowity przeprojekt interfejsu · Mapa świata wycentrowana · Kolumna DX Spots pełnej wysokości · Paski pasma z gradientem · Wykres Bz jako dedykowany panel · 14 języków przez zewnętrzne pakiety
+> v3.3 — Śledzenie satelitów z nakładką zasięgu · Baza danych stacji szpiegowskich/liczbowych · Naprawa prognozy burzy · Ulepszenia motywów · Wydajność
 
 *Conceived by Frank van Dijke · Developed with Claude AI*
 
@@ -25,7 +25,7 @@ HAMIOS zapewnia krótkofalowcom wgląd w czasie rzeczywistym w propagację KF, a
 - **Warstwa prefiksów znaków wywoławczych** (~110 podmiotów DXCC)
 - **Zoom/panoramowanie**: kółko myszy 1×–8×, klik+przeciągnij, prawy klik aby zresetować
 - **Nakładki mapy pogrupowane** poniżej mapy:
-  - *Display:* Sun · Moon · Gray line · Aurora
+  - *Display:* Sun · Moon · Gray line · Aurora · Sat
   - *Data:* WSPR · Spots · CS · Locator
 
 ### 🛰️ Propagation Path Map
@@ -38,6 +38,24 @@ HAMIOS zapewnia krótkofalowcom wgląd w czasie rzeczywistym w propagację KF, a
 ### 🌌 Aurora Ring Overlay
 - Magnetic aurora oval based on K-index (Feldstein/Holzworth, IGRF-2025)
 - **Colour by K-index**: green (K < 3) · yellow (K 3–5) · red (K ≥ 6)
+
+### 🛰 Śledzenie satelitów *(przycisk 🛰 Sat w nagłówku)*
+- Dane TLE pobrane z **Celestrak** (Amateur / ISS / Weather / CubeSat)
+- **Filtr kategorii**: Wszystkie · Amateur · ISS · Weather · CubeSat
+- Dla każdego satelity: przełączaj **punkt pozycji** (●), **ścieżkę orbitalną** (~) i **zasięg** na mapie
+- **Zasięg staje się zielony** gdy QTH jest wewnątrz strefy pokrycia satelity
+- **Panel powiadomień** pokazuje satelity aktualnie nad QTH z kątem elewacji
+- Czasy ścieżek w czasie lokalnym (CEST / CET)
+- Przycisk **↻ TLE** do ręcznego odświeżania elementów orbitalnych
+- Buforowane w `hamios_tle.json`
+
+### 🕵 Stacje szpiegowskie / liczbowe *(przycisk 🕵 Spy w nagłówku)*
+- Przewijalna tabela 24 znanych stacji liczbowych i szpiegowskich stacji radiowych
+- Kolumny: status (● aktywny / historyczny), nazwa, kraj, częstotliwości, tryb
+- **Sortowalne kolumny** — kliknij nagłówek aby posortować; kliknij ponownie aby odwrócić
+- **Filtr** według statusu aktywny/nieaktywny i wyszukiwanie tekstowe (nazwa, kraj, częstotliwość)
+- **Najedź kursorem** na wiersz aby zobaczyć pełny opis + harmonogram emisji
+- Plik danych: `hamios_spy_stations.json` (edytowalny)
 
 ### 🔵 WSPR / PSKReporter Spots on Map
 - Live propagation paths from **wspr.rocks** (WSPR) and **pskreporter.info** (FT8/FT4)
@@ -79,6 +97,7 @@ HAMIOS zapewnia krótkofalowcom wgląd w czasie rzeczywistym w propagację KF, a
 |-------------|---------|-------------|
 | ⚠️ K-index storm | Checkbox + threshold (1–9) | Alert when K rises above threshold |
 | 📡 Band open | Checkbox + threshold (10–90 %) | Alert when band opens |
+| 🛰 Satelita nad QTH | Zawsze aktywny | Pokazuje które wybrane satelity są nad QTH z kątem elewacji |
 
 Thresholds are saved to `HAMIOS.ini`.
 
@@ -145,7 +164,7 @@ Thresholds are saved to `HAMIOS.ini`.
 
 ```
 ┌─────────────────────────────────────────────────────────────────────────┐
-│ HEADER  (title · exit · CAT · interval · lang · QTH · theme · time)     │
+│ HEADER  (title · exit · CAT · interval · lang · QTH · theme · Sat · Spy · time) │
 ├──────────┬──────────────────────────────────┬────────────┬──────────────┤
 │  Solar   │      World Map (central)         │    HF      │              │
 │ Ionosph. │      380 px tall, zoom/pan       │    Band    │   DX Spots   │
@@ -272,7 +291,6 @@ LUF  = (3.5 + K × 0.8) × auroral-factor / 10^(SNR/20)
 - Stabilise CAT interface (Yaesu/Kenwood/Icom)
 - SDR integration
 - Logging connection (ADIF/WSJTX)
-- Satellite tracking
 
 ---
 

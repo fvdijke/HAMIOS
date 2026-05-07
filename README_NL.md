@@ -1,9 +1,9 @@
-# 📡 HAMIOS v3.2
+# 📡 HAMIOS v3.3
 
 **HAM-radio propagatie- en DX-monitor voor Windows**
 <img width="2200" height="1521" alt="HAMIOS v3 0" src="https://github.com/user-attachments/assets/ab39f20a-67c5-4819-8b32-96b8fe07e36e" />
 
-> v3.2 — Volledig nieuw interface-ontwerp · Wereldkaart centraal · DX Spots volledige-hoogte kolom · Gradientbalken met bandkleuren · Bz-grafiek als eigen paneel · 14 talen via externe taalpakketten
+> v3.3 — Satelliet-tracking met footprint overlay · Spy/Numbers Stations-database · Stormvoorspelling fix · Thema-verbeteringen · Prestaties
 
 *Bedacht door Frank van Dijke · Ontwikkeld met Claude AI*
 
@@ -26,7 +26,7 @@ HAMIOS geeft radioamateurs realtime inzicht in HF-propagatie, zonne-activiteit e
 - **Callsign-prefix laag** (~110 DXCC-entiteiten)
 - **Zoom/pan**: muiswiel 1×–8×, klik+sleep om te pannen, rechts om te resetten
 - **Kaart-overlays gegroepeerd** onder de kaart:
-  - *Weergave:* Zon · Maan · Graylijn · Aurora
+  - *Weergave:* Zon · Maan · Graylijn · Aurora · Sat
   - *Data:* WSPR · Spots · CS · Locator
 
 ### 🛰️ Propagatiepadkaart
@@ -39,6 +39,24 @@ HAMIOS geeft radioamateurs realtime inzicht in HF-propagatie, zonne-activiteit e
 ### 🌌 Aurora-ring overlay
 - Magnetische aurora-ovaal op basis van de K-index (Feldstein/Holzworth, IGRF-2025)
 - **Kleur op K-index**: groen (K < 3) · geel (K 3–5) · rood (K ≥ 6)
+
+### 🛰 Satelliet-tracking *(🛰 Sat-knop in header)*
+- TLE-data van **Celestrak** (Amateur / ISS / Weather / CubeSat)
+- **Categorie-filter**: Alle · Amateur · ISS · Weather · CubeSat
+- Per satelliet: **positiestip** (●), **baanpad** (~) en **footprint** op kaart
+- **Footprint kleurt groen** als het QTH binnen de dekkingszone valt
+- **Meldingen-paneel** toont satellieten boven het QTH met elevatie-hoek
+- Padtijden in lokale tijd (CEST / CET)
+- **↻ TLE**-knop voor handmatige verversing van baanelementen
+- Gecached in `hamios_tle.json`
+
+### 🕵 Spy / Numbers Stations *(🕵 Spy-knop in header)*
+- Scrollbare tabel met 24 bekende nummerstations en spy-radiostations
+- Kolommen: status (● actief / historisch), naam, land, frequenties, mode
+- **Sorteerbare kolommen** — klik kolomkop om te sorteren; nogmaals klikken draait om
+- **Filter** op actief/inactief en vrije-tekst zoekveld (naam, land, frequentie)
+- **Hover** over een rij voor volledige beschrijving + uitzendschema
+- Databestand: `hamios_spy_stations.json` (bewerkbaar)
 
 ### 🔵 WSPR / PSKReporter spots op kaart
 - Live propagatiepaden van **wspr.rocks** (WSPR) en **pskreporter.info** (FT8/FT4)
@@ -80,6 +98,7 @@ HAMIOS geeft radioamateurs realtime inzicht in HF-propagatie, zonne-activiteit e
 |-------------|-----------|--------------|
 | ⚠️ K-index storm | Checkbox + drempel (1–9) | Melding bij stijging boven drempel |
 | 📡 Band geopend | Checkbox + drempel (10–90 %) | Melding als band opengaat |
+| 🛰 Satelliet boven QTH | Altijd actief | Geeft aan welke geselecteerde satellieten boven het QTH zijn met elevatie |
 
 Drempelwaarden worden opgeslagen in `HAMIOS.ini`.
 
@@ -146,7 +165,7 @@ Drempelwaarden worden opgeslagen in `HAMIOS.ini`.
 
 ```
 ┌─────────────────────────────────────────────────────────────────────────┐
-│ HEADER  (titel · exit · CAT · interval · taal · QTH · thema · tijd)     │
+│ HEADER  (titel · exit · CAT · interval · taal · QTH · thema · Sat · Spy · tijd) │
 ├──────────┬──────────────────────────────────┬────────────┬──────────────┤
 │  Solar   │      Wereldkaart (centraal)      │    HF      │              │
 │ Ionosfeer│      380 px hoog, zoom/pan       │    Band    │   DX Spots   │
@@ -273,7 +292,6 @@ LUF  = (3.5 + K × 0.8) × auroraal-factor / 10^(SNR/20)
 - CAT-interface stabiliseren (Yaesu/Kenwood/Icom)
 - SDR-integratie
 - Logging-koppeling (ADIF/WSJTX)
-- Satelliet tracking
 
 ---
 
