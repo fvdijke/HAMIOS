@@ -244,7 +244,23 @@
     "map_spots_lbl": "スポット",
     "map_cs_lbl": "CS",
     "map_iono_lbl": "電離層",
-    "map_itu_lbl": "ITU"
+    "map_itu_lbl": "ITU",
+    "theme_lbl": "テーマ:",
+    "sw_speed_lbl": "太陽風:",
+    "settings_btn": "⚙  設定",
+    "settings_title": "⚙  設定",
+    "settings_qth": "QTH",
+    "settings_iface": "インターフェース",
+    "close_lbl": "閉じる",
+    "panels_btn": "▦  パネル",
+    "settings_layout": "レイアウト",
+    "settings_reset_layout": "↺  レイアウトリセット",
+    "settings_save_default": "💾  デフォルトとして保存",
+    "settings_profiles": "プロファイル",
+    "settings_new_profile": "＋  新しいプロファイル...",
+    "settings_load": "▶  読み込む",
+    "settings_overwrite": "↻  上書き",
+    "settings_delete": "🗑  削除"
   },
   "solar_tips": {
     "sfi": [

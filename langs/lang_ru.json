@@ -244,7 +244,23 @@
     "map_spots_lbl": "Споты",
     "map_cs_lbl": "CS",
     "map_iono_lbl": "Ионо",
-    "map_itu_lbl": "МСЭ"
+    "map_itu_lbl": "МСЭ",
+    "theme_lbl": "Тема:",
+    "sw_speed_lbl": "СВ:",
+    "settings_btn": "⚙  Настройки",
+    "settings_title": "⚙  Настройки",
+    "settings_qth": "QTH",
+    "settings_iface": "Интерфейс",
+    "close_lbl": "Закрыть",
+    "panels_btn": "▦  Панели",
+    "settings_layout": "Макет",
+    "settings_reset_layout": "↺  Сбросить макет",
+    "settings_save_default": "💾  Сохранить по умолчанию",
+    "settings_profiles": "Профили",
+    "settings_new_profile": "＋  Новый профиль...",
+    "settings_load": "▶  Загрузить",
+    "settings_overwrite": "↻  Перезаписать",
+    "settings_delete": "🗑  Удалить"
   },
   "solar_tips": {
     "sfi": [

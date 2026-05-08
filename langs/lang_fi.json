@@ -244,7 +244,23 @@
     "map_spots_lbl": "Spotit",
     "map_cs_lbl": "CS",
     "map_iono_lbl": "Iono",
-    "map_itu_lbl": "ITU"
+    "map_itu_lbl": "ITU",
+    "theme_lbl": "Teema:",
+    "sw_speed_lbl": "AW:",
+    "settings_btn": "⚙  Asetukset",
+    "settings_title": "⚙  Asetukset",
+    "settings_qth": "QTH",
+    "settings_iface": "Käyttöliittymä",
+    "close_lbl": "Sulje",
+    "panels_btn": "▦  Paneelit",
+    "settings_layout": "Asettelu",
+    "settings_reset_layout": "↺  Palauta asettelu",
+    "settings_save_default": "💾  Tallenna oletukseksi",
+    "settings_profiles": "Profiilit",
+    "settings_new_profile": "＋  Uusi profiili...",
+    "settings_load": "▶  Lataa",
+    "settings_overwrite": "↻  Korvaa",
+    "settings_delete": "🗑  Poista"
   },
   "solar_tips": {
     "sfi": [

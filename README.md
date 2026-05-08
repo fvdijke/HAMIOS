@@ -1,4 +1,4 @@
-# 📡 HAMIOS v3.4
+# 📡 HAMIOS v4.0.1
 
 <img width="2203" height="1617" alt="HAMIOS v3 0-a" src="https://github.com/user-attachments/assets/e7616442-9e7e-4b33-ac90-7741f0ec8797" />
 -  
@@ -6,7 +6,7 @@
      
 **HAM radio propagation and DX monitor for Windows**
 
-> v3.4 — Satellite tracking with footprint overlay · Spy/Numbers Stations database · Storm forecast fix · Theme improvements · Performance
+> v4.0.1 — Draggable resizable panels · Unified Settings dialog · Performance optimizations · Solar history chart
 
 *Conceived by Frank van Dijke · Developed with Claude AI*
 
@@ -42,6 +42,15 @@ HAMIOS gives radio amateurs real-time insight into HF propagation, solar activit
 ### 🌌 Aurora Ring Overlay
 - Magnetic aurora oval based on K-index (Feldstein/Holzworth, IGRF-2025)
 - **Colour by K-index**: green (K < 3) · yellow (K 3–5) · red (K ≥ 6)
+
+### 🖥️ Panel System *(v4.0.1)*
+- **11 freely draggable and resizable panels** placed on a free desktop canvas
+- Each panel has an amber 1px border, title bar with ✕ close button, and ◢ resize handle
+- **Snap-to-grid** (2px) on drag/resize release for clean alignment
+- Panels: HF Band Reliability · World Map · Solar/Ionosphere · Alerts · Band Schedule · Band History · Kp 48h · Bz 24h · X-ray 24h · DX Spots · Propagation Advice
+- **⚙ Settings dialog** contains all configuration: QTH · Language · Theme · Tooltips · Ticker · DST · Panel visibility · Layout management
+- **Layout presets**: save/load/overwrite/delete named profiles stored in `hamios_layouts.json`
+- **Save as default**: persists current layout as the startup layout
 
 ### 🛰 Satellite Tracking *(🛰 Sat button in header)*
 - TLE data downloaded from **Celestrak** (Amateur / ISS / Weather / CubeSat)
@@ -160,28 +169,40 @@ Thresholds are saved to `HAMIOS.ini`.
 - **Tooltips** with explanation per solar parameter
 - **Auto-refresh**: Off / 30 s / 1 min / 5 min / 10 min / 30 min / 1 hour
 - **Scrolling ticker** with current propagation tips
+- **Draggable panel system**: freely arrange and resize all panels
+- **Layout presets**: save and switch between custom panel arrangements
 - All settings saved to `HAMIOS.ini`
 
 ---
 
-## 🖥️ Layout (v3.0)
+## 🖥️ Layout (v4.0.1) — Free-floating panels
 
 ```
 ┌─────────────────────────────────────────────────────────────────────────┐
-│ HEADER  (title · exit · CAT · interval · lang · QTH · theme · Sat · Spy · time) │
-├──────────┬──────────────────────────────────┬────────────┬──────────────┤
-│  Solar   │      World Map (central)         │    HF      │              │
-│ Ionosph. │      380 px tall, zoom/pan       │    Band    │   DX Spots   │
-│  200 px  │   Display: Sun Moon Graylijn     │ Reliability│  (full       │
-│          │   Data: WSPR Spots CS Locator    │   420 px   │  height)     │
-│          ├──────────────────────────────────┤            │   360 px     │
-│          │  Schedule │  Band Hist  │  Bz   │            │              │
-│          │   (1/3)   │    (1/3)    │ (1/3) │            │              │
-├──────────┴──────────────────────────────────┴────────────┤              │
-│              Propagation Analysis & Advice                │              │
-├───────────────────────────────────────────────────────────┴──────────────┤
-│ TICKER                                                                    │
-└──────────────────────────────────────────────────────────────────────────┘
+│  ⚙ Settings   (QTH · Language · Theme · Tooltips · Ticker · DST · Panels · Layouts) │
+├─────────────────────────────────────────────────────────────────────────┤
+│                                                                         │
+│  ┌──────────────┐  ┌──────────────────────────────┐  ┌──────────────┐  │
+│  │Solar/Ionosph.│  │        World Map         ✕   │  │ HF Band  ✕  │  │
+│  │     ✕    ◢  │  │   zoom/pan · overlays     ◢  │  │Reliability◢ │  │
+│  └──────────────┘  └──────────────────────────────┘  └──────────────┘  │
+│                                                                         │
+│  ┌─────────────┐  ┌─────────────┐  ┌──────────┐  ┌──────────────────┐  │
+│  │Band Schedule│  │Band History │  │  Kp 48h  │  │    DX Spots  ✕  │  │
+│  │    ✕    ◢  │  │    ✕    ◢  │  │  ✕    ◢  │  │             ◢  │  │
+│  └─────────────┘  └─────────────┘  └──────────┘  └──────────────────┘  │
+│                                                                         │
+│  ┌──────────┐  ┌──────────┐  ┌──────────────────────────────────────┐  │
+│  │  Bz 24h  │  │ X-ray 24h│  │     Propagation Advice           ✕  │  │
+│  │  ✕    ◢  │  │  ✕    ◢  │  │                               ◢  │  │
+│  └──────────┘  └──────────┘  └──────────────────────────────────────┘  │
+│                                                                         │
+│  ┌─────────────────────────────────────────────────────────────────┐   │
+│  │  Alerts  ✕  ◢                                                   │   │
+│  └─────────────────────────────────────────────────────────────────┘   │
+│                                                                         │
+│  All panels: amber border · ✕ close · ◢ resize · snap-to-grid (2px)   │
+└─────────────────────────────────────────────────────────────────────────┘
 ```
 
 ---
@@ -252,6 +273,18 @@ pyinstaller HAMIOS.spec
 
 ---
 
+## 📁 Data Files
+
+| File | Contents |
+|------|----------|
+| `HAMIOS.ini` | All user settings (QTH, theme, language, alert thresholds, …) |
+| `hamios_layouts.json` | Panel layout presets |
+| `hamios_tle.json` | Cached TLE orbital elements for satellite tracking |
+| `hamios_spy_stations.json` | Spy / numbers station database (editable) |
+| `langs/*.json` | Language packs |
+
+---
+
 ## 🔭 Propagation Model
 
 ```
@@ -286,7 +319,7 @@ LUF  = (3.5 + K × 0.8) × auroral-factor / 10^(SNR/20)
 | Python | 3.10 | 3.12+ |
 | Internet | Required (data feeds) | — |
 
-> v3.0 makes best use of a wide display (≥ 1768 px) with the DX column as an additive right panel. On narrower screens the window scales proportionally and all panels remain usable.
+> v4.0.1 uses a free-floating panel canvas. Arrange panels freely on any screen size. A wide display (≥ 1920 px) provides the most comfortable workspace.
 
 ---
 

@@ -1,9 +1,9 @@
-# 📡 HAMIOS v3.3
+# 📡 HAMIOS v4.0.1
 
 **HAM-radio propagatie- en DX-monitor voor Windows**
 <img width="2200" height="1521" alt="HAMIOS v3 0" src="https://github.com/user-attachments/assets/ab39f20a-67c5-4819-8b32-96b8fe07e36e" />
 
-> v3.3 — Satelliet-tracking met footprint overlay · Spy/Numbers Stations-database · Stormvoorspelling fix · Thema-verbeteringen · Prestaties
+> v4.0.1 — Versleepbare panelen · Instellingen-dialoog · Prestatie-verbeteringen · Solar geschiedenissgrafiek
 
 *Bedacht door Frank van Dijke · Ontwikkeld met Claude AI*
 
@@ -39,6 +39,15 @@ HAMIOS geeft radioamateurs realtime inzicht in HF-propagatie, zonne-activiteit e
 ### 🌌 Aurora-ring overlay
 - Magnetische aurora-ovaal op basis van de K-index (Feldstein/Holzworth, IGRF-2025)
 - **Kleur op K-index**: groen (K < 3) · geel (K 3–5) · rood (K ≥ 6)
+
+### 🖥️ Paneel-systeem *(v4.0.1)*
+- **11 vrij versleepbare en aanpasbare panelen** op een vrij desktop-canvas
+- Elk paneel heeft een amber 1px rand, titelbalk met ✕-knop en ◢ resize-handle
+- **Snap-to-grid** (2px) bij loslaten voor nette uitlijning
+- Panelen: HF Betrouwbaarheid · Wereldkaart · Solar/Ionosfeer · Meldingen · Band Schema · Band Verloop · Kp 48u · Bz 24u · X-straling 24u · DX Spots · Propagatie Advies
+- **⚙ Instellingen-dialoog** bevat alle configuratie: QTH · Taal · Thema · Tooltips · Ticker · Zomertijd · Paneel zichtbaarheid · Indeling beheer
+- **Indeling-profielen**: opslaan/laden/overschrijven/verwijderen van named profielen in `hamios_layouts.json`
+- **Opslaan als standaard**: bewaart de huidige indeling als startindeling
 
 ### 🛰 Satelliet-tracking *(🛰 Sat-knop in header)*
 - TLE-data van **Celestrak** (Amateur / ISS / Weather / CubeSat)
@@ -157,28 +166,40 @@ Drempelwaarden worden opgeslagen in `HAMIOS.ini`.
 - **Tooltips** met uitleg per solar-parameter
 - **Automatische refresh**: Uit / 30 s / 1 min / 5 min / 10 min / 30 min / 1 uur
 - **Scrollende ticker** met actuele propagatietips
+- **Versleepbaar paneelsysteem**: rangschik en wijzig de grootte van alle panelen vrij
+- **Indeling-profielen**: opslaan en wisselen tussen aangepaste paneelindelingen
 - Alle instellingen opgeslagen in `HAMIOS.ini`
 
 ---
 
-## 🖥️ Layout (v3.0)
+## 🖥️ Layout (v4.0.1) — Vrij zwevende panelen
 
 ```
 ┌─────────────────────────────────────────────────────────────────────────┐
-│ HEADER  (titel · exit · CAT · interval · taal · QTH · thema · Sat · Spy · tijd) │
-├──────────┬──────────────────────────────────┬────────────┬──────────────┤
-│  Solar   │      Wereldkaart (centraal)      │    HF      │              │
-│ Ionosfeer│      380 px hoog, zoom/pan       │    Band    │   DX Spots   │
-│  200 px  │   Weergave: Zon Maan Graylijn    │  Betrouw-  │  (volledig   │
-│          │   Data: WSPR Spots CS Locator    │  baarheid  │   hoogte)    │
-│          ├──────────────────────────────────┤   420 px   │   360 px     │
-│          │  Schema  │  Bandverloop  │  Bz   │            │              │
-│          │  (1/3)   │    (1/3)      │ (1/3) │            │              │
-├──────────┴──────────────────────────────────┴────────────┤              │
-│              Propagatie-analyse & Advies                  │              │
-├───────────────────────────────────────────────────────────┴──────────────┤
-│ TICKER                                                                    │
-└──────────────────────────────────────────────────────────────────────────┘
+│  ⚙ Instellingen  (QTH · Taal · Thema · Tooltips · Ticker · Zomertijd · Panelen · Indelingen) │
+├─────────────────────────────────────────────────────────────────────────┤
+│                                                                         │
+│  ┌──────────────┐  ┌──────────────────────────────┐  ┌──────────────┐  │
+│  │Solar/Ionosfeer│ │        Wereldkaart        ✕  │  │ HF Band  ✕  │  │
+│  │     ✕    ◢  │  │   zoom/pan · overlays     ◢  │  │Betrouw.  ◢  │  │
+│  └──────────────┘  └──────────────────────────────┘  └──────────────┘  │
+│                                                                         │
+│  ┌─────────────┐  ┌─────────────┐  ┌──────────┐  ┌──────────────────┐  │
+│  │Band Schema  │  │Band Verloop │  │  Kp 48u  │  │    DX Spots  ✕  │  │
+│  │    ✕    ◢  │  │    ✕    ◢  │  │  ✕    ◢  │  │             ◢  │  │
+│  └─────────────┘  └─────────────┘  └──────────┘  └──────────────────┘  │
+│                                                                         │
+│  ┌──────────┐  ┌──────────────┐  ┌──────────────────────────────────┐  │
+│  │  Bz 24u  │  │X-straling 24u│  │     Propagatie Advies        ✕  │  │
+│  │  ✕    ◢  │  │  ✕       ◢  │  │                            ◢  │  │
+│  └──────────┘  └──────────────┘  └──────────────────────────────────┘  │
+│                                                                         │
+│  ┌─────────────────────────────────────────────────────────────────┐   │
+│  │  Meldingen  ✕  ◢                                                │   │
+│  └─────────────────────────────────────────────────────────────────┘   │
+│                                                                         │
+│  Alle panelen: amber rand · ✕ sluiten · ◢ formaat · snap-to-grid (2px) │
+└─────────────────────────────────────────────────────────────────────────┘
 ```
 
 ---
@@ -249,6 +270,18 @@ pyinstaller HAMIOS.spec
 
 ---
 
+## 📁 Gegevensbestanden
+
+| Bestand | Inhoud |
+|---------|--------|
+| `HAMIOS.ini` | Alle gebruikersinstellingen (QTH, thema, taal, drempelwaarden, …) |
+| `hamios_layouts.json` | Paneel-indeling profielen |
+| `hamios_tle.json` | Gecachte TLE-baanelementen voor satelliettracking |
+| `hamios_spy_stations.json` | Spy-/nummerstationsdatabase (bewerkbaar) |
+| `langs/*.json` | Taalpakketten |
+
+---
+
 ## 🔭 Propagatiemodel
 
 ```
@@ -283,7 +316,7 @@ LUF  = (3.5 + K × 0.8) × auroraal-factor / 10^(SNR/20)
 | Python | 3.10 | 3.12+ |
 | Internet | Vereist (data-feeds) | — |
 
-> v3.0 maakt optimaal gebruik van een breed scherm (≥ 1768 px) door de DX-kolom als additionele rechterkolom toe te voegen. Op smalle schermen wordt het venster proportioneel smaller maar blijven alle panelen bruikbaar.
+> v4.0.1 gebruikt een vrij zwevend paneelcanvas. Rangschik panelen vrij op elk schermformaat. Een breed scherm (≥ 1920 px) biedt de meest comfortabele werkruimte.
 
 ---
 

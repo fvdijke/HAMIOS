@@ -1,8 +1,8 @@
-# 📡 HAMIOS v3.3
+# 📡 HAMIOS v4.0.1
 
 **HAM-Funk Ausbreitung und DX-Monitor für Windows**
 
-> v3.3 — Satelliten-Tracking mit Footprint-Overlay · Spy/Zahlenstation-Datenbank · Sturm-Prognose-Fix · Thema-Verbesserungen · Leistung
+> v4.0.1 — Verschiebbare, skalierbare Panels · Einheitlicher Einstellungs-Dialog · Leistungsoptimierungen · Solar-Verlaufsdiagramm
 
 *Conceived by Frank van Dijke · Developed with Claude AI*
 
@@ -38,6 +38,15 @@ HAMIOS gibt Amateurfunkern Echtzeit-Einblick in KW-Ausbreitung, Solaraktivität 
 ### 🌌 Aurora Ring Overlay
 - Magnetic aurora oval based on K-index (Feldstein/Holzworth, IGRF-2025)
 - **Colour by K-index**: green (K < 3) · yellow (K 3–5) · red (K ≥ 6)
+
+### 🖥️ Panel-System *(v4.0.1)*
+- **11 frei verschiebbare und skalierbare Panels** auf einer freien Desktop-Leinwand
+- Jedes Panel hat einen bernsteinfarbenen 1px-Rand, Titelleiste mit ✕-Schaltfläche und ◢ Größenänderungs-Handle
+- **Einrasten am Raster** (2px) beim Loslassen nach Ziehen/Größenänderung für saubere Ausrichtung
+- Panels: KW-Band-Zuverlässigkeit · Weltkarte · Solar/Ionosphäre · Alarme · Band-Zeitplan · Band-Verlauf · Kp 48h · Bz 24h · Röntgen 24h · DX-Spots · Ausbreitungsempfehlung
+- **⚙ Einstellungs-Dialog** enthält alle Konfigurationen: QTH · Sprache · Thema · Tooltips · Ticker · Sommerzeit · Panel-Sichtbarkeit · Layout-Verwaltung
+- **Layout-Voreinstellungen**: Speichern/Laden/Überschreiben/Löschen benannter Profile in `hamios_layouts.json`
+- **Als Standard speichern**: speichert das aktuelle Layout als Startlayout
 
 ### 🛰 Satelliten-Tracking *(🛰 Sat-Schaltfläche im Header)*
 - TLE-Daten von **Celestrak** (Amateur / ISS / Weather / CubeSat)
@@ -150,34 +159,46 @@ Thresholds are saved to `HAMIOS.ini`.
 | ES | Español | PT | Português |
 | JA | 日本語 | RU | Русский |
 
-### ⚙️ Other
-- **Dynamic themes**: Midnight · DeepOcean · HighContrast
-- **System tray**: minimise to tray, tray notifications
-- **Tooltips** with explanation per solar parameter
-- **Auto-refresh**: Off / 30 s / 1 min / 5 min / 10 min / 30 min / 1 hour
-- **Scrolling ticker** with current propagation tips
-- All settings saved to `HAMIOS.ini`
+### ⚙️ Sonstiges
+- **Dynamische Themen**: Midnight · DeepOcean · HighContrast
+- **System-Tray**: In Tray minimieren, Tray-Benachrichtigungen
+- **Tooltips** mit Erklärung pro Solarparameter
+- **Auto-Aktualisierung**: Aus / 30 s / 1 min / 5 min / 10 min / 30 min / 1 Stunde
+- **Scrollender Ticker** mit aktuellen Ausbreitungstipps
+- **Verschiebbares Panel-System**: alle Panels frei anordnen und skalieren
+- **Layout-Voreinstellungen**: zwischen benutzerdefinierten Panel-Anordnungen speichern und wechseln
+- Alle Einstellungen in `HAMIOS.ini` gespeichert
 
 ---
 
-## 🖥️ Layout (v3.0)
+## 🖥️ Layout (v4.0.1) — Frei schwebende Panels
 
 ```
 ┌─────────────────────────────────────────────────────────────────────────┐
-│ HEADER  (title · exit · CAT · interval · lang · QTH · theme · Sat · Spy · time) │
-├──────────┬──────────────────────────────────┬────────────┬──────────────┤
-│  Solar   │      World Map (central)         │    HF      │              │
-│ Ionosph. │      380 px tall, zoom/pan       │    Band    │   DX Spots   │
-│  200 px  │   Display: Sun Moon Graylijn     │ Reliability│  (full       │
-│          │   Data: WSPR Spots CS Locator    │   420 px   │  height)     │
-│          ├──────────────────────────────────┤            │   360 px     │
-│          │  Schedule │  Band Hist  │  Bz   │            │              │
-│          │   (1/3)   │    (1/3)    │ (1/3) │            │              │
-├──────────┴──────────────────────────────────┴────────────┤              │
-│              Propagation Analysis & Advice                │              │
-├───────────────────────────────────────────────────────────┴──────────────┤
-│ TICKER                                                                    │
-└──────────────────────────────────────────────────────────────────────────┘
+│  ⚙ Einstellungen  (QTH · Sprache · Thema · Tooltips · Ticker · Sommerzeit · Panels · Layouts) │
+├─────────────────────────────────────────────────────────────────────────┤
+│                                                                         │
+│  ┌──────────────┐  ┌──────────────────────────────┐  ┌──────────────┐  │
+│  │Solar/Ionosph.│  │        Weltkarte          ✕  │  │  KW Band ✕  │  │
+│  │     ✕    ◢  │  │   zoom/pan · Überlag.     ◢  │  │Zuverlässig.◢│  │
+│  └──────────────┘  └──────────────────────────────┘  └──────────────┘  │
+│                                                                         │
+│  ┌─────────────┐  ┌─────────────┐  ┌──────────┐  ┌──────────────────┐  │
+│  │Band-Zeitplan│  │Band-Verlauf │  │  Kp 48h  │  │   DX-Spots   ✕  │  │
+│  │    ✕    ◢  │  │    ✕    ◢  │  │  ✕    ◢  │  │             ◢  │  │
+│  └─────────────┘  └─────────────┘  └──────────┘  └──────────────────┘  │
+│                                                                         │
+│  ┌──────────┐  ┌──────────┐  ┌──────────────────────────────────────┐  │
+│  │  Bz 24h  │  │ Röntg.24h│  │  Ausbreitungsempfehlung          ✕  │  │
+│  │  ✕    ◢  │  │  ✕    ◢  │  │                               ◢  │  │
+│  └──────────┘  └──────────┘  └──────────────────────────────────────┘  │
+│                                                                         │
+│  ┌─────────────────────────────────────────────────────────────────┐   │
+│  │  Alarme  ✕  ◢                                                   │   │
+│  └─────────────────────────────────────────────────────────────────┘   │
+│                                                                         │
+│  Alle Panels: Bernsteinrand · ✕ schließen · ◢ Größe · Raster (2px)    │
+└─────────────────────────────────────────────────────────────────────────┘
 ```
 
 ---
@@ -248,6 +269,18 @@ pyinstaller HAMIOS.spec
 
 ---
 
+## 📁 Datendateien
+
+| Datei | Inhalt |
+|-------|--------|
+| `HAMIOS.ini` | Alle Benutzereinstellungen (QTH, Thema, Sprache, Alarmschwellen, …) |
+| `hamios_layouts.json` | Panel-Layout-Voreinstellungen |
+| `hamios_tle.json` | Zwischengespeicherte TLE-Bahnelemente für Satelliten-Tracking |
+| `hamios_spy_stations.json` | Spion-/Zahlenstationen-Datenbank (bearbeitbar) |
+| `langs/*.json` | Sprachpakete |
+
+---
+
 ## 🔭 Ausbreitungsmodell
 
 ```
@@ -282,7 +315,7 @@ LUF  = (3.5 + K × 0.8) × auroral-factor / 10^(SNR/20)
 | Python | 3.10 | 3.12+ |
 | Internet | Required (data feeds) | — |
 
-> v3.0 makes best use of a wide display (≥ 1768 px) with the DX column as an additive right panel. On narrower screens the window scales proportionally and all panels remain usable.
+> v4.0.1 nutzt eine freie Panel-Leinwand. Ordnen Sie Panels auf jeder Bildschirmgröße frei an. Ein breites Display (≥ 1920 px) bietet den komfortabelsten Arbeitsbereich.
 
 ---
 

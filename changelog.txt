@@ -1,4 +1,108 @@
 ─────────────────────────────────────────────────────────────────────
+Change Log (4.0.1)  [in ontwikkeling]
+─────────────────────────────────────────────────────────────────────
+· 2026-05-08 21:01 CEST — Settings live vertaling bij taalwisseling.
+· 2026-05-08 20:57 CEST — Panelen-knop weg; alles in Instellingen-dialoog.
+  Layout + Profielen-sectie in settings. 8 nieuwe vertaalsleutels.
+· 2026-05-08 20:48 CEST — Settings-dialoog panelen + exit rechts + startup-fix.
+· 2026-05-08 20:45 CEST — Vertalingen: 8 nieuwe sleutels in alle 13 talen.
+  theme_lbl, sw_speed_lbl, settings_btn/title/qth/iface, close_lbl, panels_btn.
+· 2026-05-08 20:39 CEST — Header: ⚙ Instellingen-dialoog.
+  QTH, taal, thema, tooltips, ticker, zomertijd → _open_settings_dialog().
+  Help-knop rechts voor Fullscreen. Header compacter.
+· 2026-05-08 20:31 CEST — Performance: drag/resize versneld.
+  _active_drag class-var + after_idle batching in DraggablePanel.
+  _debounce() helper: alle 10 canvas-<Configure> bindings wachten 150ms.
+  Geen PIL-renders tijdens drag; hertekenen pas bij loslaten via on_release.
+  Line-ending fix: 8825 dubbele \r\r verwijderd.
+· 2026-05-08 20:21 CEST — Profiel overschrijven: "💾 Overschrijven" per profiel.
+· 2026-05-08 20:12 CEST — Dubbele iconen weg; snap-raster 10→2px.
+  Titelbalk toont alleen de vertaalde title (emoji al inbegrepen). _PANEL_GRID=2.
+
+· 2026-05-08 20:05 CEST — Layout-presets systeem:
+  "💾 Opslaan als standaard": huidige venster+panelen opgeslagen als __default__
+  in hamios_layouts.json; "↺ Reset layout" gebruikt deze standaard als die bestaat.
+  "👤 Profielen" submenu: profiel opslaan met naam, laden, verwijderen.
+  Venstergrootte en -positie worden meegenomen in elke preset.
+
+· 2026-05-08 19:57 CEST — Panelen-menu: vinkjes amber (fg/active="#FFA726",
+  selectcolor=BG_SURFACE) — consistent met de rest van de amber UI-stijl.
+
+· 2026-05-08 19:57 CEST — Meldingen-paneel + worldmap fix:
+  Meldingen (🔔 alerts) als apart DraggablePanel: K-drempel, band-drempel,
+  X-flare/PCA knoppen, satelliet-in-QTH-zone. Verwijderd uit band_rel.
+  Toegevoegd aan _PANEL_DEFAULTS, _PANEL_MAP en _update_panel_titles.
+  Worldmap: 2:1 ratio losgelaten; VH = canvas H × zoom — vult volledig paneel.
+
+· 2026-05-08 19:56 CEST — Paneel-verbeteringen (3):
+  Afgeronde hoeken verwijderd; outer frame terug naar tk.Frame.
+  1px amber lijn: tbar padx=1 pady=(1,0), content padx=1 pady=(0,1).
+
+· 2026-05-08 19:43 CEST — Paneel-verbeteringen (2):
+  Bz 24h en X-ray 24h gesplitst in twee aparte panelen (bz_24h, xray_24h).
+  Header-kleuren omgedraaid: bg=BG_PANEL fg=ACCENT.
+  Blauwe balk onder worldmap: canvas bg #1B3A5C→BG_ROOT.
+  Fullscreen-knop helemaal rechts in de header.
+
+· 2026-05-08 19:31 CEST — Paneel-verbeteringen (1):
+  Worldmap canvas fill=BOTH+expand; Panelen-knop amber (▦);
+  Afgeronde hoeken via Canvas _update_corners (later vervangen);
+  Reset layout menu-item + _reset_panel_layout().
+
+· 2026-05-08 — v4.0.1: DraggablePanel systeem.
+  Alle 9 panelen sleepbaar + resizable op vrij canvas (_desktop, place()).
+  Snap-raster 10px, amber 1px rand + titelbalk per paneel, ✕-knop.
+  Panelen: Band Rel, Wereldkaart, Solar, Band Schema, Band Verloop,
+  Kp 48h, Bz 24h, X-ray 24h, DX Spots, Propagatie Advies, Meldingen.
+  Fullscreen F11/⛶, paneel-toggle menu, positie/grootte opgeslagen in INI.
+
+─────────────────────────────────────────────────────────────────────
+Change Log (3.4)
+─────────────────────────────────────────────────────────────────────
+· 2026-05-08 — Grafieken: tooltips, legenda en layout:
+  Band-legenda frame verwijderd; canvas split 62%/38% band+solar.
+  Klik op grafiek filtert band. Kp/X-ray/Bz tooltips met cursor-lijn.
+  3 nieuwe vertaalsleutels in alle 13 talen.
+
+· 2026-05-08 — Data: solar-indices in geschiedenispaneel:
+  SFI-lijn + K-index gekleurde vlakken onder bandgrafiek.
+  _HIST_SOLAR_COLS uitgebreid met bz, sw_speed, sw_density, xray.
+
+· 2026-05-07 — Maanfase icoon (QTH-oriëntatie), zon/maan-pad 24h,
+  ionosonde-markers op kaart, satellite selectie ontkoppeld van refresh,
+  footprint pool-fix definitief, theme-wissel HighContrast opgelost,
+  theme opgeslagen in INI, DX Spots kolom smaller + auto-hide scrollbar,
+  Meldingen: satelliet-in-QTH-zone indicator.
+
+· 2026-05-07 — Vis-items afgevinkt: ITU, Aurora, DX spots, WSPR reeds
+  geïmplementeerd. Zon/maan-pad (checkbox Pad) en ionosondes op kaart nieuw.
+
+─────────────────────────────────────────────────────────────────────
+Change Log (3.3)
+─────────────────────────────────────────────────────────────────────
+· 2026-05-07 — Release v3.3: satelliet-tracking, spy stations,
+  storm forecast fix, theme-verbeteringen, performance.
+  Satelliet: TLE Celestrak, categorie-filter, footprint overlay,
+  QTH-zone groen, CEST pad-tijden, Sat Display-checkbox.
+  Spy/Numbers Stations: 24 stations, sorteerbaar, hover-schema.
+  Storm forecast: migratie naar 3-day-geomag-forecast.txt.
+  Lang: 11 nieuwe sleutels in alle 13 talen.
+
+─────────────────────────────────────────────────────────────────────
+Change Log (3.2)
+─────────────────────────────────────────────────────────────────────
+· 2026-05-06 19:55 CEST — Satelliet-tracking toegevoegd (v3.2 base).
+· 2026-05-06 14:41 CEST — Versie 3.2: vaste venstergrootte 1768×1250,
+  layout vastgezet, alle v3.1-items afgewerkt.
+
+─────────────────────────────────────────────────────────────────────
+Change Log (3.1)
+─────────────────────────────────────────────────────────────────────
+· 2026-04-29 19:36 CEST — Versie 3.1: stab/logging, disk-cache,
+  retry+fallback, Help/About F1, versie-check, ITU-overlay,
+  CONTRIBUTING.md, CI-workflow, README developer-sectie.
+
+─────────────────────────────────────────────────────────────────────
 Change Log (3.0)
 ─────────────────────────────────────────────────────────────────────
 · 2026-04-28 13:15 CEST — Versie 3.0: volledig interface-redesign.

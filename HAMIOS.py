@@ -1,5 +1,5 @@
 """
-HAMIOS v3.4
+HAMIOS v4.0.1
 by Frank van Dijke
 
 Real-time HF propagation, solar weather and DX monitor for Windows.
@@ -94,6 +94,93 @@ Todo
 
 
 ─────────────────────────────────────────────────────────────────────
+Change Log (4.0.1)
+─────────────────────────────────────────────────────────────────────
+· 2026-05-08 21:01 CEST — Settings live vertaling:
+  Settings-knop geregistreerd in _tr_widgets → wordt direct bijgewerkt.
+  _apply_translations() sluit en heropent de settings-dialoog (after 50ms)
+  als die open is bij taalwisseling — alle tekst direct correct.
+
+· 2026-05-08 20:57 CEST — Panelen-knop weg; alles in Instellingen-dialoog:
+  Panelen-menuknop verwijderd uit header. Reset layout, Opslaan als standaard
+  en Profielen (nieuw/laden/overschrijven/verwijderen) verplaatst naar een
+  Layout- en Profielen-sectie in de settings-dialoog.
+  8 nieuwe vertaalsleutels in alle 13 talen.
+
+· 2026-05-08 20:48 CEST — Settings-dialoog panelen + exit rechts + startup-fix:
+  Panelen-sectie in settings-dialoog: vinkjes delen _panel_vis_vars met het
+  Panelen-menu → altijd synchroon. Exit-knop verplaatst naar rechts (? | ✕ | ⛶).
+  _load_panel_layout() laadt nu eerst __default__ uit hamios_layouts.json zodat
+  startup-indeling overeenkomt met "Opslaan als standaard".
+
+· 2026-05-08 20:45 CEST — Vertalingen volledig:
+  8 nieuwe sleutels in _T en alle 13 taalbestanden: theme_lbl, sw_speed_lbl,
+  settings_btn/title/qth/iface, close_lbl, panels_btn.
+  Hardcoded strings in header en settings-dialoog vervangen door _tr().
+
+· 2026-05-08 20:39 CEST — Header opgeruimd: ⚙ Instellingen-dialoog:
+  QTH, tooltips, ticker, taal, thema, zomertijd verplaatst naar
+  _open_settings_dialog() Toplevel. Help-knop rechts voor Fullscreen.
+  Header behoudt: titel | Exit | Panelen | Sat | Spy | CAT | ⚙ Instellingen
+  rechts: Auto: [interval] countdown | separator | tijd | ? | ⛶
+
+· 2026-05-08 20:31 CEST — Performance: drag/resize drastisch versneld:
+  _active_drag class-var in DraggablePanel; after_idle batching in drag/resize-
+  move; on_release callback triggert _deferred_redraw(). _debounce() helper:
+  alle 10 canvas-<Configure> bindings wachten 150ms. Geen PIL-renders tijdens
+  drag/resize — hertekenen pas bij loslaten. Line-ending fix: dubbele CR weg.
+
+· 2026-05-08 20:21 CEST — Profiel overschrijven:
+  Elk profiel in het submenu heeft nu "💾 Overschrijven" naast Laden/Verwijderen.
+  _overwrite_named_layout() slaat de huidige layout direct op onder de bestaande naam.
+
+· 2026-05-08 20:12 CEST — Dubbele iconen weg + snap-raster 2px:
+  DraggablePanel.update_title/_icon_lbl gebruikt nu alleen title (geen icon-
+  parameter voorvoegsel); vertaalde titels bevatten al emoji. _PANEL_GRID 10→2.
+
+· 2026-05-08 20:05 CEST — Layout-presets systeem:
+  "💾 Opslaan als standaard" slaat venster+panelen op als __default__;
+  "↺ Reset layout" gebruikt die opgeslagen standaard of _PANEL_DEFAULTS.
+  "👤 Profielen" submenu: nieuw opslaan + opgeslagen profielen laden/verwijderen.
+  Opslag in hamios_layouts.json (venstergrootte+positie inbegrepen).
+
+· 2026-05-08 19:56 CEST — Meldingen-paneel + worldmap fix:
+  Meldingen (🔔 alerts) als apart DraggablePanel: K-drempel, band-drempel,
+  X-flare/PCA knoppen, satelliet-in-QTH-zone; verwijderd uit band_rel paneel.
+  Toegevoegd aan _PANEL_DEFAULTS (0,500,200,280), _PANEL_MAP en _update_panel_titles.
+  Worldmap: 2:1 ratio losgelaten; VH = canvas H × zoom — kaart vult het volledige
+  paneel ongeacht de hoogte; ook DX/WSPR overlays bijgewerkt.
+
+· 2026-05-08 19:51 CEST — Paneel-verbeteringen (3):
+  Afgeronde hoeken verwijderd; outer frame terug naar tk.Frame met bg=ACCENT.
+  1px amber lijn rondom het paneel: tbar padx=1 pady=(1,0), content padx=1 pady=(0,1).
+  lift() werkt weer correct (tk.Frame, geen Canvas-conflict meer).
+
+· 2026-05-08 19:43 CEST — Paneel-verbeteringen (2):
+  Bz 24h en X-ray 24h gesplitst in twee aparte panelen (bz_24h, xray_24h)
+  met eigen build-wrappers en eigen tooltip/cursor handlers.
+  Header-kleuren omgedraaid: bg=BG_PANEL fg=ACCENT (donker+amber ipv amber+donker).
+  Blauwe balk onder worldmap verholpen: canvas bg #1B3A5C→BG_ROOT.
+  Fullscreen-knop verplaatst naar helemaal rechts in de header.
+  _update_corners gebruikt altijd BG_ROOT (volgt thema-wisseling).
+
+· 2026-05-08 19:31 CEST — Paneel-verbeteringen:
+  Wereldkaart: canvas fill=BOTH+expand zodat kaart het hele paneel vult.
+  Panelen-knop: amber tekst (#FFA726) en ▦-icoon.
+  Afgeronde hoeken: outer frame van tk.Frame naar tk.Canvas; _update_corners()
+  overschrijft de 4 hoek-vierkantjes met achtergrondkleur (r=7px).
+  Reset layout: "↺ Reset layout" menu-item in Panelen-menu roept
+  _reset_panel_layout() aan — herstelt alle panelen naar _PANEL_DEFAULTS.
+
+· 2026-05-08 — v4.0.1: Volledig nieuwe interface
+  DraggablePanel systeem: alle panelen sleepbaar, aanpasbaar,
+  snap-raster (10px), amber kader + titelbalk per paneel, ✕-knop.
+  9 panelen op vrij canvas: Band Rel, Wereldkaart, Solar, Band Schema,
+  Band Verloop, Kp 48h, Bz+Xray, DX Spots, Propagatie Advies.
+  Fullscreen (F11/⛶), paneel-toggle menu in header, positie/grootte
+  opgeslagen per paneel in HAMIOS.ini [Panels]. Solar en DX Spots
+  zijn nu aparte panelen. Hoogte ook aanpasbaar (resizable=True,True).
+
 Change Log (3.4)
 ─────────────────────────────────────────────────────────────────────
 · 2026-05-07 16:55 CEST — Grafieken: tooltips, legenda en layout:
@@ -242,6 +329,7 @@ SETTINGS_FILE   = os.path.join(APP_DIR, "HAMIOS.ini")
 HIST_FILE       = os.path.join(APP_DIR, "HAMIOS_history.csv")
 _TLE_CACHE_FILE  = os.path.join(APP_DIR, "hamios_tle.json")
 _SPY_FILE        = os.path.join(APP_DIR, "hamios_spy_stations.json")
+_LAYOUTS_FILE    = os.path.join(APP_DIR, "hamios_layouts.json")
 # Equirectangular NASA map (2048×1024 = exact 2:1 → coordinates are correct)
 MAP_FILE      = os.path.join(APP_DIR, "worldmap_eq.jpg")
 MAP_URL       = ("https://eoimages.gsfc.nasa.gov/images/imagerecords/"
@@ -284,6 +372,24 @@ TEXT_H1    = "#F0E6C8"
 TEXT_BODY  = "#B0B8C4"
 TEXT_DIM   = "#606870"
 BORDER     = "#383E47"
+
+# ── Draggable panelen ─────────────────────────────────────────────────────────
+_PANEL_GRID = 2    # snap-raster in pixels
+
+# Standaard paneel-layout (id → (x, y, w, h, zichtbaar))
+_PANEL_DEFAULTS: dict = {
+    "band_rel":   (0,    0,    430, 600, True),
+    "worldmap":   (440,  0,    740, 490, True),
+    "solar":      (1190, 0,    370, 600, True),
+    "band_sched": (440,  500,  370, 290, True),
+    "band_hist":  (820,  500,  370, 290, True),
+    "kp_48h":     (440,  800,  370, 270, True),
+    "bz_24h":     (820,  800,  370, 200, True),
+    "xray_24h":   (820, 1010,  370, 200, True),
+    "alerts":     (0,    500,  200, 280, True),
+    "dx_spots":   (1200, 610,  370, 460, True),
+    "prop_adv":   (0,    610,  430, 460, True),
+}
 
 # ── Map colours ───────────────────────────────────────────────────────────────
 MAP_OCEAN  = (27,  58,  92)    # dark blue
@@ -777,6 +883,86 @@ def _save_settings(lat: float, lon: float, refresh: str,
                      "radio": cat_radio, "civ_addr": cat_civ_addr}
     with open(SETTINGS_FILE, "w", encoding="utf-8") as f:
         cfg.write(f)
+
+
+def _load_panel_layout() -> dict:
+    """Lees paneel-layout.  Volgorde van prioriteit:
+    1. __default__ in hamios_layouts.json  (opgeslagen door gebruiker)
+    2. [Panels] sectie in HAMIOS.ini
+    3. _PANEL_DEFAULTS (code-standaard)
+    """
+    # 1. Opgeslagen standaard
+    try:
+        layouts = _load_layouts()
+        if "__default__" in layouts:
+            saved = layouts["__default__"]
+            result = {}
+            for pid, defaults in _PANEL_DEFAULTS.items():
+                dx, dy, dw, dh, dvis = defaults
+                vals = saved.get(pid)
+                if vals and len(vals) >= 5:
+                    result[pid] = tuple(vals[:5])
+                else:
+                    result[pid] = defaults
+            return result
+    except Exception:
+        pass
+
+    # 2. INI
+    cfg = configparser.ConfigParser()
+    cfg.read(SETTINGS_FILE, encoding="utf-8")
+    result = {}
+    for pid, defaults in _PANEL_DEFAULTS.items():
+        dx, dy, dw, dh, dvis = defaults
+        try:
+            x   = cfg.getint("Panels",     f"{pid}_x",   fallback=dx)
+            y   = cfg.getint("Panels",     f"{pid}_y",   fallback=dy)
+            w   = cfg.getint("Panels",     f"{pid}_w",   fallback=dw)
+            h   = cfg.getint("Panels",     f"{pid}_h",   fallback=dh)
+            vis = cfg.getboolean("Panels", f"{pid}_vis", fallback=dvis)
+        except Exception:
+            x, y, w, h, vis = dx, dy, dw, dh, dvis
+        result[pid] = (x, y, w, h, vis)
+    return result
+
+
+def _save_panel_layout(panels: dict) -> None:
+    """Schrijf paneel-layout naar INI [Panels] sectie."""
+    cfg = configparser.ConfigParser()
+    cfg.read(SETTINGS_FILE, encoding="utf-8")
+    if not cfg.has_section("Panels"):
+        cfg.add_section("Panels")
+    for pid, panel in panels.items():
+        x, y, w, h = panel.get_geometry()
+        vis = panel.is_visible()
+        cfg.set("Panels", f"{pid}_x",   str(x))
+        cfg.set("Panels", f"{pid}_y",   str(y))
+        cfg.set("Panels", f"{pid}_w",   str(w))
+        cfg.set("Panels", f"{pid}_h",   str(h))
+        cfg.set("Panels", f"{pid}_vis", str(vis))
+    with open(SETTINGS_FILE, "w", encoding="utf-8") as f:
+        cfg.write(f)
+
+
+def _load_layouts() -> dict:
+    """Laad gebruikers-layouts uit hamios_layouts.json."""
+    try:
+        if os.path.exists(_LAYOUTS_FILE):
+            with open(_LAYOUTS_FILE, encoding="utf-8") as f:
+                return json.load(f)
+    except Exception:
+        pass
+    return {}
+
+
+def _save_layouts(layouts: dict) -> None:
+    """Schrijf gebruikers-layouts naar hamios_layouts.json."""
+    try:
+        with open(_LAYOUTS_FILE, "w", encoding="utf-8") as f:
+            json.dump(layouts, f, ensure_ascii=False, indent=2)
+    except Exception as e:
+        log.warning("layouts save failed: %s", e)
+
 
 def _safe_request(url: str, timeout: int = 10, headers: dict = None) -> tuple[bool, any]:
     """Wrapper for urllib.request.urlopen to monitor connectivity.
@@ -1477,6 +1663,22 @@ _T: dict[str, dict[str, str]] = {
     'sat_zone_none':    {"en": '—'},
     'bz_chart_hdr':     {"en": 'Bz  24h (nT)'},
     'bz_now_lbl':       {"en": 'now'},
+    'theme_lbl':        {"en": 'Theme:'},
+    'sw_speed_lbl':     {"en": 'SW:'},
+    'settings_btn':     {"en": '⚙  Settings'},
+    'settings_title':   {"en": '⚙  Settings'},
+    'settings_qth':     {"en": 'QTH'},
+    'settings_iface':        {"en": 'Interface'},
+    'settings_layout':       {"en": 'Layout'},
+    'settings_reset_layout': {"en": '↺  Reset layout'},
+    'settings_save_default': {"en": '💾  Save as default'},
+    'settings_profiles':     {"en": 'Profiles'},
+    'settings_new_profile':  {"en": '＋  New profile...'},
+    'settings_load':         {"en": '▶  Load'},
+    'settings_overwrite':    {"en": '↻  Overwrite'},
+    'settings_delete':       {"en": '🗑  Delete'},
+    'close_lbl':             {"en": 'Close'},
+    'panels_btn':            {"en": '▦  Panels'},
     'hist_bands_lbl':   {"en": 'Band reliability'},
     'hist_solar_lbl':   {"en": 'Solar indices'},
     'hist_click_hint':  {"en": 'Click chart · filter bands'},
@@ -2308,6 +2510,176 @@ class _Tooltip:
             self._win = None
 
 
+# ── DraggablePanel ────────────────────────────────────────────────────────────
+class DraggablePanel:
+    """Sleepbaar en aanpasbaar paneel met amber rand en titelbalk.
+
+    Geplaatst via place() op een parent-widget (de desktop).
+    Sleep via de amber titelbalk; grootte via resize-handle rechtsonder.
+    Grid-snapping bij loslaten (_PANEL_GRID pixels).
+    """
+    _TITLE_H    = 26
+    _MIN_W      = 160
+    _MIN_H      = 100
+    _active_drag = False   # class-level vlag: True tijdens drag/resize van élk paneel
+
+    def __init__(self, parent: tk.Widget, title: str, icon: str = "",
+                 panel_id: str = "", on_vis_change=None, on_release=None):
+        self.panel_id       = panel_id
+        self._on_vis_change = on_vis_change
+        self._on_release    = on_release   # callback na drag/resize-einde
+        self._visible       = True
+        self._x = self._y   = 0
+        self._w = self._h   = 300
+        self._drag_sx = self._drag_sy = 0
+        self._drag_ox = self._drag_oy = 0
+        self._resize_sx = self._resize_sy = 0
+        self._resize_ow = self._resize_oh = 0
+        self._move_pending  = False
+
+        # Outer frame: bg=ACCENT → 1px amber lijn rondom het paneel
+        self.frame = tk.Frame(parent, bg=ACCENT, bd=0)
+
+        # Titelbalk — donkere achtergrond, amber tekst; 1px amber zichtbaar boven+zijkanten
+        self._tbar = tk.Frame(self.frame, bg=BG_PANEL, height=self._TITLE_H)
+        self._tbar.pack(side=tk.TOP, fill=tk.X, padx=1, pady=(1, 0))
+        self._tbar.pack_propagate(False)
+
+        self._icon_lbl = tk.Label(
+            self._tbar,
+            text=title,          # titel bevat al emoji via vertaling
+            font=_font(9, "bold"), bg=BG_PANEL, fg=ACCENT,
+            anchor='w', padx=6
+        )
+        self._icon_lbl.pack(side=tk.LEFT, fill=tk.Y)
+
+        self._hide_btn = tk.Button(
+            self._tbar, text="✕",
+            font=_font(8), bg=BG_PANEL, fg=ACCENT,
+            activebackground=ACCENT, activeforeground=BG_ROOT,
+            relief=tk.FLAT, padx=5, pady=0, cursor="hand2",
+            command=self._toggle_hide
+        )
+        self._hide_btn.pack(side=tk.RIGHT, padx=(0, 3), pady=2)
+
+        # Inhoud — 1px amber zichtbaar aan zijkanten en onderkant
+        self.content = tk.Frame(self.frame, bg=BG_PANEL)
+        self.content.pack(fill=tk.BOTH, expand=True, padx=1, pady=(0, 1))
+
+        # Resize-handle rechtsonder (op outer frame zodat hij altijd zichtbaar is)
+        self._rhandle = tk.Label(
+            self.frame, text="◢",
+            font=_font(8, "bold"), bg=ACCENT, fg=BG_PANEL,
+            cursor="size_nw_se", bd=0
+        )
+        self._rhandle.place(relx=1.0, rely=1.0, anchor='se', x=-1, y=-1)
+
+        # Drag-bindings op titelbalk en icoon-label
+        for w in (self._tbar, self._icon_lbl):
+            w.bind("<Button-1>",        self._on_drag_start)
+            w.bind("<B1-Motion>",        self._on_drag_move)
+            w.bind("<ButtonRelease-1>",  self._on_drag_end)
+
+        # Resize-bindings op handle
+        self._rhandle.bind("<Button-1>",        self._on_resize_start)
+        self._rhandle.bind("<B1-Motion>",        self._on_resize_move)
+        self._rhandle.bind("<ButtonRelease-1>",  self._on_resize_end)
+
+    # ── Titel bijwerken (bij taalwisseling) ──────────────────────────────────
+    def update_title(self, title: str, icon: str = ""):
+        self._icon_lbl.config(text=title)
+
+    # ── Zichtbaarheid ────────────────────────────────────────────────────────
+    def _toggle_hide(self):
+        self.hide()
+        if self._on_vis_change:
+            self._on_vis_change(self.panel_id, False)
+
+    def hide(self):
+        self.frame.place_forget()
+        self._visible = False
+
+    def show(self):
+        self._place_frame()
+        self._visible = True
+
+    def is_visible(self) -> bool:
+        return self._visible
+
+    # ── Plaatsing ────────────────────────────────────────────────────────────
+    def place(self, x: int, y: int, w: int, h: int):
+        self._x, self._y = int(x), int(y)
+        self._w, self._h = int(w), int(h)
+        self._place_frame()
+
+    def _place_frame(self):
+        self.frame.place(x=self._x, y=self._y,
+                         width=self._w, height=self._h)
+
+    def get_geometry(self) -> tuple:
+        return self._x, self._y, self._w, self._h
+
+    # ── Drag ────────────────────────────────────────────────────────────────
+    def _on_drag_start(self, event):
+        self._drag_sx   = event.x_root
+        self._drag_sy   = event.y_root
+        self._drag_ox   = self._x
+        self._drag_oy   = self._y
+        self._move_pending = False
+        DraggablePanel._active_drag = True
+        self.frame.lift()
+
+    def _on_drag_move(self, event):
+        dx = event.x_root - self._drag_sx
+        dy = event.y_root - self._drag_sy
+        self._x = max(0, self._drag_ox + dx)
+        self._y = max(0, self._drag_oy + dy)
+        # Batch: plan één _place_frame per event-loop iteratie
+        if not self._move_pending:
+            self._move_pending = True
+            self.frame.after_idle(self._flush_move)
+
+    def _flush_move(self):
+        self._move_pending = False
+        self._place_frame()
+
+    def _on_drag_end(self, _event):
+        g = _PANEL_GRID
+        self._x = round(self._x / g) * g
+        self._y = round(self._y / g) * g
+        self._place_frame()
+        DraggablePanel._active_drag = False
+        if self._on_release:
+            self._on_release()
+
+    # ── Resize ──────────────────────────────────────────────────────────────
+    def _on_resize_start(self, event):
+        self._resize_sx  = event.x_root
+        self._resize_sy  = event.y_root
+        self._resize_ow  = self._w
+        self._resize_oh  = self._h
+        self._move_pending = False
+        DraggablePanel._active_drag = True
+
+    def _on_resize_move(self, event):
+        dw = event.x_root - self._resize_sx
+        dh = event.y_root - self._resize_sy
+        self._w = max(self._MIN_W, self._resize_ow + dw)
+        self._h = max(self._MIN_H, self._resize_oh + dh)
+        if not self._move_pending:
+            self._move_pending = True
+            self.frame.after_idle(self._flush_move)
+
+    def _on_resize_end(self, _event):
+        g = _PANEL_GRID
+        self._w = round(self._w / g) * g
+        self._h = round(self._h / g) * g
+        self._place_frame()
+        DraggablePanel._active_drag = False
+        if self._on_release:
+            self._on_release()
+
+
 # ── Satellite TLE helpers ──────────────────────────────────────────────────────
 
 def _parse_tle_text(text: str) -> list[tuple[str, str, str]]:
@@ -3102,19 +3474,19 @@ class _SatelliteDialog:
 class HAMIOSApp:
     def __init__(self, root: tk.Tk):
         self.root = root
-        self.root.title("HAMIOS v3.4")
+        self.root.title("HAMIOS v4.0.1")
         self.root.configure(bg=BG_ROOT)
 
         # Geometrie instellen vóór _build_ui — geen root.update() nodig, geen flicker.
-        # winfo_screenwidth/height werkt direct zonder update().
         _scr_w = root.winfo_screenwidth()
         _scr_h = root.winfo_screenheight()
-        _DX_EXTRA = 368            # DX-kolom 360 px + padx 8 px
-        _ini_w = min(1400 + _DX_EXTRA, _scr_w - 60)
-        _ini_y = max(0, (_scr_h - WINDOW_H) // 2)
-        root.geometry(f"{_ini_w}x{WINDOW_H}+{(_scr_w-_ini_w)//2}+{_ini_y}")
-        root.minsize(min(900 + _DX_EXTRA, _scr_w - 60), WINDOW_H)
-        root.resizable(True, False)   # breedte aanpasbaar, hoogte vast
+        _ini_w = min(1600, _scr_w - 60)
+        _ini_h = min(1000, _scr_h - 60)
+        _ini_x = (_scr_w - _ini_w) // 2
+        _ini_y = max(0, (_scr_h - _ini_h) // 2)
+        root.geometry(f"{_ini_w}x{_ini_h}+{_ini_x}+{_ini_y}")
+        root.minsize(900, 600)
+        root.resizable(True, True)   # v4: hoogte én breedte aanpasbaar
 
         self._solar_data: dict = {}
         self._solar_after_id = None
@@ -3346,6 +3718,13 @@ class HAMIOSApp:
         self._draw_xray_graph(getattr(self, "_last_xray_pts", []))
         # Advice opnieuw renderen bij taalwissel
         self._update_advice()
+        # Paneel-titelbalk teksten bijwerken
+        self._update_panel_titles()
+        # Settings-dialoog opnieuw opbouwen als die open is
+        if getattr(self, "_settings_win", None) and self._settings_win.winfo_exists():
+            self._settings_win.destroy()
+            self._settings_win = None
+            self.root.after(50, self._open_settings_dialog)
 
     def _on_lang_change(self, *_):
         self._apply_translations()
@@ -3490,6 +3869,189 @@ class HAMIOSApp:
             self._recalc_prop()
         except ValueError:
             pass
+
+    def _open_settings_dialog(self):
+        """Instellingen-dialoog: QTH, taal, thema, tooltips, ticker, zomertijd."""
+        if hasattr(self, "_settings_win") and self._settings_win and \
+                self._settings_win.winfo_exists():
+            self._settings_win.lift()
+            return
+
+        win = tk.Toplevel(self.root)
+        self._settings_win = win
+        win.title(self._tr("settings_title"))
+        win.configure(bg=BG_PANEL)
+        win.resizable(False, False)
+
+        tk.Frame(win, bg=ACCENT, height=2).pack(fill=tk.X)
+        tk.Label(win, text=self._tr("settings_title"), font=_font(11, "bold"),
+                 bg=BG_PANEL, fg=ACCENT, pady=6).pack(anchor='w', padx=14)
+
+        def section(parent, title):
+            tk.Frame(parent, bg=BORDER, height=1).pack(fill=tk.X, padx=10, pady=(8, 4))
+            tk.Label(parent, text=title, font=_font(8, "bold"),
+                     bg=BG_PANEL, fg=ACCENT, anchor='w').pack(fill=tk.X, padx=12)
+
+        def row(parent):
+            f = tk.Frame(parent, bg=BG_PANEL)
+            f.pack(fill=tk.X, padx=12, pady=2)
+            return f
+
+        # ── QTH ──────────────────────────────────────────────────────────────
+        section(win, self._tr("settings_qth"))
+        r = row(win)
+        tk.Label(r, text=self._tr("qth_lat_lbl"), font=_font(9),
+                 bg=BG_PANEL, fg=TEXT_DIM, width=10, anchor='w').pack(side=tk.LEFT)
+        lat_e = tk.Entry(r, textvariable=self._qth_lat_var, width=9,
+                         bg=BG_SURFACE, fg=TEXT_H1, insertbackground=TEXT_H1,
+                         relief=tk.FLAT, font=_font(9))
+        lat_e.pack(side=tk.LEFT, padx=(4, 12))
+        lat_e.bind("<Return>",   self._apply_qth)
+        lat_e.bind("<FocusOut>", self._apply_qth)
+        tk.Label(r, text=self._tr("lon_lbl"), font=_font(9),
+                 bg=BG_PANEL, fg=TEXT_DIM, anchor='w').pack(side=tk.LEFT)
+        lon_e = tk.Entry(r, textvariable=self._qth_lon_var, width=10,
+                         bg=BG_SURFACE, fg=TEXT_H1, insertbackground=TEXT_H1,
+                         relief=tk.FLAT, font=_font(9))
+        lon_e.pack(side=tk.LEFT, padx=(4, 0))
+        lon_e.bind("<Return>",   self._apply_qth)
+        lon_e.bind("<FocusOut>", self._apply_qth)
+
+        # ── Interface ─────────────────────────────────────────────────────────
+        section(win, self._tr("settings_iface"))
+
+        # Taal
+        r = row(win)
+        tk.Label(r, text=self._tr("lang_lbl"), font=_font(9),
+                 bg=BG_PANEL, fg=TEXT_DIM, width=10, anchor='w').pack(side=tk.LEFT)
+        lang_mb = tk.Menubutton(r, textvariable=self._lang_var,
+                                font=_font(9), bg=BG_SURFACE, fg=TEXT_H1,
+                                relief=tk.FLAT, activebackground=BG_HOVER,
+                                activeforeground=TEXT_H1, width=14,
+                                anchor='w', padx=6, pady=2, cursor="hand2")
+        lang_menu = tk.Menu(lang_mb, tearoff=False, bg=BG_SURFACE, fg=TEXT_H1,
+                            activebackground=ACCENT, activeforeground=BG_ROOT,
+                            font=_font(9))
+        for name in _LANG_NAMES:
+            lang_menu.add_command(label=name,
+                                  command=lambda v=name: (self._lang_var.set(v),
+                                                          self._on_lang_change()))
+        lang_mb["menu"] = lang_menu
+        lang_mb.pack(side=tk.LEFT, padx=(4, 0))
+
+        # Thema
+        r = row(win)
+        tk.Label(r, text=self._tr("theme_lbl"),
+                 font=_font(9), bg=BG_PANEL, fg=TEXT_DIM, width=10, anchor='w'
+                 ).pack(side=tk.LEFT)
+        theme_mb = tk.Menubutton(r, textvariable=self._theme_var,
+                                 font=_font(9), bg=BG_SURFACE, fg=TEXT_H1,
+                                 relief=tk.FLAT, activebackground=BG_HOVER,
+                                 activeforeground=TEXT_H1, width=14,
+                                 anchor='w', padx=6, pady=2, cursor="hand2")
+        theme_menu = tk.Menu(theme_mb, tearoff=False, bg=BG_SURFACE, fg=TEXT_H1,
+                             activebackground=ACCENT, activeforeground=BG_ROOT,
+                             font=_font(9))
+        for tname in THEMES.keys():
+            theme_menu.add_command(label=tname,
+                                   command=lambda v=tname: self._on_theme_change(v))
+        theme_mb["menu"] = theme_menu
+        theme_mb.pack(side=tk.LEFT, padx=(4, 0))
+
+        # Zomertijd
+        r = row(win)
+        tk.Checkbutton(r, text=self._tr("summer_time"),
+                       variable=self._dst_var, command=self._save_cur_settings,
+                       bg=BG_PANEL, fg=TEXT_BODY, selectcolor=BG_SURFACE,
+                       activebackground=BG_PANEL, activeforeground=TEXT_H1,
+                       font=_font(9)).pack(side=tk.LEFT)
+
+        # Tooltips + Ticker
+        r = row(win)
+        tk.Checkbutton(r, text=self._tr("tooltips"), variable=self._show_tips_var,
+                       command=self._save_cur_settings,
+                       bg=BG_PANEL, fg=TEXT_BODY, selectcolor=BG_SURFACE,
+                       activebackground=BG_PANEL, activeforeground=TEXT_H1,
+                       font=_font(9)).pack(side=tk.LEFT, padx=(0, 16))
+        tk.Checkbutton(r, text=self._tr("ticker"), variable=self._ticker_enabled_var,
+                       command=self._toggle_ticker,
+                       bg=BG_PANEL, fg=TEXT_BODY, selectcolor=BG_SURFACE,
+                       activebackground=BG_PANEL, activeforeground=TEXT_H1,
+                       font=_font(9)).pack(side=tk.LEFT)
+
+        # ── Panelen ───────────────────────────────────────────────────────────
+        section(win, self._tr("panels_btn"))
+        panels_frame = tk.Frame(win, bg=BG_PANEL)
+        panels_frame.pack(fill=tk.X, padx=12, pady=(2, 0))
+
+        _PANEL_LABELS = {
+            "band_rel":   ("prop_header",  "📶"),
+            "worldmap":   ("worldmap",     "🗺"),
+            "solar":      ("solar",        "☀"),
+            "alerts":     ("alerts_hdr",   "🔔"),
+            "band_sched": ("sched_header", "🗓"),
+            "band_hist":  ("hist_header",  "📈"),
+            "kp_48h":     ("kp_chart_hdr", "🧲"),
+            "bz_24h":     ("bz_chart_hdr", "⚡"),
+            "xray_24h":   ("xray_chart_hdr","☢"),
+            "dx_spots":   ("dx_header",    "📡"),
+            "prop_adv":   ("adv_header",   "💡"),
+        }
+        col, max_col = 0, 2
+        r = None
+        for pid, (tr_key, icon) in _PANEL_LABELS.items():
+            var = self._panel_vis_vars.get(pid)
+            if var is None:
+                continue
+            if col % max_col == 0:
+                r = tk.Frame(panels_frame, bg=BG_PANEL)
+                r.pack(fill=tk.X, pady=1)
+            lbl = f"{icon}  {self._tr(tr_key)}"
+            cb = tk.Checkbutton(r, text=lbl, variable=var,
+                                command=lambda p=pid, v=var: (
+                                    self._panels[p].show() if v.get()
+                                    else self._panels[p].hide(),
+                                    self._save_cur_settings()),
+                                bg=BG_PANEL, fg=TEXT_BODY, selectcolor=BG_SURFACE,
+                                activebackground=BG_PANEL, activeforeground=TEXT_H1,
+                                font=_font(9), anchor='w', width=22)
+            cb.pack(side=tk.LEFT, padx=(0, 4))
+            col += 1
+
+        # ── Layout ────────────────────────────────────────────────────────────
+        section(win, self._tr("settings_layout"))
+
+        layout_row = row(win)
+        tk.Button(layout_row, text=self._tr("settings_reset_layout"),
+                  command=self._reset_panel_layout,
+                  font=_font(9), bg=BG_SURFACE, fg="#FFA726",
+                  relief=tk.FLAT, padx=8, pady=2, cursor="hand2"
+                  ).pack(side=tk.LEFT, padx=(0, 8))
+        tk.Button(layout_row, text=self._tr("settings_save_default"),
+                  command=self._save_as_default_layout,
+                  font=_font(9), bg=BG_SURFACE, fg="#FFA726",
+                  relief=tk.FLAT, padx=8, pady=2, cursor="hand2"
+                  ).pack(side=tk.LEFT)
+
+        # Profielen-lijst (dynamisch opgebouwd)
+        section(win, self._tr("settings_profiles"))
+        self._settings_profiles_frame = tk.Frame(win, bg=BG_PANEL)
+        self._settings_profiles_frame.pack(fill=tk.X, padx=12, pady=(2, 4))
+        self._settings_win_ref = win
+        self._refresh_settings_profiles()
+
+        # ── Sluiten ───────────────────────────────────────────────────────────
+        tk.Frame(win, bg=BORDER, height=1).pack(fill=tk.X, padx=10, pady=(8, 0))
+        btn_row = tk.Frame(win, bg=BG_PANEL)
+        btn_row.pack(fill=tk.X, padx=12, pady=8)
+        tk.Button(btn_row, text=self._tr("close_lbl"), command=win.destroy,
+                  font=_font(9), bg=BG_SURFACE, fg="#FFA726",
+                  relief=tk.FLAT, padx=12, cursor="hand2").pack(side=tk.RIGHT)
+
+        win.update_idletasks()
+        rx = self.root.winfo_x() + (self.root.winfo_width()  - win.winfo_reqwidth())  // 2
+        ry = self.root.winfo_y() + (self.root.winfo_height() - win.winfo_reqheight()) // 2
+        win.geometry(f"+{max(0,rx)}+{max(0,ry)}")
 
     def _open_help(self, _event=None):
         """Open the Help / About dialog (F1 or header button)."""
@@ -4178,7 +4740,7 @@ class HAMIOSApp:
         hdr = tk.Frame(self.root, bg=BG_PANEL, height=42)
         hdr.pack(fill=tk.X)
         tk.Frame(hdr, bg=ACCENT, width=4).pack(side=tk.LEFT, fill=tk.Y)
-        tk.Label(hdr, text="📡  HAMIOS v3.4",
+        tk.Label(hdr, text="📡  HAMIOS v4.0.1",
                  font=_font(13, "bold"), bg=BG_PANEL, fg=ACCENT,
                  pady=8).pack(side=tk.LEFT, padx=10)
 
@@ -4188,22 +4750,36 @@ class HAMIOSApp:
                                      fg="#EF5350", pady=8)
         # Nog niet gepack — verschijnt alleen bij netfout via _update_net_indicator()
 
-        # Exit knop (links, naast titel)
+        # Exit knop — wordt rechts gepacked na rechter items
         exit_btn = tk.Button(hdr, text=self._tr("exit"),
                              command=self._quit_app,
                              font=_font(9), bg="#5A1010", fg=TEXT_H1,
                              activebackground="#8B1A1A", activeforeground=TEXT_H1,
                              relief=tk.FLAT, padx=8, pady=2, cursor="hand2")
-        exit_btn.pack(side=tk.LEFT, padx=(0, 6))
         self._tr_widgets["exit"] = exit_btn
 
-        # Help knop (F1)
-        tk.Button(hdr, text="?  Help",
-                  command=self._open_help,
-                  font=_font(9), bg=BG_SURFACE, fg=ACCENT,
+        # Fullscreen-knop (wordt rechts gepacked na de rechter-kant items)
+        self._fs_var = tk.BooleanVar(value=False)
+        self._fs_btn = tk.Button(hdr, text="⛶",
+                                  command=self._toggle_fullscreen,
+                                  font=_font(10), bg=BG_SURFACE, fg=ACCENT,
+                                  activebackground=BG_HOVER, activeforeground=TEXT_H1,
+                                  relief=tk.FLAT, padx=7, pady=2, cursor="hand2")
+        self.root.bind("<F11>", lambda _: self._toggle_fullscreen())
+        self.root.bind("<Escape>", lambda _: (
+            self._toggle_fullscreen() if self._fs_var.get() else None))
+
+        # Panelen-zichtbaarheid wordt beheerd via het Instellingen-paneel
+        self._panel_vis_vars: dict = {}
+
+        # Instellingen-knop
+        _settings_btn = tk.Button(hdr, text=self._tr("settings_btn"),
+                  command=self._open_settings_dialog,
+                  font=_font(9), bg=BG_SURFACE, fg="#FFA726",
                   activebackground=BG_HOVER, activeforeground=TEXT_H1,
-                  relief=tk.FLAT, padx=8, pady=2, cursor="hand2"
-                  ).pack(side=tk.LEFT, padx=(0, 4))
+                  relief=tk.FLAT, padx=8, pady=2, cursor="hand2")
+        _settings_btn.pack(side=tk.LEFT, padx=(0, 6))
+        self._tr_widgets["settings_btn"] = _settings_btn
 
         # Satellite button (always amber)
         self._sat_btn = tk.Button(hdr, text="🛰  Sat",
@@ -4235,95 +4811,34 @@ class HAMIOSApp:
             self._update_cat_btn_color()
 
         # ── Rechter kant (right → left volgorde) ────────────────────────────
+        # Fullscreen uiterst rechts
+        self._fs_btn.pack(side=tk.RIGHT, padx=(2, 4))
+
+        # Exit rechts van help, links van fullscreen
+        exit_btn.pack(side=tk.RIGHT, padx=(0, 2))
+
+        # Help direct voor exit
+        tk.Button(hdr, text="?",
+                  command=self._open_help,
+                  font=_font(9), bg=BG_SURFACE, fg=ACCENT,
+                  activebackground=BG_HOVER, activeforeground=TEXT_H1,
+                  relief=tk.FLAT, padx=7, pady=2, cursor="hand2"
+                  ).pack(side=tk.RIGHT, padx=(0, 2))
+
+        tk.Frame(hdr, bg=BORDER, width=1).pack(side=tk.RIGHT, fill=tk.Y, pady=8)
+
         # Tijden rechts (UTC + lokaal)
         self._utc_var   = tk.StringVar()
         self._local_var = tk.StringVar()
         tk.Label(hdr, textvariable=self._utc_var,
-                 font=_font(10), bg=BG_PANEL, fg=TEXT_DIM).pack(side=tk.RIGHT, padx=(0, 14))
+                 font=_font(10), bg=BG_PANEL, fg=TEXT_DIM).pack(side=tk.RIGHT, padx=(0, 12))
         tk.Frame(hdr, bg=BORDER, width=1).pack(side=tk.RIGHT, fill=tk.Y, pady=8)
         tk.Label(hdr, textvariable=self._local_var,
-                 font=_font(10, "bold"), bg=BG_PANEL, fg=TEXT_H1).pack(side=tk.RIGHT, padx=(0, 10))
+                 font=_font(10, "bold"), bg=BG_PANEL, fg=TEXT_H1).pack(side=tk.RIGHT, padx=(0, 8))
 
-        # ── Thema selector ─────────────────────────────────────────────────────
         tk.Frame(hdr, bg=BORDER, width=1).pack(side=tk.RIGHT, fill=tk.Y, pady=8)
-        theme_mb = tk.Menubutton(hdr, textvariable=self._theme_var,
-                                 font=_font(9), bg=BG_SURFACE, fg=TEXT_H1,
-                                 relief=tk.FLAT, activebackground=BG_HOVER,
-                                 activeforeground=TEXT_H1, width=11,
-                                 anchor='w', padx=6, pady=3, cursor="hand2")
-        theme_menu = tk.Menu(theme_mb, tearoff=False, bg=BG_SURFACE, fg=TEXT_H1,
-                             activebackground=ACCENT, activeforeground=BG_ROOT,
-                             font=_font(9))
-        for tname in THEMES.keys():
-            theme_menu.add_command(label=tname,
-                                   command=lambda v=tname: self._on_theme_change(v))
-        theme_mb["menu"] = theme_menu
-        theme_mb.pack(side=tk.RIGHT, padx=(0, 4))
-        theme_lbl = tk.Label(hdr, text=self._tr("theme_lbl") if "theme_lbl" in _T else "Theme:",
-                            font=_font(9), bg=BG_PANEL, fg=TEXT_DIM)
-        theme_lbl.pack(side=tk.RIGHT, padx=(8, 2))
-        self._tr_widgets["theme_lbl"] = theme_lbl
-        cb_tips = tk.Checkbutton(hdr, text=self._tr("tooltips"), variable=self._show_tips_var,
-                                 bg=BG_PANEL, fg=TEXT_BODY, selectcolor=BG_SURFACE,
-                                 activebackground=BG_PANEL, activeforeground=TEXT_H1,
-                                 font=_font(9))
-        cb_tips.pack(side=tk.RIGHT, padx=(0, 4))
-        self._tr_widgets["tooltips"] = cb_tips
-        cb_ticker = tk.Checkbutton(hdr, text=self._tr("ticker"),
-                                   variable=self._ticker_enabled_var,
-                                   command=self._toggle_ticker,
-                                   bg=BG_PANEL, fg=TEXT_BODY, selectcolor=BG_SURFACE,
-                                   activebackground=BG_PANEL, activeforeground=TEXT_H1,
-                                   font=_font(9))
-        cb_ticker.pack(side=tk.RIGHT, padx=(0, 4))
-        self._tr_widgets["ticker"] = cb_ticker
 
-        # QTH Lat/Lon invoer
-        tk.Frame(hdr, bg=BORDER, width=1).pack(side=tk.RIGHT, fill=tk.Y, pady=8)
-        lon_e = tk.Entry(hdr, textvariable=self._qth_lon_var, width=8,
-                         bg=BG_SURFACE, fg=TEXT_H1, insertbackground=TEXT_H1,
-                         relief=tk.FLAT, font=_font(9))
-        lon_e.pack(side=tk.RIGHT, padx=(2, 8))
-        lon_e.bind("<Return>",   self._apply_qth)
-        lon_e.bind("<FocusOut>", self._apply_qth)
-        lon_lbl = tk.Label(hdr, text=self._tr("lon_lbl"), font=_font(9),
-                           bg=BG_PANEL, fg=TEXT_DIM)
-        lon_lbl.pack(side=tk.RIGHT)
-        self._tr_widgets["lon_lbl"] = lon_lbl
-        lat_e = tk.Entry(hdr, textvariable=self._qth_lat_var, width=7,
-                         bg=BG_SURFACE, fg=TEXT_H1, insertbackground=TEXT_H1,
-                         relief=tk.FLAT, font=_font(9))
-        lat_e.pack(side=tk.RIGHT, padx=(2, 4))
-        lat_e.bind("<Return>",    self._apply_qth)
-        lat_e.bind("<FocusOut>",  self._apply_qth)
-        qth_lbl = tk.Label(hdr, text=self._tr("qth_lat_lbl"), font=_font(9),
-                           bg=BG_PANEL, fg=TEXT_DIM)
-        qth_lbl.pack(side=tk.RIGHT, padx=(8, 0))
-        self._tr_widgets["qth_lat_lbl"] = qth_lbl
-
-        # Taal selector
-        tk.Frame(hdr, bg=BORDER, width=1).pack(side=tk.RIGHT, fill=tk.Y, pady=8)
-        lang_mb = tk.Menubutton(hdr, textvariable=self._lang_var,
-                                font=_font(9), bg=BG_SURFACE, fg=TEXT_H1,
-                                relief=tk.FLAT, activebackground=BG_HOVER,
-                                activeforeground=TEXT_H1, width=10,
-                                anchor='w', padx=6, pady=3, cursor="hand2")
-        lang_menu = tk.Menu(lang_mb, tearoff=False, bg=BG_SURFACE, fg=TEXT_H1,
-                            activebackground=ACCENT, activeforeground=BG_ROOT,
-                            font=_font(9))
-        for name in _LANG_NAMES:
-            lang_menu.add_command(label=name,
-                                  command=lambda v=name: (self._lang_var.set(v),
-                                                          self._on_lang_change()))
-        lang_mb["menu"] = lang_menu
-        lang_mb.pack(side=tk.RIGHT, padx=(0, 4))
-        lang_lbl = tk.Label(hdr, text=self._tr("lang_lbl"), font=_font(9),
-                            bg=BG_PANEL, fg=TEXT_DIM)
-        lang_lbl.pack(side=tk.RIGHT, padx=(8, 2))
-        self._tr_widgets["lang_lbl"] = lang_lbl
-
-        # Interval keuze in header
-        tk.Frame(hdr, bg=BORDER, width=1).pack(side=tk.RIGHT, fill=tk.Y, pady=8)
+        # Refresh interval + countdown
         mb = tk.Menubutton(hdr, textvariable=self._refresh_var,
                            font=_font(9), bg=BG_SURFACE, fg=TEXT_H1,
                            relief=tk.FLAT, activebackground=BG_HOVER,
@@ -4336,10 +4851,10 @@ class HAMIOSApp:
             interval_menu.add_command(label=opt,
                                       command=lambda v=opt: self._on_interval_change(v))
         mb["menu"] = interval_menu
-        mb.pack(side=tk.RIGHT, padx=(0, 6))
+        mb.pack(side=tk.RIGHT, padx=(0, 4))
         self._countdown_var = tk.StringVar(value="")
         tk.Label(hdr, textvariable=self._countdown_var,
-                 font=_font(9), bg=BG_PANEL, fg=ACCENT).pack(side=tk.RIGHT, padx=(0, 6))
+                 font=_font(9), bg=BG_PANEL, fg=ACCENT).pack(side=tk.RIGHT, padx=(0, 4))
         auto_lbl = tk.Label(hdr, text=self._tr("auto_lbl"), font=_font(9),
                             bg=BG_PANEL, fg=TEXT_DIM)
         auto_lbl.pack(side=tk.RIGHT, padx=(4, 2))
@@ -4348,72 +4863,247 @@ class HAMIOSApp:
         # Ticker onderaan (pack VOOR body zodat hij aan de onderkant blijft)
         self._build_ticker()
 
-        # ── Hoofd body v3.0: Kaart centraal ──────────────────────────────────
-        body = tk.Frame(self.root, bg=BG_ROOT)
-        body.pack(fill=tk.BOTH, expand=True, padx=10, pady=(0, 4))
+        # ── v4.0.1: Desktop — panelen via place() ─────────────────────────────
+        self._desktop = tk.Frame(self.root, bg=BG_ROOT)
+        self._desktop.pack(fill=tk.BOTH, expand=True)
 
-        # ── DX Spots kolom rechts (eerst pack → verdringt nooit) ──────────────
-        dx_col = tk.Frame(body, bg=BG_PANEL, width=360)
-        dx_col.pack(side=tk.RIGHT, fill=tk.Y, padx=(8, 0))
-        dx_col.pack_propagate(False)
-        self._build_dx_panel(dx_col)
+        _layout = _load_panel_layout()
+        self._panels: dict = {}
 
-        # ── Linker gedeelte: grid-layout voor exacte kolomuitlijning ────────────
-        # 4 gelijke kolommen; top (rij 0) expandeert, bottom (rij 1) + advies (rij 2) vast
-        left_area = tk.Frame(body, bg=BG_ROOT)
-        left_area.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
+        _PANEL_MAP = [
+            ("band_rel",   "prop_header",  "📶", self._build_prop_panel),
+            ("worldmap",   "worldmap",     "🗺",  self._build_map_panel),
+            ("solar",      "solar",        "☀",  self._build_solar_panel),
+            ("band_sched", "sched_header", "🗓",  self._build_schedule_panel),
+            ("band_hist",  "hist_header",  "📈",  self._build_hist_panel),
+            ("kp_48h",     "kp_chart_hdr",  "🧲", self._build_kp_panel),
+            ("alerts",     "alerts_hdr",    "🔔", self._build_alerts_panel),
+            ("bz_24h",     "bz_chart_hdr",  "⚡", self._build_bz_panel_only),
+            ("xray_24h",   "xray_chart_hdr","☢",  self._build_xray_panel_only),
+            ("dx_spots",   "dx_header",     "📡", self._build_dx_spots_panel),
+            ("prop_adv",   "adv_header",  "💡",  self._build_advice_panel),
+        ]
+        for pid, tr_key, icon, build_fn in _PANEL_MAP:
+            x, y, w, h, vis = _layout[pid]
+            p = DraggablePanel(
+                self._desktop, self._tr(tr_key), icon,
+                panel_id=pid, on_vis_change=self._on_panel_vis_change,
+                on_release=self._deferred_redraw
+            )
+            p.place(x, y, w, h)
+            build_fn(p.content)
+            if not vis:
+                p.hide()
+            self._panels[pid] = p
+            # Zichtbaarheid-var (gedeeld met settings-dialoog)
+            var = tk.BooleanVar(value=vis)
+            self._panel_vis_vars[pid] = var
 
-        # col 0 (HF Rel + Schema) krijgt 3/9 breedte → ~460 px op 1380 px left_area
-        # cols 1-3 (Kaart + History/Kp/Bz) elk 2/9 → ~307 px per kolom
-        left_area.columnconfigure(0, weight=3)
-        left_area.columnconfigure(1, weight=2)
-        left_area.columnconfigure(2, weight=2)
-        left_area.columnconfigure(3, weight=2)
-        left_area.rowconfigure(0, weight=0)   # top row: natural height (map = W//2)
-        left_area.rowconfigure(1, weight=0)   # bottom row fixed height
-        left_area.rowconfigure(2, weight=0)   # advice fixed height
+    # ── Solar paneel wrapper ──────────────────────────────────────────────────
+    def _build_solar_panel(self, parent):
+        """Solar/Ionosfeer paneel — wrapper rondom _build_solar_section."""
+        self._build_solar_section(parent)
 
-        # ── Top rij: HF Rel (col 0) | Kaart (col 1-2) | leeg (col 3) ────────
-        prop_f = tk.Frame(left_area, bg=BG_PANEL)
-        prop_f.grid(row=0, column=0, sticky='nsew', padx=(0, 4))
-        self._build_prop_panel(prop_f)
+    # ── Fullscreen ────────────────────────────────────────────────────────────
+    def _toggle_fullscreen(self):
+        fs = not self._fs_var.get()
+        self._fs_var.set(fs)
+        if _IS_WIN:
+            self.root.state("zoomed" if fs else "normal")
+        else:
+            self.root.attributes("-fullscreen", fs)
+        self._fs_btn.config(text="⊡" if fs else "⛶")
 
-        map_f = tk.Frame(left_area, bg=BG_PANEL)
-        map_f.grid(row=0, column=1, columnspan=3, sticky='new', padx=(0, 4))
-        self._build_map_panel(map_f)
+    # ── Paneel-zichtbaarheid callback ────────────────────────────────────────
+    # ── Performance: debounce helper ─────────────────────────────────────────
+    def _debounce(self, key: str, ms: int, fn):
+        """Plan fn ms milliseconden na de laatste aanroep (annuleer eerdere)."""
+        attr = f"_deb_{key}"
+        old = getattr(self, attr, None)
+        if old:
+            try:
+                self.root.after_cancel(old)
+            except Exception:
+                pass
+        setattr(self, attr, self.root.after(ms, fn))
 
-        # ── Onderste rij: Schema | Bandverloop | Kp | Bz+Xray ────────────────
-        sched_f = tk.Frame(left_area, bg=BG_ROOT)
-        sched_f.grid(row=1, column=0, sticky='nsew', padx=(0, 4), pady=(8, 0))
-        self._build_schedule_panel(sched_f)
+    def _deferred_redraw(self):
+        """Herteken alle canvassen na drag/resize-einde."""
+        self._draw_map()
+        self._draw_bz_graph(getattr(self, "_last_bz_pts", []))
+        self._draw_kp_bars(getattr(self, "_last_kp_pts", []))
+        self._draw_xray_graph(getattr(self, "_last_xray_pts", []))
+        self._draw_hist_graph()
+        self._draw_schedule()
+        if hasattr(self, "_last_band_pct") and self._last_band_pct:
+            self._draw_prop_bars(self._last_band_pct)
 
-        hist_f = tk.Frame(left_area, bg=BG_ROOT)
-        hist_f.grid(row=1, column=1, sticky='nsew', padx=(0, 4), pady=(8, 0))
-        self._build_hist_panel(hist_f)
+    def _on_panel_vis_change(self, panel_id: str, visible: bool):
+        var = self._panel_vis_vars.get(panel_id)
+        if var:
+            var.set(visible)
+        self._save_cur_settings()
 
-        kp_f = tk.Frame(left_area, bg=BG_ROOT)
-        kp_f.grid(row=1, column=2, sticky='nsew', padx=(0, 4), pady=(8, 0))
-        self._build_kp_panel(kp_f)
+    def _current_layout_dict(self) -> dict:
+        """Huidige paneel- en venstergeometrie als opslaan-dict."""
+        layout: dict = {}
+        for pid, panel in self._panels.items():
+            x, y, w, h = panel.get_geometry()
+            layout[pid] = [x, y, w, h, panel.is_visible()]
+        layout["__window__"] = [
+            self.root.winfo_x(), self.root.winfo_y(),
+            self.root.winfo_width(), self.root.winfo_height()
+        ]
+        return layout
 
-        bz_f = tk.Frame(left_area, bg=BG_ROOT)
-        bz_f.grid(row=1, column=3, sticky='nsew', pady=(8, 0))
-        self._build_bz_xray_panel(bz_f)
+    def _apply_layout_dict(self, layout: dict):
+        """Pas een opgeslagen layout-dict toe op panelen en venster."""
+        win = layout.get("__window__")
+        if win and len(win) >= 4:
+            self.root.geometry(f"{win[2]}x{win[3]}+{win[0]}+{win[1]}")
+        for pid, vals in layout.items():
+            if pid == "__window__" or len(vals) < 5:
+                continue
+            p = self._panels.get(pid)
+            if not p:
+                continue
+            p.place(vals[0], vals[1], vals[2], vals[3])
+            if vals[4]:
+                p.show()
+            else:
+                p.hide()
+            var = self._panel_vis_vars.get(pid)
+            if var:
+                var.set(vals[4])
+        self._save_cur_settings()
+        self.root.after(100, self._draw_map)
 
-        # ── Advies: volledige breedte ─────────────────────────────────────────
-        adv_f = tk.Frame(left_area, bg=BG_ROOT)
-        adv_f.grid(row=2, column=0, columnspan=4, sticky='nsew', pady=(8, 0))
-        self._build_advice_panel(adv_f)
+    def _reset_panel_layout(self):
+        """Herstel naar opgeslagen standaard, of naar _PANEL_DEFAULTS."""
+        layouts = _load_layouts()
+        if "__default__" in layouts:
+            self._apply_layout_dict(layouts["__default__"])
+            return
+        for pid, (x, y, w, h, vis) in _PANEL_DEFAULTS.items():
+            p = self._panels.get(pid)
+            if not p:
+                continue
+            p.place(x, y, w, h)
+            if vis:
+                p.show()
+            else:
+                p.hide()
+            var = self._panel_vis_vars.get(pid)
+            if var:
+                var.set(vis)
+        self._save_cur_settings()
+        self.root.after(100, self._draw_map)
 
-    # ── Solar / Ionosfeer sectie (herbruikbaar in DX-paneel) ─────────────────
+    def _save_as_default_layout(self):
+        """Sla huidige layout op als standaard (gebruikt door Reset layout)."""
+        layouts = _load_layouts()
+        layouts["__default__"] = self._current_layout_dict()
+        _save_layouts(layouts)
+
+    def _save_named_layout(self):
+        """Vraag een naam en sla de huidige layout op als profiel."""
+        from tkinter import simpledialog
+        name = simpledialog.askstring(
+            "Profiel opslaan",
+            "Naam voor dit profiel:",
+            parent=self.root
+        )
+        if not name or not name.strip():
+            return
+        name = name.strip()
+        layouts = _load_layouts()
+        layouts[name] = self._current_layout_dict()
+        _save_layouts(layouts)
+        self._refresh_profiles_menu()
+
+    def _load_named_layout(self, name: str):
+        """Laad een opgeslagen profiel."""
+        layouts = _load_layouts()
+        if name in layouts:
+            self._apply_layout_dict(layouts[name])
+
+    def _overwrite_named_layout(self, name: str):
+        """Overschrijf een bestaand profiel met de huidige layout."""
+        layouts = _load_layouts()
+        layouts[name] = self._current_layout_dict()
+        _save_layouts(layouts)
+
+    def _delete_named_layout(self, name: str):
+        """Verwijder een opgeslagen profiel."""
+        layouts = _load_layouts()
+        layouts.pop(name, None)
+        _save_layouts(layouts)
+        self._refresh_profiles_menu()
+
+    def _refresh_profiles_menu(self):
+        """Verouderd — profielen staan nu in de settings-dialoog."""
+        self._refresh_settings_profiles()
+
+    def _refresh_settings_profiles(self):
+        """Bouw de profielen-lijst in de settings-dialoog opnieuw op."""
+        f = getattr(self, "_settings_profiles_frame", None)
+        if f is None or not f.winfo_exists():
+            return
+        for w in f.winfo_children():
+            w.destroy()
+
+        # Knop: nieuw profiel
+        new_r = tk.Frame(f, bg=BG_PANEL)
+        new_r.pack(fill=tk.X, pady=(0, 4))
+        tk.Button(new_r, text=self._tr("settings_new_profile"),
+                  command=lambda: (self._save_named_layout(),
+                                   self._refresh_settings_profiles()),
+                  font=_font(9), bg=BG_SURFACE, fg="#FFA726",
+                  relief=tk.FLAT, padx=8, pady=2, cursor="hand2"
+                  ).pack(side=tk.LEFT)
+
+        layouts = _load_layouts()
+        user_profiles = sorted(k for k in layouts if not k.startswith("__"))
+        for name in user_profiles:
+            r = tk.Frame(f, bg=BG_PANEL)
+            r.pack(fill=tk.X, pady=1)
+            tk.Label(r, text=name, font=_font(9), bg=BG_PANEL,
+                     fg=TEXT_H1, anchor='w', width=20).pack(side=tk.LEFT, padx=(0, 6))
+            for lbl_key, cmd in [
+                ("settings_load",      lambda n=name: (self._load_named_layout(n),)),
+                ("settings_overwrite", lambda n=name: (self._overwrite_named_layout(n),)),
+                ("settings_delete",    lambda n=name: (self._delete_named_layout(n),
+                                                        self._refresh_settings_profiles())),
+            ]:
+                tk.Button(r, text=self._tr(lbl_key),
+                          command=cmd,
+                          font=_font(8), bg=BG_SURFACE, fg="#FFA726",
+                          relief=tk.FLAT, padx=6, pady=1, cursor="hand2"
+                          ).pack(side=tk.LEFT, padx=(0, 3))
+
+    # ── Paneel-titels bijwerken na taalwisseling ─────────────────────────────
+    def _update_panel_titles(self):
+        _TITLE_MAP = {
+            "band_rel":   ("prop_header",  "📶"),
+            "worldmap":   ("worldmap",     "🗺"),
+            "solar":      ("solar",        "☀"),
+            "band_sched": ("sched_header", "🗓"),
+            "band_hist":  ("hist_header",  "📈"),
+            "alerts":     ("alerts_hdr",      "🔔"),
+            "kp_48h":     ("kp_chart_hdr",   "🧲"),
+            "bz_24h":     ("bz_chart_hdr",   "⚡"),
+            "xray_24h":   ("xray_chart_hdr", "☢"),
+            "dx_spots":   ("dx_header",      "📡"),
+            "prop_adv":   ("adv_header",   "💡"),
+        }
+        for pid, (tr_key, icon) in _TITLE_MAP.items():
+            p = getattr(self, "_panels", {}).get(pid)
+            if p:
+                p.update_title(self._tr(tr_key), icon)
+
+    # ── Solar / Ionosfeer sectie ──────────────────────────────────────────────
     def _build_solar_section(self, parent):
-        """Bouwt solar/ionosfeer info in parent (DX-paneel of elders)."""
-        tk.Frame(parent, bg=ACCENT, height=2).pack(fill=tk.X)
-        _solar_hdr_lbl = tk.Label(parent, text=self._tr("solar"),
-                                  font=_font(10, "bold"), bg=BG_PANEL, fg=ACCENT,
-                                  pady=6)
-        _solar_hdr_lbl.pack(anchor='w', padx=10)
-        self._tr_widgets["solar"] = _solar_hdr_lbl
-
+        """Bouwt solar/ionosfeer info in parent."""
         self._solar_frame = tk.Frame(parent, bg=BG_PANEL)
         self._solar_frame.pack(fill=tk.X, padx=10)
 
@@ -4532,16 +5222,7 @@ class HAMIOSApp:
     # ── Wereldkaart panel ─────────────────────────────────────────────────────
     def _build_map_panel(self, parent):
         outer = tk.Frame(parent, bg=BG_PANEL)
-        outer.pack(fill=tk.X, pady=(0, 0))
-        tk.Frame(outer, bg=ACCENT, height=2).pack(fill=tk.X)
-
-        map_hdr = tk.Frame(outer, bg=BG_PANEL)
-        map_hdr.pack(fill=tk.X)
-        map_title = tk.Label(map_hdr, text=self._tr("worldmap"),
-                             font=_font(10, "bold"), bg=BG_PANEL, fg=ACCENT,
-                             pady=4)
-        map_title.pack(side=tk.LEFT, padx=10)
-        self._tr_widgets["worldmap"] = map_title
+        outer.pack(fill=tk.BOTH, expand=True)
 
         # ── Bottom-items eerst inpakken zodat canvas de rest vult ───────────────
 
@@ -4607,11 +5288,12 @@ class HAMIOSApp:
                  anchor='w').pack(side=tk.BOTTOM, fill=tk.X, padx=10, pady=(0, 0))
 
         # Canvas fills column width; height = width // 2 (exact 2:1, set by _on_map_resize).
-        self._map_canvas = tk.Canvas(outer, bg="#1B3A5C",
+        self._map_canvas = tk.Canvas(outer, bg=BG_ROOT,
                                      bd=0, highlightthickness=0)
-        self._map_canvas.pack(fill=tk.X, padx=10, pady=(2, 2))
+        self._map_canvas.pack(fill=tk.BOTH, expand=True, padx=10, pady=(2, 2))
         self._map_photo = None
-        self._map_canvas.bind("<Configure>",       self._on_map_resize)
+        self._map_canvas.bind("<Configure>",
+                              lambda *_: self._debounce("map", 150, self._on_map_resize))
         self._map_canvas.bind("<Button-1>",        self._on_map_btn1_press)
         self._map_canvas.bind("<B1-Motion>",       self._on_map_drag)
         self._map_canvas.bind("<ButtonRelease-1>", self._on_map_btn1_release)
@@ -4679,13 +5361,8 @@ class HAMIOSApp:
             self._sat_tip_win = None
 
     def _on_map_resize(self, _event=None):
-        """Canvas height = width // 2 — exact 2:1, no black bars, no distortion."""
-        w = self._map_canvas.winfo_width()
-        if w > 1:
-            h = w // 2
-            if self._map_canvas.winfo_height() != h:
-                self._map_canvas.config(height=h)
-                self._map_base_size = None
+        """Herteken kaart bij resize van het canvas (v4: canvas vult paneel)."""
+        self._map_base_size = None
         self._draw_map()
 
     def _redraw_map(self):
@@ -4867,11 +5544,11 @@ class HAMIOSApp:
     def _draw_map(self):
         c = self._map_canvas
         W = c.winfo_width()  or 960
-        H = c.winfo_height() or 400
+        H = c.winfo_height() or 480
         zoom = max(1.0, self._map_zoom)
-        # Virtual map always width-based (2:1). Height = W//2 (set by _on_map_resize).
+        # Gebruik de werkelijke canvashoogte — paneel is vrij resizable.
         VW   = max(2, int(W * zoom))
-        VH   = max(1, int(W // 2 * zoom))
+        VH   = max(1, int(H * zoom))
 
         if not _PIL_OK:
             c.delete("all")
@@ -5438,8 +6115,9 @@ class HAMIOSApp:
             return
         c  = self._map_canvas
         W  = c.winfo_width()  or 960
+        H  = c.winfo_height() or 480
         VW = int(W * max(1.0, self._map_zoom))
-        VH = VW // 2
+        VH = int(H * max(1.0, self._map_zoom))
         cl = self._map_crop_left
         ct = self._map_crop_top
 
@@ -5515,8 +6193,9 @@ class HAMIOSApp:
                                     bd=0, highlightthickness=0)
         self._bz_canvas.pack(fill=tk.BOTH, expand=True, padx=10, pady=(0, 6))
         self._bz_canvas.bind("<Configure>",
-                             lambda *_: self._draw_bz_graph(
-                                 getattr(self, "_last_bz_pts", [])))
+                             lambda *_: self._debounce("bz", 150,
+                                 lambda: self._draw_bz_graph(
+                                     getattr(self, "_last_bz_pts", []))))
 
         # Tooltip via standaard _Tooltip class
         self._bz_tip = _Tooltip(self._bz_canvas)
@@ -5567,17 +6246,13 @@ class HAMIOSApp:
         """Planetaire Kp-index 48-uurs staafdiagram."""
         outer = tk.Frame(parent, bg=BG_PANEL)
         outer.pack(fill=tk.BOTH, expand=True)
-        tk.Frame(outer, bg=ACCENT, height=2).pack(fill=tk.X)
-        _kp_hdr = tk.Label(outer, text=self._tr("kp_chart_hdr"),
-                           font=_font(10, "bold"), bg=BG_PANEL, fg=ACCENT, pady=4)
-        _kp_hdr.pack(anchor='w', padx=10)
-        self._tr_widgets["kp_chart_hdr"] = _kp_hdr
         self._kp_canvas = tk.Canvas(outer, height=120, bg=BG_SURFACE,
                                     bd=0, highlightthickness=0)
         self._kp_canvas.pack(fill=tk.BOTH, expand=True, padx=10, pady=(0, 6))
         self._kp_canvas.bind("<Configure>",
-                             lambda *_: self._draw_kp_bars(
-                                 getattr(self, "_last_kp_pts", [])))
+                             lambda *_: self._debounce("kp", 150,
+                                 lambda: self._draw_kp_bars(
+                                     getattr(self, "_last_kp_pts", []))))
         self._kp_tooltip = _Tooltip(self._kp_canvas)
 
         def _kp_motion(event):
@@ -5618,7 +6293,6 @@ class HAMIOSApp:
         """Gecombineerd paneel: Bz 24u (boven) + X-ray 24u (onder)."""
         outer = tk.Frame(parent, bg=BG_PANEL)
         outer.pack(fill=tk.BOTH, expand=True)
-        tk.Frame(outer, bg=ACCENT, height=2).pack(fill=tk.X)
 
         # Bz sectie
         _bz_hdr = tk.Label(outer, text=self._tr("bz_chart_hdr"),
@@ -5629,8 +6303,9 @@ class HAMIOSApp:
                                     bd=0, highlightthickness=0)
         self._bz_canvas.pack(fill=tk.BOTH, expand=True, padx=10, pady=(0, 4))
         self._bz_canvas.bind("<Configure>",
-                             lambda *_: self._draw_bz_graph(
-                                 getattr(self, "_last_bz_pts", [])))
+                             lambda *_: self._debounce("bz", 150,
+                                 lambda: self._draw_bz_graph(
+                                     getattr(self, "_last_bz_pts", []))))
 
         tk.Frame(outer, bg=BORDER, height=1).pack(fill=tk.X, padx=10)
 
@@ -5643,8 +6318,9 @@ class HAMIOSApp:
                                       bd=0, highlightthickness=0)
         self._xray_canvas.pack(fill=tk.BOTH, expand=True, padx=10, pady=(0, 6))
         self._xray_canvas.bind("<Configure>",
-                               lambda *_: self._draw_xray_graph(
-                                   getattr(self, "_last_xray_pts", [])))
+                               lambda *_: self._debounce("xray", 150,
+                                   lambda: self._draw_xray_graph(
+                                       getattr(self, "_last_xray_pts", []))))
         self._xray_tooltip = _Tooltip(self._xray_canvas)
 
         def _xray_motion(event):
@@ -5675,6 +6351,90 @@ class HAMIOSApp:
             rx = c.winfo_rootx() + event.x
             ry = c.winfo_rooty() + event.y
             self._xray_tooltip.show(rx, ry, tip)
+            c.delete("xray_cursor")
+            c.create_line(event.x, 0, event.x, c.winfo_height(),
+                          fill=BORDER, dash=(3, 3), tags="xray_cursor")
+
+        self._xray_canvas.bind("<Motion>", _xray_motion)
+        self._xray_canvas.bind("<Leave>",  lambda _: (self._xray_tooltip.hide(),
+                                                       self._xray_canvas.delete("xray_cursor")))
+
+    def _build_bz_panel_only(self, parent):
+        """Zelfstandig Bz 24h paneel (gesplitst van bz_xray)."""
+        outer = tk.Frame(parent, bg=BG_PANEL)
+        outer.pack(fill=tk.BOTH, expand=True)
+        self._bz_canvas = tk.Canvas(outer, bg=BG_SURFACE, bd=0, highlightthickness=0)
+        self._bz_canvas.pack(fill=tk.BOTH, expand=True, padx=8, pady=(4, 8))
+        self._bz_canvas.bind("<Configure>",
+                             lambda *_: self._debounce("bz", 150,
+                                 lambda: self._draw_bz_graph(
+                                     getattr(self, "_last_bz_pts", []))))
+        self._bz_tip = _Tooltip(self._bz_canvas)
+
+        def _bz_on_motion(event):
+            if not self._show_tips_var.get():
+                return
+            pts = getattr(self, "_last_bz_pts", [])
+            if not pts:
+                self._bz_tip.hide(); return
+            c = self._bz_canvas
+            W = c.winfo_width() or 200; H = c.winfo_height() or 120
+            PAD_L, PAD_R = 30, 4; gW = W - PAD_L - PAD_R
+            if gW <= 0: return
+            frac = (event.x - PAD_L) / gW
+            hours_ago = 24 * (1.0 - max(0.0, min(1.0, frac)))
+            closest = min(pts, key=lambda p: abs(p[0] - hours_ago))
+            bz_val = closest[1]
+            t_ago = datetime.datetime.now(datetime.timezone.utc) - datetime.timedelta(hours=closest[0])
+            ts_lbl = t_ago.astimezone().strftime("%d %b %H:%M")
+            bz_lbl = ("positief — gunstig" if bz_val > 2 else
+                      "negatief — geo-effectief" if bz_val < -2 else "neutraal")
+            tip = [("Bz  24h", None), None,
+                   ("Bz:", f"{bz_val:+.1f} nT"),
+                   ("Status:", bz_lbl), ("Tijd:", ts_lbl)]
+            self._bz_tip.show(c.winfo_rootx() + event.x, c.winfo_rooty() + event.y, tip)
+            c.delete("bz_cursor")
+            c.create_line(event.x, 0, event.x, H, fill=BORDER, dash=(3, 3), tags="bz_cursor")
+
+        def _bz_on_leave(_e):
+            self._bz_tip.hide()
+            self._bz_canvas.delete("bz_cursor")
+
+        self._bz_canvas.bind("<Motion>", _bz_on_motion)
+        self._bz_canvas.bind("<Leave>",  _bz_on_leave)
+
+    def _build_xray_panel_only(self, parent):
+        """Zelfstandig X-ray 24h paneel (gesplitst van bz_xray)."""
+        outer = tk.Frame(parent, bg=BG_PANEL)
+        outer.pack(fill=tk.BOTH, expand=True)
+        self._xray_canvas = tk.Canvas(outer, bg=BG_SURFACE, bd=0, highlightthickness=0)
+        self._xray_canvas.pack(fill=tk.BOTH, expand=True, padx=8, pady=(4, 8))
+        self._xray_canvas.bind("<Configure>",
+                               lambda *_: self._debounce("xray", 150,
+                                   lambda: self._draw_xray_graph(
+                                       getattr(self, "_last_xray_pts", []))))
+        self._xray_tooltip = _Tooltip(self._xray_canvas)
+
+        def _xray_motion(event):
+            if not self._show_tips_var.get():
+                return
+            pts = getattr(self, "_last_xray_pts", [])
+            if not pts:
+                self._xray_tooltip.hide(); return
+            c = self._xray_canvas
+            W = c.winfo_width() or 200; PAD_L, PAD_R = 20, 4; gW = W - PAD_L - PAD_R
+            frac = (event.x - PAD_L) / max(1, gW)
+            ha, flux = min(pts, key=lambda p: abs(p[0] - 24*(1.0 - max(0.0, min(1.0, frac)))))
+            t_ago = datetime.datetime.now(datetime.timezone.utc) - datetime.timedelta(hours=ha)
+            ts_lbl = t_ago.astimezone().strftime("%d %b %H:%M")
+            if   flux >= 1e-4: cls = f"X{flux/1e-4:.1f}"
+            elif flux >= 1e-5: cls = f"M{flux/1e-5:.1f}"
+            elif flux >= 1e-6: cls = f"C{flux/1e-6:.1f}"
+            elif flux >= 1e-7: cls = f"B{flux/1e-7:.1f}"
+            else:              cls = f"A{flux/1e-8:.1f}"
+            tip = [("X-ray  24h", None), None,
+                   ("Klasse:", cls), ("Flux:", f"{flux:.2e} W/m²"), ("Tijd:", ts_lbl)]
+            self._xray_tooltip.show(c.winfo_rootx() + event.x, c.winfo_rooty() + event.y, tip)
             c.delete("xray_cursor")
             c.create_line(event.x, 0, event.x, c.winfo_height(),
                           fill=BORDER, dash=(3, 3), tags="xray_cursor")
@@ -5842,15 +6602,8 @@ class HAMIOSApp:
 
     def _build_prop_panel(self, parent):
         outer = tk.Frame(parent, bg=BG_PANEL)
-        outer.pack(fill=tk.BOTH, expand=True, pady=(0, 0))
+        outer.pack(fill=tk.BOTH, expand=True)
 
-        tk.Frame(outer, bg=ACCENT, height=2).pack(fill=tk.X)
-        prop_hdr = tk.Frame(outer, bg=BG_PANEL)
-        prop_hdr.pack(fill=tk.X, padx=10, pady=(2, 0))
-        _prop_title = tk.Label(prop_hdr, text=self._tr("prop_header"),
-                               font=_font(10, "bold"), bg=BG_PANEL, fg=ACCENT)
-        _prop_title.pack(side=tk.LEFT)
-        self._tr_widgets["prop_header"] = _prop_title
         ctrl = tk.Frame(outer, bg=BG_PANEL)
         ctrl.pack(fill=tk.X, padx=10, pady=(0, 4))
 
@@ -5913,7 +6666,9 @@ class HAMIOSApp:
                                       bd=0, highlightthickness=0)
         self._prop_canvas.pack(fill=tk.X, padx=10, pady=(0, 8))
         self._prop_canvas.bind("<Configure>",
-                               lambda *_: self._draw_prop_bars(self._last_band_pct))
+                               lambda *_: self._debounce("prop", 150,
+                                   lambda: self._draw_prop_bars(
+                                       getattr(self, "_last_band_pct", []))))
         self._bar_rows: list = []   # (y_top, y_bot, tooltip_text)
         self._tooltip  = _Tooltip(self._prop_canvas)
         self._prop_canvas.bind("<Motion>",   self._on_bar_motion)
@@ -5929,89 +6684,82 @@ class HAMIOSApp:
 
         self._update_cat_freq_lbl_visibility()
 
-        # ── Kaartoverlays + meldingen onder HF Betrouwbaarheid ───────────────
-        tk.Frame(outer, bg=ACCENT, height=2).pack(fill=tk.X, padx=10, pady=(6, 0))
-        ov_frame = tk.Frame(outer, bg=BG_PANEL)
-        ov_frame.pack(fill=tk.X, padx=10, pady=(4, 6))
+        # Meldingen staan in het aparte "alerts"-paneel
 
-        def _cb_ov(parent_row, tr_key, var, fallback_text=""):
-            def _on_toggle():
-                self._save_cur_settings()
-                self._draw_map()
-            cb = tk.Checkbutton(parent_row,
-                                text=self._tr(tr_key) if tr_key else fallback_text,
-                                variable=var, command=_on_toggle,
-                                bg=BG_PANEL, fg=TEXT_BODY, selectcolor=BG_SURFACE,
-                                activebackground=BG_PANEL, activeforeground=TEXT_H1,
-                                font=_font(9))
-            cb.pack(side=tk.LEFT, padx=(0, 4))
-            if tr_key:
-                self._tr_widgets.setdefault(tr_key, [])
-                if isinstance(self._tr_widgets[tr_key], list):
-                    self._tr_widgets[tr_key].append(cb)
-                else:
-                    self._tr_widgets[tr_key] = [self._tr_widgets[tr_key], cb]
 
-        # Meldingen header
-        _alert_lbl = tk.Label(ov_frame, text=self._tr("alerts_hdr") + ":",
-                              font=_font(8), bg=BG_PANEL, fg=TEXT_DIM, anchor='w')
-        _alert_lbl.pack(fill=tk.X, pady=(2, 0))
-        self._tr_widgets.setdefault("alerts_hdr", [])
-        if not isinstance(self._tr_widgets["alerts_hdr"], list):
-            self._tr_widgets["alerts_hdr"] = [self._tr_widgets["alerts_hdr"]]
-        self._tr_widgets["alerts_hdr"].append(_alert_lbl)
+    def _build_alerts_panel(self, parent):
+        """Meldingen-paneel: K-drempel, band-opening drempel, satelliet in QTH-zone."""
+        outer = tk.Frame(parent, bg=BG_PANEL)
+        outer.pack(fill=tk.BOTH, expand=True, padx=10, pady=8)
 
-        # K-index drempel (eigen rij)
-        rk = tk.Frame(ov_frame, bg=BG_PANEL)
-        rk.pack(fill=tk.X, pady=(0, 1))
+        def _tr_cb(frame, tr_key):
+            """Helper: registreer widget in _tr_widgets als lijst."""
+            self._tr_widgets.setdefault(tr_key, [])
+            if not isinstance(self._tr_widgets[tr_key], list):
+                self._tr_widgets[tr_key] = [self._tr_widgets[tr_key]]
+            self._tr_widgets[tr_key].append(frame)
+
+        # ── K-index drempel ───────────────────────────────────────────────────
+        rk = tk.Frame(outer, bg=BG_PANEL)
+        rk.pack(fill=tk.X, pady=(0, 4))
         _k_cb = tk.Checkbutton(rk, variable=self._alert_k_en_var,
                                command=self._save_cur_settings,
                                bg=BG_PANEL, fg=TEXT_BODY, selectcolor=BG_SURFACE,
                                activebackground=BG_PANEL, activeforeground=TEXT_H1,
                                font=_font(9), text=self._tr("k_alert_lbl"))
-        _k_cb.pack(side=tk.LEFT, padx=(0, 2))
-        self._tr_widgets.setdefault("k_alert_lbl", [])
-        if not isinstance(self._tr_widgets["k_alert_lbl"], list):
-            self._tr_widgets["k_alert_lbl"] = [self._tr_widgets["k_alert_lbl"]]
-        self._tr_widgets["k_alert_lbl"].append(_k_cb)
+        _k_cb.pack(side=tk.LEFT, padx=(0, 4))
+        _tr_cb(_k_cb, "k_alert_lbl")
         tk.Spinbox(rk, from_=1, to=9, width=2, textvariable=self._k_alert_var,
                    command=self._save_cur_settings,
                    bg=BG_SURFACE, fg=TEXT_H1, buttonbackground=BG_SURFACE,
-                   relief=tk.FLAT, font=_font(9, "bold")).pack(side=tk.LEFT, padx=(2, 0))
+                   relief=tk.FLAT, font=_font(9, "bold")).pack(side=tk.LEFT)
 
-        # Band-opening drempel (eigen rij)
-        rb = tk.Frame(ov_frame, bg=BG_PANEL)
-        rb.pack(fill=tk.X)
+        # ── Band-opening drempel ──────────────────────────────────────────────
+        rb = tk.Frame(outer, bg=BG_PANEL)
+        rb.pack(fill=tk.X, pady=(0, 4))
         _b_cb = tk.Checkbutton(rb, variable=self._alert_band_en_var,
                                command=self._save_cur_settings,
                                bg=BG_PANEL, fg=TEXT_BODY, selectcolor=BG_SURFACE,
                                activebackground=BG_PANEL, activeforeground=TEXT_H1,
                                font=_font(9), text=self._tr("band_alert_lbl"))
-        _b_cb.pack(side=tk.LEFT, padx=(0, 2))
-        self._tr_widgets.setdefault("band_alert_lbl", [])
-        if not isinstance(self._tr_widgets["band_alert_lbl"], list):
-            self._tr_widgets["band_alert_lbl"] = [self._tr_widgets["band_alert_lbl"]]
-        self._tr_widgets["band_alert_lbl"].append(_b_cb)
+        _b_cb.pack(side=tk.LEFT, padx=(0, 4))
+        _tr_cb(_b_cb, "band_alert_lbl")
         tk.Spinbox(rb, from_=10, to=90, increment=5, width=3,
                    textvariable=self._band_alert_var, command=self._save_cur_settings,
                    bg=BG_SURFACE, fg=TEXT_H1, buttonbackground=BG_SURFACE,
-                   relief=tk.FLAT, font=_font(9, "bold")).pack(side=tk.LEFT, padx=(2, 0))
+                   relief=tk.FLAT, font=_font(9, "bold")).pack(side=tk.LEFT)
         tk.Label(rb, text="%", font=_font(9), bg=BG_PANEL,
                  fg=TEXT_DIM).pack(side=tk.LEFT, padx=(2, 0))
 
-        # Satelliet in QTH-zone
-        tk.Frame(ov_frame, bg=BORDER, height=1).pack(fill=tk.X, pady=(4, 2))
-        _sz_lbl = tk.Label(ov_frame, text=self._tr("sat_zone_hdr"),
+        # ── X-flare / PCA knoppen ─────────────────────────────────────────────
+        def _alert_cb(frame, var, tr_key):
+            cb = tk.Checkbutton(frame, variable=var, command=self._save_cur_settings,
+                                bg=BG_PANEL, fg=TEXT_BODY, selectcolor=BG_SURFACE,
+                                activebackground=BG_PANEL, activeforeground=TEXT_H1,
+                                font=_font(9), text=self._tr(tr_key))
+            cb.pack(side=tk.LEFT, padx=(0, 4))
+            _tr_cb(cb, tr_key)
+
+        rx = tk.Frame(outer, bg=BG_PANEL)
+        rx.pack(fill=tk.X, pady=(0, 1))
+        _alert_cb(rx, self._alert_xflare_en_var, "alert_xflare_lbl")
+
+        rp = tk.Frame(outer, bg=BG_PANEL)
+        rp.pack(fill=tk.X, pady=(0, 4))
+        _alert_cb(rp, self._alert_pca_en_var, "alert_pca_lbl")
+
+        # ── Satelliet in QTH-zone ─────────────────────────────────────────────
+        tk.Frame(outer, bg=BORDER, height=1).pack(fill=tk.X, pady=(4, 4))
+        _sz_lbl = tk.Label(outer, text=self._tr("sat_zone_hdr"),
                            font=_font(8), bg=BG_PANEL, fg=TEXT_DIM, anchor='w')
         _sz_lbl.pack(fill=tk.X)
         self._tr_widgets["sat_zone_hdr"] = _sz_lbl
         self._sat_zone_var = tk.StringVar(value="—")
-        self._sat_zone_lbl = tk.Label(ov_frame, textvariable=self._sat_zone_var,
+        self._sat_zone_lbl = tk.Label(outer, textvariable=self._sat_zone_var,
                                       font=_font(8, "bold"), bg=BG_PANEL,
-                                      fg="#66BB6A", anchor='w', wraplength=190,
+                                      fg="#66BB6A", anchor='w', wraplength=200,
                                       justify=tk.LEFT)
-        self._sat_zone_lbl.pack(fill=tk.X, pady=(0, 2))
-
+        self._sat_zone_lbl.pack(fill=tk.X, pady=(0, 4))
 
     def _draw_prop_bars(self, band_pct):
         self._last_band_pct = band_pct
@@ -6240,16 +6988,10 @@ class HAMIOSApp:
     # ── Historiek panel ───────────────────────────────────────────────────────
     def _build_hist_panel(self, parent):
         outer = tk.Frame(parent, bg=BG_PANEL)
-        outer.pack(fill=tk.BOTH, expand=True, pady=(0, 0))
-
-        tk.Frame(outer, bg=ACCENT, height=2).pack(fill=tk.X)
+        outer.pack(fill=tk.BOTH, expand=True)
 
         hdr = tk.Frame(outer, bg=BG_PANEL)
         hdr.pack(fill=tk.X, padx=10, pady=(4, 2))
-        _hist_title = tk.Label(hdr, text=self._tr("hist_header"),
-                               font=_font(10, "bold"), bg=BG_PANEL, fg=ACCENT)
-        _hist_title.pack(side=tk.LEFT)
-        self._tr_widgets["hist_header"] = _hist_title
 
         # Radiobuttons: value = interne NL-sleutel (opgeslagen in INI), text = vertaald
         _HIST_RANGE_KEYS = [("Uren", "hist_range_h"), ("Dagen", "hist_range_d"),
@@ -6269,7 +7011,8 @@ class HAMIOSApp:
         self._hist_canvas = tk.Canvas(outer, height=160, bg=BG_PANEL,
                                       bd=0, highlightthickness=0)
         self._hist_canvas.pack(fill=tk.BOTH, expand=True, padx=10, pady=(0, 6))
-        self._hist_canvas.bind("<Configure>", lambda *_: self._draw_hist_graph())
+        self._hist_canvas.bind("<Configure>",
+                               lambda *_: self._debounce("hist", 150, self._draw_hist_graph))
         self._hist_tooltip = _Tooltip(self._hist_canvas)
         self._hist_layout: dict = {}
         self._hist_canvas.bind("<Motion>",   self._on_hist_motion)
@@ -6432,19 +7175,12 @@ class HAMIOSApp:
     # ── Bandopenings-schema (heatmap) ─────────────────────────────────────────
     def _build_schedule_panel(self, parent):
         outer = tk.Frame(parent, bg=BG_PANEL)
-        outer.pack(fill=tk.BOTH, expand=True, pady=(0, 0))
-        tk.Frame(outer, bg=ACCENT, height=2).pack(fill=tk.X)
-
-        hdr = tk.Frame(outer, bg=BG_PANEL)
-        hdr.pack(fill=tk.X, padx=10, pady=(4, 2))
-        _sched_title = tk.Label(hdr, text=self._tr("sched_header"),
-                                font=_font(10, "bold"), bg=BG_PANEL, fg=ACCENT)
-        _sched_title.pack(side=tk.LEFT)
-        self._tr_widgets["sched_header"] = _sched_title
+        outer.pack(fill=tk.BOTH, expand=True)
         self._sched_canvas = tk.Canvas(outer, height=120, bg=BG_PANEL,
                                        bd=0, highlightthickness=0)
         self._sched_canvas.pack(fill=tk.BOTH, expand=True, padx=10, pady=(0, 6))
-        self._sched_canvas.bind("<Configure>", lambda *_: self._draw_schedule())
+        self._sched_canvas.bind("<Configure>",
+                                lambda *_: self._debounce("sched", 150, self._draw_schedule))
         self._sched_tooltip = _Tooltip(self._sched_canvas)
         self._sched_layout: dict = {}   # grid-layout voor hover
         self._sched_canvas.bind("<Motion>", self._on_sched_motion)
@@ -6640,21 +7376,16 @@ class HAMIOSApp:
 
     # ── DX Spots panel ───────────────────────────────────────────────────────
     def _build_dx_panel(self, parent):
+        """Legacy wrapper — gebruik _build_dx_spots_panel voor v4 panelen."""
+        self._build_dx_spots_panel(parent)
+
+    def _build_dx_spots_panel(self, parent):
+        """Live DX Spots paneel (zonder solar sectie)."""
         outer = tk.Frame(parent, bg=BG_PANEL)
         outer.pack(fill=tk.BOTH, expand=True)
 
-        # ── Solar / Ionosfeer sectie bovenin DX-paneel ───────────────────────
-        self._build_solar_section(outer)
-
-        # Gouden scheidingslijn tussen solar en DX spots
-        tk.Frame(outer, bg=ACCENT, height=2).pack(fill=tk.X, pady=(6, 0))
-
         hdr = tk.Frame(outer, bg=BG_PANEL)
         hdr.pack(fill=tk.X, padx=10, pady=(4, 2))
-        _dx_title = tk.Label(hdr, text=self._tr("dx_header"),
-                             font=_font(10, "bold"), bg=BG_PANEL, fg=ACCENT)
-        _dx_title.pack(side=tk.LEFT)
-        self._tr_widgets["dx_header"] = _dx_title
         _dx_own_cb = tk.Checkbutton(hdr, text=self._tr("own_cont_lbl"),
                                     variable=self._dx_own_cont_var,
                                     command=self._filter_dx_spots,
@@ -6692,7 +7423,8 @@ class HAMIOSApp:
         self._dx_canvas.configure(yscrollcommand=self._dx_sb.set)
         # Scrollbar wordt pas getoond als de inhoud de canvas overschrijdt
         self._dx_canvas.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
-        self._dx_canvas.bind("<Configure>", lambda *_: self._draw_dx_panel())
+        self._dx_canvas.bind("<Configure>",
+                             lambda *_: self._debounce("dx", 150, self._draw_dx_panel))
         def _dx_scroll(e):
             if e.num == 4 or e.delta > 0:
                 self._dx_canvas.yview_scroll(-1, "units")
@@ -6917,17 +7649,8 @@ class HAMIOSApp:
 
     # ── Advies panel ─────────────────────────────────────────────────────────
     def _build_advice_panel(self, parent):
-        # Geen vaste hoogte op outer — inhoud bepaalt de hoogte via adv_wrap (fixed)
         outer = tk.Frame(parent, bg=BG_PANEL)
-        # side=BOTTOM: claimt ruimte vóórdat top_row uitbreidt met expand=True
-        outer.pack(side=tk.BOTTOM, fill=tk.X, pady=(6, 0))
-        tk.Frame(outer, bg=ACCENT, height=2).pack(fill=tk.X)
-        adv_hdr = tk.Frame(outer, bg=BG_PANEL)
-        adv_hdr.pack(fill=tk.X, padx=10, pady=(4, 2))
-        _adv_title = tk.Label(adv_hdr, text=self._tr("adv_header"),
-                              font=_font(10, "bold"), bg=BG_PANEL, fg=ACCENT)
-        _adv_title.pack(side=tk.LEFT)
-        self._tr_widgets["adv_header"] = _adv_title
+        outer.pack(fill=tk.BOTH, expand=True)
         adv_h = ADV_ROWS * (ADV_CARD_H + ADV_CARD_GAP)
         adv_wrap = tk.Frame(outer, bg=BG_PANEL, height=adv_h)
         adv_wrap.pack(fill=tk.X, padx=10, pady=(0, 8))
@@ -7614,6 +8337,8 @@ class HAMIOSApp:
 
     # ── Instellingen opslaan ──────────────────────────────────────────────────
     def _save_cur_settings(self):
+        if hasattr(self, "_panels") and self._panels:
+            _save_panel_layout(self._panels)
         _save_settings(self._qth_lat, self._qth_lon,
                        self._refresh_var.get(),
                        self._mode_var.get(),
@@ -7673,7 +8398,7 @@ class HAMIOSApp:
             pystray.Menu.SEPARATOR,
             pystray.MenuItem(self._tr("tray_exit"), self._tray_quit),
         )
-        self._tray_icon = pystray.Icon("HAMIOS", tray_img, "HAMIOS v3.4", menu)
+        self._tray_icon = pystray.Icon("HAMIOS", tray_img, "HAMIOS v4.0.1", menu)
         threading.Thread(target=self._tray_icon.run, daemon=True).start()
 
     def _tray_show(self, icon=None, item=None):
@@ -8106,7 +8831,7 @@ class HAMIOSApp:
 
 
 # ── Version check (GitHub releases API) ────────────────────────────────────────
-_APP_VERSION = "3.4"
+_APP_VERSION = "4.0.1"
 _GITHUB_RELEASES_URL = "https://api.github.com/repos/fvdijke/HAMIOS/releases/latest"
 
 def _check_latest_version() -> tuple[str, str]:

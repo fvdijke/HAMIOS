@@ -244,7 +244,23 @@
     "map_spots_lbl": "Spots",
     "map_cs_lbl": "CS",
     "map_iono_lbl": "Iono",
-    "map_itu_lbl": "ITU"
+    "map_itu_lbl": "ITU",
+    "theme_lbl": "Thema:",
+    "sw_speed_lbl": "SW:",
+    "settings_btn": "⚙  Einstellungen",
+    "settings_title": "⚙  Einstellungen",
+    "settings_qth": "QTH",
+    "settings_iface": "Oberfläche",
+    "close_lbl": "Schließen",
+    "panels_btn": "▦  Fenster",
+    "settings_layout": "Layout",
+    "settings_reset_layout": "↺  Layout zurücksetzen",
+    "settings_save_default": "💾  Als Standard speichern",
+    "settings_profiles": "Profile",
+    "settings_new_profile": "＋  Neues Profil...",
+    "settings_load": "▶  Laden",
+    "settings_overwrite": "↻  Überschreiben",
+    "settings_delete": "🗑  Löschen"
   },
   "solar_tips": {
     "sfi": [

@@ -1,8 +1,8 @@
-# 📡 HAMIOS v3.3
+# 📡 HAMIOS v4.0.1
 
 **Monitor de propagação HF e DX para Windows**
 
-> v3.3 — Rastreamento de satélites com overlay de pegada · Base de dados de estações espiã/números · Correção de previsão de tempestade · Melhorias de tema · Desempenho
+> v4.0.1 — Painéis arrastáveis e redimensionáveis · Caixa de diálogo de Configurações unificada · Otimizações de desempenho · Gráfico histórico solar
 
 *Conceived by Frank van Dijke · Developed with Claude AI*
 
@@ -38,6 +38,15 @@ HAMIOS fornece aos radioamadores informações em tempo real sobre propagação 
 ### 🌌 Aurora Ring Overlay
 - Magnetic aurora oval based on K-index (Feldstein/Holzworth, IGRF-2025)
 - **Colour by K-index**: green (K < 3) · yellow (K 3–5) · red (K ≥ 6)
+
+### 🖥️ Sistema de painéis *(v4.0.1)*
+- **11 painéis livremente arrastáveis e redimensionáveis** numa tela de ambiente de trabalho livre
+- Cada painel tem uma borda âmbar de 1px, barra de título com botão ✕ de fechar e puxador ◢ de redimensionamento
+- **Ajuste à grelha** (2px) ao soltar após arrastar/redimensionar para alinhamento limpo
+- Painéis: Fiabilidade das bandas HF · Mapa mundial · Solar/Ionosfera · Alertas · Horário das bandas · Histórico das bandas · Kp 48h · Bz 24h · Raios X 24h · Spots DX · Conselhos de propagação
+- **⚙ Caixa de diálogo Configurações** contém toda a configuração: QTH · Idioma · Tema · Dicas de ferramentas · Ticker · Horário de verão · Visibilidade dos painéis · Gestão de layouts
+- **Predefinições de layout**: guardar/carregar/substituir/eliminar perfis com nome em `hamios_layouts.json`
+- **Guardar como predefinição**: guarda o layout atual como layout de arranque
 
 ### 🛰 Rastreamento de satélites *(botão 🛰 Sat no cabeçalho)*
 - Dados TLE descarregados do **Celestrak** (Amateur / ISS / Weather / CubeSat)
@@ -150,34 +159,46 @@ Thresholds are saved to `HAMIOS.ini`.
 | ES | Español | PT | Português |
 | JA | 日本語 | RU | Русский |
 
-### ⚙️ Other
-- **Dynamic themes**: Midnight · DeepOcean · HighContrast
-- **System tray**: minimise to tray, tray notifications
-- **Tooltips** with explanation per solar parameter
-- **Auto-refresh**: Off / 30 s / 1 min / 5 min / 10 min / 30 min / 1 hour
-- **Scrolling ticker** with current propagation tips
-- All settings saved to `HAMIOS.ini`
+### ⚙️ Outros
+- **Temas dinâmicos**: Midnight · DeepOcean · HighContrast
+- **Bandeja do sistema**: minimizar para a bandeja, notificações
+- **Dicas de ferramentas** com explicação por parâmetro solar
+- **Atualização automática**: Desativado / 30 s / 1 min / 5 min / 10 min / 30 min / 1 hora
+- **Ticker deslizante** com dicas de propagação atuais
+- **Sistema de painéis arrastáveis**: organize e redimensione livremente todos os painéis
+- **Predefinições de layout**: guarde e alterne entre disposições de painéis personalizadas
+- Todas as configurações guardadas em `HAMIOS.ini`
 
 ---
 
-## 🖥️ Layout (v3.0)
+## 🖥️ Layout (v4.0.1) — Painéis flutuantes livres
 
 ```
 ┌─────────────────────────────────────────────────────────────────────────┐
-│ HEADER  (title · exit · CAT · interval · lang · QTH · theme · Sat · Spy · time) │
-├──────────┬──────────────────────────────────┬────────────┬──────────────┤
-│  Solar   │      World Map (central)         │    HF      │              │
-│ Ionosph. │      380 px tall, zoom/pan       │    Band    │   DX Spots   │
-│  200 px  │   Display: Sun Moon Graylijn     │ Reliability│  (full       │
-│          │   Data: WSPR Spots CS Locator    │   420 px   │  height)     │
-│          ├──────────────────────────────────┤            │   360 px     │
-│          │  Schedule │  Band Hist  │  Bz   │            │              │
-│          │   (1/3)   │    (1/3)    │ (1/3) │            │              │
-├──────────┴──────────────────────────────────┴────────────┤              │
-│              Propagation Analysis & Advice                │              │
-├───────────────────────────────────────────────────────────┴──────────────┤
-│ TICKER                                                                    │
-└──────────────────────────────────────────────────────────────────────────┘
+│  ⚙ Configurações  (QTH · Idioma · Tema · Dicas · Ticker · Hora verão · Painéis · Layouts) │
+├─────────────────────────────────────────────────────────────────────────┤
+│                                                                         │
+│  ┌──────────────┐  ┌──────────────────────────────┐  ┌──────────────┐  │
+│  │Solar/Ionosfer│  │      Mapa mundial         ✕  │  │Bandas HF ✕  │  │
+│  │     ✕    ◢  │  │   zoom/pan · sobrep.      ◢  │  │Fiabilidade◢ │  │
+│  └──────────────┘  └──────────────────────────────┘  └──────────────┘  │
+│                                                                         │
+│  ┌─────────────┐  ┌─────────────┐  ┌──────────┐  ┌──────────────────┐  │
+│  │HorBandas    │  │HistBandas   │  │  Kp 48h  │  │  Spots DX    ✕  │  │
+│  │    ✕    ◢  │  │    ✕    ◢  │  │  ✕    ◢  │  │             ◢  │  │
+│  └─────────────┘  └─────────────┘  └──────────┘  └──────────────────┘  │
+│                                                                         │
+│  ┌──────────┐  ┌──────────┐  ┌──────────────────────────────────────┐  │
+│  │  Bz 24h  │  │RaiosX 24h│  │  Conselhos de propagação         ✕  │  │
+│  │  ✕    ◢  │  │  ✕    ◢  │  │                               ◢  │  │
+│  └──────────┘  └──────────┘  └──────────────────────────────────────┘  │
+│                                                                         │
+│  ┌─────────────────────────────────────────────────────────────────┐   │
+│  │  Alertas  ✕  ◢                                                  │   │
+│  └─────────────────────────────────────────────────────────────────┘   │
+│                                                                         │
+│  Todos os painéis: borda âmbar · ✕ fechar · ◢ tamanho · grelha (2px)  │
+└─────────────────────────────────────────────────────────────────────────┘
 ```
 
 ---
@@ -248,6 +269,18 @@ pyinstaller HAMIOS.spec
 
 ---
 
+## 📁 Ficheiros de dados
+
+| Ficheiro | Conteúdo |
+|----------|----------|
+| `HAMIOS.ini` | Todas as configurações do utilizador (QTH, tema, idioma, limiares de alerta, …) |
+| `hamios_layouts.json` | Predefinições de layout dos painéis |
+| `hamios_tle.json` | Elementos orbitais TLE em cache para rastreamento de satélites |
+| `hamios_spy_stations.json` | Base de dados de estações espiã/números (editável) |
+| `langs/*.json` | Pacotes de idioma |
+
+---
+
 ## 🔭 Modelo de propagação
 
 ```
@@ -282,7 +315,7 @@ LUF  = (3.5 + K × 0.8) × auroral-factor / 10^(SNR/20)
 | Python | 3.10 | 3.12+ |
 | Internet | Required (data feeds) | — |
 
-> v3.0 makes best use of a wide display (≥ 1768 px) with the DX column as an additive right panel. On narrower screens the window scales proportionally and all panels remain usable.
+> v4.0.1 usa uma tela de painéis livre. Organize os painéis livremente em qualquer tamanho de ecrã. Um ecrã largo (≥ 1920 px) oferece o espaço de trabalho mais confortável.
 
 ---
 

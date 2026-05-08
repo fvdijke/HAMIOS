@@ -244,7 +244,23 @@
     "map_spots_lbl": "Spots",
     "map_cs_lbl": "CS",
     "map_iono_lbl": "Iono",
-    "map_itu_lbl": "ITU"
+    "map_itu_lbl": "ITU",
+    "theme_lbl": "Tema:",
+    "sw_speed_lbl": "SW:",
+    "settings_btn": "⚙  Inställningar",
+    "settings_title": "⚙  Inställningar",
+    "settings_qth": "QTH",
+    "settings_iface": "Gränssnitt",
+    "close_lbl": "Stäng",
+    "panels_btn": "▦  Paneler",
+    "settings_layout": "Layout",
+    "settings_reset_layout": "↺  Återställ layout",
+    "settings_save_default": "💾  Spara som standard",
+    "settings_profiles": "Profiler",
+    "settings_new_profile": "＋  Ny profil...",
+    "settings_load": "▶  Ladda",
+    "settings_overwrite": "↻  Skriv över",
+    "settings_delete": "🗑  Ta bort"
   },
   "solar_tips": {
     "sfi": [

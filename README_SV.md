@@ -1,8 +1,8 @@
-# 📡 HAMIOS v3.3
+# 📡 HAMIOS v4.0.1
 
 **KV utbrednings- och DX-monitor för Windows**
 
-> v3.3 — Satellitspårning med fotavtrycksöverlägg · Spion-/nummerstationsdatabas · Stormprognos-fix · Temaförbättringar · Prestanda
+> v4.0.1 — Flyttbara och storleksändringsbara paneler · Enhetlig Inställningar-dialog · Prestandaoptimeringar · Solhistorikdiagram
 
 *Conceived by Frank van Dijke · Developed with Claude AI*
 
@@ -38,6 +38,15 @@ HAMIOS ger radioamatörer realtidsinblick i KV-utbredning, solaktivitet och DX-m
 ### 🌌 Aurora Ring Overlay
 - Magnetic aurora oval based on K-index (Feldstein/Holzworth, IGRF-2025)
 - **Colour by K-index**: green (K < 3) · yellow (K 3–5) · red (K ≥ 6)
+
+### 🖥️ Panelsystem *(v4.0.1)*
+- **11 fritt rörliga och storleksändringsbara paneler** placerade på en fri skrivbordsyta
+- Varje panel har en bärnstensformad 1px-kant, namnlist med ✕ stäng-knapp och ◢ storleksändringshandtag
+- **Fäst till rutnät** (2px) vid släpp efter drag/storleksändring för ren justering
+- Paneler: KV-band tillförlitlighet · Världskarta · Solar/Jonosfär · Varningar · Bandschema · Bandhistorik · Kp 48h · Bz 24h · Röntgen 24h · DX-spotar · Utbredningsrekommendationer
+- **⚙ Inställningar-dialog** innehåller all konfiguration: QTH · Språk · Tema · Verktygstips · Ticker · Sommartid · Panelsynlighet · Layouthantering
+- **Layoutförinställningar**: spara/ladda/skriva över/ta bort namngivna profiler i `hamios_layouts.json`
+- **Spara som standard**: sparar nuvarande layout som startlayout
 
 ### 🛰 Satellitspårning *(🛰 Sat-knapp i sidhuvudet)*
 - TLE-data nedladdad från **Celestrak** (Amateur / ISS / Weather / CubeSat)
@@ -150,34 +159,46 @@ Thresholds are saved to `HAMIOS.ini`.
 | ES | Español | PT | Português |
 | JA | 日本語 | RU | Русский |
 
-### ⚙️ Other
-- **Dynamic themes**: Midnight · DeepOcean · HighContrast
-- **System tray**: minimise to tray, tray notifications
-- **Tooltips** with explanation per solar parameter
-- **Auto-refresh**: Off / 30 s / 1 min / 5 min / 10 min / 30 min / 1 hour
-- **Scrolling ticker** with current propagation tips
-- All settings saved to `HAMIOS.ini`
+### ⚙️ Övrigt
+- **Dynamiska teman**: Midnight · DeepOcean · HighContrast
+- **Systemfält**: minimera till fältet, fältaviseringar
+- **Verktygstips** med förklaring per solarparameter
+- **Automatisk uppdatering**: Av / 30 s / 1 min / 5 min / 10 min / 30 min / 1 timme
+- **Rullande ticker** med aktuella utbredningstips
+- **Rörligt panelsystem**: arrangera och ändra storlek på alla paneler fritt
+- **Layoutförinställningar**: spara och växla mellan anpassade panelarrangemang
+- Alla inställningar sparade i `HAMIOS.ini`
 
 ---
 
-## 🖥️ Layout (v3.0)
+## 🖥️ Layout (v4.0.1) — Fritt svävande paneler
 
 ```
 ┌─────────────────────────────────────────────────────────────────────────┐
-│ HEADER  (title · exit · CAT · interval · lang · QTH · theme · Sat · Spy · time) │
-├──────────┬──────────────────────────────────┬────────────┬──────────────┤
-│  Solar   │      World Map (central)         │    HF      │              │
-│ Ionosph. │      380 px tall, zoom/pan       │    Band    │   DX Spots   │
-│  200 px  │   Display: Sun Moon Graylijn     │ Reliability│  (full       │
-│          │   Data: WSPR Spots CS Locator    │   420 px   │  height)     │
-│          ├──────────────────────────────────┤            │   360 px     │
-│          │  Schedule │  Band Hist  │  Bz   │            │              │
-│          │   (1/3)   │    (1/3)    │ (1/3) │            │              │
-├──────────┴──────────────────────────────────┴────────────┤              │
-│              Propagation Analysis & Advice                │              │
-├───────────────────────────────────────────────────────────┴──────────────┤
-│ TICKER                                                                    │
-└──────────────────────────────────────────────────────────────────────────┘
+│  ⚙ Inställningar  (QTH · Språk · Tema · Verktygstips · Ticker · Sommartid · Paneler · Layouter) │
+├─────────────────────────────────────────────────────────────────────────┤
+│                                                                         │
+│  ┌──────────────┐  ┌──────────────────────────────┐  ┌──────────────┐  │
+│  │Sol/Jonosfär  │  │       Världskarta         ✕  │  │KV-band   ✕  │  │
+│  │     ✕    ◢  │  │   zoom/pan · överlager    ◢  │  │Tillförlitl.◢│  │
+│  └──────────────┘  └──────────────────────────────┘  └──────────────┘  │
+│                                                                         │
+│  ┌─────────────┐  ┌─────────────┐  ┌──────────┐  ┌──────────────────┐  │
+│  │Bandschema   │  │Bandhistorik │  │  Kp 48h  │  │  DX-spotar   ✕  │  │
+│  │    ✕    ◢  │  │    ✕    ◢  │  │  ✕    ◢  │  │             ◢  │  │
+│  └─────────────┘  └─────────────┘  └──────────┘  └──────────────────┘  │
+│                                                                         │
+│  ┌──────────┐  ┌──────────┐  ┌──────────────────────────────────────┐  │
+│  │  Bz 24h  │  │Röntgen 24h│  │  Utbredningsrekommendationer    ✕  │  │
+│  │  ✕    ◢  │  │  ✕    ◢  │  │                               ◢  │  │
+│  └──────────┘  └──────────┘  └──────────────────────────────────────┘  │
+│                                                                         │
+│  ┌─────────────────────────────────────────────────────────────────┐   │
+│  │  Varningar  ✕  ◢                                                │   │
+│  └─────────────────────────────────────────────────────────────────┘   │
+│                                                                         │
+│  Alla paneler: bärnstenskant · ✕ stäng · ◢ storlek · rutnät (2px)     │
+└─────────────────────────────────────────────────────────────────────────┘
 ```
 
 ---
@@ -248,6 +269,18 @@ pyinstaller HAMIOS.spec
 
 ---
 
+## 📁 Datafiler
+
+| Fil | Innehåll |
+|-----|----------|
+| `HAMIOS.ini` | Alla användarinställningar (QTH, tema, språk, varningströsklar, …) |
+| `hamios_layouts.json` | Panellayout-förinställningar |
+| `hamios_tle.json` | Cachade TLE-banelement för satellitspårning |
+| `hamios_spy_stations.json` | Spion-/nummerstationsdatabas (redigerbar) |
+| `langs/*.json` | Språkpaket |
+
+---
+
 ## 🔭 Utbredningsmodell
 
 ```
@@ -282,7 +315,7 @@ LUF  = (3.5 + K × 0.8) × auroral-factor / 10^(SNR/20)
 | Python | 3.10 | 3.12+ |
 | Internet | Required (data feeds) | — |
 
-> v3.0 makes best use of a wide display (≥ 1768 px) with the DX column as an additive right panel. On narrower screens the window scales proportionally and all panels remain usable.
+> v4.0.1 använder en fri panel-yta. Arrangera paneler fritt på alla skärmstorlekar. En bred skärm (≥ 1920 px) ger det mest bekväma arbetsområdet.
 
 ---
 

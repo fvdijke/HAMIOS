@@ -1,8 +1,8 @@
-# 📡 HAMIOS v3.3
+# 📡 HAMIOS v4.0.1
 
 **LB-etenemis- ja DX-monitori Windowsille**
 
-> v3.3 — Satelliittiseuranta jalanjälkipäällysteellä · Vakoilu-/numerosasemien tietokanta · Myrskyennusteen korjaus · Temaparannukset · Suorituskyky
+> v4.0.1 — Siirrettävät ja kokoaan muutettavat paneelit · Yhtenäinen Asetukset-valintaikkuna · Suorituskyvyn optimoinnit · Aurinkohistoriakaavio
 
 *Conceived by Frank van Dijke · Developed with Claude AI*
 
@@ -38,6 +38,15 @@ HAMIOS tarjoaa radioamatööreille reaaliaikaisen näkemyksen LB-etenemisestä, 
 ### 🌌 Aurora Ring Overlay
 - Magnetic aurora oval based on K-index (Feldstein/Holzworth, IGRF-2025)
 - **Colour by K-index**: green (K < 3) · yellow (K 3–5) · red (K ≥ 6)
+
+### 🖥️ Paneelijärjestelmä *(v4.0.1)*
+- **11 vapaasti siirrettävää ja kokoaan muutettavaa paneelia** vapaalla työpöytäalustalla
+- Jokaisessa paneelissa on meripihkavärinen 1px-reunus, otsikkorivi ✕-sulkupainikkeella ja ◢ kokoa muuttava kahva
+- **Ruudukkoon kohdistus** (2px) vedä/koon muutos vapautettaessa siistiä kohdistusta varten
+- Paneelit: LB-kaista luotettavuus · Maailmankartta · Aurinko/Ionosfääri · Hälytykset · Kaistataulu · Kaistahistoria · Kp 48h · Bz 24h · Röntgen 24h · DX-pisteet · Etenemissuositukset
+- **⚙ Asetukset-valintaikkuna** sisältää kaiken konfiguraation: QTH · Kieli · Teema · Työkaluvihjeet · Ticker · Kesäaika · Paneelin näkyvyys · Asettelun hallinta
+- **Asettelu-esiasetukset**: tallenna/lataa/kirjoita yli/poista nimettyjä profiileja `hamios_layouts.json`-tiedostossa
+- **Tallenna oletukseksi**: tallentaa nykyisen asettelun käynnistysasetteluksi
 
 ### 🛰 Satelliittiseuranta *(🛰 Sat-painike otsikossa)*
 - TLE-data ladattu **Celestrak**-palvelusta (Amateur / ISS / Weather / CubeSat)
@@ -150,34 +159,46 @@ Thresholds are saved to `HAMIOS.ini`.
 | ES | Español | PT | Português |
 | JA | 日本語 | RU | Русский |
 
-### ⚙️ Other
-- **Dynamic themes**: Midnight · DeepOcean · HighContrast
-- **System tray**: minimise to tray, tray notifications
-- **Tooltips** with explanation per solar parameter
-- **Auto-refresh**: Off / 30 s / 1 min / 5 min / 10 min / 30 min / 1 hour
-- **Scrolling ticker** with current propagation tips
-- All settings saved to `HAMIOS.ini`
+### ⚙️ Muut
+- **Dynaamiset teemat**: Midnight · DeepOcean · HighContrast
+- **Järjestelmäilmaisin**: pienennä ilmaisinalueelle, ilmoitukset
+- **Työkaluvihjeet** selityksellä kullekin aurinkoparametrille
+- **Automaattinen päivitys**: Pois / 30 s / 1 min / 5 min / 10 min / 30 min / 1 tunti
+- **Vierittyvä ticker** nykyisillä etenemisvinkeillä
+- **Siirrettävä paneelijärjestelmä**: järjestä ja muuta kaikkien paneelien kokoa vapaasti
+- **Asettelu-esiasetukset**: tallenna ja vaihda mukautettujen paneeliasettelujen välillä
+- Kaikki asetukset tallennettu `HAMIOS.ini`-tiedostoon
 
 ---
 
-## 🖥️ Layout (v3.0)
+## 🖥️ Asettelu (v4.0.1) — Vapaasti kelluvat paneelit
 
 ```
 ┌─────────────────────────────────────────────────────────────────────────┐
-│ HEADER  (title · exit · CAT · interval · lang · QTH · theme · Sat · Spy · time) │
-├──────────┬──────────────────────────────────┬────────────┬──────────────┤
-│  Solar   │      World Map (central)         │    HF      │              │
-│ Ionosph. │      380 px tall, zoom/pan       │    Band    │   DX Spots   │
-│  200 px  │   Display: Sun Moon Graylijn     │ Reliability│  (full       │
-│          │   Data: WSPR Spots CS Locator    │   420 px   │  height)     │
-│          ├──────────────────────────────────┤            │   360 px     │
-│          │  Schedule │  Band Hist  │  Bz   │            │              │
-│          │   (1/3)   │    (1/3)    │ (1/3) │            │              │
-├──────────┴──────────────────────────────────┴────────────┤              │
-│              Propagation Analysis & Advice                │              │
-├───────────────────────────────────────────────────────────┴──────────────┤
-│ TICKER                                                                    │
-└──────────────────────────────────────────────────────────────────────────┘
+│  ⚙ Asetukset  (QTH · Kieli · Teema · Työkaluvihjeet · Ticker · Kesäaika · Paneelit · Asettelut) │
+├─────────────────────────────────────────────────────────────────────────┤
+│                                                                         │
+│  ┌──────────────┐  ┌──────────────────────────────┐  ┌──────────────┐  │
+│  │Aurinko/Ionosf│  │      Maailmankartta       ✕  │  │LB-kaista ✕  │  │
+│  │     ✕    ◢  │  │   zoom/pan · kerrokset    ◢  │  │Luotettavuus◢│  │
+│  └──────────────┘  └──────────────────────────────┘  └──────────────┘  │
+│                                                                         │
+│  ┌─────────────┐  ┌─────────────┐  ┌──────────┐  ┌──────────────────┐  │
+│  │Kaistataulu  │  │Kaistahistoria│  │  Kp 48h  │  │  DX-pisteet  ✕  │  │
+│  │    ✕    ◢  │  │    ✕    ◢  │  │  ✕    ◢  │  │             ◢  │  │
+│  └─────────────┘  └─────────────┘  └──────────┘  └──────────────────┘  │
+│                                                                         │
+│  ┌──────────┐  ┌──────────┐  ┌──────────────────────────────────────┐  │
+│  │  Bz 24h  │  │Röntgen 24h│  │  Etenemissuositukset             ✕  │  │
+│  │  ✕    ◢  │  │  ✕    ◢  │  │                               ◢  │  │
+│  └──────────┘  └──────────┘  └──────────────────────────────────────┘  │
+│                                                                         │
+│  ┌─────────────────────────────────────────────────────────────────┐   │
+│  │  Hälytykset  ✕  ◢                                               │   │
+│  └─────────────────────────────────────────────────────────────────┘   │
+│                                                                         │
+│  Kaikki paneelit: meripihkareunус · ✕ sulje · ◢ koko · ruudukko (2px) │
+└─────────────────────────────────────────────────────────────────────────┘
 ```
 
 ---
@@ -248,6 +269,18 @@ pyinstaller HAMIOS.spec
 
 ---
 
+## 📁 Datatiedostot
+
+| Tiedosto | Sisältö |
+|----------|---------|
+| `HAMIOS.ini` | Kaikki käyttäjäasetukset (QTH, teema, kieli, hälytyskynnykset, …) |
+| `hamios_layouts.json` | Paneeliasettelun esiasetukset |
+| `hamios_tle.json` | Välimuistissa olevat TLE-rataelementit satelliittiseurantaa varten |
+| `hamios_spy_stations.json` | Vakoilu-/numerosasemien tietokanta (muokattava) |
+| `langs/*.json` | Kielipaketit |
+
+---
+
 ## 🔭 Etenemismalli
 
 ```
@@ -282,7 +315,7 @@ LUF  = (3.5 + K × 0.8) × auroral-factor / 10^(SNR/20)
 | Python | 3.10 | 3.12+ |
 | Internet | Required (data feeds) | — |
 
-> v3.0 makes best use of a wide display (≥ 1768 px) with the DX column as an additive right panel. On narrower screens the window scales proportionally and all panels remain usable.
+> v4.0.1 käyttää vapaata paneelialuetta. Järjestä paneelit vapaasti millä tahansa näyttökoolla. Leveä näyttö (≥ 1920 px) tarjoaa mukavimman työtilan.
 
 ---
 
