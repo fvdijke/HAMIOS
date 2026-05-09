@@ -260,7 +260,20 @@
     "settings_new_profile": "＋  Uusi profiili...",
     "settings_load": "▶  Lataa",
     "settings_overwrite": "↻  Korvaa",
-    "settings_delete": "🗑  Poista"
+    "settings_delete": "🗑  Poista",
+    "map_lightning_lbl": "Salama",
+    "lightning_hdr": "⚡  Ukkosmyrsky",
+    "lightning_no_dep": "pip install websocket-client",
+    "lightning_conn": "Yhdistetaan...",
+    "lightning_live": "🟢 Live",
+    "lightning_disc": "🔴 Katkaistu...",
+    "lightning_strikes": "{n} salamaa (viimeiset {m} min)",
+    "storm_forecast_24h": "⚡  Ukkosennuste 24h",
+    "qrn_lbl": "QRN-taso:",
+    "qrn_low": "Alhainen",
+    "qrn_moderate": "Kohtalainen",
+    "qrn_high": "Korkea — HF < 15 MHz hairiintynyt",
+    "overlay_btn": "🗺  Overlay"
   },
   "solar_tips": {
     "sfi": [

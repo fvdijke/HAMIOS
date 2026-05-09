@@ -1,5 +1,5 @@
 """
-HAMIOS v4.0.1
+HAMIOS v4.0.2
 by Frank van Dijke
 
 Real-time HF propagation, solar weather and DX monitor for Windows.
@@ -61,6 +61,7 @@ Dependencies:
   pip install pillow
   pip install pyserial   # optioneel, voor CAT-interface
   pip install pystray    # optioneel, voor systeemtray
+  pip install websocket-client  # optioneel, voor live blikseminslagen
 
 ─────────────────────────────────────────────────────────────────────
 Todo
@@ -74,6 +75,12 @@ Todo
 - [x] Vis: Laat posities van geselecteerde satellieten zien. Maak een pulldown van beschikbare satellieten (TLE data)
 - [x] Vis: Laat DX-cluster spots zien (selectie bij weergave) — geïmplementeerd via checkbox "Spots" in Data-rij, _draw_dx_spots()
 - [x] Vis: Laat WSPR spots zien (selectie bij weergave) — geïmplementeerd via checkbox "WSPR" in Data-rij, _draw_wspr_spots()
+- [x] Vis: Overlay met Onweer locaties met dynamisch ontladings getal.
+- [x] Vis: Maak een nieuwe knop om de map overlay's te selecteren. Knop "🗺 Overlay" in header; overlay-rij verwijderd uit worldmap paneel; Display/Data gegroepeerd in eigen dialoog.
+- [ ] Vis: Verbeter de performance van de interface
+- [ ] Vis: Zet achter de layout selecties een korte tekst wat de selectie doet.
+- [ ] Vis: Geef onder de worldmap in het grijs aan waar deze ruimte voor is zolag er nog geen data staan. Misschien een korte uitleg hoe deze te gebruiken?
+
 
 - [x] Layout: Maak nieuwe knop in header voor satelliet info (Download TLE, Satelliet selecties)
 - [x] Layout: Zet weergave en data selectievakjes onder Meldingen in hetzelfde panel
@@ -85,17 +92,66 @@ Todo
 - [x] Data: Groepeer satellieten per categorie (bijv. weer, navigatie, amateur, etc.) en maak selectie per categorie mogelijk.
 - [x] Data: Voeg offline indicator toe — ⚠ OFFLINE label in header via _net_ok / _update_net_indicator(). Grijze overlay geeft weinig meerwaarde boven de bestaande header-indicator.
 - [x] Data: Knop "🕵 Spy" in header naast Sat; data in hamios_spy_stations.json (24 stations, naam/land/frequenties/info/actief).
+- [x] Data: Onweer voorspelling
 
 - [x] Fix: storm_probs 404 — fallback naar alternatieve SWPC URL (geomag-storm-probabilities.json)
 - [x] Fix: footprint aan de boven- en onderkant van de kaart gaat nog niet goed. Footprint stop te snel
 - [x] Fix: onthou de selectie van own continent / eigen continent(DX Spots) in ini file
 
-- [x] Lang: Update alle teksten in alle talen op basis van de nieuwe functionaliteiten. Pas ook de Helpfunctie aan, de tooltips, readme's enz.
+- [ ] Lang: Update alle teksten in alle talen op basis van de nieuwe functionaliteiten. Pas ook de Helpfunctie aan, de tooltips, readme's enz.
 
 
 ─────────────────────────────────────────────────────────────────────
 Change Log (4.0.1)
 ─────────────────────────────────────────────────────────────────────
+· 2026-05-09 10:34 CEST — Vis: kaart-overlays naar header-knop:
+  "🗺 Overlay"-knop in header opent dialoog met Display- en Data-groepen.
+  Overlay-rij verwijderd uit worldmap paneel (minder druk, meer kaartruimte).
+  Splash centrering: winfo_reqwidth na update_idletasks + fallback 480×360.
+  overlay_btn vertaalsleutel in alle 13 taalbestanden.
+
+· 2026-05-09 10:08 CEST — Drie startup-fixes:
+  1. Bare Tk-window: root gepositioneerd op -32000,-32000 met overrideredirect,
+     geen deiconify → splash Toplevel verschijnt zonder zichtbare root.
+  2. Splash centrering: win.update() voor dimensiemeting + geometry met
+     winfo_width/height ipv winfo_reqwidth/height.
+  3. Startup = saved default: _load_startup_window_geometry() leest __window__
+     uit __default__ en past venstergrootte/-positie toe na app-init.
+
+· 2026-05-09 10:00 CEST — Fixes:
+  Splash screen gecentreerd (//3 → //2 verticaal).
+  Lightning paneel default positie 440,800 → 1200,800 (overlapte met kp_48h).
+  _layout.get(pid) met fallback zodat nieuwe panels werken bij oude INI.
+
+· 2026-05-09 09:54 CEST — Splash screen:
+  _check_and_show_dependencies() vervangen door volwaardig _show_splash():
+  App-naam (groot), versienummer, ✅/❌ per dep, kopieer-commando, amber
+  "Doorgaan →"-knop. Vinkje "Toon bij opstarten" slaat direct naar INI.
+  Settings heeft ook splash-toggle onder Dependencies.
+  show_splash in CONFIG_SCHEMA, _save_settings en _save_cur_settings.
+
+· 2026-05-09 09:48 CEST — Dependency-status in settings + startup fix:
+  Settings-dialoog toont "📦 Dependencies" sectie onderaan met ✅/❌ per package.
+  Klik op install-commando kopieert naar klembord.
+  Startup: root.deiconify()+update() vóór dep-dialoog zodat Toplevel zichtbaar
+  is; -topmost + focus_force() op dialoog; root.withdraw() na dep-check.
+
+· 2026-05-09 09:43 CEST — Dependency-check bij opstarten:
+  _check_and_show_dependencies(): dialoog met groene vinkjes (aanwezig) en
+  rode kruisjes (ontbreekt). Klik op install-commando = kopieer naar klembord.
+  _SERIAL_OK definitie toegevoegd (pyserial import ontbrak).
+  Lightning-paneel toegevoegd aan Settings→Panelen lijst.
+
+· 2026-05-08 21:59 CEST — Fix: onweer-paneel zichtbaar + dubbele iconen weg:
+  Lightning default positie 820,1220 → 440,800 (was buiten beeld).
+  Settings/panelen checkboxes: lbl=_tr(tr_key) ipv f"{icon}  {_tr(tr_key)}"
+  (vertaling bevat al emoji).
+
+· 2026-05-08 — v4.0.2: Onweer-layer en voorspellingspaneel:
+  Blitzortung WebSocket voor live blikseminslagen op kaart.
+  Open-Meteo CAPE/LI voorspelling als apart Onweer-paneel (⚡).
+  QRN-waarschuwing op basis van CAPE en actieve inslagen.
+
 · 2026-05-08 21:01 CEST — Settings live vertaling:
   Settings-knop geregistreerd in _tr_widgets → wordt direct bijgewerkt.
   _apply_translations() sluit en heropent de settings-dialoog (after 50ms)
@@ -210,6 +266,17 @@ try:
     _TRAY_OK = True
 except ImportError:
     _TRAY_OK = False
+try:
+    import serial as _serial_lib
+    _SERIAL_OK = True
+except ImportError:
+    _serial_lib = None
+    _SERIAL_OK = False
+try:
+    import websocket as _ws_lib
+    _WEBSOCKET_OK = True
+except ImportError:
+    _WEBSOCKET_OK = False
 from tkinter import font as tkfont
 import threading
 import queue as _queue
@@ -330,6 +397,10 @@ HIST_FILE       = os.path.join(APP_DIR, "HAMIOS_history.csv")
 _TLE_CACHE_FILE  = os.path.join(APP_DIR, "hamios_tle.json")
 _SPY_FILE        = os.path.join(APP_DIR, "hamios_spy_stations.json")
 _LAYOUTS_FILE    = os.path.join(APP_DIR, "hamios_layouts.json")
+# Lightning
+BLITZORTUNG_WS       = "wss://ws1.blitzortung.org:3000/"
+STORM_FORECAST_URL   = "https://api.open-meteo.com/v1/forecast"
+_LIGHTNING_KEEP_MIN  = 30   # bewaar inslagen van afgelopen N minuten
 # Equirectangular NASA map (2048×1024 = exact 2:1 → coordinates are correct)
 MAP_FILE      = os.path.join(APP_DIR, "worldmap_eq.jpg")
 MAP_URL       = ("https://eoimages.gsfc.nasa.gov/images/imagerecords/"
@@ -386,6 +457,7 @@ _PANEL_DEFAULTS: dict = {
     "kp_48h":     (440,  800,  370, 270, True),
     "bz_24h":     (820,  800,  370, 200, True),
     "xray_24h":   (820, 1010,  370, 200, True),
+    "lightning":  (1200, 800,  370, 300, True),
     "alerts":     (0,    500,  200, 280, True),
     "dx_spots":   (1200, 610,  370, 460, True),
     "prop_adv":   (0,    610,  430, 460, True),
@@ -746,6 +818,8 @@ CONFIG_SCHEMA = {
         "show_sat":           {"type": bool, "default": True},
         "show_sunmoon_path":  {"type": bool, "default": False},
         "show_iono":          {"type": bool, "default": False},
+        "show_lightning": {"type": bool, "default": False},
+        "show_splash":    {"type": bool, "default": True},
         "dx_own_cont": {"type": bool, "default": True},
     },
     "Graph": {
@@ -834,6 +908,8 @@ def _save_settings(lat: float, lon: float, refresh: str,
                       show_sat: bool = True,
                       show_sunmoon_path: bool = False,
                       show_iono: bool = False,
+                      show_lightning: bool = False,
+                      show_splash:    bool = True,
                       dx_own_cont: bool = True,
                       hist_range: str = "Uren",
                       hist_sel: set = None,
@@ -870,6 +946,8 @@ def _save_settings(lat: float, lon: float, refresh: str,
                     "show_sat":          str(show_sat),
                     "show_sunmoon_path": str(show_sunmoon_path),
                     "show_iono":         str(show_iono),
+                    "show_lightning":    str(show_lightning),
+                    "show_splash":       str(show_splash),
                     "dx_own_cont":       str(dx_own_cont)}
     cfg["Graph"]  = {"hist_range": hist_range,
                      "selected_bands": ",".join(sorted(hist_sel)) if hist_sel else ""}
@@ -883,6 +961,19 @@ def _save_settings(lat: float, lon: float, refresh: str,
                      "radio": cat_radio, "civ_addr": cat_civ_addr}
     with open(SETTINGS_FILE, "w", encoding="utf-8") as f:
         cfg.write(f)
+
+
+def _load_startup_window_geometry() -> tuple | None:
+    """Retourneert (x, y, w, h) van het venster uit de saved default, of None."""
+    try:
+        layouts = _load_layouts()
+        if "__default__" in layouts:
+            win = layouts["__default__"].get("__window__")
+            if win and len(win) >= 4:
+                return tuple(int(v) for v in win[:4])
+    except Exception:
+        pass
+    return None
 
 
 def _load_panel_layout() -> dict:
@@ -1736,6 +1827,7 @@ _T: dict[str, dict[str, str]] = {
     'dx_status_fmt': {"en": '{n} of {total} spots  (HF{filt})  ·  {ts}'},
     'map_display_lbl': {"en": 'Display:'},
     'map_data_lbl':    {"en": 'Data:'},
+    'overlay_btn':     {"en": '🗺  Overlay'},
     'map_pad_lbl':     {"en": 'Path'},
     'map_aurora_lbl':  {"en": 'Aurora'},
     'map_sat_lbl':     {"en": 'Sat'},
@@ -1743,6 +1835,18 @@ _T: dict[str, dict[str, str]] = {
     'map_spots_lbl':   {"en": 'Spots'},
     'map_cs_lbl':      {"en": 'CS'},
     'map_iono_lbl':    {"en": 'Iono'},
+    'map_lightning_lbl':  {"en": 'Ltng'},
+    'lightning_hdr':      {"en": '⚡  Lightning'},
+    'lightning_no_dep':   {"en": 'pip install websocket-client'},
+    'lightning_conn':     {"en": 'Connecting to Blitzortung...'},
+    'lightning_live':     {"en": '🟢 Live'},
+    'lightning_disc':     {"en": '🔴 Disconnected — retrying...'},
+    'lightning_strikes':  {"en": '{n} strikes (last {m} min)'},
+    'storm_forecast_24h': {"en": '⚡  Storm forecast 24h'},
+    'qrn_lbl':            {"en": 'QRN level:'},
+    'qrn_low':            {"en": 'Low'},
+    'qrn_moderate':       {"en": 'Moderate'},
+    'qrn_high':           {"en": 'High — HF < 15 MHz disrupted'},
     'map_itu_lbl':     {"en": 'ITU'},
     'sw_density_lbl':  {"en": 'SW density (n/cm³)'},
     'kp_planet_lbl':   {"en": 'Kp (planetary)'},
@@ -3470,11 +3574,209 @@ class _SatelliteDialog:
             self._build_table(self._tbl, self._cvs)
 
 
+# ── Dependency-check bij opstarten ────────────────────────────────────────────
+
+def _show_splash(root: tk.Tk) -> bool:
+    """Splash screen bij opstarten: naam/versie, dependency-status, toon-vinkje.
+
+    Leest 'show_splash' uit HAMIOS.ini. Toont altijd als er vereiste packages
+    ontbreken, anders alleen als show_splash=True.
+    Retourneert True = doorgaan, False = afsluiten.
+    """
+    import configparser as _cp
+
+    # Lees show_splash direct uit INI (app nog niet gestart)
+    _cfg = _cp.ConfigParser()
+    _cfg.read(SETTINGS_FILE, encoding="utf-8")
+    try:
+        show_splash = _cfg.getboolean("App", "show_splash", fallback=True)
+    except Exception:
+        show_splash = True
+
+    DEPS = [
+        ("Pillow",           "pillow",            _PIL_OK,       True,
+         "Kaartweergave, overlays, maanfase"),
+        ("pystray",          "pystray",           _TRAY_OK,      False,
+         "Systeem-tray icoon en notificaties"),
+        ("pyserial",         "pyserial",          _SERIAL_OK,    False,
+         "CAT-interface (rig control)"),
+        ("websocket-client", "websocket-client",  _WEBSOCKET_OK, False,
+         "Live blikseminslagen (Blitzortung)"),
+    ]
+    missing_required = [d for d in DEPS if not d[2] and d[3]]
+    missing_optional = [d for d in DEPS if not d[2] and not d[3]]
+
+    # Toon alleen als: splash aan ÓÓÓF vereiste dep ontbreekt
+    if not show_splash and not missing_required:
+        return True
+
+    BG      = "#1A1C1F"
+    BG_CARD = "#22252A"
+    BG_DEP  = "#2A2E35"
+    AMBER   = "#C8A84B"
+    DIM     = "#606870"
+    FG      = "#F0E6C8"
+
+    win = tk.Toplevel(root)
+    win.title("HAMIOS")
+    win.configure(bg=BG)
+    win.resizable(False, False)
+    win.attributes("-topmost", True)
+    win.grab_set()
+    win.focus_force()
+
+    result    = [True]
+    splash_var = tk.BooleanVar(value=show_splash)
+
+    def _save_splash_pref():
+        """Sla splash-voorkeur direct op in INI."""
+        try:
+            cfg2 = _cp.ConfigParser()
+            cfg2.read(SETTINGS_FILE, encoding="utf-8")
+            if not cfg2.has_section("App"):
+                cfg2.add_section("App")
+            cfg2.set("App", "show_splash", str(splash_var.get()))
+            with open(SETTINGS_FILE, "w", encoding="utf-8") as _f:
+                cfg2.write(_f)
+        except Exception:
+            pass
+
+    # ── Amber top-balk ────────────────────────────────────────────────────────
+    tk.Frame(win, bg=AMBER, height=3).pack(fill=tk.X)
+
+    # ── App naam + versie ─────────────────────────────────────────────────────
+    header = tk.Frame(win, bg=BG_CARD)
+    header.pack(fill=tk.X)
+    tk.Label(header, text="📡  HAMIOS",
+             font=("Segoe UI", 22, "bold"), bg=BG_CARD, fg=AMBER,
+             pady=10).pack(side=tk.LEFT, padx=20)
+    ver_frame = tk.Frame(header, bg=BG_CARD)
+    ver_frame.pack(side=tk.RIGHT, padx=20, pady=10)
+    tk.Label(ver_frame, text=f"v{_APP_VERSION}",
+             font=("Segoe UI", 14, "bold"), bg=BG_CARD, fg=AMBER,
+             anchor='e').pack(anchor='e')
+    tk.Label(ver_frame, text="HF Propagation & DX Monitor",
+             font=("Segoe UI", 9), bg=BG_CARD, fg=DIM,
+             anchor='e').pack(anchor='e')
+    tk.Label(ver_frame, text="by Frank van Dijke · Claude AI",
+             font=("Segoe UI", 8), bg=BG_CARD, fg=DIM,
+             anchor='e').pack(anchor='e')
+
+    tk.Frame(win, bg=AMBER, height=1).pack(fill=tk.X)
+
+    # ── Dependencies ──────────────────────────────────────────────────────────
+    tk.Label(win, text="📦  Dependencies",
+             font=("Segoe UI", 9, "bold"), bg=BG, fg=AMBER,
+             anchor='w').pack(fill=tk.X, padx=16, pady=(10, 4))
+
+    dep_card = tk.Frame(win, bg=BG_DEP)
+    dep_card.pack(fill=tk.X, padx=12, pady=(0, 6))
+
+    for name, pkg, is_ok, required, desc in DEPS:
+        row = tk.Frame(dep_card, bg=BG_DEP)
+        row.pack(fill=tk.X, padx=8, pady=3)
+        icon = "✅" if is_ok else "❌"
+        iclr = "#66BB6A" if is_ok else ("#EF5350" if required else "#FFA726")
+        tk.Label(row, text=icon, font=("Segoe UI", 10),
+                 bg=BG_DEP, fg=iclr, width=3).pack(side=tk.LEFT)
+        lbl_type = " [vereist]" if required else " [optioneel]"
+        info = tk.Frame(row, bg=BG_DEP)
+        info.pack(side=tk.LEFT, fill=tk.X, expand=True)
+        tk.Label(info, text=f"{name}{lbl_type}",
+                 font=("Segoe UI", 9, "bold"), bg=BG_DEP,
+                 fg=FG if is_ok else iclr, anchor='w').pack(fill=tk.X)
+        tk.Label(info, text=desc,
+                 font=("Segoe UI", 8), bg=BG_DEP, fg=DIM,
+                 anchor='w').pack(fill=tk.X)
+        if not is_ok:
+            cmd = f"pip install {pkg}"
+            cmd_lbl = tk.Label(row, text=cmd,
+                               font=("Consolas", 8), bg="#1A1C1F",
+                               fg=AMBER, padx=6, pady=2, cursor="hand2")
+            cmd_lbl.pack(side=tk.LEFT, padx=(8, 0))
+            cmd_lbl.bind("<Button-1>",
+                         lambda _, c=cmd: (root.clipboard_clear(),
+                                           root.clipboard_append(c)))
+            tk.Label(row, text="← kopieer",
+                     font=("Segoe UI", 7), bg=BG_DEP, fg=DIM
+                     ).pack(side=tk.LEFT, padx=(4, 0))
+
+    # Samenvatting
+    if missing_required:
+        msg, mclr = (f"⚠️  {len(missing_required)} vereiste package(s) ontbreken.",
+                     "#EF5350")
+    elif missing_optional:
+        msg, mclr = (f"ℹ️  {len(missing_optional)} optionele package(s) ontbreken — "
+                     f"bijbehorende functies uitgeschakeld.", "#FFA726")
+    else:
+        msg, mclr = ("✅  Alle dependencies aanwezig.", "#66BB6A")
+
+    tk.Label(win, text=msg, font=("Segoe UI", 8), bg=BG, fg=mclr,
+             wraplength=440, justify=tk.LEFT).pack(anchor='w', padx=16, pady=(0, 6))
+
+    # ── Onderste balk: vinkje + knoppen ──────────────────────────────────────
+    tk.Frame(win, bg="#383E47", height=1).pack(fill=tk.X, padx=0)
+    bottom = tk.Frame(win, bg=BG_CARD)
+    bottom.pack(fill=tk.X, padx=0)
+
+    # Vinkje
+    cb = tk.Checkbutton(bottom, text="Toon dit scherm bij opstarten",
+                        variable=splash_var,
+                        bg=BG_CARD, fg=FG, selectcolor=BG_DEP,
+                        activebackground=BG_CARD, activeforeground=FG,
+                        font=("Segoe UI", 9))
+    cb.pack(side=tk.LEFT, padx=14, pady=10)
+
+    def _go():
+        _save_splash_pref()
+        result[0] = True
+        win.destroy()
+
+    def _quit():
+        _save_splash_pref()
+        result[0] = False
+        win.destroy()
+
+    if missing_required:
+        tk.Button(bottom, text="Afsluiten", command=_quit,
+                  font=("Segoe UI", 9), bg="#5A1010", fg=FG,
+                  relief=tk.FLAT, padx=12, pady=4, cursor="hand2"
+                  ).pack(side=tk.RIGHT, padx=(4, 14), pady=8)
+
+    tk.Button(bottom, text="Doorgaan  →", command=_go,
+              font=("Segoe UI", 9, "bold"), bg=AMBER, fg=BG,
+              activebackground="#D4B050", activeforeground=BG,
+              relief=tk.FLAT, padx=14, pady=4, cursor="hand2"
+              ).pack(side=tk.RIGHT, padx=(14, 4), pady=8)
+
+    # Centreer: gebruik winfo_reqwidth na update_idletasks (betrouwbaarder dan winfo_width)
+    win.update_idletasks()
+    sw = win.winfo_screenwidth()
+    sh = win.winfo_screenheight()
+    ww = win.winfo_reqwidth()
+    wh = win.winfo_reqheight()
+    if ww < 10:   # fallback als nog niet berekend
+        ww, wh = 480, 360
+    x  = max(0, (sw - ww) // 2)
+    y  = max(0, (sh - wh) // 2)
+    win.geometry(f"+{x}+{y}")
+    win.update_idletasks()
+    win.attributes("-topmost", False)
+
+    root.wait_window(win)
+    return result[0]
+
+
+# Alias voor achterwaartse compatibiliteit
+def _check_and_show_dependencies(root: tk.Tk) -> bool:
+    return _show_splash(root)
+
+
 # ── Hoofd-GUI ──────────────────────────────────────────────────────────────────
 class HAMIOSApp:
     def __init__(self, root: tk.Tk):
         self.root = root
-        self.root.title("HAMIOS v4.0.1")
+        self.root.title("HAMIOS v4.0.2")
         self.root.configure(bg=BG_ROOT)
 
         # Geometrie instellen vóór _build_ui — geen root.update() nodig, geen flicker.
@@ -3546,6 +3848,12 @@ class HAMIOSApp:
         self._show_sat_var           = tk.BooleanVar(value=s.get("show_sat", True))
         self._show_sunmoon_path_var  = tk.BooleanVar(value=s.get("show_sunmoon_path", False))
         self._show_iono_var          = tk.BooleanVar(value=s.get("show_iono", False))
+        self._show_lightning_var = tk.BooleanVar(value=s.get("show_lightning", False))
+        self._show_splash_var    = tk.BooleanVar(value=s.get("show_splash",    True))
+        self._lightning_strikes: list  = []   # [(lat, lon, datetime, energy), ...]
+        self._storm_forecast:    dict  = {}   # {unix_ts: {code, cape, lift}}
+        self._lightning_ws_running     = False
+        self._lightning_reconnect_id   = None
         self._show_spots_var    = tk.BooleanVar(value=s["show_spots"])
         self._spot_hit_areas:   list = []   # [{x, y, r, spot}, ...] voor klik-detectie
         self._show_wspr_var     = tk.BooleanVar(value=s["show_wspr"])
@@ -3623,6 +3931,8 @@ class HAMIOSApp:
         self._start_tray()
         self.root.protocol("WM_DELETE_WINDOW", self._on_close)
         threading.Thread(target=self._refresh_solar, daemon=True).start()
+        if _WEBSOCKET_OK:
+            self.root.after(2000, self._start_lightning_ws)
         threading.Thread(target=self._refresh_dx, daemon=True).start()
         threading.Thread(target=self._refresh_wspr, daemon=True).start()
         self._cat_start_poll()
@@ -3992,10 +4302,11 @@ class HAMIOSApp:
             "band_sched": ("sched_header", "🗓"),
             "band_hist":  ("hist_header",  "📈"),
             "kp_48h":     ("kp_chart_hdr", "🧲"),
-            "bz_24h":     ("bz_chart_hdr", "⚡"),
+            "bz_24h":     ("bz_chart_hdr",  "⚡"),
             "xray_24h":   ("xray_chart_hdr","☢"),
-            "dx_spots":   ("dx_header",    "📡"),
-            "prop_adv":   ("adv_header",   "💡"),
+            "lightning":  ("lightning_hdr",  "⚡"),
+            "dx_spots":   ("dx_header",     "📡"),
+            "prop_adv":   ("adv_header",    "💡"),
         }
         col, max_col = 0, 2
         r = None
@@ -4006,7 +4317,7 @@ class HAMIOSApp:
             if col % max_col == 0:
                 r = tk.Frame(panels_frame, bg=BG_PANEL)
                 r.pack(fill=tk.X, pady=1)
-            lbl = f"{icon}  {self._tr(tr_key)}"
+            lbl = self._tr(tr_key)   # vertaling bevat al emoji
             cb = tk.Checkbutton(r, text=lbl, variable=var,
                                 command=lambda p=pid, v=var: (
                                     self._panels[p].show() if v.get()
@@ -4040,10 +4351,138 @@ class HAMIOSApp:
         self._settings_win_ref = win
         self._refresh_settings_profiles()
 
+        # ── Dependencies ──────────────────────────────────────────────────────
+        section(win, "📦  Dependencies")
+        dep_frame = tk.Frame(win, bg=BG_PANEL)
+        dep_frame.pack(fill=tk.X, padx=12, pady=(2, 0))
+
+        DEPS_SETTINGS = [
+            ("Pillow",           _PIL_OK,       True,  "pip install pillow"),
+            ("pystray",          _TRAY_OK,      False, "pip install pystray"),
+            ("pyserial",         _SERIAL_OK,    False, "pip install pyserial"),
+            ("websocket-client", _WEBSOCKET_OK, False, "pip install websocket-client"),
+        ]
+        for pkg_name, is_ok, required, install_cmd in DEPS_SETTINGS:
+            dr = tk.Frame(dep_frame, bg=BG_PANEL)
+            dr.pack(fill=tk.X, pady=1)
+            icon  = "✅" if is_ok else "❌"
+            iclr  = "#66BB6A" if is_ok else ("#EF5350" if required else "#FFA726")
+            tk.Label(dr, text=icon, font=_font(9),
+                     bg=BG_PANEL, fg=iclr, width=3).pack(side=tk.LEFT)
+            lbl_type = " [vereist]" if required else " [optioneel]"
+            tk.Label(dr, text=f"{pkg_name}{lbl_type}",
+                     font=_font(9), bg=BG_PANEL,
+                     fg=TEXT_H1 if is_ok else iclr,
+                     anchor='w').pack(side=tk.LEFT, padx=(0, 10))
+            if not is_ok:
+                cmd_lbl = tk.Label(dr, text=install_cmd,
+                                   font=(_FONT_MONO, 8), bg=BG_SURFACE,
+                                   fg=ACCENT, padx=6, pady=1, cursor="hand2")
+                cmd_lbl.pack(side=tk.LEFT)
+                cmd_lbl.bind("<Button-1>",
+                             lambda _, c=install_cmd: (
+                                 self.root.clipboard_clear(),
+                                 self.root.clipboard_append(c)))
+                tk.Label(dr, text="← kopieer", font=_font(7),
+                         bg=BG_PANEL, fg=TEXT_DIM).pack(side=tk.LEFT, padx=(4, 0))
+
+        # Splash-toggle
+        tk.Frame(dep_frame, bg=BORDER, height=1).pack(fill=tk.X, pady=(6, 2))
+        tk.Checkbutton(dep_frame,
+                       text="Toon splash screen bij opstarten",
+                       variable=self._show_splash_var,
+                       command=self._save_cur_settings,
+                       bg=BG_PANEL, fg=TEXT_BODY, selectcolor=BG_SURFACE,
+                       activebackground=BG_PANEL, activeforeground=TEXT_H1,
+                       font=_font(9)).pack(anchor='w', pady=(0, 4))
+
         # ── Sluiten ───────────────────────────────────────────────────────────
         tk.Frame(win, bg=BORDER, height=1).pack(fill=tk.X, padx=10, pady=(8, 0))
         btn_row = tk.Frame(win, bg=BG_PANEL)
         btn_row.pack(fill=tk.X, padx=12, pady=8)
+        tk.Button(btn_row, text=self._tr("close_lbl"), command=win.destroy,
+                  font=_font(9), bg=BG_SURFACE, fg="#FFA726",
+                  relief=tk.FLAT, padx=12, cursor="hand2").pack(side=tk.RIGHT)
+
+        win.update_idletasks()
+        rx = self.root.winfo_x() + (self.root.winfo_width()  - win.winfo_reqwidth())  // 2
+        ry = self.root.winfo_y() + (self.root.winfo_height() - win.winfo_reqheight()) // 2
+        win.geometry(f"+{max(0,rx)}+{max(0,ry)}")
+
+    def _open_overlay_dialog(self):
+        """Overlay-dialoog: alle kaart-overlays gegroepeerd in Display en Data."""
+        if hasattr(self, "_overlay_win") and self._overlay_win and \
+                self._overlay_win.winfo_exists():
+            self._overlay_win.lift()
+            return
+
+        win = tk.Toplevel(self.root)
+        self._overlay_win = win
+        win.title(self._tr("overlay_btn"))
+        win.configure(bg=BG_PANEL)
+        win.resizable(False, False)
+
+        tk.Frame(win, bg=ACCENT, height=2).pack(fill=tk.X)
+        tk.Label(win, text=self._tr("overlay_btn"),
+                 font=_font(11, "bold"), bg=BG_PANEL, fg=ACCENT,
+                 pady=6).pack(anchor='w', padx=14)
+
+        def _cb(parent, tr_key, var):
+            def _redraw():
+                self._save_cur_settings()
+                self._draw_map()
+            cb = tk.Checkbutton(parent,
+                                text=self._tr(tr_key),
+                                variable=var, command=_redraw,
+                                bg=BG_PANEL, fg=TEXT_BODY, selectcolor=BG_SURFACE,
+                                activebackground=BG_PANEL, activeforeground=TEXT_H1,
+                                font=_font(9), anchor='w')
+            cb.pack(fill=tk.X, padx=4, pady=1)
+            self._tr_widgets.setdefault(tr_key, [])
+            if not isinstance(self._tr_widgets[tr_key], list):
+                self._tr_widgets[tr_key] = [self._tr_widgets[tr_key]]
+            self._tr_widgets[tr_key].append(cb)
+
+        def section(title):
+            tk.Frame(win, bg=BORDER, height=1).pack(fill=tk.X, padx=10, pady=(6, 2))
+            tk.Label(win, text=title, font=_font(8, "bold"),
+                     bg=BG_PANEL, fg=ACCENT, anchor='w').pack(fill=tk.X, padx=12)
+
+        # ── Display ───────────────────────────────────────────────────────────
+        section(self._tr("map_display_lbl"))
+        disp = tk.Frame(win, bg=BG_PANEL)
+        disp.pack(fill=tk.X, padx=12, pady=(2, 0))
+        for tr_key, var in [
+            ("sun",           self._show_sun_var),
+            ("moon",          self._show_moon_var),
+            ("map_pad_lbl",   self._show_sunmoon_path_var),
+            ("graylijn",      self._show_graylijn_var),
+            ("map_aurora_lbl",self._show_aurora_var),
+            ("map_sat_lbl",   self._show_sat_var),
+        ]:
+            _cb(disp, tr_key, var)
+
+        # ── Data ──────────────────────────────────────────────────────────────
+        section(self._tr("map_data_lbl"))
+        data = tk.Frame(win, bg=BG_PANEL)
+        data.pack(fill=tk.X, padx=12, pady=(2, 0))
+        data_overlays = [
+            ("map_wspr_lbl",      self._show_wspr_var),
+            ("map_spots_lbl",     self._show_spots_var),
+            ("map_cs_lbl",        self._show_cs_var),
+            ("locator",           self._show_locator_var),
+            ("map_iono_lbl",      self._show_iono_var),
+            ("map_lightning_lbl", self._show_lightning_var),
+        ]
+        if not _ITU_DISABLED:
+            data_overlays.append(("map_itu_lbl", self._show_iaru_var))
+        for tr_key, var in data_overlays:
+            _cb(data, tr_key, var)
+
+        # ── Sluiten ───────────────────────────────────────────────────────────
+        tk.Frame(win, bg=BORDER, height=1).pack(fill=tk.X, padx=10, pady=(8, 0))
+        btn_row = tk.Frame(win, bg=BG_PANEL)
+        btn_row.pack(fill=tk.X, padx=12, pady=6)
         tk.Button(btn_row, text=self._tr("close_lbl"), command=win.destroy,
                   font=_font(9), bg=BG_SURFACE, fg="#FFA726",
                   relief=tk.FLAT, padx=12, cursor="hand2").pack(side=tk.RIGHT)
@@ -4740,7 +5179,7 @@ class HAMIOSApp:
         hdr = tk.Frame(self.root, bg=BG_PANEL, height=42)
         hdr.pack(fill=tk.X)
         tk.Frame(hdr, bg=ACCENT, width=4).pack(side=tk.LEFT, fill=tk.Y)
-        tk.Label(hdr, text="📡  HAMIOS v4.0.1",
+        tk.Label(hdr, text="📡  HAMIOS v4.0.2",
                  font=_font(13, "bold"), bg=BG_PANEL, fg=ACCENT,
                  pady=8).pack(side=tk.LEFT, padx=10)
 
@@ -4778,8 +5217,17 @@ class HAMIOSApp:
                   font=_font(9), bg=BG_SURFACE, fg="#FFA726",
                   activebackground=BG_HOVER, activeforeground=TEXT_H1,
                   relief=tk.FLAT, padx=8, pady=2, cursor="hand2")
-        _settings_btn.pack(side=tk.LEFT, padx=(0, 6))
+        _settings_btn.pack(side=tk.LEFT, padx=(0, 4))
         self._tr_widgets["settings_btn"] = _settings_btn
+
+        # Overlay-knop
+        _overlay_btn = tk.Button(hdr, text=self._tr("overlay_btn"),
+                  command=self._open_overlay_dialog,
+                  font=_font(9), bg=BG_SURFACE, fg="#FFA726",
+                  activebackground=BG_HOVER, activeforeground=TEXT_H1,
+                  relief=tk.FLAT, padx=8, pady=2, cursor="hand2")
+        _overlay_btn.pack(side=tk.LEFT, padx=(0, 6))
+        self._tr_widgets["overlay_btn"] = _overlay_btn
 
         # Satellite button (always amber)
         self._sat_btn = tk.Button(hdr, text="🛰  Sat",
@@ -4880,11 +5328,12 @@ class HAMIOSApp:
             ("alerts",     "alerts_hdr",    "🔔", self._build_alerts_panel),
             ("bz_24h",     "bz_chart_hdr",  "⚡", self._build_bz_panel_only),
             ("xray_24h",   "xray_chart_hdr","☢",  self._build_xray_panel_only),
+            ("lightning",  "lightning_hdr", "⚡", self._build_lightning_panel),
             ("dx_spots",   "dx_header",     "📡", self._build_dx_spots_panel),
             ("prop_adv",   "adv_header",  "💡",  self._build_advice_panel),
         ]
         for pid, tr_key, icon, build_fn in _PANEL_MAP:
-            x, y, w, h, vis = _layout[pid]
+            x, y, w, h, vis = _layout.get(pid, _PANEL_DEFAULTS.get(pid, (0, 0, 300, 200, True)))
             p = DraggablePanel(
                 self._desktop, self._tr(tr_key), icon,
                 panel_id=pid, on_vis_change=self._on_panel_vis_change,
@@ -5093,6 +5542,7 @@ class HAMIOSApp:
             "kp_48h":     ("kp_chart_hdr",   "🧲"),
             "bz_24h":     ("bz_chart_hdr",   "⚡"),
             "xray_24h":   ("xray_chart_hdr", "☢"),
+            "lightning":  ("lightning_hdr",  "⚡"),
             "dx_spots":   ("dx_header",      "📡"),
             "prop_adv":   ("adv_header",   "💡"),
         }
@@ -5223,56 +5673,7 @@ class HAMIOSApp:
     def _build_map_panel(self, parent):
         outer = tk.Frame(parent, bg=BG_PANEL)
         outer.pack(fill=tk.BOTH, expand=True)
-
-        # ── Bottom-items eerst inpakken zodat canvas de rest vult ───────────────
-
-        # Selectievakjes: één rij — groeplabels + vakjes naast elkaar
-        map_ov = tk.Frame(outer, bg=BG_PANEL)
-        map_ov.pack(side=tk.BOTTOM, fill=tk.X, padx=10, pady=(2, 4))
-
-        def _cb_map(parent, tr_key, var, fallback_text=""):
-            def _on_toggle():
-                self._save_cur_settings()
-                self._draw_map()
-            cb = tk.Checkbutton(parent,
-                                text=self._tr(tr_key) if tr_key else fallback_text,
-                                variable=var, command=_on_toggle,
-                                bg=BG_PANEL, fg=TEXT_BODY, selectcolor=BG_SURFACE,
-                                activebackground=BG_PANEL, activeforeground=TEXT_H1,
-                                font=_font(9))
-            cb.pack(side=tk.LEFT, padx=(0, 3))
-            if tr_key:
-                self._tr_widgets.setdefault(tr_key, [])
-                if isinstance(self._tr_widgets[tr_key], list):
-                    self._tr_widgets[tr_key].append(cb)
-                else:
-                    self._tr_widgets[tr_key] = [self._tr_widgets[tr_key], cb]
-
-        # Eén horizontale rij: [Display: cb cb cb cb] [separator] [Data: cb cb cb cb]
-        row = tk.Frame(map_ov, bg=BG_PANEL)
-        row.pack(fill=tk.X)
-
-        tk.Label(row, text=self._tr("map_display_lbl"),
-                 font=_font(8), bg=BG_PANEL, fg=TEXT_DIM).pack(side=tk.LEFT, padx=(0, 3))
-        _cb_map(row, "sun",      self._show_sun_var)
-        _cb_map(row, "moon",     self._show_moon_var)
-        _cb_map(row, "map_pad_lbl", self._show_sunmoon_path_var)
-        _cb_map(row, "graylijn", self._show_graylijn_var)
-        _cb_map(row, "map_aurora_lbl", self._show_aurora_var)
-        _cb_map(row, "map_sat_lbl",   self._show_sat_var)
-
-        # Subtiele verticale scheidingslijn
-        tk.Frame(row, bg=BORDER, width=1).pack(side=tk.LEFT, fill=tk.Y, padx=(8, 8))
-
-        tk.Label(row, text=self._tr("map_data_lbl"),
-                 font=_font(8), bg=BG_PANEL, fg=TEXT_DIM).pack(side=tk.LEFT, padx=(0, 3))
-        _cb_map(row, "map_wspr_lbl",  self._show_wspr_var)
-        _cb_map(row, "map_spots_lbl", self._show_spots_var)
-        _cb_map(row, "map_cs_lbl",    self._show_cs_var)
-        _cb_map(row, "locator",       self._show_locator_var)
-        _cb_map(row, "map_iono_lbl",  self._show_iono_var)
-        if not _ITU_DISABLED:
-            _cb_map(row, "map_itu_lbl", self._show_iaru_var)
+        # Overlay-selecties zijn verplaatst naar de 🗺 Overlay-knop in de header
 
         # GC-labels net boven de selectievakjes
         self._gc_path_var = tk.StringVar(value="")
@@ -5622,6 +6023,8 @@ class HAMIOSApp:
             bool(self._show_sunmoon_path_var.get()),
             bool(self._show_iono_var.get()),
             round(_moon_phase_deg(), 3) if self._show_moon_var.get() else 0,
+            bool(getattr(self, "_show_lightning_var", None)
+                 and self._show_lightning_var.get()),
         )
 
         if getattr(self, "_map_render_key", None) != render_key:
@@ -6098,6 +6501,31 @@ class HAMIOSApp:
                                  dt_local.strftime(f"%d %b  %H:%M {tz_name}")))
         self._sat_path_hits = hits
 
+        # ── Blikseminslagen (op gecropte weergave-img, niet op cache) ────
+        if (getattr(self, "_show_lightning_var", None)
+                and self._show_lightning_var.get()
+                and getattr(self, "_lightning_strikes", [])):
+            strikes = list(self._lightning_strikes)
+            now_lt  = datetime.datetime.now(datetime.timezone.utc)
+            lt_img  = Image.new("RGBA", (W, H), (0, 0, 0, 0))
+            ld      = ImageDraw.Draw(lt_img)
+            for slat, slon, stime, senergy in strikes:
+                age_s = max(0, (now_lt - stime).total_seconds())
+                if age_s > _LIGHTNING_KEEP_MIN * 60:
+                    continue
+                alpha = max(30, int(220 * (1 - age_s / (_LIGHTNING_KEEP_MIN * 60))))
+                sz    = max(2, min(5, 1 + senergy // 40))
+                # Naar viewport-pixel (gecorrigeerd voor crop en zoom)
+                vx = int((slon + 180) / 360 * VW) - crop_l
+                vy = int((90 - slat) / 180 * VH) - crop_t
+                if not (0 <= vx < W and 0 <= vy < H):
+                    continue
+                clr = ((255, 255, 220, alpha) if age_s < 120
+                       else (255, 200, 60, alpha) if age_s < 600
+                       else (255, 120, 0, alpha))
+                ld.ellipse([(vx-sz, vy-sz), (vx+sz, vy+sz)], fill=clr)
+            img = Image.alpha_composite(img.convert("RGBA"), lt_img).convert("RGB")
+
         # ── Tonen ────────────────────────────────────────────────────────────
         self._map_photo = ImageTk.PhotoImage(img)
         c.delete("all")
@@ -6442,6 +6870,251 @@ class HAMIOSApp:
         self._xray_canvas.bind("<Motion>", _xray_motion)
         self._xray_canvas.bind("<Leave>",  lambda _: (self._xray_tooltip.hide(),
                                                        self._xray_canvas.delete("xray_cursor")))
+
+    # ── Onweer: Blitzortung WebSocket ─────────────────────────────────────────
+
+    def _start_lightning_ws(self):
+        """Start Blitzortung WebSocket verbinding in achtergrond-thread."""
+        if not _WEBSOCKET_OK or self._lightning_ws_running:
+            return
+        self._lightning_ws_running = True
+        if hasattr(self, "_lightning_status_var"):
+            self.root.after(0, lambda: self._lightning_status_var.set(
+                self._tr("lightning_conn")))
+        threading.Thread(target=self._lightning_ws_thread, daemon=True).start()
+
+    def _lightning_ws_thread(self):
+        """WebSocket thread: ontvangt inslagen van Blitzortung."""
+        def _on_message(ws, message):
+            try:
+                data = json.loads(message)
+                lat = data.get("lat") or data.get("x")
+                lon = data.get("lon") or data.get("y")
+                if lat is None or lon is None:
+                    return
+                now  = datetime.datetime.now(datetime.timezone.utc)
+                energy = abs(int(data.get("sig", data.get("s", 1)) or 1))
+                self._lightning_strikes.append(
+                    (float(lat), float(lon), now, energy))
+                # Prune inslagen ouder dan _LIGHTNING_KEEP_MIN
+                cutoff = now - datetime.timedelta(minutes=_LIGHTNING_KEEP_MIN)
+                self._lightning_strikes = [
+                    s for s in self._lightning_strikes if s[2] >= cutoff]
+                # Update teller in paneel
+                if hasattr(self, "_lightning_count_var"):
+                    cnt = len(self._lightning_strikes)
+                    self.root.after(0, lambda c=cnt: self._lightning_count_var.set(
+                        self._tr("lightning_strikes").format(
+                            n=c, m=_LIGHTNING_KEEP_MIN)))
+            except Exception:
+                pass
+
+        def _on_open(ws):
+            ws.send('{"a": 111}')
+            self._lightning_ws_running = True
+            if hasattr(self, "_lightning_status_var"):
+                self.root.after(0, lambda: self._lightning_status_var.set(
+                    self._tr("lightning_live")))
+
+        def _on_error(ws, err):
+            log.warning("Blitzortung error: %s", err)
+
+        def _on_close(ws, code, msg):
+            self._lightning_ws_running = False
+            if hasattr(self, "_lightning_status_var"):
+                self.root.after(0, lambda: self._lightning_status_var.set(
+                    self._tr("lightning_disc")))
+            # Herverbinden na 30 seconden
+            self._lightning_reconnect_id = self.root.after(
+                30_000, self._start_lightning_ws)
+
+        try:
+            ws = _ws_lib.WebSocketApp(
+                BLITZORTUNG_WS,
+                on_message=_on_message,
+                on_open=_on_open,
+                on_error=_on_error,
+                on_close=_on_close,
+            )
+            ws.run_forever(ping_interval=30, ping_timeout=10)
+        except Exception as e:
+            log.warning("Blitzortung connect failed: %s", e)
+            self._lightning_ws_running = False
+
+    def _fetch_storm_forecast(self):
+        """Haal CAPE/onweersverwachting op van Open-Meteo (achtergrond)."""
+        lat  = getattr(self, "_qth_lat", 52.0)
+        lon  = getattr(self, "_qth_lon",  5.0)
+        url  = (f"{STORM_FORECAST_URL}"
+                f"?latitude={lat:.4f}&longitude={lon:.4f}"
+                f"&hourly=weather_code,cape,lifted_index"
+                f"&forecast_days=2&timeformat=unixtime&timezone=auto")
+        raw  = _fetch_with_retry(url, timeout=10, retries=2)
+        if raw is None:
+            return
+        try:
+            data    = json.loads(raw.decode())
+            hourly  = data.get("hourly", {})
+            times   = hourly.get("time", [])
+            codes   = hourly.get("weather_code", [])
+            capes   = hourly.get("cape", [])
+            lifts   = hourly.get("lifted_index", [])
+            now_ts  = datetime.datetime.now(datetime.timezone.utc).timestamp()
+            result  = {}
+            for i, t in enumerate(times):
+                if t < now_ts - 3600:
+                    continue
+                result[t] = {
+                    "code": codes[i] if i < len(codes) else 0,
+                    "cape": float(capes[i] or 0) if i < len(capes) else 0.0,
+                    "lift": float(lifts[i] or 0) if i < len(lifts) else 0.0,
+                }
+            self._storm_forecast = result
+            self.root.after(0, self._draw_storm_chart)
+        except Exception as e:
+            log.warning("storm forecast parse error: %s", e)
+
+    def _build_lightning_panel(self, parent):
+        """Onweer-paneel: live blikseminslagen + CAPE-voorspelling."""
+        outer = tk.Frame(parent, bg=BG_PANEL)
+        outer.pack(fill=tk.BOTH, expand=True)
+
+        # Status + teller
+        self._lightning_status_var = tk.StringVar(
+            value=self._tr("lightning_no_dep") if not _WEBSOCKET_OK
+            else self._tr("lightning_conn"))
+        tk.Label(outer, textvariable=self._lightning_status_var,
+                 font=_font(8), bg=BG_PANEL, fg=TEXT_DIM,
+                 anchor='w').pack(fill=tk.X, padx=10, pady=(4, 0))
+
+        self._lightning_count_var = tk.StringVar(
+            value=self._tr("lightning_strikes").format(
+                n=0, m=_LIGHTNING_KEEP_MIN))
+        tk.Label(outer, textvariable=self._lightning_count_var,
+                 font=_font(9, "bold"), bg=BG_PANEL,
+                 fg="#FFF176", anchor='w').pack(fill=tk.X, padx=10)
+
+        # QRN niveau
+        qrn_row = tk.Frame(outer, bg=BG_PANEL)
+        qrn_row.pack(fill=tk.X, padx=10, pady=(2, 0))
+        tk.Label(qrn_row, text=self._tr("qrn_lbl"),
+                 font=_font(8), bg=BG_PANEL, fg=TEXT_DIM).pack(side=tk.LEFT)
+        self._qrn_var = tk.StringVar(value="—")
+        tk.Label(qrn_row, textvariable=self._qrn_var,
+                 font=_font(8, "bold"), bg=BG_PANEL,
+                 fg=ACCENT).pack(side=tk.LEFT, padx=(6, 0))
+
+        # CAPE forecast canvas
+        tk.Frame(outer, bg=BORDER, height=1).pack(fill=tk.X, padx=10, pady=(6, 2))
+        tk.Label(outer, text=self._tr("storm_forecast_24h"),
+                 font=_font(8, "bold"), bg=BG_PANEL, fg=ACCENT,
+                 anchor='w').pack(fill=tk.X, padx=10)
+        self._lightning_canvas = tk.Canvas(
+            outer, bg=BG_SURFACE, bd=0, highlightthickness=0, height=120)
+        self._lightning_canvas.pack(
+            fill=tk.BOTH, expand=True, padx=10, pady=(2, 8))
+        self._lightning_canvas.bind(
+            "<Configure>",
+            lambda *_: self._debounce("lstorm", 150, self._draw_storm_chart))
+
+        # Start WebSocket als beschikbaar
+        if _WEBSOCKET_OK and not self._lightning_ws_running:
+            self.root.after(500, self._start_lightning_ws)
+        # Start forecast fetch
+        threading.Thread(
+            target=self._fetch_storm_forecast, daemon=True).start()
+        # Periodieke forecast refresh (elke 10 min)
+        self.root.after(600_000, self._schedule_storm_refresh)
+
+    def _schedule_storm_refresh(self):
+        threading.Thread(target=self._fetch_storm_forecast, daemon=True).start()
+        self.root.after(600_000, self._schedule_storm_refresh)
+
+    def _draw_storm_chart(self):
+        """Teken CAPE-voorspelling als staafdiagram."""
+        if not hasattr(self, "_lightning_canvas"):
+            return
+        c = self._lightning_canvas
+        c.delete("all")
+        W = c.winfo_width() or 300
+        H = c.winfo_height() or 120
+        c.create_rectangle(0, 0, W, H, fill=BG_SURFACE, outline="")
+
+        forecast = self._storm_forecast
+        if not forecast:
+            c.create_text(W // 2, H // 2, text="—",
+                          fill=TEXT_DIM, font=(_FONT_MONO, 9))
+            return
+
+        PAD_L, PAD_R, PAD_T, PAD_B = 28, 4, 4, 16
+        gW = W - PAD_L - PAD_R
+        gH = H - PAD_T - PAD_B
+        CAPE_MAX = 3000.0
+
+        now_ts = datetime.datetime.now(datetime.timezone.utc).timestamp()
+        # Neem maximaal 24 uur vooruit
+        hours = sorted(t for t in forecast if t >= now_ts - 1800)[:24]
+        if not hours:
+            return
+
+        bar_w = max(2, gW // max(len(hours), 1))
+
+        # QRN berekenen: max CAPE of onweers code
+        max_cape = max((forecast[t]["cape"] for t in hours), default=0)
+        has_storm_code = any(forecast[t]["code"] in (95, 96, 99) for t in hours[:12])
+        if max_cape > 1500 or has_storm_code:
+            qrn_lbl = self._tr("qrn_high");   qrn_clr = "#EF5350"
+        elif max_cape > 500:
+            qrn_lbl = self._tr("qrn_moderate"); qrn_clr = "#FFA726"
+        else:
+            qrn_lbl = self._tr("qrn_low");     qrn_clr = "#66BB6A"
+        if hasattr(self, "_qrn_var"):
+            self._qrn_var.set(qrn_lbl)
+            # Kleur het QRN label
+            try:
+                self._lightning_canvas.master.master.nametowidget(
+                    str(self._qrn_var))
+            except Exception:
+                pass
+
+        # Y-rasterlijnen
+        for cape_ref in (500, 1500, 3000):
+            yr = PAD_T + int(gH * (1 - cape_ref / CAPE_MAX))
+            if PAD_T <= yr <= PAD_T + gH:
+                c.create_line(PAD_L, yr, W - PAD_R, yr,
+                              fill=BORDER, dash=(2, 4))
+                c.create_text(PAD_L - 2, yr, text=str(cape_ref // 100),
+                              fill=TEXT_DIM, font=(_FONT_SANS, 6), anchor='e')
+
+        # Staven
+        for i, ts in enumerate(hours):
+            cape = forecast[ts].get("cape", 0) or 0
+            code = forecast[ts].get("code", 0) or 0
+            bar_h = int(gH * min(cape, CAPE_MAX) / CAPE_MAX)
+            x_left  = PAD_L + i * bar_w
+            x_right = x_left + bar_w - 1
+            y_top   = PAD_T + gH - bar_h
+
+            if code in (95, 96, 99):
+                clr = "#EF5350"   # onweerscode
+            elif cape > 1500:
+                clr = "#FFA726"
+            elif cape > 500:
+                clr = "#FFF176"
+            else:
+                clr = "#4FC3F7"
+
+            if bar_h > 0:
+                c.create_rectangle(x_left, y_top, x_right, PAD_T + gH,
+                                   fill=clr, outline="")
+
+        # Tijdlabels (elke 6u)
+        for i, ts in enumerate(hours):
+            if i % 6 == 0:
+                t_lbl = datetime.datetime.fromtimestamp(ts).strftime("%H")
+                x = PAD_L + i * bar_w
+                c.create_text(x, H - PAD_B + 2, text=t_lbl,
+                              fill=TEXT_DIM, font=(_FONT_SANS, 6), anchor='nw')
 
     def _draw_kp_bars(self, pts: list):
         """Teken planetaire Kp-index als staafdiagram (3u blokken, 48u)."""
@@ -8359,6 +9032,8 @@ class HAMIOSApp:
                        self._show_sat_var.get(),
                        self._show_sunmoon_path_var.get(),
                        self._show_iono_var.get(),
+                       self._show_lightning_var.get(),
+                       self._show_splash_var.get(),
                        self._dx_own_cont_var.get(),
                        self._hist_range_var.get(),
                        self._hist_sel,
@@ -8398,7 +9073,7 @@ class HAMIOSApp:
             pystray.Menu.SEPARATOR,
             pystray.MenuItem(self._tr("tray_exit"), self._tray_quit),
         )
-        self._tray_icon = pystray.Icon("HAMIOS", tray_img, "HAMIOS v4.0.1", menu)
+        self._tray_icon = pystray.Icon("HAMIOS", tray_img, "HAMIOS v4.0.2", menu)
         threading.Thread(target=self._tray_icon.run, daemon=True).start()
 
     def _tray_show(self, icon=None, item=None):
@@ -8831,7 +9506,7 @@ class HAMIOSApp:
 
 
 # ── Version check (GitHub releases API) ────────────────────────────────────────
-_APP_VERSION = "4.0.1"
+_APP_VERSION = "4.0.2"
 _GITHUB_RELEASES_URL = "https://api.github.com/repos/fvdijke/HAMIOS/releases/latest"
 
 def _check_latest_version() -> tuple[str, str]:
@@ -8990,7 +9665,20 @@ if __name__ == "__main__":
     import traceback as _tb
 
     root = tk.Tk()
-    root.withdraw()   # verberg tot UI volledig is opgebouwd en gecentreerd
+    # Verplaats root ver buiten beeld (1×1 pixel) zodat geen bare Tk-venster
+    # verschijnt, maar Toplevel-kinderen wél getoond kunnen worden.
+    root.geometry("1x1-32000-32000")
+    root.overrideredirect(True)   # geen titelbalk/rand
+    root.update()
+
+    # ── Splash / dependency-check vóór de hoofdapplicatie ────────────────────
+    if not _check_and_show_dependencies(root):
+        root.destroy()
+        sys.exit(0)
+
+    # Herstel root voor normale gebruik
+    root.overrideredirect(False)
+    root.withdraw()
 
     # Ctrl+C via OS-signaal → netjes afsluiten via event-loop
     signal.signal(signal.SIGINT, lambda *_: root.after(0, root.destroy))
@@ -9005,6 +9693,13 @@ if __name__ == "__main__":
     root.report_callback_exception = _cb_exception
 
     app = HAMIOSApp(root)
+
+    # Pas opgeslagen venstergeometrie toe vanuit saved default
+    _wg = _load_startup_window_geometry()
+    if _wg:
+        wx, wy, ww, wh = _wg
+        root.geometry(f"{ww}x{wh}+{wx}+{wy}")
+
     try:
         root.mainloop()
     except KeyboardInterrupt:

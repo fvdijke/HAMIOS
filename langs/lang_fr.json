@@ -260,7 +260,20 @@
     "settings_new_profile": "＋  Nouveau profil...",
     "settings_load": "▶  Charger",
     "settings_overwrite": "↻  Écraser",
-    "settings_delete": "🗑  Supprimer"
+    "settings_delete": "🗑  Supprimer",
+    "map_lightning_lbl": "Foudre",
+    "lightning_hdr": "⚡  Orage",
+    "lightning_no_dep": "pip install websocket-client",
+    "lightning_conn": "Connexion...",
+    "lightning_live": "🟢 En direct",
+    "lightning_disc": "🔴 Deconnecte...",
+    "lightning_strikes": "{n} eclairs (dernieres {m} min)",
+    "storm_forecast_24h": "⚡  Previsions orage 24h",
+    "qrn_lbl": "Niveau QRN :",
+    "qrn_low": "Faible",
+    "qrn_moderate": "Modere",
+    "qrn_high": "Eleve — HF < 15 MHz perturbe",
+    "overlay_btn": "🗺  Overlay"
   },
   "solar_tips": {
     "sfi": [

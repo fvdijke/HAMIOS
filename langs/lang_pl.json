@@ -260,7 +260,20 @@
     "settings_new_profile": "＋  Nowy profil...",
     "settings_load": "▶  Załaduj",
     "settings_overwrite": "↻  Nadpisz",
-    "settings_delete": "🗑  Usuń"
+    "settings_delete": "🗑  Usuń",
+    "map_lightning_lbl": "Piorun",
+    "lightning_hdr": "⚡  Burza",
+    "lightning_no_dep": "pip install websocket-client",
+    "lightning_conn": "Laczenie...",
+    "lightning_live": "🟢 Na zywo",
+    "lightning_disc": "🔴 Rozlaczono...",
+    "lightning_strikes": "{n} wyladowan (ostatnie {m} min)",
+    "storm_forecast_24h": "⚡  Prognoza burzy 24h",
+    "qrn_lbl": "Poziom QRN:",
+    "qrn_low": "Niski",
+    "qrn_moderate": "Umiarkowany",
+    "qrn_high": "Wysoki — HF < 15 MHz zaklocone",
+    "overlay_btn": "🗺  Overlay"
   },
   "solar_tips": {
     "sfi": [

@@ -260,7 +260,20 @@
     "settings_new_profile": "＋  Nieuw profiel...",
     "settings_load": "▶  Laden",
     "settings_overwrite": "↻  Overschrijven",
-    "settings_delete": "🗑  Verwijderen"
+    "settings_delete": "🗑  Verwijderen",
+    "map_lightning_lbl": "Bliksem",
+    "lightning_hdr": "⚡  Onweer",
+    "lightning_no_dep": "pip install websocket-client",
+    "lightning_conn": "Verbinding maken...",
+    "lightning_live": "🟢 Live",
+    "lightning_disc": "🔴 Verbroken — herverbinden...",
+    "lightning_strikes": "{n} inslagen (laatste {m} min)",
+    "storm_forecast_24h": "⚡  Onweersverwachting 24u",
+    "qrn_lbl": "QRN niveau:",
+    "qrn_low": "Laag",
+    "qrn_moderate": "Matig",
+    "qrn_high": "Hoog — HF < 15 MHz verstoord",
+    "overlay_btn": "🗺  Overlay"
   },
   "solar_tips": {
     "sfi": [

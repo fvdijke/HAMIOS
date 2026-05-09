@@ -1,6 +1,24 @@
 ─────────────────────────────────────────────────────────────────────
 Change Log (4.0.1)  [in ontwikkeling]
 ─────────────────────────────────────────────────────────────────────
+─────────────────────────────────────────────────────────────────────
+Change Log (4.0.2)
+─────────────────────────────────────────────────────────────────────
+· 2026-05-09 10:34 — Kaart-overlays → 🗺 Overlay-knop in header; splash fix.
+· 2026-05-09 10:08 — Bare Tk-window weg; splash gecentreerd; startup=saved default.
+· 2026-05-09 10:00 — Splash gecentreerd; lightning positie fix; _layout.get fallback.
+· 2026-05-09 09:54 — Splash screen: naam, versie, dep-status, toon-vinkje.
+· 2026-05-09 09:48 — Dep-status in settings; startup dialoog fix.
+· 2026-05-09 09:43 — Dependency-check dialoog bij opstarten + fixes.
+· 2026-05-08 21:59 — Fix: onweer-paneel positie + dubbele iconen in settings.
+· 2026-05-09 — v4.0.2: Onweer-layer en voorspellingspaneel:
+  Blitzortung WebSocket (websocket-client, optioneel) voor live blikseminslagen.
+  Inslagen als gekleurde fading dots op de kaart (wit=nieuw, oranje=oud, 30min buffer).
+  Open-Meteo CAPE/LI-voorspelling als apart ⚡ Onweer-paneel (gratis, geen key).
+  CAPE-staafdiagram 24u (blauw<500 / geel>500 / oranje>1500 / rood=code 95+).
+  QRN-niveau indicator (Laag/Matig/Hoog met HF-impact melding).
+  Auto-reconnect bij WebSocket disconnect (30s). 13 vertaalsleutels in alle talen.
+
 · 2026-05-08 21:01 CEST — Settings live vertaling bij taalwisseling.
 · 2026-05-08 20:57 CEST — Panelen-knop weg; alles in Instellingen-dialoog.
   Layout + Profielen-sectie in settings. 8 nieuwe vertaalsleutels.

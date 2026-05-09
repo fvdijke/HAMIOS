@@ -260,7 +260,20 @@
     "settings_new_profile": "＋  Nytt profil...",
     "settings_load": "▶  Last inn",
     "settings_overwrite": "↻  Overskriv",
-    "settings_delete": "🗑  Slett"
+    "settings_delete": "🗑  Slett",
+    "map_lightning_lbl": "Lyn",
+    "lightning_hdr": "⚡  Tordenvear",
+    "lightning_no_dep": "pip install websocket-client",
+    "lightning_conn": "Kobler til...",
+    "lightning_live": "🟢 Live",
+    "lightning_disc": "🔴 Frakoblet...",
+    "lightning_strikes": "{n} lynnedslag (siste {m} min)",
+    "storm_forecast_24h": "⚡  Tordenvear prognose 24t",
+    "qrn_lbl": "QRN-niva:",
+    "qrn_low": "Lavt",
+    "qrn_moderate": "Moderat",
+    "qrn_high": "Hoyt — HF < 15 MHz forstyrret",
+    "overlay_btn": "🗺  Overlay"
   },
   "solar_tips": {
     "sfi": [

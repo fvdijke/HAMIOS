@@ -260,7 +260,20 @@
     "settings_new_profile": "＋  Nuevo perfil...",
     "settings_load": "▶  Cargar",
     "settings_overwrite": "↻  Sobrescribir",
-    "settings_delete": "🗑  Eliminar"
+    "settings_delete": "🗑  Eliminar",
+    "map_lightning_lbl": "Rayo",
+    "lightning_hdr": "⚡  Tormenta",
+    "lightning_no_dep": "pip install websocket-client",
+    "lightning_conn": "Conectando...",
+    "lightning_live": "🟢 En vivo",
+    "lightning_disc": "🔴 Desconectado...",
+    "lightning_strikes": "{n} rayos (ultimos {m} min)",
+    "storm_forecast_24h": "⚡  Pronostico tormenta 24h",
+    "qrn_lbl": "Nivel QRN:",
+    "qrn_low": "Bajo",
+    "qrn_moderate": "Moderado",
+    "qrn_high": "Alto — HF < 15 MHz perturbado",
+    "overlay_btn": "🗺  Overlay"
   },
   "solar_tips": {
     "sfi": [

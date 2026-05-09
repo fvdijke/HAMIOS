@@ -260,7 +260,20 @@
     "settings_new_profile": "＋  新しいプロファイル...",
     "settings_load": "▶  読み込む",
     "settings_overwrite": "↻  上書き",
-    "settings_delete": "🗑  削除"
+    "settings_delete": "🗑  削除",
+    "map_lightning_lbl": "Rai",
+    "lightning_hdr": "⚡  Rau",
+    "lightning_no_dep": "pip install websocket-client",
+    "lightning_conn": "Setsuzoku-chu...",
+    "lightning_live": "🟢 Live",
+    "lightning_disc": "🔴 Setsudan...",
+    "lightning_strikes": "{n}-kai no rakurai (kako {m} fun)",
+    "storm_forecast_24h": "⚡  Rau yohou 24jikan",
+    "qrn_lbl": "QRN reberu:",
+    "qrn_low": "Tei",
+    "qrn_moderate": "Chuteido",
+    "qrn_high": "Ko — HF 15MHz ika ni eikyo",
+    "overlay_btn": "🗺  オーバーレイ"
   },
   "solar_tips": {
     "sfi": [
