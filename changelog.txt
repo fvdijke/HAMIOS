@@ -1,6 +1,10 @@
 ─────────────────────────────────────────────────────────────────────
 Change Log (4.0.1)  [in ontwikkeling]
 ─────────────────────────────────────────────────────────────────────
+· 2026-05-11 19:05 — Splash toggle fix, panel lift improvements, spy/sat dialog centering,
+  Bz/Kp/Xray comprehensive tooltips, solar history legend, lighter cyan graticule,
+  recursive panel click activation.
+
 · 2026-05-11 18:14 — Overlay tekst leesbaarder (TEXT_BODY), grayline donkerder (100,130,90),
   lightning-panel toont correcte status als websocket-client ontbreekt,
   panelen altijd naar voren (_lift_all_panels + desktop bind + DraggablePanel.show),

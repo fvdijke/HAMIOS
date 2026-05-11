@@ -66,46 +66,38 @@ Dependencies:
 ─────────────────────────────────────────────────────────────────────
 Todo
 ─────────────────────────────────────────────────────────────────────
-- [x] CAT: Enable CAT
+- Splashscreen -
+- [x] Fix: Splashscreen reageert niet op selectie wel of niet tonen
+- [x] Fix: Laat syntax zien per dependency om te installeren
 
-- [x] Vis: Verbeter de performance van de interface — debounce, active_drag, after_idle batching al geïmplementeerd in v4.0.1
-- [x] Vis: Zet achter de overlay selecties een korte tekst wat de selectie doet.
-- [x] Vis: Geef onder de worldmap in het grijs (klein font en gecentreerd) aan waar deze ruimte voor is zolag er nog geen data staat. Misschien een korte uitleg hoe deze te gebruiken?
-- [x] Vis: geef bij hover-over een satelliet de lat/lon gegevens en de elevation van de satelliet ten opzichte van de QTH
-- [x] Vis: maak de grayline minder fel kwa kleur.
-- [x] Vis: Flash-ring bij nieuwe inslagen (10s); contributor-locaties niet beschikbaar via Blitzortung API
-- [x] Vis: Ik wil de band selectie/legenda weer terug onder de Band history grafiek.
-- [x] Vis: Ik wil in het sat paneel een rode waarschuwing als in overlay de sat selectie uit staat.
+- Panelen -
+- [x] Fix: Panelen moeten altijd op de voorgrond (ook van het main screen)
+- [x] Fix: De panelen moeten actief worden waar je deze ook aanklikt
 
+- Spy paneel -
+- [x] Fix: Spy paneel start niet in het midden van het scherm
+- [x] Fix: Sat paneel start niet in het midden van het scherm
 
-- [x] Layout: In settings wil ik een snap to grid optie met daarbij een optie om de gridsize aan te geven in px
-- [x] Layout: notifications, KP en Xray in settingspanel hebben geen icoontje
-- [x] Layout: Houdt panelen aldtijd in front
-- [x] Layout: Verwijder alle ITU gegevens uit de source code. Ook de overlay, uit teksten. Alles wat ITU gerelateerd is kan weg.
-- [x] Layout: Zet de sat selectie in overlay onder Data
-- [x] Layout: Splits de Band history grafiek en die andere grafiek.
-- [x] Layout: Splits Solar/ionosfeer paneel, band day/night en Storm forcast.
-- [x] Layout: Zet de nieuwe panelen in de panel selectie paneel.
+- Onweer paneel -
+- [x] Fix: Geen onweer informatie (wereldwijd of bij qth)
 
-- [x] Data: In band dag/nacht paneel vertaal Arm naar Gesloten, closed en de rest van de talen
-- [x] Data: Ik wil de X as van de Bx grafiek kunnen inzoomen. Is nu 40 maar wil bv ook 20 als min/max
-- [x] Data: Geef bij de tooltips ook aan wat de betreffende data of grafiek presenteerd. Dus niet alleen de data maar ook wat het is/betekend.
+- Worldmap -
+- [x] Vis: Meridianen mogen iets lichter van kleur (cyan)
+- [ ] Vis: Color picker in settings voor Worldmap en meridianen
 
-- [x] Fix: locaties van bv satellieten kloppen niet na resize van de worldmap. Dit komt omdat de 2:1 ratio niet wordt nageleefd. Behoudt dus altijd de 2:1 ratio bij resizen.
-- [x] Fix: er is geen onweer informatie zichtbaar op de worlmap — show_lightning default True; Blitzortung WebSocket actief als websocket-client geïnstalleerd is
-- [x] Fix: Maak de beschrijvende tekst in de overlay paneel beter leesbaar (kleur)
-- [x] Fix: Maak de grayline iets donderder
-- [x] Fix: Onweerpanel geeft aan dat de verbinding is verbroken
-- [x] Fix: Zet alle panelen altijd vooraan.
-- [x] Fix: Niet alle panels hebben een icoon — bz_chart_hdr ⚡ toegevoegd in alle 13 talen
+- Solar verloop panel -
+- [x] Fix: geen uitleg informatie bij grafiek. Maak uitgebreide explainer
 
-- [x] Lang: Help-tekst bijgewerkt met alle v4.x panels, overlay-knop, lightning, keyboard shortcuts.
-- [x] Lang: changelog.txt en release-teksten in het Engels bijgehouden.
-
+- Tooltips -
+- [x] Fix: Xray, Bz en Kp, Maak uitgebreide explainer
 
 ─────────────────────────────────────────────────────────────────────
 Change Log (4.0.1)
 ─────────────────────────────────────────────────────────────────────
+· 2026-05-11 19:05 — Splash toggle fix, panel lift improvements, spy/sat dialog centering,
+  Bz/Kp/Xray comprehensive tooltips, solar history legend, lighter cyan graticule,
+  recursive panel click activation.
+
 · 2026-05-11 18:14 — Overlay tekst leesbaarder (TEXT_BODY), grayline donkerder (100,130,90),
   lightning-panel toont correcte status als websocket-client ontbreekt,
   panelen altijd naar voren (_lift_all_panels + desktop bind + DraggablePanel.show),
@@ -507,7 +499,7 @@ MAP_OCEAN  = (27,  58,  92)    # dark blue
 MAP_LAND   = (45,  96, 128)    # blue-grey
 MAP_COAST  = (60, 122, 160)    # coastline
 MAP_NIGHT  = (0,    8,  20, 150)  # night overlay (RGBA)
-MAP_GRID   = (30,  62,  95)    # graticule
+MAP_GRID   = (45,  90, 140)    # graticule — licht cyaan
 MAP_SUN    = (255, 215,   0)   # sun
 MAP_MOON   = (200, 200, 200)   # moon
 MAP_QTH    = ( 80, 180, 255)   # own position (bright blue)
@@ -2685,6 +2677,14 @@ class DraggablePanel:
         # Klik op content-area brengt het paneel naar de voorgrond
         self.content.bind("<Button-1>", lambda _: self.frame.lift(), add="+")
 
+        # Zorg dat klikken OVERAL op het paneel het naar voren brengt
+        def _bind_lift_recursive(widget):
+            widget.bind("<Button-1>", lambda _: self.frame.lift(), add="+")
+            for child in widget.winfo_children():
+                _bind_lift_recursive(child)
+        # Bind na build (content is nog leeg nu, maar after_idle pakt children op)
+        self.frame.after_idle(lambda: _bind_lift_recursive(self.frame))
+
     # ── Titel bijwerken (bij taalwisseling) ──────────────────────────────────
     def update_title(self, title: str, icon: str = ""):
         self._icon_lbl.config(text=title)
@@ -3140,6 +3140,12 @@ class _SpyDialog:
         win.title("Spy / Numbers Stations")
         win.configure(bg=BG_PANEL)
         win.geometry("700x620")
+        win.update_idletasks()
+        sw = win.winfo_screenwidth()
+        sh = win.winfo_screenheight()
+        ww = win.winfo_reqwidth() or 700
+        wh = win.winfo_reqheight() or 620
+        win.geometry(f"+{(sw-ww)//2}+{(sh-wh)//2}")
         win.resizable(True, True)
 
         tk.Frame(win, bg=self._AMBER, height=2).pack(fill=tk.X)
@@ -3375,6 +3381,12 @@ class _SatelliteDialog:
         win.title("Satellite Tracking")
         win.configure(bg=BG_PANEL)
         win.geometry("560x580")
+        win.update_idletasks()
+        sw = win.winfo_screenwidth()
+        sh = win.winfo_screenheight()
+        ww = win.winfo_reqwidth() or 560
+        wh = win.winfo_reqheight() or 580
+        win.geometry(f"+{(sw-ww)//2}+{(sh-wh)//2}")
         win.resizable(True, True)
 
         tk.Frame(win, bg=ACCENT, height=2).pack(fill=tk.X)
@@ -3695,10 +3707,11 @@ def _show_splash(root: tk.Tk) -> bool:
                  font=("Segoe UI", 8), bg=BG_DEP, fg=DIM,
                  anchor='w').pack(fill=tk.X)
         if not is_ok:
-            cmd = f"pip install {pkg}"
+            cmd = f"  pip install {pkg}  "
             cmd_lbl = tk.Label(row, text=cmd,
                                font=("Consolas", 8), bg="#1A1C1F",
-                               fg=AMBER, padx=6, pady=2, cursor="hand2")
+                               fg=AMBER, padx=6, pady=2, cursor="hand2",
+                               relief=tk.GROOVE, bd=1)
             cmd_lbl.pack(side=tk.LEFT, padx=(8, 0))
             cmd_lbl.bind("<Button-1>",
                          lambda _, c=cmd: (root.clipboard_clear(),
@@ -3728,6 +3741,7 @@ def _show_splash(root: tk.Tk) -> bool:
     # Vinkje
     cb = tk.Checkbutton(bottom, text="Toon dit scherm bij opstarten",
                         variable=splash_var,
+                        command=_save_splash_pref,
                         bg=BG_CARD, fg=FG, selectcolor=BG_DEP,
                         activebackground=BG_CARD, activeforeground=FG,
                         font=("Segoe UI", 9))
@@ -5348,6 +5362,18 @@ class HAMIOSApp:
         self._desktop.bind("<Button-1>",
                            lambda _: self.root.after(10, self._lift_all_panels))
 
+        # Zorg dat panelen altijd vooraan blijven via periodieke lift
+        def _keep_panels_front():
+            if hasattr(self, "_panels"):
+                for p in self._panels.values():
+                    if p.is_visible():
+                        try:
+                            p.frame.lift()
+                        except Exception:
+                            pass
+            self.root.after(500, _keep_panels_front)
+        self.root.after(500, _keep_panels_front)
+
         _layout = _load_panel_layout()
         self._panels: dict = {}
 
@@ -5727,6 +5753,7 @@ class HAMIOSApp:
         self._solar_hist_canvas.bind(
             "<Configure>",
             lambda *_: self._debounce("solhist", 150, self._draw_solar_hist_chart))
+        self._solar_hist_canvas.bind("<Enter>", lambda e: self._show_solar_hist_tip(e))
 
     # ── Wereldkaart panel ─────────────────────────────────────────────────────
     def _build_map_panel(self, parent):
@@ -6673,12 +6700,13 @@ class HAMIOSApp:
             age_min   = int((closest[0] - age_h) * 60)
             t_ago = datetime.datetime.now(datetime.timezone.utc) - datetime.timedelta(hours=closest[0])
             ts_lbl = t_ago.astimezone().strftime("%d %b %H:%M")
-            bz_lbl = ("positief — gunstig" if bz_val > 2  else
-                      "negatief — geo-effectief" if bz_val < -2 else
-                      "neutraal")
-            tip = [("Bz  24h", None), None,
+            bz_meaning = ("Positief Bz beschermt aardveld → rustig" if bz_val > 2
+                          else "Negatief Bz koppelt aan aardveld → storm risico" if bz_val < -2
+                          else "Neutraal Bz — geen direct effect")
+            tip = [("⚡  Bz 24u (nT)", None),
+                   ("Z-component van het interplanetaire magneetveld.", None), None,
                    ("Bz:", f"{bz_val:+.1f} nT"),
-                   ("Status:", bz_lbl),
+                   ("Betekenis:", bz_meaning),
                    ("Tijd:", ts_lbl)]
             rx = c.winfo_rootx() + event.x
             ry = c.winfo_rooty() + event.y
@@ -6726,10 +6754,15 @@ class HAMIOSApp:
                         self._tr("geo_unsettled") if kp < 5 else
                         self._tr("geo_storm")     if kp < 7 else
                         self._tr("geo_severe"))
-            tip = [("Kp  48h", None),
-                   ("Planetaire K-index: 0=rustig, 5+=storm.", None), None,
+            k_meaning = ("K 0-2: Rustig — optimale HF-omstandigheden" if kp < 3
+                         else "K 3-4: Onrustig — lagere banden stabieler" if kp < 5
+                         else "K 5-6: Kleine storm — poolroutes geblokkeerd" if kp < 7
+                         else "K 7+: Zware storm — HF grotendeels onbruikbaar")
+            tip = [("🧲  Kp-index 48u", None),
+                   ("Planetaire K-index maat voor geomagn. activiteit.", None), None,
                    ("K-index:", f"{kp:.1f}"),
-                   (self._tr("status_lbl"), k_status),
+                   ("Status:", k_status),
+                   ("Impact:", k_meaning),
                    ("Tijd:", ts_lbl)]
             rx = c.winfo_rootx() + event.x
             ry = c.winfo_rooty() + event.y
@@ -6797,10 +6830,15 @@ class HAMIOSApp:
             elif flux >= 1e-6: cls = f"C{flux/1e-6:.1f}"
             elif flux >= 1e-7: cls = f"B{flux/1e-7:.1f}"
             else:              cls = f"A{flux/1e-8:.1f}"
-            tip = [("X-ray  24h", None),
-                   ("GOES röntgenflux: A/B/C=normaal, M/X=vlam.", None), None,
+            xray_meaning = ("X-vlam — SWF mogelijk, HF dagzijde verstoord" if flux >= 1e-4
+                            else "M-vlam — verhoogde kans op SWF" if flux >= 1e-5
+                            else "C-vlam — lichte impact" if flux >= 1e-6
+                            else "A/B-klasse — normaal achtergrondniveau")
+            tip = [("☢  X-straling 24u", None),
+                   ("GOES röntgenflux van de zon (log-schaal).", None), None,
                    ("Klasse:", cls),
                    ("Flux:", f"{flux:.2e} W/m²"),
+                   ("Impact:", xray_meaning),
                    ("Tijd:", ts_lbl)]
             rx = c.winfo_rootx() + event.x
             ry = c.winfo_rooty() + event.y
@@ -6855,12 +6893,13 @@ class HAMIOSApp:
             bz_val = closest[1]
             t_ago = datetime.datetime.now(datetime.timezone.utc) - datetime.timedelta(hours=closest[0])
             ts_lbl = t_ago.astimezone().strftime("%d %b %H:%M")
-            bz_lbl = ("positief — gunstig" if bz_val > 2 else
-                      "negatief — geo-effectief" if bz_val < -2 else "neutraal")
-            tip = [("Bz  24h (nT)", None),
-                   ("Bz beschrijft de Z-component van het IMF.", None), None,
+            bz_meaning = ("Positief Bz beschermt aardveld → rustig" if bz_val > 2
+                          else "Negatief Bz koppelt aan aardveld → storm risico" if bz_val < -2
+                          else "Neutraal Bz — geen direct effect")
+            tip = [("⚡  Bz 24u (nT)", None),
+                   ("Z-component van het interplanetaire magneetveld.", None), None,
                    ("Bz:", f"{bz_val:+.1f} nT"),
-                   ("Status:", bz_lbl),
+                   ("Betekenis:", bz_meaning),
                    ("Tijd:", ts_lbl)]
             self._bz_tip.show(c.winfo_rootx() + event.x, c.winfo_rooty() + event.y, tip)
             c.delete("bz_cursor")
@@ -6902,9 +6941,16 @@ class HAMIOSApp:
             elif flux >= 1e-6: cls = f"C{flux/1e-6:.1f}"
             elif flux >= 1e-7: cls = f"B{flux/1e-7:.1f}"
             else:              cls = f"A{flux/1e-8:.1f}"
-            tip = [("X-ray  24h", None),
-                   ("GOES röntgenflux: A/B/C=normaal, M/X=vlam.", None), None,
-                   ("Klasse:", cls), ("Flux:", f"{flux:.2e} W/m²"), ("Tijd:", ts_lbl)]
+            xray_meaning = ("X-vlam — SWF mogelijk, HF dagzijde verstoord" if flux >= 1e-4
+                            else "M-vlam — verhoogde kans op SWF" if flux >= 1e-5
+                            else "C-vlam — lichte impact" if flux >= 1e-6
+                            else "A/B-klasse — normaal achtergrondniveau")
+            tip = [("☢  X-straling 24u", None),
+                   ("GOES röntgenflux van de zon (log-schaal).", None), None,
+                   ("Klasse:", cls),
+                   ("Flux:", f"{flux:.2e} W/m²"),
+                   ("Impact:", xray_meaning),
+                   ("Tijd:", ts_lbl)]
             self._xray_tooltip.show(c.winfo_rootx() + event.x, c.winfo_rooty() + event.y, tip)
             c.delete("xray_cursor")
             c.create_line(event.x, 0, event.x, c.winfo_height(),
@@ -7067,12 +7113,20 @@ class HAMIOSApp:
             "<Configure>",
             lambda *_: self._debounce("lstorm", 150, self._draw_storm_chart))
 
+        # Toon status
+        if hasattr(self, "_lightning_status_var"):
+            if _WEBSOCKET_OK:
+                self._lightning_status_var.set(self._tr("lightning_conn"))
+            else:
+                self._lightning_status_var.set(self._tr("lightning_no_dep"))
         # Start WebSocket als beschikbaar
         if _WEBSOCKET_OK and not self._lightning_ws_running:
             self.root.after(500, self._start_lightning_ws)
-        # Start forecast fetch
+        # Start forecast fetch — direct en via thread
         threading.Thread(
             target=self._fetch_storm_forecast, daemon=True).start()
+        self.root.after(0, lambda: threading.Thread(
+            target=self._fetch_storm_forecast, daemon=True).start())
         # Periodieke forecast refresh (elke 10 min)
         self.root.after(600_000, self._schedule_storm_refresh)
 
@@ -7872,6 +7926,18 @@ class HAMIOSApp:
         W = c.winfo_width() or 700
         H = c.winfo_height() or 80
 
+        c.create_rectangle(0, 0, W, H, fill=BG_SURFACE, outline="")
+
+        # Legend
+        c.create_text(4, 4, text="SFI", fill="#FFA726",
+                      font=(_FONT_SANS, 6, "bold"), anchor='nw')
+        c.create_text(30, 4, text="K-index: ",
+                      fill=TEXT_DIM, font=(_FONT_SANS, 6), anchor='nw')
+        for k_val, clr, lbl in [(0,"#4FC3F7","0-2"), (3,"#FFF176","3-4"),
+                                  (5,"#FFA726","5-6"), (7,"#EF5350","7+")]:
+            c.create_text(70 + k_val*10, 4, text=lbl, fill=clr,
+                          font=(_FONT_SANS, 6), anchor='nw')
+
         _RANGE = {
             "Uren":    datetime.timedelta(hours=24),
             "Dagen":   datetime.timedelta(days=7),
@@ -7943,6 +8009,20 @@ class HAMIOSApp:
             c.create_text(W - PAD_R + 2, ky,
                           text=str(k_lbl), fill=_K_CLR.get(k_lbl, "#666666"),
                           font=(_FONT_SANS, 6), anchor='w')
+
+    def _show_solar_hist_tip(self, event):
+        if not self._show_tips_var.get():
+            return
+        tip = [("☀  Solar History", None), None,
+               ("SFI lijn:", "Solar Flux Index — hoe hoger, hoe beter HF"),
+               ("K-index balken:", "Geomagnetische activiteit — hoog = storing"),
+               ("Blauw:", "K 0–2 (rustig)  •  Geel: K 3–4  •  Rood: K 5+")]
+        tt = getattr(self, "_solar_hist_tt", None)
+        if tt is None:
+            self._solar_hist_tt = _Tooltip(self._solar_hist_canvas)
+            tt = self._solar_hist_tt
+        c = self._solar_hist_canvas
+        tt.show(c.winfo_rootx() + event.x, c.winfo_rooty() + event.y, tip)
 
     # ── Bandopenings-schema (heatmap) ─────────────────────────────────────────
     def _build_schedule_panel(self, parent):
