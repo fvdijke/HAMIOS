@@ -1,6 +1,13 @@
 ─────────────────────────────────────────────────────────────────────
 Change Log (4.0.1)  [in ontwikkeling]
 ─────────────────────────────────────────────────────────────────────
+· 2026-05-11 18:14 — Overlay tekst leesbaarder (TEXT_BODY), grayline donkerder (100,130,90),
+  lightning-panel toont correcte status als websocket-client ontbreekt,
+  panelen altijd naar voren (_lift_all_panels + desktop bind + DraggablePanel.show),
+  emoji-iconen toegevoegd aan band_cond_hdr/storm_fc_hdr/solar_hist_hdr in lang_nl.json,
+  Bz Y-as zoom-control (SpinBox 10–100 nT) in standalone Bz-paneel,
+  rijkere tooltips met context voor Bz/Kp/X-ray charts,
+  flash-ring ripple-effect (10s) bij nieuwe blikseminslagen op de kaart.
 ─────────────────────────────────────────────────────────────────────
 Change Log (4.0.2)
 ─────────────────────────────────────────────────────────────────────

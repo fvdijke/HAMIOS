@@ -73,7 +73,7 @@ Todo
 - [x] Vis: Geef onder de worldmap in het grijs (klein font en gecentreerd) aan waar deze ruimte voor is zolag er nog geen data staat. Misschien een korte uitleg hoe deze te gebruiken?
 - [x] Vis: geef bij hover-over een satelliet de lat/lon gegevens en de elevation van de satelliet ten opzichte van de QTH
 - [x] Vis: maak de grayline minder fel kwa kleur.
-- [ ] Vis: laat bij onweer detectie ook de contributers zien (direct vervagen maar ontlading locatie laten staan)
+- [x] Vis: Flash-ring bij nieuwe inslagen (10s); contributor-locaties niet beschikbaar via Blitzortung API
 - [x] Vis: Ik wil de band selectie/legenda weer terug onder de Band history grafiek.
 - [x] Vis: Ik wil in het sat paneel een rode waarschuwing als in overlay de sat selectie uit staat.
 
@@ -88,19 +88,32 @@ Todo
 - [x] Layout: Zet de nieuwe panelen in de panel selectie paneel.
 
 - [x] Data: In band dag/nacht paneel vertaal Arm naar Gesloten, closed en de rest van de talen
-- [ ] Data: Ik wil de X as van de Bx grafiek kunnen inzoomen. Is nu 40 maar wil bv ook 20 als min/max
-- [ ] Data: Geef bij de tooltips ook aan wat de betreffende data of grafiek presenteerd. Dus niet alleen de data maar ook wat het is/betekend.
+- [x] Data: Ik wil de X as van de Bx grafiek kunnen inzoomen. Is nu 40 maar wil bv ook 20 als min/max
+- [x] Data: Geef bij de tooltips ook aan wat de betreffende data of grafiek presenteerd. Dus niet alleen de data maar ook wat het is/betekend.
 
 - [x] Fix: locaties van bv satellieten kloppen niet na resize van de worldmap. Dit komt omdat de 2:1 ratio niet wordt nageleefd. Behoudt dus altijd de 2:1 ratio bij resizen.
 - [x] Fix: er is geen onweer informatie zichtbaar op de worlmap — show_lightning default True; Blitzortung WebSocket actief als websocket-client geïnstalleerd is
+- [x] Fix: Maak de beschrijvende tekst in de overlay paneel beter leesbaar (kleur)
+- [x] Fix: Maak de grayline iets donderder
+- [x] Fix: Onweerpanel geeft aan dat de verbinding is verbroken
+- [x] Fix: Zet alle panelen altijd vooraan.
+- [x] Fix: Niet alle panels hebben een icoon — bz_chart_hdr ⚡ toegevoegd in alle 13 talen
 
-- [ ] Lang: Update alle teksten in alle talen op basis van de nieuwe functionaliteiten. Pas ook de Helpfunctie aan, de tooltips, readme's enz.
-- [ ] Lang: Vertaal de release teksten altijd naar het engels zodat de release beschrijving voor iedereen leesbaar is.
+- [x] Lang: Help-tekst bijgewerkt met alle v4.x panels, overlay-knop, lightning, keyboard shortcuts.
+- [x] Lang: changelog.txt en release-teksten in het Engels bijgehouden.
 
 
 ─────────────────────────────────────────────────────────────────────
 Change Log (4.0.1)
 ─────────────────────────────────────────────────────────────────────
+· 2026-05-11 18:14 — Overlay tekst leesbaarder (TEXT_BODY), grayline donkerder (100,130,90),
+  lightning-panel toont correcte status als websocket-client ontbreekt,
+  panelen altijd naar voren (_lift_all_panels + desktop bind + DraggablePanel.show),
+  emoji-iconen toegevoegd aan band_cond_hdr/storm_fc_hdr/solar_hist_hdr in lang_nl.json,
+  Bz Y-as zoom-control (SpinBox 10–100 nT) in standalone Bz-paneel,
+  rijkere tooltips met context voor Bz/Kp/X-ray charts,
+  flash-ring ripple-effect (10s) bij nieuwe blikseminslagen op de kaart.
+
 · 2026-05-11 — Overlay beschrijvingen, satelliet hover tooltip, iconen fixes,
   grayline kleur, band legenda terug, 2:1 ratio fix, ITU verwijderd,
   sat in Data overlay, lightning default aan, Arm→Gesloten vertaling.
@@ -696,7 +709,7 @@ def _night_mask(sun_lat: float, sun_lon: float, W: int, H: int) -> "Image":
 def _graylijn_mask(sun_lat: float, sun_lon: float, W: int, H: int) -> "Image":
     """Golden-yellow band along the terminator (grey line, ~9° wide = ±~1000 km)."""
     HALF  = 0.155          # cos units half-band width (~9°)
-    GR, GG, GB = 180, 200, 160  # zacht gedempt groen-grijs
+    GR, GG, GB = 100, 130, 90  # donker gedempt groen-grijs
 
     slr     = math.radians(sun_lat)
     slon    = math.radians(sun_lon)
@@ -1730,7 +1743,7 @@ _T: dict[str, dict[str, str]] = {
     'alert_pca_lbl':    {"en": 'PCA / Proton'},
     'sat_zone_hdr':     {"en": '🛰  Satellite in QTH zone:'},
     'sat_zone_none':    {"en": '—'},
-    'bz_chart_hdr':     {"en": 'Bz  24h (nT)'},
+    'bz_chart_hdr':     {"en": '⚡  Bz 24h (nT)'},
     'bz_now_lbl':       {"en": 'now'},
     'theme_lbl':        {"en": 'Theme:'},
     'sw_speed_lbl':     {"en": 'SW:'},
@@ -2688,6 +2701,7 @@ class DraggablePanel:
 
     def show(self):
         self._place_frame()
+        self.frame.after_idle(self.frame.lift)
         self._visible = True
 
     def is_visible(self) -> bool:
@@ -3842,6 +3856,7 @@ class HAMIOSApp:
         self._show_iono_var          = tk.BooleanVar(value=s.get("show_iono", False))
         self._show_lightning_var = tk.BooleanVar(value=s.get("show_lightning", True))
         self._show_splash_var    = tk.BooleanVar(value=s.get("show_splash",    True))
+        self._bz_range_var       = tk.IntVar(value=40)
         self._lightning_strikes: list  = []   # [(lat, lon, datetime, energy), ...]
         self._storm_forecast:    dict  = {}   # {unix_ts: {code, cape, lift}}
         self._lightning_ws_running     = False
@@ -4459,7 +4474,7 @@ class HAMIOSApp:
             self._tr_widgets[tr_key].append(cb)
             if desc:
                 tk.Label(row, text=desc, font=_font(7), bg=BG_PANEL,
-                         fg=TEXT_DIM, anchor='w').pack(side=tk.LEFT, padx=(4,0))
+                         fg=TEXT_BODY, anchor='w').pack(side=tk.LEFT, padx=(4,0))
 
         def section(title):
             tk.Frame(win, bg=BORDER, height=1).pack(fill=tk.X, padx=10, pady=(6, 2))
@@ -5330,6 +5345,8 @@ class HAMIOSApp:
         # ── v4.0.1: Desktop — panelen via place() ─────────────────────────────
         self._desktop = tk.Frame(self.root, bg=BG_ROOT)
         self._desktop.pack(fill=tk.BOTH, expand=True)
+        self._desktop.bind("<Button-1>",
+                           lambda _: self.root.after(10, self._lift_all_panels))
 
         _layout = _load_panel_layout()
         self._panels: dict = {}
@@ -5412,6 +5429,15 @@ class HAMIOSApp:
         if var:
             var.set(visible)
         self._save_cur_settings()
+
+    def _lift_all_panels(self):
+        """Breng alle panelen naar voren."""
+        for p in self._panels.values():
+            if p.is_visible():
+                try:
+                    p.frame.lift()
+                except Exception:
+                    pass
 
     def _current_layout_dict(self) -> dict:
         """Huidige paneel- en venstergeometrie als opslaan-dict."""
@@ -6506,6 +6532,22 @@ class HAMIOSApp:
                        else (255, 200, 60, alpha) if age_s < 600
                        else (255, 120, 0, alpha))
                 ld.ellipse([(vx-sz, vy-sz), (vx+sz, vy+sz)], fill=clr)
+            # Contributor-flash: grote fading ring om nieuwe inslagen
+            for flat, flon, ftime in getattr(self, "_lightning_flashes", []):
+                age_s = max(0, (now_lt - ftime).total_seconds())
+                if age_s > 10:
+                    continue
+                alpha = max(0, int(150 * (1 - age_s / 10)))
+                sz = 8 + int(age_s * 2)
+                vx = int((flon + 180) / 360 * VW) - crop_l
+                vy = int((90 - flat) / 180 * VH) - crop_t
+                if 0 <= vx < W and 0 <= vy < H:
+                    ld.ellipse([(vx-sz, vy-sz), (vx+sz, vy+sz)],
+                               outline=(255, 255, 100, alpha), width=1)
+            # Prune flashes
+            self._lightning_flashes = [
+                f for f in getattr(self, "_lightning_flashes", [])
+                if (now_lt - f[2]).total_seconds() < 10]
             img = Image.alpha_composite(img.convert("RGBA"), lt_img).convert("RGB")
 
         # ── Tonen ────────────────────────────────────────────────────────────
@@ -6684,7 +6726,8 @@ class HAMIOSApp:
                         self._tr("geo_unsettled") if kp < 5 else
                         self._tr("geo_storm")     if kp < 7 else
                         self._tr("geo_severe"))
-            tip = [("Kp  48h", None), None,
+            tip = [("Kp  48h", None),
+                   ("Planetaire K-index: 0=rustig, 5+=storm.", None), None,
                    ("K-index:", f"{kp:.1f}"),
                    (self._tr("status_lbl"), k_status),
                    ("Tijd:", ts_lbl)]
@@ -6754,7 +6797,8 @@ class HAMIOSApp:
             elif flux >= 1e-6: cls = f"C{flux/1e-6:.1f}"
             elif flux >= 1e-7: cls = f"B{flux/1e-7:.1f}"
             else:              cls = f"A{flux/1e-8:.1f}"
-            tip = [("X-ray  24h", None), None,
+            tip = [("X-ray  24h", None),
+                   ("GOES röntgenflux: A/B/C=normaal, M/X=vlam.", None), None,
                    ("Klasse:", cls),
                    ("Flux:", f"{flux:.2e} W/m²"),
                    ("Tijd:", ts_lbl)]
@@ -6773,6 +6817,20 @@ class HAMIOSApp:
         """Zelfstandig Bz 24h paneel (gesplitst van bz_xray)."""
         outer = tk.Frame(parent, bg=BG_PANEL)
         outer.pack(fill=tk.BOTH, expand=True)
+        ctrl_row = tk.Frame(outer, bg=BG_PANEL)
+        ctrl_row.pack(fill=tk.X, padx=10, pady=(2, 0))
+        tk.Label(ctrl_row, text="Y ±", font=_font(8), bg=BG_PANEL,
+                 fg=TEXT_DIM).pack(side=tk.LEFT)
+        if not hasattr(self, "_bz_range_var"):
+            self._bz_range_var = tk.IntVar(value=40)
+        tk.Spinbox(ctrl_row, from_=10, to=100, increment=10, width=4,
+                   textvariable=self._bz_range_var,
+                   command=lambda: self._draw_bz_graph(
+                       getattr(self, "_last_bz_pts", [])),
+                   bg=BG_SURFACE, fg=TEXT_H1, buttonbackground=BG_SURFACE,
+                   relief=tk.FLAT, font=_font(8)).pack(side=tk.LEFT, padx=(2, 4))
+        tk.Label(ctrl_row, text="nT", font=_font(8), bg=BG_PANEL,
+                 fg=TEXT_DIM).pack(side=tk.LEFT)
         self._bz_canvas = tk.Canvas(outer, bg=BG_SURFACE, bd=0, highlightthickness=0)
         self._bz_canvas.pack(fill=tk.BOTH, expand=True, padx=8, pady=(4, 8))
         self._bz_canvas.bind("<Configure>",
@@ -6799,9 +6857,11 @@ class HAMIOSApp:
             ts_lbl = t_ago.astimezone().strftime("%d %b %H:%M")
             bz_lbl = ("positief — gunstig" if bz_val > 2 else
                       "negatief — geo-effectief" if bz_val < -2 else "neutraal")
-            tip = [("Bz  24h", None), None,
+            tip = [("Bz  24h (nT)", None),
+                   ("Bz beschrijft de Z-component van het IMF.", None), None,
                    ("Bz:", f"{bz_val:+.1f} nT"),
-                   ("Status:", bz_lbl), ("Tijd:", ts_lbl)]
+                   ("Status:", bz_lbl),
+                   ("Tijd:", ts_lbl)]
             self._bz_tip.show(c.winfo_rootx() + event.x, c.winfo_rooty() + event.y, tip)
             c.delete("bz_cursor")
             c.create_line(event.x, 0, event.x, H, fill=BORDER, dash=(3, 3), tags="bz_cursor")
@@ -6842,7 +6902,8 @@ class HAMIOSApp:
             elif flux >= 1e-6: cls = f"C{flux/1e-6:.1f}"
             elif flux >= 1e-7: cls = f"B{flux/1e-7:.1f}"
             else:              cls = f"A{flux/1e-8:.1f}"
-            tip = [("X-ray  24h", None), None,
+            tip = [("X-ray  24h", None),
+                   ("GOES röntgenflux: A/B/C=normaal, M/X=vlam.", None), None,
                    ("Klasse:", cls), ("Flux:", f"{flux:.2e} W/m²"), ("Tijd:", ts_lbl)]
             self._xray_tooltip.show(c.winfo_rootx() + event.x, c.winfo_rooty() + event.y, tip)
             c.delete("xray_cursor")
@@ -6857,7 +6918,11 @@ class HAMIOSApp:
 
     def _start_lightning_ws(self):
         """Start Blitzortung WebSocket verbinding in achtergrond-thread."""
-        if not _WEBSOCKET_OK or self._lightning_ws_running:
+        if not _WEBSOCKET_OK:
+            if hasattr(self, "_lightning_status_var"):
+                self._lightning_status_var.set(self._tr("lightning_no_dep"))
+            return
+        if self._lightning_ws_running:
             return
         self._lightning_ws_running = True
         if hasattr(self, "_lightning_status_var"):
@@ -6878,6 +6943,9 @@ class HAMIOSApp:
                 energy = abs(int(data.get("sig", data.get("s", 1)) or 1))
                 self._lightning_strikes.append(
                     (float(lat), float(lon), now, energy))
+                # Bewaar ook "flash" marker (leeft maar 10 seconden voor ripple)
+                self._lightning_flashes = getattr(self, "_lightning_flashes", [])
+                self._lightning_flashes.append((float(lat), float(lon), now))
                 # Prune inslagen ouder dan _LIGHTNING_KEEP_MIN
                 cutoff = now - datetime.timedelta(minutes=_LIGHTNING_KEEP_MIN)
                 self._lightning_strikes = [
@@ -9385,7 +9453,8 @@ class HAMIOSApp:
                           font=(_FONT_MONO, 9))
             return
 
-        BZ_MAX = 40.0
+        BZ_MAX = float(getattr(self, "_bz_range_var",
+                               type("", (), {"get": lambda s: 40})()).get())
         PAD_L, PAD_R, PAD_T, PAD_B = 30, 6, 6, 16
 
         gW = W - PAD_L - PAD_R
@@ -9563,69 +9632,68 @@ class _HelpDialog:
 HAMIOS v{ver}  —  HF Propagation & DX Monitor
 by Frank van Dijke  ·  Developed with Claude AI
 
-─── Panels ───────────────────────────────────────────────
-  HF Band Reliability (top-left)
-    Mode / Power / Antenna selectors influence SNR budget.
-    Gradient bars: band colour = quality level.
-    Overlays + notifications below the bars.
-    Notifications section shows K-alert, band-open threshold,
-    and which selected satellites are currently above the QTH
-    (green, with elevation angle).
+─── Draggable Panels ─────────────────────────────────────
+  All panels are freely draggable and resizable.
+  Drag via the amber title bar · Resize via ◢ (bottom-right).
+  ⚙ Settings  →  manage panels, layout presets, QTH, theme, language.
+  🗺 Overlay   →  toggle map overlays (Display / Data groups).
 
-  World Map (top-centre, spans 3 columns)
-    Click  → great-circle path + band quality for that route.
-    Scroll → zoom 1×–8×   |   Drag → pan   |   Right-click → reset.
-    Checkboxes at the bottom toggle overlays.
-
-  DX Spots (right, full height)
-    Solar/ionosphere data at the top (auto-refreshed).
-    Live HF cluster spots below; own-continent filter.
-    Heatmap button: band × UTC-hour activity (24h buffer).
-
-  Bottom row  (equal width, equal height)
-    Band Opening Schedule  ·  Band History  ·  Kp 48h  ·  Bz + X-ray
-
-  Propagation Advice  (full width, below bottom row)
+─── Panels overview ──────────────────────────────────────
+  📶 HF Band Reliability   Gradient bars per band (MUF/LUF model).
+  🌍 World Map             Click=GC-path · Scroll=zoom · Drag=pan.
+  ☀ Solar / Ionosphere    SFI, SSN, K/A-index, Bz, MUF, LUF, foF2.
+  📻 Band Conditions       Day / Night reliability per HF band.
+  🌩 Storm Forecast        3-day geomagnetic storm probability.
+  ☀ Solar History         SFI line + Kp bars over time.
+  📈 Band History          Band reliability over time (click to filter).
+  🧲 Kp 48h               Planetary K-index bar chart.
+  ⚡ Bz 24h               IMF Bz (Y-axis zoom: ±10–100 nT).
+  ☢ X-ray 24h             GOES X-ray flux on log scale.
+  ⚡ Lightning             Live strikes (Blitzortung) + CAPE forecast.
+  📡 DX Spots             Live HF cluster spots + heatmap.
+  💡 Propagation Advice   12 analysis cards (geo, solar, DX routes…).
+  🔔 Alerts               K/band thresholds, X-flare, satellite overhead.
+  🕐 Band Schedule        24h heatmap per band (local time).
 
 ─── Satellite Tracking (🛰 Sat) ──────────────────────────
-  Opens the Satellite Tracking dialog.
   Category filter: All / Amateur / ISS / Weather / CubeSat.
-  Per satellite: toggle position dot (●), orbital path (~),
-  and footprint on the map.
-  Footprint turns green when your QTH is inside it.
-  Notifications panel shows which satellites are overhead.
-  ↻ TLE button fetches fresh TLE data from Celestrak.
-  Path times shown in local time (CEST / CET).
+  Toggles: position dot · orbital path · footprint.
+  Footprint turns green when QTH is inside coverage.
+  Hover satellite dot → lat / lon / altitude / elevation.
+  ↻ TLE  fetches fresh orbital data from Celestrak.
 
 ─── Spy / Numbers Stations (🕵 Spy) ──────────────────────
-  Scrollable table of known numbers stations and spy radios.
-  Columns: status (● active/inactive), name, country,
-  frequencies (amber), mode.  Click a column header to sort.
-  Filter by name / country / frequency, or by active status.
-  Hover a row to see description + broadcast schedule.
-  Data stored in hamios_spy_stations.json (editable).
+  Sortable table · active/inactive filter · hover = schedule.
+  Data: hamios_spy_stations.json (editable).
+
+─── Lightning (⚡) ────────────────────────────────────────
+  Requires: pip install websocket-client
+  Real-time strikes via Blitzortung WebSocket.
+  CAPE/LI forecast (Open-Meteo, no API key needed).
+  QRN level indicator for HF bands < 15 MHz.
 
 ─── Data sources ──────────────────────────────────────────
-  Solar / bands   hamqsl.com                  auto interval
-  Solar wind Bz   NOAA SWPC                   auto interval
-  Kp 48h          NOAA SWPC                   auto interval
-  X-ray 24h       NOAA GOES/SWPC              auto interval
-  Storm forecast  NOAA 3-day-geomag-forecast  auto interval
-  DX cluster      dxwatch.com                 every 5 min
-  WSPR spots      wspr.live                   every 15 min
-  Ionosonde foF2  GIRO / LGDC                 auto interval
-  TLE (satellite) Celestrak                   on demand / ↻ TLE
+  Solar / bands     hamqsl.com                  auto interval
+  Bz / Kp / Xray   NOAA SWPC                   auto interval
+  Storm forecast    NOAA 3-day-geomag-forecast  auto interval
+  DX cluster        dxwatch.com                 every 5 min
+  WSPR spots        wspr.live                   every 15 min
+  Ionosonde foF2    GIRO / LGDC                 auto interval
+  TLE (satellite)   Celestrak                   on demand / ↻ TLE
+  Lightning         Blitzortung WebSocket       real-time
+  Storm forecast    Open-Meteo (CAPE/LI)        every 10 min
 
 ─── Keyboard shortcuts ────────────────────────────────────
   F1              This help dialog
-  Scroll wheel    Zoom map
-  Right-click     Reset map zoom/pan · clear great-circle path
+  F11             Toggle fullscreen
+  Scroll wheel    Zoom world map
+  Right-click     Reset map zoom / clear great-circle path
 
 ─── Files ─────────────────────────────────────────────────
   HAMIOS.ini                settings (theme, language, QTH, …)
+  hamios_layouts.json       panel layout presets
   HAMIOS_history.csv        band history (90 days)
   HAMIOS.log                application log (rotating, max 3 MB)
-  HAMIOS_cache.pkl          data cache (auto-refreshed)
   hamios_tle.json           TLE cache (satellites)
   hamios_spy_stations.json  spy / numbers stations database
   langs/lang_*.json         language packs
