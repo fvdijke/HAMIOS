@@ -273,7 +273,10 @@
     "qrn_low": "Niedrig",
     "qrn_moderate": "Mittel",
     "qrn_high": "Hoch — HF < 15 MHz gestoert",
-    "overlay_btn": "🗺  Overlay"
+    "overlay_btn": "🗺  Overlay",
+    "band_cond_hdr": "Bandbedingungen",
+    "storm_fc_hdr": "Sturmprognose",
+    "solar_hist_hdr": "Solar-Verlauf"
   },
   "solar_tips": {
     "sfi": [

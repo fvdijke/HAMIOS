@@ -273,7 +273,10 @@
     "qrn_low": "Lavt",
     "qrn_moderate": "Moderat",
     "qrn_high": "Hoejt — HF < 15 MHz forstyrret",
-    "overlay_btn": "🗺  Overlay"
+    "overlay_btn": "🗺  Overlay",
+    "band_cond_hdr": "Båndforhold",
+    "storm_fc_hdr": "Stormprognose",
+    "solar_hist_hdr": "Solhistorik"
   },
   "solar_tips": {
     "sfi": [

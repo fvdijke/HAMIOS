@@ -273,7 +273,10 @@
     "qrn_low": "Tei",
     "qrn_moderate": "Chuteido",
     "qrn_high": "Ko — HF 15MHz ika ni eikyo",
-    "overlay_btn": "🗺  オーバーレイ"
+    "overlay_btn": "🗺  オーバーレイ",
+    "band_cond_hdr": "バンド状況",
+    "storm_fc_hdr": "嵐予報",
+    "solar_hist_hdr": "太陽史"
   },
   "solar_tips": {
     "sfi": [

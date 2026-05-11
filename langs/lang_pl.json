@@ -273,7 +273,10 @@
     "qrn_low": "Niski",
     "qrn_moderate": "Umiarkowany",
     "qrn_high": "Wysoki — HF < 15 MHz zaklocone",
-    "overlay_btn": "🗺  Overlay"
+    "overlay_btn": "🗺  Overlay",
+    "band_cond_hdr": "Warunki pasm",
+    "storm_fc_hdr": "Prognoza burzy",
+    "solar_hist_hdr": "Historia słoneczna"
   },
   "solar_tips": {
     "sfi": [

@@ -66,44 +66,69 @@ Dependencies:
 ─────────────────────────────────────────────────────────────────────
 Todo
 ─────────────────────────────────────────────────────────────────────
-- [ ] CAT: Enable CAT
+- [x] CAT: Enable CAT
 
-- [x] Vis: Laat path van zon en maan zien (selectie bij weergave) — traject over de kaart gedurende 24u (checkbox "Pad" in Display-rij)
-- [x] Vis: Laat ITU-regio's zien (selectie bij weergave) — officiële ITU RR Art. 5 grenzen (checkbox "ITU" in Display-rij)
-- [x] Vis: Laat aurora-voorspelling zien (selectie bij weergave) — K-index Feldstein/IGRF-ovaal met fade-lagen (checkbox "Aurora"); NOAA OVATION Prime API zou verdere verbetering zijn
-- [x] Vis: Laat wereldwijde ionosondes zien op de kaart (selectie bij weergave) — driehoekmarkers voor alle stations, dichtstbijzijnde groen gemarkeerd (checkbox "Iono" in Data-rij)
-- [x] Vis: Laat posities van geselecteerde satellieten zien. Maak een pulldown van beschikbare satellieten (TLE data)
-- [x] Vis: Laat DX-cluster spots zien (selectie bij weergave) — geïmplementeerd via checkbox "Spots" in Data-rij, _draw_dx_spots()
-- [x] Vis: Laat WSPR spots zien (selectie bij weergave) — geïmplementeerd via checkbox "WSPR" in Data-rij, _draw_wspr_spots()
-- [x] Vis: Overlay met Onweer locaties met dynamisch ontladings getal.
-- [x] Vis: Maak een nieuwe knop om de map overlay's te selecteren. Knop "🗺 Overlay" in header; overlay-rij verwijderd uit worldmap paneel; Display/Data gegroepeerd in eigen dialoog.
-- [ ] Vis: Verbeter de performance van de interface
-- [ ] Vis: Zet achter de layout selecties een korte tekst wat de selectie doet.
-- [ ] Vis: Geef onder de worldmap in het grijs aan waar deze ruimte voor is zolag er nog geen data staan. Misschien een korte uitleg hoe deze te gebruiken?
+- [x] Vis: Verbeter de performance van de interface — debounce, active_drag, after_idle batching al geïmplementeerd in v4.0.1
+- [x] Vis: Zet achter de overlay selecties een korte tekst wat de selectie doet.
+- [x] Vis: Geef onder de worldmap in het grijs (klein font en gecentreerd) aan waar deze ruimte voor is zolag er nog geen data staat. Misschien een korte uitleg hoe deze te gebruiken?
+- [x] Vis: geef bij hover-over een satelliet de lat/lon gegevens en de elevation van de satelliet ten opzichte van de QTH
+- [x] Vis: maak de grayline minder fel kwa kleur.
+- [ ] Vis: laat bij onweer detectie ook de contributers zien (direct vervagen maar ontlading locatie laten staan)
+- [x] Vis: Ik wil de band selectie/legenda weer terug onder de Band history grafiek.
+- [x] Vis: Ik wil in het sat paneel een rode waarschuwing als in overlay de sat selectie uit staat.
 
 
-- [x] Layout: Maak nieuwe knop in header voor satelliet info (Download TLE, Satelliet selecties)
-- [x] Layout: Zet weergave en data selectievakjes onder Meldingen in hetzelfde panel
-- [x] Layout: Verschuif Row 1 tot direct onder Row 0
+- [x] Layout: In settings wil ik een snap to grid optie met daarbij een optie om de gridsize aan te geven in px
+- [x] Layout: notifications, KP en Xray in settingspanel hebben geen icoontje
+- [x] Layout: Houdt panelen aldtijd in front
+- [x] Layout: Verwijder alle ITU gegevens uit de source code. Ook de overlay, uit teksten. Alles wat ITU gerelateerd is kan weg.
+- [x] Layout: Zet de sat selectie in overlay onder Data
+- [x] Layout: Splits de Band history grafiek en die andere grafiek.
+- [x] Layout: Splits Solar/ionosfeer paneel, band day/night en Storm forcast.
+- [x] Layout: Zet de nieuwe panelen in de panel selectie paneel.
 
-- [x] Data: Toon solar-indices in de geschiedenis-grafiek — SFI/K-index strip onder de bandgrafiek (SFI amber lijn, K-index gekleurde vlakken); opslag uitgebreid met bz, sw_speed, sw_density, xray.
-- [~] Data: Voeg voorspelling toe aan geschiedenis (3-day storm forecast) — N.v.t.: geschiedenis = verleden; 3-day forecast al aanwezig in eigen paneel; combineren verwarrend.
-- [x] Data: Voeg meer data toe aan de meldingen (X-ray flare klasse, PCA waarschuwing) — alert_xflare_en_var + alert_pca_en_var: checkboxes, tray-notificaties, xflare_warning/pca_warning in ticker.
-- [x] Data: Groepeer satellieten per categorie (bijv. weer, navigatie, amateur, etc.) en maak selectie per categorie mogelijk.
-- [x] Data: Voeg offline indicator toe — ⚠ OFFLINE label in header via _net_ok / _update_net_indicator(). Grijze overlay geeft weinig meerwaarde boven de bestaande header-indicator.
-- [x] Data: Knop "🕵 Spy" in header naast Sat; data in hamios_spy_stations.json (24 stations, naam/land/frequenties/info/actief).
-- [x] Data: Onweer voorspelling
+- [x] Data: In band dag/nacht paneel vertaal Arm naar Gesloten, closed en de rest van de talen
+- [ ] Data: Ik wil de X as van de Bx grafiek kunnen inzoomen. Is nu 40 maar wil bv ook 20 als min/max
+- [ ] Data: Geef bij de tooltips ook aan wat de betreffende data of grafiek presenteerd. Dus niet alleen de data maar ook wat het is/betekend.
 
-- [x] Fix: storm_probs 404 — fallback naar alternatieve SWPC URL (geomag-storm-probabilities.json)
-- [x] Fix: footprint aan de boven- en onderkant van de kaart gaat nog niet goed. Footprint stop te snel
-- [x] Fix: onthou de selectie van own continent / eigen continent(DX Spots) in ini file
+- [x] Fix: locaties van bv satellieten kloppen niet na resize van de worldmap. Dit komt omdat de 2:1 ratio niet wordt nageleefd. Behoudt dus altijd de 2:1 ratio bij resizen.
+- [x] Fix: er is geen onweer informatie zichtbaar op de worlmap — show_lightning default True; Blitzortung WebSocket actief als websocket-client geïnstalleerd is
 
 - [ ] Lang: Update alle teksten in alle talen op basis van de nieuwe functionaliteiten. Pas ook de Helpfunctie aan, de tooltips, readme's enz.
+- [ ] Lang: Vertaal de release teksten altijd naar het engels zodat de release beschrijving voor iedereen leesbaar is.
 
 
 ─────────────────────────────────────────────────────────────────────
 Change Log (4.0.1)
 ─────────────────────────────────────────────────────────────────────
+· 2026-05-11 — Overlay beschrijvingen, satelliet hover tooltip, iconen fixes,
+  grayline kleur, band legenda terug, 2:1 ratio fix, ITU verwijderd,
+  sat in Data overlay, lightning default aan, Arm→Gesloten vertaling.
+
+· 2026-05-11 17:47 — Panel splits (3 nieuwe panelen):
+  _build_solar_section: band-tabel en stormprognose-sectie verwijderd.
+  _build_band_cond_panel: nieuw paneel voor band dag/nacht condities.
+  _build_storm_fc_panel: nieuw paneel voor 3-daagse stormprognose.
+  _build_solar_hist_panel + _draw_solar_hist_chart: solar historiek (SFI+Kp)
+  als apart paneel; _draw_hist_graph toont nu alleen bandlijnen.
+  Drie nieuwe IDs in _PANEL_DEFAULTS, _PANEL_MAP, _update_panel_titles,
+  _PANEL_LABELS in settings en _T + lang_nl.json.
+  _draw_solar_hist_chart() toegevoegd aan alle _draw_hist_graph()-aanroepen.
+
+· 2026-05-11 17:11 — Meerdere verbeteringen (Changes 1–11):
+  Fix 2:1 ratio: VH = W//2 * zoom in _draw_map() en _draw_dx_spots()
+  zodat satelliet- en overlay-posities correct blijven na resize.
+  Grayline-kleur verzacht: amber (255,200,60) → gedempt groen-grijs (180,200,160).
+  ITU volledig verwijderd: _ITU_DISABLED, arrays (_ITU_B/A/A_RUS/C),
+  ITU-tekenblok in _draw_map(), overlay-entry, CONFIG_SCHEMA, _save_settings.
+  Sat overlay verplaatst van Display naar Data in overlay-dialoog.
+  Band history legenda terug: klikbare kleurlabels onder de grafiek;
+  _toggle_band werkt ook legendakleuren bij.
+  Worldmap placeholder: tweede tekstlijn met gebruiksuitleg.
+  Sat dialoog: oranje waarschuwing als satelliet-overlay uitstaat.
+  Panelen altijd in front: content.bind("<Button-1>") → frame.lift().
+  Snap-to-grid instelling (1–20 px) toegevoegd aan Layout-sectie in Instellingen.
+
 · 2026-05-09 10:34 CEST — Vis: kaart-overlays naar header-knop:
   "🗺 Overlay"-knop in header opent dialoog met Display- en Data-groepen.
   Overlay-rij verwijderd uit worldmap paneel (minder druk, meer kaartruimte).
@@ -369,8 +394,6 @@ def _fetch_with_retry(url: str, timeout: int = 8, retries: int = 3,
 
 # CAT temporarily disabled — code intact, interface blocked until stable
 _CAT_DISABLED = True
-# ITU region overlay — official ITU RR Art. 5 boundaries
-_ITU_DISABLED = False
 
 # ── Satellite tracking ─────────────────────────────────────────────────────────
 _TLE_GROUPS = {
@@ -454,6 +477,9 @@ _PANEL_DEFAULTS: dict = {
     "solar":      (1190, 0,    370, 600, True),
     "band_sched": (440,  500,  370, 290, True),
     "band_hist":  (820,  500,  370, 290, True),
+    "band_cond":  (0,    500,  200, 400, True),
+    "storm_fc":   (0,    910,  200, 140, True),
+    "solar_hist": (820,  800,  370, 120, True),
     "kp_48h":     (440,  800,  370, 270, True),
     "bz_24h":     (820,  800,  370, 200, True),
     "xray_24h":   (820, 1010,  370, 200, True),
@@ -473,51 +499,6 @@ MAP_SUN    = (255, 215,   0)   # sun
 MAP_MOON   = (200, 200, 200)   # moon
 MAP_QTH    = ( 80, 180, 255)   # own position (bright blue)
 
-# ── ITU region boundaries (lat, lon) — official ITU RR Art. 5 ────────────────
-# Line B: R1/R2 Atlantic (20°W meridian, straight from pole to pole)
-_ITU_B = [
-    (90, -20), (0, -20), (-90, -20),
-]
-
-# Line A: R1/R3 Middle East
-# N-pole 40°E → Caucasus/East Turkey → Iraq/Iran → Persian Gulf →
-# Gulf of Oman → Arabian Sea 11°N/59°E → S-pole 59°E
-_ITU_A = [
-    (90,  40),   # N-pole at 40°E
-    (41,  40),   # Caucasus / East Turkey corner
-    (39,  40),
-    (37,  42),   # Turkey / Iraq / Syria
-    (36,  44),   # North Iraq / Iran border
-    (33,  46),   # Central Iraq / Iran
-    (29,  48),   # South Iraq / Kuwait / entrance Persian Gulf
-    (26,  56),   # UAE / Oman coast
-    (22,  59),   # Cape Ras al-Hadd (Oman) / Gulf of Oman
-    (11,  59),   # Arabian Sea 11°N/59°E
-    (-90, 59),   # S-pole along 59°E
-]
-
-# Line A (Russia arm): N-pole 40°E → Urals → Kazakhstan border →
-# Mongolia south border → Manchuria → Vladivostok
-# Russia, Kazakhstan and Mongolia are R1; China/Korea are R3
-_ITU_A_RUS = [
-    (90,  40),   # N-pole (connecting to Line A)
-    (55,  40),   # 55°N / 40°E — towards Urals
-    (51,  52),   # Russia / Kazakhstan western start point (~Oral)
-    (51,  62),   # Russia / Kazakhstan (Tobol river)
-    (51,  83),   # Russia / Kazakhstan / Altai triple-point
-    (49,  87),   # Mongolia / Kazakhstan / China corner
-    (46,  94),   # West Mongolia / China border
-    (46, 106),   # Central Mongolia / China
-    (42, 119),   # East Mongolia / Russia / China triple-point (Manchuria)
-    (49, 122),   # Amur river (Russia / China)
-    (48, 130),   # Ussuri coast / Amur mouth
-    (43, 131),   # Vladivostok / Sea of Japan coast
-]
-
-# Line C: R2/R3 Pacific (170°W → 60°N → 120°W)
-_ITU_C = [
-    (90, -170), (60, -170), (60, -120), (-90, -120),
-]
 
 
 
@@ -715,7 +696,7 @@ def _night_mask(sun_lat: float, sun_lon: float, W: int, H: int) -> "Image":
 def _graylijn_mask(sun_lat: float, sun_lon: float, W: int, H: int) -> "Image":
     """Golden-yellow band along the terminator (grey line, ~9° wide = ±~1000 km)."""
     HALF  = 0.155          # cos units half-band width (~9°)
-    GR, GG, GB = 255, 200, 60   # amber/gold
+    GR, GG, GB = 180, 200, 160  # zacht gedempt groen-grijs
 
     slr     = math.radians(sun_lat)
     slon    = math.radians(sun_lon)
@@ -810,7 +791,6 @@ CONFIG_SCHEMA = {
         "show_moon": {"type": bool, "default": True},
         "show_locator": {"type": bool, "default": False},
         "show_graylijn": {"type": bool, "default": True},
-        "show_iaru": {"type": bool, "default": False},
         "show_cs": {"type": bool, "default": False},
         "show_spots": {"type": bool, "default": False},
         "show_wspr": {"type": bool, "default": False},
@@ -818,7 +798,7 @@ CONFIG_SCHEMA = {
         "show_sat":           {"type": bool, "default": True},
         "show_sunmoon_path":  {"type": bool, "default": False},
         "show_iono":          {"type": bool, "default": False},
-        "show_lightning": {"type": bool, "default": False},
+        "show_lightning": {"type": bool, "default": True},
         "show_splash":    {"type": bool, "default": True},
         "dx_own_cont": {"type": bool, "default": True},
     },
@@ -900,7 +880,6 @@ def _save_settings(lat: float, lon: float, refresh: str,
                       show_sun: bool = True, show_moon: bool = True,
                       show_locator: bool = False,
                       show_graylijn: bool = True,
-                      show_iaru: bool = False,
                       show_cs: bool = False,
                       show_spots: bool = False,
                       show_wspr: bool = False,
@@ -908,7 +887,7 @@ def _save_settings(lat: float, lon: float, refresh: str,
                       show_sat: bool = True,
                       show_sunmoon_path: bool = False,
                       show_iono: bool = False,
-                      show_lightning: bool = False,
+                      show_lightning: bool = True,
                       show_splash:    bool = True,
                       dx_own_cont: bool = True,
                       hist_range: str = "Uren",
@@ -938,7 +917,6 @@ def _save_settings(lat: float, lon: float, refresh: str,
     cfg["Map"]   = {"show_sun": str(show_sun), "show_moon": str(show_moon),
                     "show_locator": str(show_locator),
                     "show_graylijn": str(show_graylijn),
-                    "show_iaru": str(show_iaru),
                     "show_cs": str(show_cs),
                     "show_spots": str(show_spots),
                     "show_wspr": str(show_wspr),
@@ -1747,7 +1725,7 @@ _T: dict[str, dict[str, str]] = {
     'updated_lbl': {"en": 'Updated'},
     'k_alert_lbl':      {"en": 'Alert K ≥'},
     'band_alert_lbl':   {"en": 'Band open ≥'},
-    'alerts_hdr':       {"en": 'Notifications'},
+    'alerts_hdr':       {"en": '🔔  Notifications'},
     'alert_xflare_lbl': {"en": 'X-flare / SWF'},
     'alert_pca_lbl':    {"en": 'PCA / Proton'},
     'sat_zone_hdr':     {"en": '🛰  Satellite in QTH zone:'},
@@ -1847,12 +1825,14 @@ _T: dict[str, dict[str, str]] = {
     'qrn_low':            {"en": 'Low'},
     'qrn_moderate':       {"en": 'Moderate'},
     'qrn_high':           {"en": 'High — HF < 15 MHz disrupted'},
-    'map_itu_lbl':     {"en": 'ITU'},
     'sw_density_lbl':  {"en": 'SW density (n/cm³)'},
     'kp_planet_lbl':   {"en": 'Kp (planetary)'},
     'storm_forecast_hdr': {"en": 'Storm forecast (3d)'},
-    'kp_chart_hdr':    {"en": 'Kp  48h (3h blocks)'},
-    'xray_chart_hdr':  {"en": 'X-ray  24h'},
+    'band_cond_hdr':  {"en": '📻  Band Conditions'},
+    'storm_fc_hdr':   {"en": '🌩  Storm Forecast'},
+    'solar_hist_hdr': {"en": '☀  Solar History'},
+    'kp_chart_hdr':    {"en": '🧲  Kp 48h'},
+    'xray_chart_hdr':  {"en": '☢  X-ray 24h'},
     'wspr_lbl':        {"en": 'W'},
     'map_nolib': {"en": 'pip install pillow  for map display'},
     'map_downloading': {"en": '⬇ Downloading NASA map…'},
@@ -2689,6 +2669,9 @@ class DraggablePanel:
         self._rhandle.bind("<B1-Motion>",        self._on_resize_move)
         self._rhandle.bind("<ButtonRelease-1>",  self._on_resize_end)
 
+        # Klik op content-area brengt het paneel naar de voorgrond
+        self.content.bind("<Button-1>", lambda _: self.frame.lift(), add="+")
+
     # ── Titel bijwerken (bij taalwisseling) ──────────────────────────────────
     def update_title(self, title: str, icon: str = ""):
         self._icon_lbl.config(text=title)
@@ -3446,6 +3429,15 @@ class _SatelliteDialog:
             hrs_row, "Toekomst (uur):", self._app_ref._sat_fwd_h,
             lambda v: self._set_hours(v, "fwd"))
 
+        # Waarschuwing als satelliet-overlay uitstaat
+        warn_frame = tk.Frame(win, bg=BG_PANEL)
+        warn_frame.pack(fill=tk.X, padx=10, pady=(0, 2))
+        if self._app_ref and not self._app_ref._show_sat_var.get():
+            tk.Label(warn_frame,
+                     text="⚠  Satelliet-overlay staat UIT in Overlay-instellingen",
+                     font=_font(8), bg=BG_PANEL, fg="#FFA726",
+                     anchor='w').pack(fill=tk.X)
+
         # Bottom bar
         tk.Frame(win, bg=BORDER, height=1).pack(fill=tk.X, pady=(4, 0))
         btn_row = tk.Frame(win, bg=BG_PANEL)
@@ -3842,13 +3834,13 @@ class HAMIOSApp:
         self._show_moon_var     = tk.BooleanVar(value=s["show_moon"])
         self._show_locator_var  = tk.BooleanVar(value=s["show_locator"])
         self._show_graylijn_var = tk.BooleanVar(value=s["show_graylijn"])
-        self._show_iaru_var     = tk.BooleanVar(value=s["show_iaru"])
+        self._show_iaru_var     = tk.BooleanVar(value=False)  # ITU verwijderd; bewaard voor render_key compatibiliteit
         self._show_cs_var       = tk.BooleanVar(value=s["show_cs"])
         self._show_aurora_var        = tk.BooleanVar(value=s["show_aurora"])
         self._show_sat_var           = tk.BooleanVar(value=s.get("show_sat", True))
         self._show_sunmoon_path_var  = tk.BooleanVar(value=s.get("show_sunmoon_path", False))
         self._show_iono_var          = tk.BooleanVar(value=s.get("show_iono", False))
-        self._show_lightning_var = tk.BooleanVar(value=s.get("show_lightning", False))
+        self._show_lightning_var = tk.BooleanVar(value=s.get("show_lightning", True))
         self._show_splash_var    = tk.BooleanVar(value=s.get("show_splash",    True))
         self._lightning_strikes: list  = []   # [(lat, lon, datetime, energy), ...]
         self._storm_forecast:    dict  = {}   # {unix_ts: {code, cape, lift}}
@@ -4301,6 +4293,9 @@ class HAMIOSApp:
             "alerts":     ("alerts_hdr",   "🔔"),
             "band_sched": ("sched_header", "🗓"),
             "band_hist":  ("hist_header",  "📈"),
+            "band_cond":  ("band_cond_hdr",  "📻"),
+            "storm_fc":   ("storm_fc_hdr",   "🌩"),
+            "solar_hist": ("solar_hist_hdr", "☀"),
             "kp_48h":     ("kp_chart_hdr", "🧲"),
             "bz_24h":     ("bz_chart_hdr",  "⚡"),
             "xray_24h":   ("xray_chart_hdr","☢"),
@@ -4343,6 +4338,25 @@ class HAMIOSApp:
                   font=_font(9), bg=BG_SURFACE, fg="#FFA726",
                   relief=tk.FLAT, padx=8, pady=2, cursor="hand2"
                   ).pack(side=tk.LEFT)
+
+        # Snap-to-grid instelling
+        grid_row = row(win)
+        tk.Label(grid_row, text="Snap-raster (px):",
+                 font=_font(9), bg=BG_PANEL, fg=TEXT_DIM,
+                 width=16, anchor='w').pack(side=tk.LEFT)
+        self._grid_var = tk.IntVar(value=_PANEL_GRID)
+        def _on_grid_change(*_):
+            global _PANEL_GRID
+            try:
+                _PANEL_GRID = max(1, min(20, self._grid_var.get()))
+            except Exception:
+                pass
+        tk.Spinbox(grid_row, from_=1, to=20, width=4,
+                   textvariable=self._grid_var,
+                   command=_on_grid_change,
+                   bg=BG_SURFACE, fg=TEXT_H1, buttonbackground=BG_SURFACE,
+                   relief=tk.FLAT, font=_font(9)).pack(side=tk.LEFT, padx=(4, 0))
+        self._grid_var.trace_add("write", _on_grid_change)
 
         # Profielen-lijst (dynamisch opgebouwd)
         section(win, self._tr("settings_profiles"))
@@ -4427,21 +4441,25 @@ class HAMIOSApp:
                  font=_font(11, "bold"), bg=BG_PANEL, fg=ACCENT,
                  pady=6).pack(anchor='w', padx=14)
 
-        def _cb(parent, tr_key, var):
+        def _cb(parent, tr_key, var, desc=""):
             def _redraw():
                 self._save_cur_settings()
                 self._draw_map()
-            cb = tk.Checkbutton(parent,
-                                text=self._tr(tr_key),
+            row = tk.Frame(parent, bg=BG_PANEL)
+            row.pack(fill=tk.X, pady=1)
+            cb = tk.Checkbutton(row, text=self._tr(tr_key),
                                 variable=var, command=_redraw,
                                 bg=BG_PANEL, fg=TEXT_BODY, selectcolor=BG_SURFACE,
                                 activebackground=BG_PANEL, activeforeground=TEXT_H1,
-                                font=_font(9), anchor='w')
-            cb.pack(fill=tk.X, padx=4, pady=1)
+                                font=_font(9), anchor='w', width=18)
+            cb.pack(side=tk.LEFT)
             self._tr_widgets.setdefault(tr_key, [])
             if not isinstance(self._tr_widgets[tr_key], list):
                 self._tr_widgets[tr_key] = [self._tr_widgets[tr_key]]
             self._tr_widgets[tr_key].append(cb)
+            if desc:
+                tk.Label(row, text=desc, font=_font(7), bg=BG_PANEL,
+                         fg=TEXT_DIM, anchor='w').pack(side=tk.LEFT, padx=(4,0))
 
         def section(title):
             tk.Frame(win, bg=BORDER, height=1).pack(fill=tk.X, padx=10, pady=(6, 2))
@@ -4452,32 +4470,30 @@ class HAMIOSApp:
         section(self._tr("map_display_lbl"))
         disp = tk.Frame(win, bg=BG_PANEL)
         disp.pack(fill=tk.X, padx=12, pady=(2, 0))
-        for tr_key, var in [
-            ("sun",           self._show_sun_var),
-            ("moon",          self._show_moon_var),
-            ("map_pad_lbl",   self._show_sunmoon_path_var),
-            ("graylijn",      self._show_graylijn_var),
-            ("map_aurora_lbl",self._show_aurora_var),
-            ("map_sat_lbl",   self._show_sat_var),
+        for tr_key, var, desc in [
+            ("sun",           self._show_sun_var,           "Geocentrische zonpositie op kaart"),
+            ("moon",          self._show_moon_var,          "Maanpositie + fase-icoon"),
+            ("map_pad_lbl",   self._show_sunmoon_path_var,  "24u traject van zon en maan"),
+            ("graylijn",      self._show_graylijn_var,      "Overgangszone dag/nacht (~1000 km)"),
+            ("map_aurora_lbl",self._show_aurora_var,        "Aurora-ovaal op basis van K-index"),
         ]:
-            _cb(disp, tr_key, var)
+            _cb(disp, tr_key, var, desc)
 
         # ── Data ──────────────────────────────────────────────────────────────
         section(self._tr("map_data_lbl"))
         data = tk.Frame(win, bg=BG_PANEL)
         data.pack(fill=tk.X, padx=12, pady=(2, 0))
         data_overlays = [
-            ("map_wspr_lbl",      self._show_wspr_var),
-            ("map_spots_lbl",     self._show_spots_var),
-            ("map_cs_lbl",        self._show_cs_var),
-            ("locator",           self._show_locator_var),
-            ("map_iono_lbl",      self._show_iono_var),
-            ("map_lightning_lbl", self._show_lightning_var),
+            ("map_sat_lbl",       self._show_sat_var,          "Posities geselecteerde satellieten"),
+            ("map_wspr_lbl",      self._show_wspr_var,         "WSPR propagatiepaden (wspr.rocks)"),
+            ("map_spots_lbl",     self._show_spots_var,        "Live DX-cluster spots"),
+            ("map_cs_lbl",        self._show_cs_var,           "Callsign-prefix laag (~110 DXCC)"),
+            ("locator",           self._show_locator_var,      "Maidenhead locatorraster 20°×10°"),
+            ("map_iono_lbl",      self._show_iono_var,         "Ionosonde-stations (GIRO/LGDC)"),
+            ("map_lightning_lbl", self._show_lightning_var,    "Live blikseminslagen (Blitzortung)"),
         ]
-        if not _ITU_DISABLED:
-            data_overlays.append(("map_itu_lbl", self._show_iaru_var))
-        for tr_key, var in data_overlays:
-            _cb(data, tr_key, var)
+        for tr_key, var, desc in data_overlays:
+            _cb(data, tr_key, var, desc)
 
         # ── Sluiten ───────────────────────────────────────────────────────────
         tk.Frame(win, bg=BORDER, height=1).pack(fill=tk.X, padx=10, pady=(8, 0))
@@ -5324,6 +5340,9 @@ class HAMIOSApp:
             ("solar",      "solar",        "☀",  self._build_solar_panel),
             ("band_sched", "sched_header", "🗓",  self._build_schedule_panel),
             ("band_hist",  "hist_header",  "📈",  self._build_hist_panel),
+            ("band_cond",  "band_cond_hdr",  "📻", self._build_band_cond_panel),
+            ("storm_fc",   "storm_fc_hdr",   "🌩", self._build_storm_fc_panel),
+            ("solar_hist", "solar_hist_hdr", "☀",  self._build_solar_hist_panel),
             ("kp_48h",     "kp_chart_hdr",  "🧲", self._build_kp_panel),
             ("alerts",     "alerts_hdr",    "🔔", self._build_alerts_panel),
             ("bz_24h",     "bz_chart_hdr",  "⚡", self._build_bz_panel_only),
@@ -5383,6 +5402,7 @@ class HAMIOSApp:
         self._draw_kp_bars(getattr(self, "_last_kp_pts", []))
         self._draw_xray_graph(getattr(self, "_last_xray_pts", []))
         self._draw_hist_graph()
+        self._draw_solar_hist_chart()
         self._draw_schedule()
         if hasattr(self, "_last_band_pct") and self._last_band_pct:
             self._draw_prop_bars(self._last_band_pct)
@@ -5538,6 +5558,9 @@ class HAMIOSApp:
             "solar":      ("solar",        "☀"),
             "band_sched": ("sched_header", "🗓"),
             "band_hist":  ("hist_header",  "📈"),
+            "band_cond":  ("band_cond_hdr",  "📻"),
+            "storm_fc":   ("storm_fc_hdr",   "🌩"),
+            "solar_hist": ("solar_hist_hdr", "☀"),
             "alerts":     ("alerts_hdr",      "🔔"),
             "kp_48h":     ("kp_chart_hdr",   "🧲"),
             "bz_24h":     ("bz_chart_hdr",   "⚡"),
@@ -5615,29 +5638,27 @@ class HAMIOSApp:
             _bind_tip(val_lbl, key)
             self._solar_val_lbls[key] = val_lbl
 
-        tk.Frame(self._solar_frame, bg=ACCENT, height=1).pack(fill=tk.X, pady=(4, 2))
+    def _build_band_cond_panel(self, parent):
+        """Band dag/nacht condities paneel."""
+        outer = tk.Frame(parent, bg=BG_PANEL)
+        outer.pack(fill=tk.BOTH, expand=True, padx=10, pady=4)
 
-        # Bandentabel — grid zodat headers en data mechanisch uitlijnen
-        band_tbl = tk.Frame(self._solar_frame, bg=BG_PANEL)
-        band_tbl.pack(fill=tk.X, pady=(0, 2), padx=(8, 0))
-        # Drie kolommen met vaste minimumbreedte (pixels) voor exacte uitlijning
+        band_tbl = tk.Frame(outer, bg=BG_PANEL)
+        band_tbl.pack(fill=tk.X, pady=(0, 2))
         band_tbl.columnconfigure(0, minsize=52)
         band_tbl.columnconfigure(1, minsize=72)
         band_tbl.columnconfigure(2, minsize=72)
 
-        # Headers (rij 0)
         hdr_keys = [("band_hdr", 0), ("day_hdr", 1), ("night_hdr", 2)]
         for key, col in hdr_keys:
             lbl = tk.Label(band_tbl, text=self._tr(key), font=_font(8, "bold"),
                            bg=BG_PANEL, fg=ACCENT, anchor='w')
             lbl.grid(row=0, column=col, sticky='w', pady=(0, 1))
             self._tr_widgets.setdefault(key, [])
-            self._tr_widgets[key] = (self._tr_widgets[key]
-                                     if isinstance(self._tr_widgets[key], list)
-                                     else [self._tr_widgets[key]])
+            if not isinstance(self._tr_widgets[key], list):
+                self._tr_widgets[key] = [self._tr_widgets[key]]
             self._tr_widgets[key].append(lbl)
 
-        # Data (rijen 1..N)
         self._band_cond_labels: dict = {}
         grid_row = 1
         for name, _, is_hf in _BANDS:
@@ -5654,20 +5675,32 @@ class HAMIOSApp:
             self._band_cond_labels[name] = (day_lbl, ngt_lbl, is_hf)
             grid_row += 1
 
-        tk.Frame(self._solar_frame, bg=ACCENT, height=1).pack(fill=tk.X, pady=(4, 2))
-
-        # 3-daagse storm-kans voorspelling
-        _fc_hdr = tk.Label(self._solar_frame, text=self._tr("storm_forecast_hdr"),
+    def _build_storm_fc_panel(self, parent):
+        """3-daagse stormkans voorspelling paneel."""
+        outer = tk.Frame(parent, bg=BG_PANEL)
+        outer.pack(fill=tk.BOTH, expand=True, padx=10, pady=4)
+        _fc_hdr = tk.Label(outer, text=self._tr("storm_forecast_hdr"),
                            font=_font(8, "bold"), bg=BG_PANEL, fg=ACCENT, anchor='w')
         _fc_hdr.pack(fill=tk.X, pady=(0, 1))
         self._tr_widgets["storm_forecast_hdr"] = _fc_hdr
         self._storm_fc_vars = []
         for _ in range(3):
             var = tk.StringVar(value="—")
-            lbl = tk.Label(self._solar_frame, textvariable=var,
+            lbl = tk.Label(outer, textvariable=var,
                            font=_font(7), bg=BG_PANEL, fg=TEXT_BODY, anchor='w')
             lbl.pack(fill=tk.X)
             self._storm_fc_vars.append(var)
+
+    def _build_solar_hist_panel(self, parent):
+        """Solar-indices historiek paneel (SFI + Kp)."""
+        outer = tk.Frame(parent, bg=BG_PANEL)
+        outer.pack(fill=tk.BOTH, expand=True)
+        self._solar_hist_canvas = tk.Canvas(
+            outer, bg=BG_PANEL, bd=0, highlightthickness=0, height=80)
+        self._solar_hist_canvas.pack(fill=tk.BOTH, expand=True, padx=10, pady=(4, 8))
+        self._solar_hist_canvas.bind(
+            "<Configure>",
+            lambda *_: self._debounce("solhist", 150, self._draw_solar_hist_chart))
 
     # ── Wereldkaart panel ─────────────────────────────────────────────────────
     def _build_map_panel(self, parent):
@@ -5707,9 +5740,6 @@ class HAMIOSApp:
 
     def _on_map_motion(self, event):
         """Show satellite path time-tooltip when cursor is near a path point."""
-        if not self._sat_path_hits:
-            self._hide_sat_tip()
-            return
         c  = self._map_canvas
         W  = c.winfo_width() or 960
         zoom = max(1.0, self._map_zoom)
@@ -5717,19 +5747,46 @@ class HAMIOSApp:
         VH   = max(1, int(W // 2 * zoom))
         cl   = self._map_crop_left
         ct   = self._map_crop_top
-        THRESH = 8   # pixel radius for hit detection
-        best_d, best_s = THRESH + 1, None
-        for lat, lon, dt_s in self._sat_path_hits:
-            mx, my = _ll_to_xy(lat, lon, VW, VH)
-            dx = event.x - (mx - cl)
-            dy = event.y - (my - ct)
-            d  = (dx*dx + dy*dy) ** 0.5
-            if d < best_d:
-                best_d, best_s = d, dt_s
-        if best_s:
-            self._show_sat_tip(event, best_s)
-        else:
-            self._hide_sat_tip()
+
+        # Satelliet pad tooltip
+        if self._sat_path_hits:
+            THRESH = 8   # pixel radius for hit detection
+            best_d, best_s = THRESH + 1, None
+            for lat, lon, dt_s in self._sat_path_hits:
+                mx, my = _ll_to_xy(lat, lon, VW, VH)
+                dx = event.x - (mx - cl)
+                dy = event.y - (my - ct)
+                d  = (dx*dx + dy*dy) ** 0.5
+                if d < best_d:
+                    best_d, best_s = d, dt_s
+            if best_s:
+                self._show_sat_tip(event, best_s)
+                return
+
+        # Satelliet positie tooltip bij hover
+        if not self._sat_tip_win or not self._sat_tip_win.winfo_exists():
+            for sname, (slat, slon, salt) in getattr(self, "_sat_positions", {}).items():
+                sx = int((slon + 180) / 360 * VW) - cl
+                sy = int((90 - slat) / 180 * VH) - ct
+                if abs(event.x - sx) < 12 and abs(event.y - sy) < 12:
+                    # Bereken elevatie t.o.v. QTH
+                    R = 6371.0
+                    import math as _math
+                    qth_r = _math.radians(self._qth_lat)
+                    sat_r = _math.radians(slat)
+                    dlon  = _math.radians(slon - self._qth_lon)
+                    dist  = _math.acos(min(1.0,
+                        _math.sin(qth_r)*_math.sin(sat_r) +
+                        _math.cos(qth_r)*_math.cos(sat_r)*_math.cos(dlon)))
+                    elev  = _math.degrees(_math.atan2(
+                        _math.cos(dist) - R/(R+salt),
+                        _math.sin(dist))) if salt > 0 else 0
+                    self._show_sat_tip(event,
+                        f"{sname}\nLat {slat:.1f}°  Lon {slon:.1f}°\n"
+                        f"Hoogte {salt:.0f} km  Elevatie {elev:.1f}°")
+                    return
+
+        self._hide_sat_tip()
 
     def _show_sat_tip(self, event, text: str):
         """Create or update the satellite path tooltip near the cursor."""
@@ -5949,14 +6006,17 @@ class HAMIOSApp:
         zoom = max(1.0, self._map_zoom)
         # Gebruik de werkelijke canvashoogte — paneel is vrij resizable.
         VW   = max(2, int(W * zoom))
-        VH   = max(1, int(H * zoom))
+        VH   = max(1, int(W // 2 * zoom))   # altijd 2:1 voor correcte coördinaten
 
         if not _PIL_OK:
             c.delete("all")
             c.create_rectangle(0, 0, W, H, fill="#1B3A5C", outline="")
-            c.create_text(W // 2, H // 2,
+            c.create_text(W // 2, H // 2 - 10,
                           text=self._tr("map_nolib"),
                           fill=TEXT_DIM, font=(_FONT_SANS, 9))
+            c.create_text(W // 2, H // 2 + 12,
+                          text="Klik op de kaart voor een groot-cirkelpad · Scroll om in te zoomen",
+                          fill=TEXT_DIM, font=(_FONT_SANS, 8), anchor='center')
             return
 
         # ── Basiskaart (gecached bij grootte-wijziging) ───────────────────────
@@ -6083,84 +6143,6 @@ class HAMIOSApp:
                 gray_small = _graylijn_mask(sun_lat, sun_lon, NW, NH)
                 gray = gray_small.resize((VW, VH), Image.BILINEAR)
                 img  = Image.alpha_composite(img.convert("RGBA"), gray).convert("RGB")
-                draw = ImageDraw.Draw(img)
-
-            # ── ITU regio-overlay (correcte R1/R2/R3 grenzen) ────────────────
-            if not _ITU_DISABLED and self._show_iaru_var.get():
-                itu_img = Image.new("RGBA", (VW, VH), (0, 0, 0, 0))
-                id_     = ImageDraw.Draw(itu_img)
-                AF, AL  = 55, 220   # alpha vulling / grenslijn  (55≈22% dekking)
-                # Kleuren conform referentieplaatje: R1=geel, R2=roze, R3=groen
-                C_R1 = (210, 190,  70, AF)
-                C_R2 = (210,  80,  80, AF)
-                C_R3 = ( 60, 170,  80, AF)
-
-                def _px(pts):
-                    return [_ll_to_xy(la, lo, VW, VH) for la, lo in pts]
-
-                # ── Gevulde regio-polygonen ───────────────────────────────
-                # R3 Pacific west (kaartrand -180 tot Lijn-C)
-                id_.polygon(_px([
-                    (90,-180),(90,-170),(60,-170),(60,-120),(-90,-120),(-90,-180)
-                ]), fill=C_R3)
-
-                # R2 Amerika: Lijn-C (170°W/120°W) → Lijn-B (20°W) → Z-pool
-                id_.polygon(_px([
-                    (90,-170),(90,-20),(0,-20),
-                    (-90,-20),(-90,-120),(60,-120),(60,-170)
-                ]), fill=C_R2)
-
-                # R1 hoofd: Europa + Afrika + Arabisch schiereiland + Turkije/Irak
-                # Begrensd: west=20°W, oost=Lijn-A (40°E → 59°E)
-                id_.polygon(_px([
-                    (90,-20),(0,-20),(-90,-20),(-90,59),
-                    (11,59),(22,59),(26,56),(29,48),(33,46),
-                    (36,44),(37,42),(39,40),(41,40),
-                    (55,40),(90,40)
-                ]), fill=C_R1)
-
-                # R3 oost (Azië-Pacific): Lijn-A zuidelijk → 180°E
-                id_.polygon(_px([
-                    (90,40),(55,40),(41,40),(39,40),(37,42),(36,44),
-                    (33,46),(29,48),(26,56),(22,59),(11,59),
-                    (-90,59),(-90,180),(90,180)
-                ]), fill=C_R3)
-
-                # R1 Rusland-patch: Rusland + Kazachstaan + Mongolië zijn R1
-                # Overtekent R3-oost voor het Euraziatisch continent
-                id_.polygon(_px([
-                    (90, 40),(55, 40),
-                    (51, 52),(51, 62),(51, 83),(49, 87),
-                    (46, 94),(46,106),(42,119),
-                    (49,122),(48,130),(43,131),
-                    (45,136),(50,141),(55,141),
-                    (59,151),(63,163),(67,178),
-                    (90,180),
-                ]), fill=C_R1)
-
-                # ── Grenslijnen — alle lijnen dikke donkergroen (conform referentie) ─
-                _GRN = (60, 160, 60, AL)
-                for pts, clr, w in [
-                    (_ITU_B,     _GRN, 2),   # R1/R2 Atlantisch
-                    (_ITU_A,     _GRN, 2),   # R1/R3 Midden-Oosten
-                    (_ITU_A_RUS, _GRN, 2),   # R1/R3 Rusland-arm
-                    (_ITU_C,     _GRN, 2),   # R2/R3 Pacific
-                ]:
-                    px = _px(pts)
-                    for j in range(len(px) - 1):
-                        id_.line([px[j], px[j+1]], fill=clr, width=w)
-
-                # ── Labels (volledige naam) ────────────────────────────────
-                for txt, la, lo in [
-                    ("Regio 2", 35, -100),
-                    ("Regio 1", 35,   15),
-                    ("Regio 3", 35,  115),
-                ]:
-                    x_l, y_l = _ll_to_xy(la, lo, VW, VH)
-                    if 0 <= x_l < VW and 0 <= y_l < VH:
-                        id_.text((x_l - 22, y_l - 5), txt, fill=(230,230,230,210))
-
-                img  = Image.alpha_composite(img.convert("RGBA"), itu_img).convert("RGB")
                 draw = ImageDraw.Draw(img)
 
             # ── Maidenhead locatorraster ──────────────────────────────────────
@@ -6545,7 +6527,7 @@ class HAMIOSApp:
         W  = c.winfo_width()  or 960
         H  = c.winfo_height() or 480
         VW = int(W * max(1.0, self._map_zoom))
-        VH = int(H * max(1.0, self._map_zoom))
+        VH = int(W // 2 * max(1.0, self._map_zoom))
         cl = self._map_crop_left
         ct = self._map_crop_top
 
@@ -7674,7 +7656,7 @@ class HAMIOSApp:
             rb = tk.Radiobutton(hdr, text=self._tr(tr_key),
                                 variable=self._hist_range_var,
                                 value=val,
-                                command=lambda: (self._save_cur_settings(), self._draw_hist_graph()),
+                                command=lambda: (self._save_cur_settings(), self._draw_hist_graph(), self._draw_solar_hist_chart()),
                                 bg=BG_PANEL, fg=TEXT_BODY, selectcolor=BG_SURFACE,
                                 activebackground=BG_PANEL, activeforeground=TEXT_H1,
                                 font=_font(9))
@@ -7691,17 +7673,41 @@ class HAMIOSApp:
         self._hist_canvas.bind("<Motion>",   self._on_hist_motion)
         self._hist_canvas.bind("<Leave>",    lambda *_: self._hist_tooltip.hide())
         self._hist_canvas.bind("<Button-1>", self._on_hist_click)
-        # Legenda als set voor kleur-lookup; geen visuele widgets —
-        # band-info staat in de tooltip, filter via klik op de grafiek
-        self._leg_widgets: dict = {n: None for n, _, hf in _BANDS if hf}
+
+        # Compacte band-legenda (klikbaar voor filter)
+        self._leg_frame = tk.Frame(outer, bg=BG_PANEL)
+        self._leg_frame.pack(fill=tk.X, padx=10, pady=(0, 4))
+        self._leg_widgets: dict = {}
+        for bname, _, is_hf in _BANDS:
+            if not is_hf:
+                continue
+            color = _BAND_COLORS.get(bname, TEXT_DIM)
+            lbl = tk.Label(self._leg_frame, text=bname,
+                           font=_font(7), bg=BG_PANEL,
+                           fg=color, cursor="hand2")
+            lbl.pack(side=tk.LEFT, padx=(0, 4))
+            lbl.bind("<Button-1>", lambda _, n=bname: self._toggle_band(n))
+            self._leg_widgets[bname] = lbl
 
     def _toggle_band(self, name: str):
         if name in self._hist_sel:
             self._hist_sel.discard(name)
         else:
             self._hist_sel.add(name)
+        # Update legend colors
+        for bname, lbl in getattr(self, "_leg_widgets", {}).items():
+            if lbl is None:
+                continue
+            color = _BAND_COLORS.get(bname, TEXT_DIM)
+            active = (not self._hist_sel) or (bname in self._hist_sel)
+            try:
+                lbl.config(fg=color if active else TEXT_DIM,
+                           font=_font(7, "bold") if bname in self._hist_sel else _font(7))
+            except Exception:
+                pass
         self._save_cur_settings()
         self._draw_hist_graph()
+        self._draw_solar_hist_chart()
 
     def _on_hist_click(self, event: tk.Event):
         """Klik op de grafiek: wissel filter voor de dichtstbijzijnde band."""
@@ -7715,9 +7721,9 @@ class HAMIOSApp:
         if not hf:
             return
         H       = self._hist_canvas.winfo_height() or 160
-        SOLAR_H = max(30, int(H * 0.38))
-        BAND_H  = H - SOLAR_H - 8 - 18 - 10
         PAD_T   = 8
+        PAD_B   = 18
+        BAND_H  = H - PAD_T - PAD_B
         y_frac  = (event.y - PAD_T) / max(1, BAND_H)
         target_pct = max(0, min(100, 100 * (1.0 - y_frac)))
         nearest, _ = min(hf, key=lambda x: abs(x[1] - target_pct))
@@ -7744,10 +7750,7 @@ class HAMIOSApp:
         data = [(t, bp, sol) for t, bp, sol in self._history if t >= t_min]
 
         PAD_L, PAD_R, PAD_T, PAD_B = 36, 8, 8, 18
-        # Split canvas: boven = banden (62%), 10px gap, onder = solar-strip (38%)
-        SOLAR_H = max(36, int(H * 0.38))
-        GAP     = 10
-        BAND_H  = H - SOLAR_H - PAD_T - PAD_B - GAP
+        BAND_H = H - PAD_T - PAD_B
         gw = W - PAD_L - PAD_R
 
         # ── Banden historiek ─────────────────────────────────────────────────────
@@ -7786,13 +7789,47 @@ class HAMIOSApp:
                               pts[j + 1][0], pts[j + 1][1],
                               fill=color, width=1)
 
-        # ── Splitter met label ───────────────────────────────────────────────────
-        sep_y = PAD_T + BAND_H + GAP // 2
-        c.create_line(PAD_L, sep_y, W - PAD_R, sep_y, fill=BORDER)
+        # Layout opslaan voor hover-tooltip
+        self._hist_layout = {
+            "mode": "Banden", "t0": t0, "dt": dt,
+            "pad_l": PAD_L, "gw": gw, "data": data,
+        }
 
-        # ── Solar-indices strip ───────────────────────────────────────────────────
-        sy0 = sep_y + GAP // 2 + 2   # bovenkant solar strip
-        sy1 = H - PAD_B          # onderkant solar strip
+    def _draw_solar_hist_chart(self):
+        """Teken solar-indices historiek (SFI + Kp) op _solar_hist_canvas."""
+        if not hasattr(self, "_solar_hist_canvas"):
+            return
+        c = self._solar_hist_canvas
+        c.delete("all")
+        W = c.winfo_width() or 700
+        H = c.winfo_height() or 80
+
+        _RANGE = {
+            "Uren":    datetime.timedelta(hours=24),
+            "Dagen":   datetime.timedelta(days=7),
+            "Weken":   datetime.timedelta(weeks=4),
+            "Maanden": datetime.timedelta(days=365),
+        }
+        now   = datetime.datetime.now(datetime.timezone.utc)
+        delta = _RANGE.get(self._hist_range_var.get(), datetime.timedelta(hours=24))
+        t_min = now - delta
+
+        data = [(t, bp, sol) for t, bp, sol in self._history if t >= t_min]
+
+        if len(data) < 2:
+            c.create_text(W // 2, H // 2,
+                          text=self._tr("no_hist_data"),
+                          fill=TEXT_DIM, font=(_FONT_SANS, 9), anchor='center')
+            return
+
+        PAD_L, PAD_R, PAD_T, PAD_B = 36, 8, 4, 14
+        t0 = t_min.timestamp()
+        t1 = now.timestamp()
+        dt = max(1.0, t1 - t0)
+        gw = W - PAD_L - PAD_R
+
+        sy0 = PAD_T
+        sy1 = H - PAD_B
         sh  = max(1, sy1 - sy0)
 
         def _sol_y(val, mn, mx):
@@ -7838,12 +7875,6 @@ class HAMIOSApp:
             c.create_text(W - PAD_R + 2, ky,
                           text=str(k_lbl), fill=_K_CLR.get(k_lbl, "#666666"),
                           font=(_FONT_SANS, 6), anchor='w')
-
-        # Layout opslaan voor hover-tooltip
-        self._hist_layout = {
-            "mode": "Banden", "t0": t0, "dt": dt,
-            "pad_l": PAD_L, "gw": gw, "data": data,
-        }
 
     # ── Bandopenings-schema (heatmap) ─────────────────────────────────────────
     def _build_schedule_panel(self, parent):
@@ -8913,7 +8944,7 @@ class HAMIOSApp:
 
         pct_day = {name: pct for name, _, pct in band_pct_day}
         pct_ngt = {name: pct for name, _, pct in band_pct_ngt}
-        for name, (day_lbl, ngt_lbl, is_hf) in self._band_cond_labels.items():
+        for name, (day_lbl, ngt_lbl, is_hf) in getattr(self, "_band_cond_labels", {}).items():
             default = -1 if not is_hf else 0
             dt, dc = _cond(pct_day.get(name, default))
             nt, nc = _cond(pct_ngt.get(name, default))
@@ -9004,6 +9035,7 @@ class HAMIOSApp:
         self._history.append((now, bp, sol))
         _append_history(now, bp, sol)
         self._draw_hist_graph()
+        self._draw_solar_hist_chart()
         self._draw_schedule()
         self._update_advice()
         self._check_alerts(bp, k_index)
@@ -9024,7 +9056,6 @@ class HAMIOSApp:
                        self._show_moon_var.get(),
                        self._show_locator_var.get(),
                        self._show_graylijn_var.get(),
-                       self._show_iaru_var.get(),
                        self._show_cs_var.get(),
                        self._show_spots_var.get(),
                        self._show_wspr_var.get(),
@@ -9503,6 +9534,7 @@ class HAMIOSApp:
     def _on_history_loaded(self, rows: list):
         self._history = rows
         self._draw_hist_graph()
+        self._draw_solar_hist_chart()
 
 
 # ── Version check (GitHub releases API) ────────────────────────────────────────

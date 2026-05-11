@@ -273,7 +273,10 @@
     "qrn_low": "Alhainen",
     "qrn_moderate": "Kohtalainen",
     "qrn_high": "Korkea — HF < 15 MHz hairiintynyt",
-    "overlay_btn": "🗺  Overlay"
+    "overlay_btn": "🗺  Overlay",
+    "band_cond_hdr": "Taajuusolosuhteet",
+    "storm_fc_hdr": "Myrskyennuste",
+    "solar_hist_hdr": "Aurinkoshistoria"
   },
   "solar_tips": {
     "sfi": [

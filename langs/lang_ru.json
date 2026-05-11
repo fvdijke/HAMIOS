@@ -273,7 +273,10 @@
     "qrn_low": "Nizkiy",
     "qrn_moderate": "Umerennyy",
     "qrn_high": "Vysokiy — HF < 15 MGts narushen",
-    "overlay_btn": "🗺  Overlay"
+    "overlay_btn": "🗺  Overlay",
+    "band_cond_hdr": "Условия диапазонов",
+    "storm_fc_hdr": "Прогноз бури",
+    "solar_hist_hdr": "История солнца"
   },
   "solar_tips": {
     "sfi": [

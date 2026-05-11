@@ -273,7 +273,10 @@
     "qrn_low": "Lag",
     "qrn_moderate": "Medel",
     "qrn_high": "Hog — HF < 15 MHz stord",
-    "overlay_btn": "🗺  Overlay"
+    "overlay_btn": "🗺  Overlay",
+    "band_cond_hdr": "Bandförhållanden",
+    "storm_fc_hdr": "Stormprognos",
+    "solar_hist_hdr": "Solhistorik"
   },
   "solar_tips": {
     "sfi": [
