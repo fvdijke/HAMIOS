@@ -6630,57 +6630,93 @@ class HAMIOSApp:
                                  dt_local.strftime(f"%d %b  %H:%M {tz_name}")))
         self._sat_path_hits = hits
 
-        # ── Blikseminslagen (op gecropte weergave-img, niet op cache) ────
-        if (getattr(self, "_show_lightning_var", None)
-                and self._show_lightning_var.get()
-                and getattr(self, "_lightning_strikes", [])):
-            strikes = list(self._lightning_strikes)
-            now_lt  = datetime.datetime.now(datetime.timezone.utc)
-            # Gebruik dezelfde afmeting als img om ValueError bij alpha_composite te voorkomen
-            img_w, img_h = img.size
-            lt_img  = Image.new("RGBA", (img_w, img_h), (0, 0, 0, 0))
-            ld      = ImageDraw.Draw(lt_img)
-            for slat, slon, stime, senergy in strikes:
-                age_s = max(0, (now_lt - stime).total_seconds())
-                if age_s > _LIGHTNING_KEEP_MIN * 60:
-                    continue
-                alpha = max(30, int(220 * (1 - age_s / (_LIGHTNING_KEEP_MIN * 60))))
-                sz    = max(2, min(5, 1 + senergy // 40))
-                # Naar viewport-pixel (gecorrigeerd voor crop en zoom)
-                vx = int((slon + 180) / 360 * VW) - crop_l
-                vy = int((90 - slat) / 180 * VH) - crop_t
-                if not (0 <= vx < img_w and 0 <= vy < img_h):
-                    continue
-                fade_min = getattr(self, "_lightning_fade_min", _LIGHTNING_KEEP_MIN)
-                alpha = max(30, int(220 * (1 - age_s / max(1, fade_min * 60))))
-                clr = ((255, 255, 220, alpha) if age_s < 120
-                       else (255, 200, 60, alpha) if age_s < 600
-                       else (255, 120, 0, alpha))
-                ld.ellipse([(vx-sz, vy-sz), (vx+sz, vy+sz)], fill=clr)
-            # Contributor-flash: grote fading ring om nieuwe inslagen
-            for flat, flon, ftime in getattr(self, "_lightning_flashes", []):
-                age_s = max(0, (now_lt - ftime).total_seconds())
-                if age_s > 10:
-                    continue
-                alpha = max(0, int(150 * (1 - age_s / 10)))
-                sz = 8 + int(age_s * 2)
-                vx = int((flon + 180) / 360 * VW) - crop_l
-                vy = int((90 - flat) / 180 * VH) - crop_t
-                if 0 <= vx < img_w and 0 <= vy < img_h:
-                    ld.ellipse([(vx-sz, vy-sz), (vx+sz, vy+sz)],
-                               outline=(255, 255, 100, alpha), width=1)
-            # Prune flashes
-            self._lightning_flashes = [
-                f for f in getattr(self, "_lightning_flashes", [])
-                if (now_lt - f[2]).total_seconds() < 10]
-            img = Image.alpha_composite(img.convert("RGBA"), lt_img).convert("RGB")
-
-        # ── Tonen ────────────────────────────────────────────────────────────
+        # ── Tonen (bliksem als losse canvas-items voor real-time fade) ──────
         self._map_photo = ImageTk.PhotoImage(img)
         c.delete("all")
         c.create_image(0, 0, anchor='nw', image=self._map_photo)
         self._draw_dx_spots()
+        # Bliksem direct als canvas-items (real-time, geen PIL nodig)
+        self._draw_lightning_canvas_overlay()
         self._draw_wspr_spots()
+
+    def _draw_lightning_canvas_overlay(self):
+        """Teken blikseminslagen real-time als canvas-items (geen PIL, geen volledige render).
+
+        Wordt aangeroepen na elke nieuwe inslag en elke 500ms voor fade-animatie.
+        """
+        if not hasattr(self, "_map_canvas"):
+            return
+        c = self._map_canvas
+        c.delete("lightning")   # verwijder vorige inslagen-items
+
+        if not (getattr(self, "_show_lightning_var", None)
+                and self._show_lightning_var.get()):
+            return
+
+        strikes = list(getattr(self, "_lightning_strikes", []))
+        flashes = list(getattr(self, "_lightning_flashes", []))
+        if not strikes and not flashes:
+            return
+
+        W    = c.winfo_width()  or 960
+        H    = c.winfo_height() or 480
+        zoom = max(1.0, getattr(self, "_map_zoom", 1.0))
+        VW   = max(2, int(W * zoom))
+        VH   = max(1, int(W // 2 * zoom))
+        crop_l = getattr(self, "_map_crop_left", 0)
+        crop_t = getattr(self, "_map_crop_top",  0)
+        now_lt   = datetime.datetime.now(datetime.timezone.utc)
+        fade_min = getattr(self, "_lightning_fade_min", _LIGHTNING_KEEP_MIN)
+
+        for slat, slon, stime, _energy in strikes:
+            age_s = max(0, (now_lt - stime).total_seconds())
+            if age_s > fade_min * 60:
+                continue
+            f = 1.0 - age_s / max(1, fade_min * 60)   # 1=nieuw → 0=oud
+            sz = max(2, min(5, 2 + int(f * 3)))
+            vx = int((slon + 180) / 360 * VW) - crop_l
+            vy = int((90 - slat) / 180 * VH) - crop_t
+            if not (0 <= vx < W and 0 <= vy < H):
+                continue
+            # Kleur: wit → geel → oranje, vervaagt naar achtergrond
+            if age_s < 60:
+                r, g, b = 255, 255, int(180 + 75 * f)
+            elif age_s < 300:
+                r, g, b = 255, int(150 + 105 * f), 30
+            else:
+                r, g, b = int(150 + 105 * f), int(60 + 60 * f), 0
+            # Fade simuleren door kleur te dimmen
+            r = int(r * f); g = int(g * f); b = int(b * f)
+            clr = f"#{r:02x}{g:02x}{b:02x}"
+            c.create_oval(vx-sz, vy-sz, vx+sz, vy+sz,
+                          fill=clr, outline="", tags="lightning")
+
+        # Flash-ringen (10s)
+        now_flashes = []
+        for flat, flon, ftime in flashes:
+            age_s = max(0, (now_lt - ftime).total_seconds())
+            if age_s >= 10:
+                continue
+            now_flashes.append((flat, flon, ftime))
+            f    = 1.0 - age_s / 10
+            sz   = int(6 + age_s * 3)
+            r2   = int(255 * f); g2 = int(255 * f); b2 = int(80 * f)
+            clr  = f"#{r2:02x}{g2:02x}{b2:02x}"
+            vx   = int((flon + 180) / 360 * VW) - crop_l
+            vy   = int((90 - flat) / 180 * VH) - crop_t
+            if 0 <= vx < W and 0 <= vy < H:
+                c.create_oval(vx-sz, vy-sz, vx+sz, vy+sz,
+                              outline=clr, tags="lightning")
+        self._lightning_flashes = now_flashes
+
+        # Volgende fade-stap (500ms interval zolang er inslagen zijn)
+        if hasattr(self, "_lightning_after_id"):
+            try:
+                self.root.after_cancel(self._lightning_after_id)
+            except Exception:
+                pass
+        self._lightning_after_id = self.root.after(
+            500, self._draw_lightning_canvas_overlay)
 
     def _draw_dx_spots(self):
         """Teken DX-spot stippen en lijnen als canvas-items over de kaart."""
@@ -7137,9 +7173,8 @@ class HAMIOSApp:
                     self.root.after(0, lambda c=cnt: self._lightning_count_var.set(
                         self._tr("lightning_strikes").format(
                             n=c, m=_LIGHTNING_KEEP_MIN)))
-                # Herteken kaart (debounced, max 1×/5s)
-                self.root.after(0, lambda: self._debounce(
-                    "lightning_draw", 5000, self._draw_map))
+                # Real-time canvas overlay (direct, geen PIL render nodig)
+                self.root.after(0, self._draw_lightning_canvas_overlay)
             except Exception as e:
                 log.debug("lightning parse error: %s", e)
 
