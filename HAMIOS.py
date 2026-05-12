@@ -81,6 +81,7 @@ Todo
 - Onweer paneel -
 - [x] Fix: Geen onweer informatie (wereldwijd of bij qth) — websocket-client installeren + CAPE altijd geladen
 - [x] Fix: Onweerpaneel status geeft Verbroken — alleen tonen als verbinding ooit live was
+- [ ] Vis: Geef in het onweer panel aan wat de kleuren van de rondjes betekenen
 
 - Worldmap -
 - [x] Vis: Meridianen mogen iets lichter van kleur (cyan)
@@ -97,198 +98,7 @@ Todo
 ─────────────────────────────────────────────────────────────────────
 Change Log (4.0.1)
 ─────────────────────────────────────────────────────────────────────
-· 2026-05-12 13:49 — Uitgebreide Nederlandse tooltips toegevoegd:
-  Band condities tabel: hover-tooltip per bandnaam (freq, propagatiekarakter, advies).
-  Storm forecast header: tooltip met K5/K6/K7+ uitleg en kansen per dag.
-  Meldingen paneel: tooltips op K-alert, band-alert, X-flare en PCA checkbuttons.
-  Band reliability bars: verrijkte tooltip met Kwaliteit en Advies per band.
 
-· 2026-05-12 13:33 — Bug fixes: splash INI-sectie, dialogen gecentreerd, lightning status,
-  color picker voor kaart, solar history tooltip <Leave>, lift interval 2s.
-
-· 2026-05-11 19:05 — Splash toggle fix, panel lift improvements, spy/sat dialog centering,
-  Bz/Kp/Xray comprehensive tooltips, solar history legend, lighter cyan graticule,
-  recursive panel click activation.
-
-· 2026-05-11 18:14 — Overlay tekst leesbaarder (TEXT_BODY), grayline donkerder (100,130,90),
-  lightning-panel toont correcte status als websocket-client ontbreekt,
-  panelen altijd naar voren (_lift_all_panels + desktop bind + DraggablePanel.show),
-  emoji-iconen toegevoegd aan band_cond_hdr/storm_fc_hdr/solar_hist_hdr in lang_nl.json,
-  Bz Y-as zoom-control (SpinBox 10–100 nT) in standalone Bz-paneel,
-  rijkere tooltips met context voor Bz/Kp/X-ray charts,
-  flash-ring ripple-effect (10s) bij nieuwe blikseminslagen op de kaart.
-
-· 2026-05-11 — Overlay beschrijvingen, satelliet hover tooltip, iconen fixes,
-  grayline kleur, band legenda terug, 2:1 ratio fix, ITU verwijderd,
-  sat in Data overlay, lightning default aan, Arm→Gesloten vertaling.
-
-· 2026-05-11 17:47 — Panel splits (3 nieuwe panelen):
-  _build_solar_section: band-tabel en stormprognose-sectie verwijderd.
-  _build_band_cond_panel: nieuw paneel voor band dag/nacht condities.
-  _build_storm_fc_panel: nieuw paneel voor 3-daagse stormprognose.
-  _build_solar_hist_panel + _draw_solar_hist_chart: solar historiek (SFI+Kp)
-  als apart paneel; _draw_hist_graph toont nu alleen bandlijnen.
-  Drie nieuwe IDs in _PANEL_DEFAULTS, _PANEL_MAP, _update_panel_titles,
-  _PANEL_LABELS in settings en _T + lang_nl.json.
-  _draw_solar_hist_chart() toegevoegd aan alle _draw_hist_graph()-aanroepen.
-
-· 2026-05-11 17:11 — Meerdere verbeteringen (Changes 1–11):
-  Fix 2:1 ratio: VH = W//2 * zoom in _draw_map() en _draw_dx_spots()
-  zodat satelliet- en overlay-posities correct blijven na resize.
-  Grayline-kleur verzacht: amber (255,200,60) → gedempt groen-grijs (180,200,160).
-  ITU volledig verwijderd: _ITU_DISABLED, arrays (_ITU_B/A/A_RUS/C),
-  ITU-tekenblok in _draw_map(), overlay-entry, CONFIG_SCHEMA, _save_settings.
-  Sat overlay verplaatst van Display naar Data in overlay-dialoog.
-  Band history legenda terug: klikbare kleurlabels onder de grafiek;
-  _toggle_band werkt ook legendakleuren bij.
-  Worldmap placeholder: tweede tekstlijn met gebruiksuitleg.
-  Sat dialoog: oranje waarschuwing als satelliet-overlay uitstaat.
-  Panelen altijd in front: content.bind("<Button-1>") → frame.lift().
-  Snap-to-grid instelling (1–20 px) toegevoegd aan Layout-sectie in Instellingen.
-
-· 2026-05-09 10:34 CEST — Vis: kaart-overlays naar header-knop:
-  "🗺 Overlay"-knop in header opent dialoog met Display- en Data-groepen.
-  Overlay-rij verwijderd uit worldmap paneel (minder druk, meer kaartruimte).
-  Splash centrering: winfo_reqwidth na update_idletasks + fallback 480×360.
-  overlay_btn vertaalsleutel in alle 13 taalbestanden.
-
-· 2026-05-09 10:08 CEST — Drie startup-fixes:
-  1. Bare Tk-window: root gepositioneerd op -32000,-32000 met overrideredirect,
-     geen deiconify → splash Toplevel verschijnt zonder zichtbare root.
-  2. Splash centrering: win.update() voor dimensiemeting + geometry met
-     winfo_width/height ipv winfo_reqwidth/height.
-  3. Startup = saved default: _load_startup_window_geometry() leest __window__
-     uit __default__ en past venstergrootte/-positie toe na app-init.
-
-· 2026-05-09 10:00 CEST — Fixes:
-  Splash screen gecentreerd (//3 → //2 verticaal).
-  Lightning paneel default positie 440,800 → 1200,800 (overlapte met kp_48h).
-  _layout.get(pid) met fallback zodat nieuwe panels werken bij oude INI.
-
-· 2026-05-09 09:54 CEST — Splash screen:
-  _check_and_show_dependencies() vervangen door volwaardig _show_splash():
-  App-naam (groot), versienummer, ✅/❌ per dep, kopieer-commando, amber
-  "Doorgaan →"-knop. Vinkje "Toon bij opstarten" slaat direct naar INI.
-  Settings heeft ook splash-toggle onder Dependencies.
-  show_splash in CONFIG_SCHEMA, _save_settings en _save_cur_settings.
-
-· 2026-05-09 09:48 CEST — Dependency-status in settings + startup fix:
-  Settings-dialoog toont "📦 Dependencies" sectie onderaan met ✅/❌ per package.
-  Klik op install-commando kopieert naar klembord.
-  Startup: root.deiconify()+update() vóór dep-dialoog zodat Toplevel zichtbaar
-  is; -topmost + focus_force() op dialoog; root.withdraw() na dep-check.
-
-· 2026-05-09 09:43 CEST — Dependency-check bij opstarten:
-  _check_and_show_dependencies(): dialoog met groene vinkjes (aanwezig) en
-  rode kruisjes (ontbreekt). Klik op install-commando = kopieer naar klembord.
-  _SERIAL_OK definitie toegevoegd (pyserial import ontbrak).
-  Lightning-paneel toegevoegd aan Settings→Panelen lijst.
-
-· 2026-05-08 21:59 CEST — Fix: onweer-paneel zichtbaar + dubbele iconen weg:
-  Lightning default positie 820,1220 → 440,800 (was buiten beeld).
-  Settings/panelen checkboxes: lbl=_tr(tr_key) ipv f"{icon}  {_tr(tr_key)}"
-  (vertaling bevat al emoji).
-
-· 2026-05-08 — v4.0.2: Onweer-layer en voorspellingspaneel:
-  Blitzortung WebSocket voor live blikseminslagen op kaart.
-  Open-Meteo CAPE/LI voorspelling als apart Onweer-paneel (⚡).
-  QRN-waarschuwing op basis van CAPE en actieve inslagen.
-
-· 2026-05-08 21:01 CEST — Settings live vertaling:
-  Settings-knop geregistreerd in _tr_widgets → wordt direct bijgewerkt.
-  _apply_translations() sluit en heropent de settings-dialoog (after 50ms)
-  als die open is bij taalwisseling — alle tekst direct correct.
-
-· 2026-05-08 20:57 CEST — Panelen-knop weg; alles in Instellingen-dialoog:
-  Panelen-menuknop verwijderd uit header. Reset layout, Opslaan als standaard
-  en Profielen (nieuw/laden/overschrijven/verwijderen) verplaatst naar een
-  Layout- en Profielen-sectie in de settings-dialoog.
-  8 nieuwe vertaalsleutels in alle 13 talen.
-
-· 2026-05-08 20:48 CEST — Settings-dialoog panelen + exit rechts + startup-fix:
-  Panelen-sectie in settings-dialoog: vinkjes delen _panel_vis_vars met het
-  Panelen-menu → altijd synchroon. Exit-knop verplaatst naar rechts (? | ✕ | ⛶).
-  _load_panel_layout() laadt nu eerst __default__ uit hamios_layouts.json zodat
-  startup-indeling overeenkomt met "Opslaan als standaard".
-
-· 2026-05-08 20:45 CEST — Vertalingen volledig:
-  8 nieuwe sleutels in _T en alle 13 taalbestanden: theme_lbl, sw_speed_lbl,
-  settings_btn/title/qth/iface, close_lbl, panels_btn.
-  Hardcoded strings in header en settings-dialoog vervangen door _tr().
-
-· 2026-05-08 20:39 CEST — Header opgeruimd: ⚙ Instellingen-dialoog:
-  QTH, tooltips, ticker, taal, thema, zomertijd verplaatst naar
-  _open_settings_dialog() Toplevel. Help-knop rechts voor Fullscreen.
-  Header behoudt: titel | Exit | Panelen | Sat | Spy | CAT | ⚙ Instellingen
-  rechts: Auto: [interval] countdown | separator | tijd | ? | ⛶
-
-· 2026-05-08 20:31 CEST — Performance: drag/resize drastisch versneld:
-  _active_drag class-var in DraggablePanel; after_idle batching in drag/resize-
-  move; on_release callback triggert _deferred_redraw(). _debounce() helper:
-  alle 10 canvas-<Configure> bindings wachten 150ms. Geen PIL-renders tijdens
-  drag/resize — hertekenen pas bij loslaten. Line-ending fix: dubbele CR weg.
-
-· 2026-05-08 20:21 CEST — Profiel overschrijven:
-  Elk profiel in het submenu heeft nu "💾 Overschrijven" naast Laden/Verwijderen.
-  _overwrite_named_layout() slaat de huidige layout direct op onder de bestaande naam.
-
-· 2026-05-08 20:12 CEST — Dubbele iconen weg + snap-raster 2px:
-  DraggablePanel.update_title/_icon_lbl gebruikt nu alleen title (geen icon-
-  parameter voorvoegsel); vertaalde titels bevatten al emoji. _PANEL_GRID 10→2.
-
-· 2026-05-08 20:05 CEST — Layout-presets systeem:
-  "💾 Opslaan als standaard" slaat venster+panelen op als __default__;
-  "↺ Reset layout" gebruikt die opgeslagen standaard of _PANEL_DEFAULTS.
-  "👤 Profielen" submenu: nieuw opslaan + opgeslagen profielen laden/verwijderen.
-  Opslag in hamios_layouts.json (venstergrootte+positie inbegrepen).
-
-· 2026-05-08 19:56 CEST — Meldingen-paneel + worldmap fix:
-  Meldingen (🔔 alerts) als apart DraggablePanel: K-drempel, band-drempel,
-  X-flare/PCA knoppen, satelliet-in-QTH-zone; verwijderd uit band_rel paneel.
-  Toegevoegd aan _PANEL_DEFAULTS (0,500,200,280), _PANEL_MAP en _update_panel_titles.
-  Worldmap: 2:1 ratio losgelaten; VH = canvas H × zoom — kaart vult het volledige
-  paneel ongeacht de hoogte; ook DX/WSPR overlays bijgewerkt.
-
-· 2026-05-08 19:51 CEST — Paneel-verbeteringen (3):
-  Afgeronde hoeken verwijderd; outer frame terug naar tk.Frame met bg=ACCENT.
-  1px amber lijn rondom het paneel: tbar padx=1 pady=(1,0), content padx=1 pady=(0,1).
-  lift() werkt weer correct (tk.Frame, geen Canvas-conflict meer).
-
-· 2026-05-08 19:43 CEST — Paneel-verbeteringen (2):
-  Bz 24h en X-ray 24h gesplitst in twee aparte panelen (bz_24h, xray_24h)
-  met eigen build-wrappers en eigen tooltip/cursor handlers.
-  Header-kleuren omgedraaid: bg=BG_PANEL fg=ACCENT (donker+amber ipv amber+donker).
-  Blauwe balk onder worldmap verholpen: canvas bg #1B3A5C→BG_ROOT.
-  Fullscreen-knop verplaatst naar helemaal rechts in de header.
-  _update_corners gebruikt altijd BG_ROOT (volgt thema-wisseling).
-
-· 2026-05-08 19:31 CEST — Paneel-verbeteringen:
-  Wereldkaart: canvas fill=BOTH+expand zodat kaart het hele paneel vult.
-  Panelen-knop: amber tekst (#FFA726) en ▦-icoon.
-  Afgeronde hoeken: outer frame van tk.Frame naar tk.Canvas; _update_corners()
-  overschrijft de 4 hoek-vierkantjes met achtergrondkleur (r=7px).
-  Reset layout: "↺ Reset layout" menu-item in Panelen-menu roept
-  _reset_panel_layout() aan — herstelt alle panelen naar _PANEL_DEFAULTS.
-
-· 2026-05-08 — v4.0.1: Volledig nieuwe interface
-  DraggablePanel systeem: alle panelen sleepbaar, aanpasbaar,
-  snap-raster (10px), amber kader + titelbalk per paneel, ✕-knop.
-  9 panelen op vrij canvas: Band Rel, Wereldkaart, Solar, Band Schema,
-  Band Verloop, Kp 48h, Bz+Xray, DX Spots, Propagatie Advies.
-  Fullscreen (F11/⛶), paneel-toggle menu in header, positie/grootte
-  opgeslagen per paneel in HAMIOS.ini [Panels]. Solar en DX Spots
-  zijn nu aparte panelen. Hoogte ook aanpasbaar (resizable=True,True).
-
-Change Log (3.4)
-─────────────────────────────────────────────────────────────────────
-· 2026-05-07 16:55 CEST — Grafieken: tooltips, legenda en layout:
-  Band-legenda frame verwijderd; ruimte benut voor grotere grafiekverhouding
-  (62% banden / 10px gap / 38% solar-strip). Klik op grafiek filtert band.
-  _on_hist_motion: band-legenda + solar-sectie (SFI/K/A/Bz) + hint in tooltip.
-  Kp 48h: _Tooltip met K-waarde, storm-status, tijdstip, cursor-lijn.
-  X-ray 24h: _Tooltip met flare-klasse, flux, tijdstip, cursor-lijn.
-  Bz 24h: Toplevel→_Tooltip; positief/negatief Bz-interpretatie toegevoegd.
-  3 nieuwe vertaalsleutels in alle 13 taalbestanden.
 
 
 """
@@ -488,22 +298,25 @@ BORDER     = "#383E47"
 _PANEL_GRID = 2    # snap-raster in pixels
 
 # Standaard paneel-layout (id → (x, y, w, h, zichtbaar))
+# v4.5+: coördinaten zijn scherm-absoluut (Toplevel-vensters).
+# Y-offset van 42px (header) wordt toegepast bij eerste start.
+_HDR_H = APP_HDR_H   # 42px — offset zodat panelen onder de header starten
 _PANEL_DEFAULTS: dict = {
-    "band_rel":   (0,    0,    430, 600, True),
-    "worldmap":   (440,  0,    740, 490, True),
-    "solar":      (1190, 0,    370, 600, True),
-    "band_sched": (440,  500,  370, 290, True),
-    "band_hist":  (820,  500,  370, 290, True),
-    "band_cond":  (0,    500,  200, 400, True),
-    "storm_fc":   (0,    910,  200, 140, True),
-    "solar_hist": (820,  800,  370, 120, True),
-    "kp_48h":     (440,  800,  370, 270, True),
-    "bz_24h":     (820,  800,  370, 200, True),
-    "xray_24h":   (820, 1010,  370, 200, True),
-    "lightning":  (1200, 800,  370, 300, True),
-    "alerts":     (0,    500,  200, 280, True),
-    "dx_spots":   (1200, 610,  370, 460, True),
-    "prop_adv":   (0,    610,  430, 460, True),
+    "band_rel":   (0,    _HDR_H+0,   430, 600, True),
+    "worldmap":   (440,  _HDR_H+0,   740, 490, True),
+    "solar":      (1190, _HDR_H+0,   370, 600, True),
+    "band_sched": (440,  _HDR_H+500, 370, 290, True),
+    "band_hist":  (820,  _HDR_H+500, 370, 290, True),
+    "band_cond":  (0,    _HDR_H+500, 200, 400, True),
+    "storm_fc":   (0,    _HDR_H+910, 200, 140, True),
+    "solar_hist": (820,  _HDR_H+800, 370, 120, True),
+    "kp_48h":     (440,  _HDR_H+800, 370, 270, True),
+    "bz_24h":     (820,  _HDR_H+800, 370, 200, True),
+    "xray_24h":   (820,  _HDR_H+1010,370, 200, True),
+    "lightning":  (1200, _HDR_H+800, 370, 300, True),
+    "alerts":     (0,    _HDR_H+500, 200, 280, True),
+    "dx_spots":   (1200, _HDR_H+610, 370, 460, True),
+    "prop_adv":   (0,    _HDR_H+610, 430, 460, True),
 }
 
 # ── Map colours ───────────────────────────────────────────────────────────────
@@ -2616,22 +2429,22 @@ class _Tooltip:
 
 # ── DraggablePanel ────────────────────────────────────────────────────────────
 class DraggablePanel:
-    """Sleepbaar en aanpasbaar paneel met amber rand en titelbalk.
+    """Sleepbaar paneel als OS-native tk.Toplevel (v4.5 — Fase 3).
 
-    Geplaatst via place() op een parent-widget (de desktop).
-    Sleep via de amber titelbalk; grootte via resize-handle rechtsonder.
-    Grid-snapping bij loslaten (_PANEL_GRID pixels).
+    Gebruikt overrideredirect=True voor eigen chrome + OS-level window management.
+    Drag en resize via wm_geometry() → instant, geen after_idle batching nodig.
+    Z-order wordt door het OS beheerd — geen lift()-hacks.
     """
     _TITLE_H    = 26
     _MIN_W      = 160
     _MIN_H      = 100
-    _active_drag = False   # class-level vlag: True tijdens drag/resize van élk paneel
+    _active_drag = False
 
     def __init__(self, parent: tk.Widget, title: str, icon: str = "",
                  panel_id: str = "", on_vis_change=None, on_release=None):
         self.panel_id       = panel_id
         self._on_vis_change = on_vis_change
-        self._on_release    = on_release   # callback na drag/resize-einde
+        self._on_release    = on_release
         self._visible       = True
         self._x = self._y   = 0
         self._w = self._h   = 300
@@ -2639,19 +2452,31 @@ class DraggablePanel:
         self._drag_ox = self._drag_oy = 0
         self._resize_sx = self._resize_sy = 0
         self._resize_ow = self._resize_oh = 0
-        self._move_pending  = False
 
-        # Outer frame: bg=ACCENT → 1px amber lijn rondom het paneel
-        self.frame = tk.Frame(parent, bg=ACCENT, bd=0)
+        # Zoek de root Tk-instantie (Toplevel vereist root als parent)
+        _root = parent
+        while not isinstance(_root, tk.Tk):
+            _root = _root.master
 
-        # Titelbalk — donkere achtergrond, amber tekst; 1px amber zichtbaar boven+zijkanten
+        # OS-native venster — overrideredirect verwijdert OS-chrome (wij hebben eigen)
+        self.frame = tk.Toplevel(_root)
+        self.frame.overrideredirect(True)
+        self.frame.configure(bg=ACCENT)
+        # Subtiele semi-transparantie voor diepte-effect (Windows DWM)
+        try:
+            self.frame.wm_attributes("-alpha", 0.97)
+        except Exception:
+            pass
+        # wm_transient zorgt dat panels verdwijnen met het hoofdvenster
+        self.frame.wm_transient(_root)
+
+        # Titelbalk — donkere achtergrond, amber tekst
         self._tbar = tk.Frame(self.frame, bg=BG_PANEL, height=self._TITLE_H)
         self._tbar.pack(side=tk.TOP, fill=tk.X, padx=1, pady=(1, 0))
         self._tbar.pack_propagate(False)
 
         self._icon_lbl = tk.Label(
-            self._tbar,
-            text=title,          # titel bevat al emoji via vertaling
+            self._tbar, text=title,
             font=_font(9, "bold"), bg=BG_PANEL, fg=ACCENT,
             anchor='w', padx=6
         )
@@ -2666,11 +2491,11 @@ class DraggablePanel:
         )
         self._hide_btn.pack(side=tk.RIGHT, padx=(0, 3), pady=2)
 
-        # Inhoud — 1px amber zichtbaar aan zijkanten en onderkant
+        # Inhoud — 1px amber rand zijkanten en onderkant
         self.content = tk.Frame(self.frame, bg=BG_PANEL)
         self.content.pack(fill=tk.BOTH, expand=True, padx=1, pady=(0, 1))
 
-        # Resize-handle rechtsonder (op outer frame zodat hij altijd zichtbaar is)
+        # Resize-handle rechtsonder
         self._rhandle = tk.Label(
             self.frame, text="◢",
             font=_font(8, "bold"), bg=ACCENT, fg=BG_PANEL,
@@ -2678,29 +2503,24 @@ class DraggablePanel:
         )
         self._rhandle.place(relx=1.0, rely=1.0, anchor='se', x=-1, y=-1)
 
-        # Drag-bindings op titelbalk en icoon-label
+        # Drag-bindings (wm_geometry → direct, geen after_idle nodig)
         for w in (self._tbar, self._icon_lbl):
             w.bind("<Button-1>",        self._on_drag_start)
             w.bind("<B1-Motion>",        self._on_drag_move)
             w.bind("<ButtonRelease-1>",  self._on_drag_end)
 
-        # Resize-bindings op handle
+        # Resize-bindings
         self._rhandle.bind("<Button-1>",        self._on_resize_start)
         self._rhandle.bind("<B1-Motion>",        self._on_resize_move)
         self._rhandle.bind("<ButtonRelease-1>",  self._on_resize_end)
 
-        # Klik op content-area brengt het paneel naar de voorgrond
-        self.content.bind("<Button-1>", lambda _: self.frame.lift(), add="+")
+        # Klik op content = focus (z-order handelt OS af)
+        self.content.bind("<Button-1>", lambda _: self.frame.focus_set(), add="+")
 
-        # Zorg dat klikken OVERAL op het paneel het naar voren brengt
-        def _bind_lift_recursive(widget):
-            widget.bind("<Button-1>", lambda _: self.frame.lift(), add="+")
-            for child in widget.winfo_children():
-                _bind_lift_recursive(child)
-        # Bind na build (content is nog leeg nu, maar after_idle pakt children op)
-        self.frame.after_idle(lambda: _bind_lift_recursive(self.frame))
+        # Protocol: sluit via ✕, niet via Alt+F4
+        self.frame.protocol("WM_DELETE_WINDOW", self._toggle_hide)
 
-    # ── Titel bijwerken (bij taalwisseling) ──────────────────────────────────
+    # ── Titel bijwerken ───────────────────────────────────────────────────────
     def update_title(self, title: str, icon: str = ""):
         self._icon_lbl.config(text=title)
 
@@ -2711,86 +2531,72 @@ class DraggablePanel:
             self._on_vis_change(self.panel_id, False)
 
     def hide(self):
-        self.frame.place_forget()
+        self.frame.withdraw()
         self._visible = False
 
     def show(self):
-        self._place_frame()
-        self.frame.after_idle(self.frame.lift)
+        self._apply_geometry()
+        self.frame.deiconify()
+        self.frame.lift()
         self._visible = True
 
     def is_visible(self) -> bool:
         return self._visible
 
-    # ── Plaatsing ────────────────────────────────────────────────────────────
+    # ── Plaatsing via wm_geometry (OS-native, instant) ───────────────────────
     def place(self, x: int, y: int, w: int, h: int):
         self._x, self._y = int(x), int(y)
         self._w, self._h = int(w), int(h)
-        self._place_frame()
+        self._apply_geometry()
 
-    def _place_frame(self):
-        self.frame.place(x=self._x, y=self._y,
-                         width=self._w, height=self._h)
+    def _apply_geometry(self):
+        self.frame.wm_geometry(f"{self._w}x{self._h}+{self._x}+{self._y}")
 
     def get_geometry(self) -> tuple:
         return self._x, self._y, self._w, self._h
 
-    # ── Drag ────────────────────────────────────────────────────────────────
+    # ── Drag — direct wm_geometry, geen batching ─────────────────────────────
     def _on_drag_start(self, event):
-        self._drag_sx   = event.x_root
-        self._drag_sy   = event.y_root
-        self._drag_ox   = self._x
-        self._drag_oy   = self._y
-        self._move_pending = False
+        self._drag_sx = event.x_root
+        self._drag_sy = event.y_root
+        self._drag_ox = self._x
+        self._drag_oy = self._y
         DraggablePanel._active_drag = True
         self.frame.lift()
 
     def _on_drag_move(self, event):
-        dx = event.x_root - self._drag_sx
-        dy = event.y_root - self._drag_sy
-        self._x = max(0, self._drag_ox + dx)
-        self._y = max(0, self._drag_oy + dy)
-        # Batch: plan één _place_frame per event-loop iteratie
-        if not self._move_pending:
-            self._move_pending = True
-            self.frame.after_idle(self._flush_move)
-
-    def _flush_move(self):
-        self._move_pending = False
-        self._place_frame()
+        self._x = max(0, self._drag_ox + event.x_root - self._drag_sx)
+        self._y = max(0, self._drag_oy + event.y_root - self._drag_sy)
+        # Direct wm_geometry — OS verplaatst het venster zonder tussenkomst
+        self.frame.wm_geometry(f"{self._w}x{self._h}+{self._x}+{self._y}")
 
     def _on_drag_end(self, _event):
         g = _PANEL_GRID
         self._x = round(self._x / g) * g
         self._y = round(self._y / g) * g
-        self._place_frame()
+        self._apply_geometry()
         DraggablePanel._active_drag = False
         if self._on_release:
             self._on_release()
 
-    # ── Resize ──────────────────────────────────────────────────────────────
+    # ── Resize — direct wm_geometry ──────────────────────────────────────────
     def _on_resize_start(self, event):
-        self._resize_sx  = event.x_root
-        self._resize_sy  = event.y_root
-        self._resize_ow  = self._w
-        self._resize_oh  = self._h
-        self._move_pending = False
+        self._resize_sx = event.x_root
+        self._resize_sy = event.y_root
+        self._resize_ow = self._w
+        self._resize_oh = self._h
         DraggablePanel._active_drag = True
 
     def _on_resize_move(self, event):
-        dw = event.x_root - self._resize_sx
-        dh = event.y_root - self._resize_sy
-        self._w = max(self._MIN_W, self._resize_ow + dw)
-        self._h = max(self._MIN_H, self._resize_oh + dh)
-        if not self._move_pending:
-            self._move_pending = True
-            self.frame.after_idle(self._flush_move)
+        self._w = max(self._MIN_W, self._resize_ow + event.x_root - self._resize_sx)
+        self._h = max(self._MIN_H, self._resize_oh + event.y_root - self._resize_sy)
+        self.frame.wm_geometry(f"{self._w}x{self._h}+{self._x}+{self._y}")
 
     def _on_resize_end(self, _event):
         g = _PANEL_GRID
         self._w = round(self._w / g) * g
         self._h = round(self._h / g) * g
-        self._place_frame()
+        self._apply_geometry()
         DraggablePanel._active_drag = False
         if self._on_release:
             self._on_release()
@@ -5412,23 +5218,12 @@ class HAMIOSApp:
         # Ticker onderaan (pack VOOR body zodat hij aan de onderkant blijft)
         self._build_ticker()
 
-        # ── v4.0.1: Desktop — panelen via place() ─────────────────────────────
+        # ── v4.5: Panelen als Toplevel — _desktop is dunne placeholder ──────────
+        # De desktop Frame is nog aanwezig als achtergrond-canvas voor tooltips
+        # en event-afvang; panelen leven als zelfstandige OS-vensters.
         self._desktop = tk.Frame(self.root, bg=BG_ROOT)
         self._desktop.pack(fill=tk.BOTH, expand=True)
-        self._desktop.bind("<Button-1>",
-                           lambda _: self.root.after(10, self._lift_all_panels))
-
-        # Zorg dat panelen altijd vooraan blijven via periodieke lift
-        def _keep_panels_front():
-            if hasattr(self, "_panels"):
-                for p in self._panels.values():
-                    if p.is_visible():
-                        try:
-                            p.frame.lift()
-                        except Exception:
-                            pass
-            self.root.after(2000, _keep_panels_front)
-        self.root.after(2000, _keep_panels_front)
+        # Geen lift()-timer meer nodig — OS beheert z-order van Toplevel vensters
 
         _layout = _load_panel_layout()
         self._panels: dict = {}
@@ -5513,7 +5308,7 @@ class HAMIOSApp:
         self._save_cur_settings()
 
     def _lift_all_panels(self):
-        """Breng alle panelen naar voren."""
+        """Breng alle panelen naar voren (legacy — OS beheert z-order bij Toplevel)."""
         for p in self._panels.values():
             if p.is_visible():
                 try:
