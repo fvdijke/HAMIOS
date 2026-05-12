@@ -816,7 +816,8 @@ CONFIG_SCHEMA = {
         "show_sat":           {"type": bool, "default": True},
         "show_sunmoon_path":  {"type": bool, "default": False},
         "show_iono":          {"type": bool, "default": False},
-        "show_lightning": {"type": bool, "default": True},
+        "show_lightning":      {"type": bool, "default": True},
+        "lightning_fade_min":  {"type": int,  "min": 1, "max": 60, "default": 30},
         "dx_own_cont": {"type": bool, "default": True},
     },
     "Graph": {
@@ -904,8 +905,9 @@ def _save_settings(lat: float, lon: float, refresh: str,
                       show_sat: bool = True,
                       show_sunmoon_path: bool = False,
                       show_iono: bool = False,
-                      show_lightning: bool = True,
-                      show_splash:    bool = True,
+                      show_lightning:     bool = True,
+                      lightning_fade_min: int  = 30,
+                      show_splash:        bool = True,
                       dx_own_cont: bool = True,
                       hist_range: str = "Uren",
                       hist_sel: set = None,
@@ -942,7 +944,8 @@ def _save_settings(lat: float, lon: float, refresh: str,
                     "show_sat":          str(show_sat),
                     "show_sunmoon_path": str(show_sunmoon_path),
                     "show_iono":         str(show_iono),
-                    "show_lightning":    str(show_lightning),
+                    "show_lightning":     str(show_lightning),
+                    "lightning_fade_min": str(lightning_fade_min),
                     "dx_own_cont":       str(dx_own_cont)}
     cfg["Graph"]  = {"hist_range": hist_range,
                      "selected_bands": ",".join(sorted(hist_sel)) if hist_sel else ""}
@@ -3880,7 +3883,8 @@ class HAMIOSApp:
         self._show_sat_var           = tk.BooleanVar(value=s.get("show_sat", True))
         self._show_sunmoon_path_var  = tk.BooleanVar(value=s.get("show_sunmoon_path", False))
         self._show_iono_var          = tk.BooleanVar(value=s.get("show_iono", False))
-        self._show_lightning_var = tk.BooleanVar(value=s.get("show_lightning", True))
+        self._show_lightning_var  = tk.BooleanVar(value=s.get("show_lightning", True))
+        self._lightning_fade_min  = int(s.get("lightning_fade_min", _LIGHTNING_KEEP_MIN))
         self._show_splash_var    = tk.BooleanVar(value=s.get("show_splash",    True))
         self._bz_range_var       = tk.IntVar(value=40)
         self._lightning_strikes: list  = []   # [(lat, lon, datetime, energy), ...]
@@ -6632,7 +6636,9 @@ class HAMIOSApp:
                 and getattr(self, "_lightning_strikes", [])):
             strikes = list(self._lightning_strikes)
             now_lt  = datetime.datetime.now(datetime.timezone.utc)
-            lt_img  = Image.new("RGBA", (W, H), (0, 0, 0, 0))
+            # Gebruik dezelfde afmeting als img om ValueError bij alpha_composite te voorkomen
+            img_w, img_h = img.size
+            lt_img  = Image.new("RGBA", (img_w, img_h), (0, 0, 0, 0))
             ld      = ImageDraw.Draw(lt_img)
             for slat, slon, stime, senergy in strikes:
                 age_s = max(0, (now_lt - stime).total_seconds())
@@ -6643,8 +6649,10 @@ class HAMIOSApp:
                 # Naar viewport-pixel (gecorrigeerd voor crop en zoom)
                 vx = int((slon + 180) / 360 * VW) - crop_l
                 vy = int((90 - slat) / 180 * VH) - crop_t
-                if not (0 <= vx < W and 0 <= vy < H):
+                if not (0 <= vx < img_w and 0 <= vy < img_h):
                     continue
+                fade_min = getattr(self, "_lightning_fade_min", _LIGHTNING_KEEP_MIN)
+                alpha = max(30, int(220 * (1 - age_s / max(1, fade_min * 60))))
                 clr = ((255, 255, 220, alpha) if age_s < 120
                        else (255, 200, 60, alpha) if age_s < 600
                        else (255, 120, 0, alpha))
@@ -6658,7 +6666,7 @@ class HAMIOSApp:
                 sz = 8 + int(age_s * 2)
                 vx = int((flon + 180) / 360 * VW) - crop_l
                 vy = int((90 - flat) / 180 * VH) - crop_t
-                if 0 <= vx < W and 0 <= vy < H:
+                if 0 <= vx < img_w and 0 <= vy < img_h:
                     ld.ellipse([(vx-sz, vy-sz), (vx+sz, vy+sz)],
                                outline=(255, 255, 100, alpha), width=1)
             # Prune flashes
@@ -7237,6 +7245,32 @@ class HAMIOSApp:
         tk.Label(outer, textvariable=self._lightning_count_var,
                  font=_font(9, "bold"), bg=BG_PANEL,
                  fg="#FFF176", anchor='w').pack(fill=tk.X, padx=10)
+
+        # Fade-tijd instelling
+        fade_row = tk.Frame(outer, bg=BG_PANEL)
+        fade_row.pack(fill=tk.X, padx=10, pady=(2, 0))
+        tk.Label(fade_row, text="Fade na:", font=_font(8),
+                 bg=BG_PANEL, fg=TEXT_DIM).pack(side=tk.LEFT)
+        self._lightning_fade_var = tk.IntVar(
+            value=getattr(self, "_lightning_fade_min", _LIGHTNING_KEEP_MIN))
+
+        def _on_fade_change(*_):
+            try:
+                v = max(1, min(60, self._lightning_fade_var.get()))
+                self._lightning_fade_min = v
+                self._lightning_fade_var.set(v)
+                self._save_cur_settings()
+            except Exception:
+                pass
+
+        tk.Spinbox(fade_row, from_=1, to=60, width=3,
+                   textvariable=self._lightning_fade_var,
+                   command=_on_fade_change,
+                   bg=BG_SURFACE, fg=TEXT_H1, buttonbackground=BG_SURFACE,
+                   relief=tk.FLAT, font=_font(8)).pack(side=tk.LEFT, padx=(4, 0))
+        tk.Label(fade_row, text="min", font=_font(8),
+                 bg=BG_PANEL, fg=TEXT_DIM).pack(side=tk.LEFT, padx=(2, 0))
+        self._lightning_fade_var.trace_add("write", _on_fade_change)
 
         # QRN niveau
         qrn_row = tk.Frame(outer, bg=BG_PANEL)
@@ -9409,6 +9443,7 @@ class HAMIOSApp:
                        self._show_sunmoon_path_var.get(),
                        self._show_iono_var.get(),
                        self._show_lightning_var.get(),
+                       getattr(self, "_lightning_fade_min", 30),
                        self._show_splash_var.get(),
                        self._dx_own_cont_var.get(),
                        self._hist_range_var.get(),
