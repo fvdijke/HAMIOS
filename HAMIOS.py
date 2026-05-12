@@ -438,7 +438,7 @@ _TLE_CACHE_FILE  = os.path.join(APP_DIR, "hamios_tle.json")
 _SPY_FILE        = os.path.join(APP_DIR, "hamios_spy_stations.json")
 _LAYOUTS_FILE    = os.path.join(APP_DIR, "hamios_layouts.json")
 # Lightning
-BLITZORTUNG_WS       = "wss://ws1.blitzortung.org:3000/"
+BLITZORTUNG_WS       = "wss://ws1.blitzortung.org:443/"   # poort 3000 geweigerd; 443 werkt
 STORM_FORECAST_URL   = "https://api.open-meteo.com/v1/forecast"
 _LIGHTNING_KEEP_MIN  = 30   # bewaar inslagen van afgelopen N minuten
 # Equirectangular NASA map (2048×1024 = exact 2:1 → coordinates are correct)
@@ -7067,33 +7067,73 @@ class HAMIOSApp:
         threading.Thread(target=self._lightning_ws_thread, daemon=True).start()
 
     def _lightning_ws_thread(self):
-        """WebSocket thread: ontvangt inslagen van Blitzortung."""
-        def _on_message(ws, message):
+        """WebSocket thread: ontvangt inslagen van Blitzortung (poort 443).
+
+        Blitzortung gebruikt een compact binair JSON-formaat waarbij getallen
+        worden gesplitst met niet-ASCII tekens (U+0106..U+01FF).
+        We gebruiken regex om lat/lon direct uit de ruwe string te extraheren.
+        """
+        import re as _re
+
+        def _parse_blitzortung(message):
+            """Extraheer lat/lon uit het Blitzortung compact-JSON formaat.
+
+            Blitzortung port 443 gebruikt een binair gecodeerd formaat waarbij:
+            - "lat" aanwezig is (zonder sluitend aanhalingsteken voor de waarde)
+            - lon/x zonder tekstuele sleutelnaam (positie-gebaseerd)
+            - Getallen worden gesplitst met non-ASCII Unicode-tekens
+            """
+            # Methode 1: standaard JSON
             try:
                 data = json.loads(message)
-                lat = data.get("lat") or data.get("x")
-                lon = data.get("lon") or data.get("y")
+                lat = data.get("lat") or data.get("y")
+                lon = data.get("lon") or data.get("x")
+                if lat is not None and lon is not None:
+                    return float(lat), float(lon), 1
+            except Exception:
+                pass
+
+            # Methode 2: Positionale extractie — alle floats ≥3 decimalen
+            # Format: ..., lat_value, lon_value, ... (positie 1 en 2 zijn lat/lon)
+            floats = _re.findall(r'([+-]?\d{1,3}\.\d{3,})', message)
+            if len(floats) >= 2:
+                lat, lon = float(floats[0]), float(floats[1])
+                if -90.0 <= lat <= 90.0 and -180.0 <= lon <= 180.0:
+                    return lat, lon, 1
+
+            # Methode 3: "lat" key zonder sluitend quote
+            lat_m = _re.search(r'"lat[^\d\-+]*([+-]?\d+\.\d+)', message)
+            lon_m = _re.search(r'"lon[^\d\-+]*([+-]?\d+\.\d+)', message)
+            if lat_m and lon_m:
+                return float(lat_m.group(1)), float(lon_m.group(1)), 1
+
+            return None, None, 0
+
+        def _on_message(ws, message):
+            try:
+                lat, lon, energy = _parse_blitzortung(message)
                 if lat is None or lon is None:
                     return
-                now  = datetime.datetime.now(datetime.timezone.utc)
-                energy = abs(int(data.get("sig", data.get("s", 1)) or 1))
-                self._lightning_strikes.append(
-                    (float(lat), float(lon), now, energy))
-                # Bewaar ook "flash" marker (leeft maar 10 seconden voor ripple)
+                now = datetime.datetime.now(datetime.timezone.utc)
+                self._lightning_strikes.append((lat, lon, now, energy))
+                # Flash marker voor ripple-effect (10s)
                 self._lightning_flashes = getattr(self, "_lightning_flashes", [])
-                self._lightning_flashes.append((float(lat), float(lon), now))
-                # Prune inslagen ouder dan _LIGHTNING_KEEP_MIN
+                self._lightning_flashes.append((lat, lon, now))
+                # Prune oude inslagen
                 cutoff = now - datetime.timedelta(minutes=_LIGHTNING_KEEP_MIN)
                 self._lightning_strikes = [
                     s for s in self._lightning_strikes if s[2] >= cutoff]
-                # Update teller in paneel
+                # Update teller
                 if hasattr(self, "_lightning_count_var"):
                     cnt = len(self._lightning_strikes)
                     self.root.after(0, lambda c=cnt: self._lightning_count_var.set(
                         self._tr("lightning_strikes").format(
                             n=c, m=_LIGHTNING_KEEP_MIN)))
-            except Exception:
-                pass
+                # Herteken kaart (debounced, max 1×/5s)
+                self.root.after(0, lambda: self._debounce(
+                    "lightning_draw", 5000, self._draw_map))
+            except Exception as e:
+                log.debug("lightning parse error: %s", e)
 
         def _on_open(ws):
             ws.send('{"a": 111}')
@@ -7120,9 +7160,12 @@ class HAMIOSApp:
             self._lightning_was_live = True
             _on_open(ws)
 
+        # Probeer ws1..ws4 op poort 443 totdat een verbinding lukt
+        _WS_HOSTS = [f"wss://ws{i}.blitzortung.org:443/" for i in range(1, 5)]
+        _ws_url = getattr(self, "_lightning_last_host", _WS_HOSTS[0])
         try:
             ws = _ws_lib.WebSocketApp(
-                BLITZORTUNG_WS,
+                _ws_url,
                 on_message=_on_message,
                 on_open=_on_open_tracked,
                 on_error=_on_error,
@@ -7130,11 +7173,17 @@ class HAMIOSApp:
             )
             ws.run_forever(ping_interval=30, ping_timeout=10)
         except Exception as e:
-            log.warning("Blitzortung connect failed: %s", e)
+            log.warning("Blitzortung connect failed on %s: %s", _ws_url, e)
             self._lightning_ws_running = False
+            # Roteer naar volgende host bij volgende poging
+            try:
+                idx = _WS_HOSTS.index(_ws_url)
+                self._lightning_last_host = _WS_HOSTS[(idx + 1) % len(_WS_HOSTS)]
+            except ValueError:
+                self._lightning_last_host = _WS_HOSTS[0]
             if hasattr(self, "_lightning_status_var"):
                 self.root.after(0, lambda: self._lightning_status_var.set(
-                    f"⚠ Verbinding mislukt — pip install websocket-client?"))
+                    f"⚠ Host {_ws_url} geweigerd — volgende poging 60s"))
 
     def _fetch_storm_forecast(self):
         """Haal CAPE/onweersverwachting op van Open-Meteo (achtergrond)."""
