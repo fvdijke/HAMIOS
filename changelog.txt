@@ -1,6 +1,14 @@
 ─────────────────────────────────────────────────────────────────────
 Change Log (4.0.1)  [in ontwikkeling]
 ─────────────────────────────────────────────────────────────────────
+· 2026-05-12 13:33 — Bug fixes batch:
+  - Splash toggle: show_splash moved from Map→App section in INI (was never read correctly)
+  - Panel lift interval: 500ms → 2000ms (less CPU)
+  - Spy/Sat dialogs: win.update() + winfo_width() for accurate centering
+  - Lightning status: "Verbroken" only shown after successful connection, not on first fail
+  - Color picker: settings dialog has 🎨 section for meridian/ocean colors
+  - Solar history tooltip: <Leave> binding added so tooltip hides on mouse leave
+
 · 2026-05-11 19:05 — Splash toggle fix, panel lift improvements, spy/sat dialog centering,
   Bz/Kp/Xray comprehensive tooltips, solar history legend, lighter cyan graticule,
   recursive panel click activation.

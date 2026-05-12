@@ -67,33 +67,39 @@ Dependencies:
 Todo
 ─────────────────────────────────────────────────────────────────────
 - Splashscreen -
-- [x] Fix: Splashscreen reageert niet op selectie wel of niet tonen
+- [x] Fix: Splashscreen reageert niet op selectie wel of niet tonen — show_splash verplaatst naar App-sectie in INI (was Map)
 - [x] Fix: Laat syntax zien per dependency om te installeren
 
 - Panelen -
-- [x] Fix: Panelen moeten altijd op de voorgrond (ook van het main screen)
+- [x] Fix: Panelen moeten altijd op de voorgrond — lift interval 500ms→2000ms
 - [x] Fix: De panelen moeten actief worden waar je deze ook aanklikt
 
 - Spy paneel -
-- [x] Fix: Spy paneel start niet in het midden van het scherm
-- [x] Fix: Sat paneel start niet in het midden van het scherm
+- [x] Fix: Spy paneel start niet in het midden van het scherm — win.update() + winfo_width()
+- [x] Fix: Sat paneel start niet in het midden van het scherm — win.update() + winfo_width()
 
 - Onweer paneel -
-- [x] Fix: Geen onweer informatie (wereldwijd of bij qth)
+- [x] Fix: Geen onweer informatie (wereldwijd of bij qth) — websocket-client installeren + CAPE altijd geladen
+- [x] Fix: Onweerpaneel status geeft Verbroken — alleen tonen als verbinding ooit live was
 
 - Worldmap -
 - [x] Vis: Meridianen mogen iets lichter van kleur (cyan)
-- [ ] Vis: Color picker in settings voor Worldmap en meridianen
+- [x] Vis: Color picker in settings voor Worldmap en meridianen — 🎨 sectie in Instellingen
 
 - Solar verloop panel -
 - [x] Fix: geen uitleg informatie bij grafiek. Maak uitgebreide explainer
 
 - Tooltips -
 - [x] Fix: Xray, Bz en Kp, Maak uitgebreide explainer
+- [x] Fix: Solar history tooltip blijft staan — <Leave> binding toegevoegd
+- [ ] Fix: Meer uitgebreidere uitleg bij alle tooltips
 
 ─────────────────────────────────────────────────────────────────────
 Change Log (4.0.1)
 ─────────────────────────────────────────────────────────────────────
+· 2026-05-12 13:33 — Bug fixes: splash INI-sectie, dialogen gecentreerd, lightning status,
+  color picker voor kaart, solar history tooltip <Leave>, lift interval 2s.
+
 · 2026-05-11 19:05 — Splash toggle fix, panel lift improvements, spy/sat dialog centering,
   Bz/Kp/Xray comprehensive tooltips, solar history legend, lighter cyan graticule,
   recursive panel click activation.
@@ -789,7 +795,8 @@ CONFIG_SCHEMA = {
         "show_tips": {"type": bool, "default": True},
         "show_ticker": {"type": bool, "default": True},
         "language": {"type": str, "default": "English"},
-        "theme":    {"type": str, "options": ["Midnight", "DeepOcean", "HighContrast"], "default": "Midnight"},
+        "theme":      {"type": str, "options": ["Midnight", "DeepOcean", "HighContrast"], "default": "Midnight"},
+        "show_splash": {"type": bool, "default": True},
     },
     "Map": {
         "show_sun": {"type": bool, "default": True},
@@ -804,7 +811,6 @@ CONFIG_SCHEMA = {
         "show_sunmoon_path":  {"type": bool, "default": False},
         "show_iono":          {"type": bool, "default": False},
         "show_lightning": {"type": bool, "default": True},
-        "show_splash":    {"type": bool, "default": True},
         "dx_own_cont": {"type": bool, "default": True},
     },
     "Graph": {
@@ -918,7 +924,8 @@ def _save_settings(lat: float, lon: float, refresh: str,
     cfg["App"]   = {"refresh": refresh, "mode": mode, "power": power,
                     "antenna": antenna, "dst": str(dst),
                     "show_tips": str(show_tips), "show_ticker": str(show_ticker),
-                    "language": language, "theme": theme}
+                    "language": language, "theme": theme,
+                    "show_splash": str(show_splash)}   # hier, niet in Map
     cfg["Map"]   = {"show_sun": str(show_sun), "show_moon": str(show_moon),
                     "show_locator": str(show_locator),
                     "show_graylijn": str(show_graylijn),
@@ -930,7 +937,6 @@ def _save_settings(lat: float, lon: float, refresh: str,
                     "show_sunmoon_path": str(show_sunmoon_path),
                     "show_iono":         str(show_iono),
                     "show_lightning":    str(show_lightning),
-                    "show_splash":       str(show_splash),
                     "dx_own_cont":       str(dx_own_cont)}
     cfg["Graph"]  = {"hist_range": hist_range,
                      "selected_bands": ",".join(sorted(hist_sel)) if hist_sel else ""}
@@ -3140,11 +3146,11 @@ class _SpyDialog:
         win.title("Spy / Numbers Stations")
         win.configure(bg=BG_PANEL)
         win.geometry("700x620")
-        win.update_idletasks()
+        win.update()
         sw = win.winfo_screenwidth()
         sh = win.winfo_screenheight()
-        ww = win.winfo_reqwidth() or 700
-        wh = win.winfo_reqheight() or 620
+        ww = win.winfo_width()  or 700
+        wh = win.winfo_height() or 620
         win.geometry(f"+{(sw-ww)//2}+{(sh-wh)//2}")
         win.resizable(True, True)
 
@@ -3381,11 +3387,11 @@ class _SatelliteDialog:
         win.title("Satellite Tracking")
         win.configure(bg=BG_PANEL)
         win.geometry("560x580")
-        win.update_idletasks()
+        win.update()
         sw = win.winfo_screenwidth()
         sh = win.winfo_screenheight()
-        ww = win.winfo_reqwidth() or 560
-        wh = win.winfo_reqheight() or 580
+        ww = win.winfo_width()  or 560
+        wh = win.winfo_height() or 580
         win.geometry(f"+{(sw-ww)//2}+{(sh-wh)//2}")
         win.resizable(True, True)
 
@@ -4352,6 +4358,46 @@ class HAMIOSApp:
                                 font=_font(9), anchor='w', width=22)
             cb.pack(side=tk.LEFT, padx=(0, 4))
             col += 1
+
+        # ── Kaart kleuren ─────────────────────────────────────────────────────
+        section(win, "🎨  Kaart kleuren")
+        colors_row = row(win)
+
+        def _pick_color(title, current_rgb, callback):
+            from tkinter import colorchooser
+            hex_cur = "#{:02x}{:02x}{:02x}".format(*current_rgb)
+            result = colorchooser.askcolor(color=hex_cur, title=title, parent=win)
+            if result and result[0]:
+                r, g, b = (int(x) for x in result[0])
+                callback((r, g, b))
+                self._map_base_size = None
+                self._map_render_key = None
+                self.root.after(0, self._draw_map)
+
+        def _grid_btn():
+            global MAP_GRID
+            _pick_color("Meridiaan kleur", MAP_GRID,
+                        lambda c: globals().__setitem__("MAP_GRID", c)
+                        or setattr(self, "_map_grid_color", c))
+
+        def _ocean_btn():
+            global MAP_OCEAN
+            _pick_color("Oceaan kleur", MAP_OCEAN,
+                        lambda c: globals().__setitem__("MAP_OCEAN", c))
+
+        tk.Button(colors_row, text="Meridianen",
+                  command=_grid_btn,
+                  font=_font(9), bg=BG_SURFACE, fg="#FFA726",
+                  relief=tk.FLAT, padx=8, pady=2, cursor="hand2"
+                  ).pack(side=tk.LEFT, padx=(0, 8))
+        tk.Button(colors_row, text="Oceaan",
+                  command=_ocean_btn,
+                  font=_font(9), bg=BG_SURFACE, fg="#FFA726",
+                  relief=tk.FLAT, padx=8, pady=2, cursor="hand2"
+                  ).pack(side=tk.LEFT)
+        tk.Label(colors_row, text="(kleur wordt direct toegepast)",
+                 font=_font(8), bg=BG_PANEL, fg=TEXT_DIM
+                 ).pack(side=tk.LEFT, padx=(8, 0))
 
         # ── Layout ────────────────────────────────────────────────────────────
         section(win, self._tr("settings_layout"))
@@ -5371,8 +5417,8 @@ class HAMIOSApp:
                             p.frame.lift()
                         except Exception:
                             pass
-            self.root.after(500, _keep_panels_front)
-        self.root.after(500, _keep_panels_front)
+            self.root.after(2000, _keep_panels_front)
+        self.root.after(2000, _keep_panels_front)
 
         _layout = _load_panel_layout()
         self._panels: dict = {}
@@ -5754,6 +5800,9 @@ class HAMIOSApp:
             "<Configure>",
             lambda *_: self._debounce("solhist", 150, self._draw_solar_hist_chart))
         self._solar_hist_canvas.bind("<Enter>", lambda e: self._show_solar_hist_tip(e))
+        self._solar_hist_canvas.bind("<Leave>",
+            lambda _: getattr(self, "_solar_hist_tt", None) and
+                      self._solar_hist_tt.hide())
 
     # ── Wereldkaart panel ─────────────────────────────────────────────────────
     def _build_map_panel(self, parent):
@@ -7017,18 +7066,24 @@ class HAMIOSApp:
 
         def _on_close(ws, code, msg):
             self._lightning_ws_running = False
-            if hasattr(self, "_lightning_status_var"):
+            # Toon "verbroken" alleen als verbinding ooit live was
+            if hasattr(self, "_lightning_status_var") and getattr(self, "_lightning_was_live", False):
                 self.root.after(0, lambda: self._lightning_status_var.set(
                     self._tr("lightning_disc")))
-            # Herverbinden na 30 seconden
+            self._lightning_was_live = False
+            # Herverbinden na 60 seconden
             self._lightning_reconnect_id = self.root.after(
-                30_000, self._start_lightning_ws)
+                60_000, self._start_lightning_ws)
+
+        def _on_open_tracked(ws):
+            self._lightning_was_live = True
+            _on_open(ws)
 
         try:
             ws = _ws_lib.WebSocketApp(
                 BLITZORTUNG_WS,
                 on_message=_on_message,
-                on_open=_on_open,
+                on_open=_on_open_tracked,
                 on_error=_on_error,
                 on_close=_on_close,
             )
@@ -7036,6 +7091,9 @@ class HAMIOSApp:
         except Exception as e:
             log.warning("Blitzortung connect failed: %s", e)
             self._lightning_ws_running = False
+            if hasattr(self, "_lightning_status_var"):
+                self.root.after(0, lambda: self._lightning_status_var.set(
+                    f"⚠ Verbinding mislukt — pip install websocket-client?"))
 
     def _fetch_storm_forecast(self):
         """Haal CAPE/onweersverwachting op van Open-Meteo (achtergrond)."""
