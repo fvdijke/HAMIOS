@@ -6147,6 +6147,50 @@ class HAMIOSApp:
             self._draw_map()
 
     def _draw_map(self):
+        """Start een achtergrond-render als er geen render loopt; anders debounce."""
+        if getattr(self, "_map_render_running", False):
+            # Render al bezig — plan een nieuwe render na afloop
+            self._map_render_pending = True
+            return
+        self._map_render_running = True
+        self._map_render_pending = False
+        threading.Thread(target=self._draw_map_thread, daemon=True).start()
+
+    def _draw_map_thread(self):
+        """Alle PIL-berekeningen in achtergrond-thread (blokkeert de UI niet)."""
+        try:
+            img = self._render_map_image()
+            if img is not None:
+                # PhotoImage MOET in main thread aangemaakt worden
+                self.root.after(0, lambda i=img: self._apply_map_image(i))
+        except Exception as e:
+            log.warning("map render error: %s", e)
+        finally:
+            self._map_render_running = False
+            if getattr(self, "_map_render_pending", False):
+                self.root.after(0, self._draw_map)
+
+    def _apply_map_image(self, img):
+        """Toon het gerenderde PIL-beeld op het canvas (main thread)."""
+        c = self._map_canvas
+        self._map_photo = ImageTk.PhotoImage(img)
+        c.delete("all")
+        c.create_image(0, 0, anchor='nw', image=self._map_photo)
+        self._draw_dx_spots()
+        self._draw_lightning_canvas_overlay()
+        self._draw_wspr_spots()
+
+    def _render_map_image(self):
+        """PIL-rendering in achtergrond-thread. Retourneert PIL Image of None."""
+        c = self._map_canvas
+        W = c.winfo_width()  or 960
+        H = c.winfo_height() or 480
+        zoom = max(1.0, self._map_zoom)
+        # ── Doorgaan met de bestaande render-logica ───────────────────────────
+        return self._draw_map_impl(c, W, H, zoom)
+
+    def _draw_map_impl(self, c, W, H, zoom):
+        """Volledige PIL map-render. Wordt aangeroepen vanuit achtergrond-thread."""
         c = self._map_canvas
         W = c.winfo_width()  or 960
         H = c.winfo_height() or 480
@@ -6630,14 +6674,8 @@ class HAMIOSApp:
                                  dt_local.strftime(f"%d %b  %H:%M {tz_name}")))
         self._sat_path_hits = hits
 
-        # ── Tonen (bliksem als losse canvas-items voor real-time fade) ──────
-        self._map_photo = ImageTk.PhotoImage(img)
-        c.delete("all")
-        c.create_image(0, 0, anchor='nw', image=self._map_photo)
-        self._draw_dx_spots()
-        # Bliksem direct als canvas-items (real-time, geen PIL nodig)
-        self._draw_lightning_canvas_overlay()
-        self._draw_wspr_spots()
+        # Retourneer het gerenderde beeld — _apply_map_image() toont het in main thread
+        return img
 
     def _draw_lightning_canvas_overlay(self):
         """Teken blikseminslagen real-time als canvas-items (geen PIL, geen volledige render).
