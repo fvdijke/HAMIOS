@@ -1,6 +1,12 @@
 ─────────────────────────────────────────────────────────────────────
 Change Log (4.0.1)  [in ontwikkeling]
 ─────────────────────────────────────────────────────────────────────
+· 2026-05-12 13:49 — Uitgebreide Nederlandse tooltips toegevoegd:
+  - Band condities tabel: hover-tooltip per bandnaam met freq-range, propagatiekarakter en advies
+  - Storm forecast header: tooltip met K5/K6/K7+ uitleg en percentage-interpretatie
+  - Meldingen paneel: tooltips op K-alert, band-alert, X-flare en PCA checkbuttons (uit _SOLAR_TIPS)
+  - Band reliability bars: verrijkte tooltip met Kwaliteit (Gesloten/Slecht/Matig/Goed/Uitstekend) en Advies
+
 · 2026-05-12 13:33 — Bug fixes batch:
   - Splash toggle: show_splash moved from Map→App section in INI (was never read correctly)
   - Panel lift interval: 500ms → 2000ms (less CPU)

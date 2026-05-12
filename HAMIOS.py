@@ -92,11 +92,17 @@ Todo
 - Tooltips -
 - [x] Fix: Xray, Bz en Kp, Maak uitgebreide explainer
 - [x] Fix: Solar history tooltip blijft staan — <Leave> binding toegevoegd
-- [ ] Fix: Meer uitgebreidere uitleg bij alle tooltips
+- [x] Fix: Meer uitgebreidere uitleg bij alle tooltips
 
 ─────────────────────────────────────────────────────────────────────
 Change Log (4.0.1)
 ─────────────────────────────────────────────────────────────────────
+· 2026-05-12 13:49 — Uitgebreide Nederlandse tooltips toegevoegd:
+  Band condities tabel: hover-tooltip per bandnaam (freq, propagatiekarakter, advies).
+  Storm forecast header: tooltip met K5/K6/K7+ uitleg en kansen per dag.
+  Meldingen paneel: tooltips op K-alert, band-alert, X-flare en PCA checkbuttons.
+  Band reliability bars: verrijkte tooltip met Kwaliteit en Advies per band.
+
 · 2026-05-12 13:33 — Bug fixes: splash INI-sectie, dialogen gecentreerd, lightning status,
   color picker voor kaart, solar history tooltip <Leave>, lift interval 2s.
 
@@ -5738,6 +5744,20 @@ class HAMIOSApp:
 
     def _build_band_cond_panel(self, parent):
         """Band dag/nacht condities paneel."""
+        BAND_INFO = {
+            "160m": ("1.8–2.0 MHz — Nachtsband", "Werkt 's nachts via F2-laag. Overdag sterk geabsorbeerd. Goed voor regionale DX bij laag K-index."),
+            "80m":  ("3.5–4.0 MHz — Avond/nacht", "Nachtsband, ook vroege ochtend. Skip ~200-2000 km. Gevoelig voor K-index."),
+            "60m":  ("5 MHz — Noodband", "Beperkte banden per regio. Dag/nacht bruikbaar bij gemiddelde SFI."),
+            "40m":  ("7 MHz — Dagelijks betrouwbaar", "Beste dag-DX band bij lage SFI. Nachts lange skip. MUF ±10-14 MHz."),
+            "30m":  ("10 MHz — WARC-band", "CW/digi only. Bijna altijd open. Overdag regionaal, 's nachts DX."),
+            "20m":  ("14 MHz — Hoofd-DX band", "Meest betrouwbare DX-band. Open bij SFI>80. Dag: F2-propagatie wereldwijd."),
+            "17m":  ("18 MHz — WARC DX-band", "Uitstekend voor DX bij hoge SFI. Gevoeliger voor storm dan 20m."),
+            "15m":  ("21 MHz — Zonnecyclus band", "Open bij hoge SFI (>100). Beste propagatie rond middaguur lokaal."),
+            "12m":  ("24 MHz — WARC hoge band", "Vereist SFI>110. Trans-equatoriaal en F2 bij zonnemaxima."),
+            "10m":  ("28–30 MHz — Ionosfeer afhankelijk", "Gesloten bij laag SFI. Spectaculair open bij SFI>150. Es-opens mogelijk."),
+            "6m":   ("50 MHz — Magic band", "Normaal gesloten via ionosfeer. Sporadisch-E (mei-aug) geeft verrassende DX."),
+        }
+
         outer = tk.Frame(parent, bg=BG_PANEL)
         outer.pack(fill=tk.BOTH, expand=True, padx=10, pady=4)
 
@@ -5762,8 +5782,17 @@ class HAMIOSApp:
         for name, _, is_hf in _BANDS:
             if not is_hf:
                 continue
-            tk.Label(band_tbl, text=name, font=_font(8), bg=BG_PANEL,
-                     fg=TEXT_DIM, anchor='w').grid(row=grid_row, column=0, sticky='w')
+            bname_lbl = tk.Label(band_tbl, text=name, font=_font(8), bg=BG_PANEL,
+                                 fg=TEXT_DIM, anchor='w', cursor="question_arrow")
+            bname_lbl.grid(row=grid_row, column=0, sticky='w')
+            if name in BAND_INFO:
+                title, body = BAND_INFO[name]
+                tt = _Tooltip(bname_lbl)
+                tip_text = f"{title}\n{'─'*len(title)}\n{body}"
+                bname_lbl.bind("<Enter>", lambda e, t=tt, tx=tip_text:
+                    t.show(e.widget.winfo_rootx()+e.x, e.widget.winfo_rooty()+e.y, tx)
+                    if getattr(self, "_show_tips_var", None) and self._show_tips_var.get() else None)
+                bname_lbl.bind("<Leave>", lambda *_, t=tt: t.hide())
             day_lbl = tk.Label(band_tbl, text="—", font=_font(8, "bold"),
                                bg=BG_PANEL, fg=TEXT_DIM, anchor='w')
             day_lbl.grid(row=grid_row, column=1, sticky='w')
@@ -5778,9 +5807,21 @@ class HAMIOSApp:
         outer = tk.Frame(parent, bg=BG_PANEL)
         outer.pack(fill=tk.BOTH, expand=True, padx=10, pady=4)
         _fc_hdr = tk.Label(outer, text=self._tr("storm_forecast_hdr"),
-                           font=_font(8, "bold"), bg=BG_PANEL, fg=ACCENT, anchor='w')
+                           font=_font(8, "bold"), bg=BG_PANEL, fg=ACCENT, anchor='w',
+                           cursor="question_arrow")
         _fc_hdr.pack(fill=tk.X, pady=(0, 1))
         self._tr_widgets["storm_forecast_hdr"] = _fc_hdr
+        storm_tt = _Tooltip(_fc_hdr)
+        storm_tip = ("3-daagse geomagnetische stormkans\n" + "─"*35 + "\n"
+                     "K5 (G1): lichte storm — poolroutes verstoord\n"
+                     "K6 (G2): matige storm — 40m/80m meest betrouwbaar\n"
+                     "K7+ (G3+): zware storm — HF grotendeels onbruikbaar\n\n"
+                     "Percentages geven kans op storm die dag.\n"
+                     "Bron: NOAA 3-day geomagnetic forecast.")
+        _fc_hdr.bind("<Enter>", lambda e, t=storm_tt, tx=storm_tip:
+            t.show(e.widget.winfo_rootx()+e.x, e.widget.winfo_rooty()+e.y, tx)
+            if getattr(self, "_show_tips_var", None) and self._show_tips_var.get() else None)
+        _fc_hdr.bind("<Leave>", lambda *_, t=storm_tt: t.hide())
         self._storm_fc_vars = []
         for _ in range(3):
             var = tk.StringVar(value="—")
@@ -7534,6 +7575,21 @@ class HAMIOSApp:
                 self._tr_widgets[tr_key] = [self._tr_widgets[tr_key]]
             self._tr_widgets[tr_key].append(frame)
 
+        def _bind_tip(widget, tip_key):
+            """Bind _SOLAR_TIPS tooltip to widget if key exists."""
+            from_tips = _SOLAR_TIPS.get(tip_key, None)
+            if not from_tips:
+                return
+            title, body = from_tips[0], from_tips[1]
+            tip_text = f"{title}\n{'─'*max(1,len(title))}\n{body}" if title else ""
+            if not tip_text:
+                return
+            tt = _Tooltip(widget)
+            widget.bind("<Enter>", lambda e, t=tt, tx=tip_text:
+                t.show(e.widget.winfo_rootx()+e.x, e.widget.winfo_rooty()+e.y, tx)
+                if getattr(self, "_show_tips_var", None) and self._show_tips_var.get() else None)
+            widget.bind("<Leave>", lambda *_, t=tt: t.hide())
+
         # ── K-index drempel ───────────────────────────────────────────────────
         rk = tk.Frame(outer, bg=BG_PANEL)
         rk.pack(fill=tk.X, pady=(0, 4))
@@ -7541,9 +7597,11 @@ class HAMIOSApp:
                                command=self._save_cur_settings,
                                bg=BG_PANEL, fg=TEXT_BODY, selectcolor=BG_SURFACE,
                                activebackground=BG_PANEL, activeforeground=TEXT_H1,
-                               font=_font(9), text=self._tr("k_alert_lbl"))
+                               font=_font(9), text=self._tr("k_alert_lbl"),
+                               cursor="question_arrow")
         _k_cb.pack(side=tk.LEFT, padx=(0, 4))
         _tr_cb(_k_cb, "k_alert_lbl")
+        _bind_tip(_k_cb, "tip_k_alert")
         tk.Spinbox(rk, from_=1, to=9, width=2, textvariable=self._k_alert_var,
                    command=self._save_cur_settings,
                    bg=BG_SURFACE, fg=TEXT_H1, buttonbackground=BG_SURFACE,
@@ -7556,9 +7614,11 @@ class HAMIOSApp:
                                command=self._save_cur_settings,
                                bg=BG_PANEL, fg=TEXT_BODY, selectcolor=BG_SURFACE,
                                activebackground=BG_PANEL, activeforeground=TEXT_H1,
-                               font=_font(9), text=self._tr("band_alert_lbl"))
+                               font=_font(9), text=self._tr("band_alert_lbl"),
+                               cursor="question_arrow")
         _b_cb.pack(side=tk.LEFT, padx=(0, 4))
         _tr_cb(_b_cb, "band_alert_lbl")
+        _bind_tip(_b_cb, "tip_band_alert")
         tk.Spinbox(rb, from_=10, to=90, increment=5, width=3,
                    textvariable=self._band_alert_var, command=self._save_cur_settings,
                    bg=BG_SURFACE, fg=TEXT_H1, buttonbackground=BG_SURFACE,
@@ -7567,21 +7627,24 @@ class HAMIOSApp:
                  fg=TEXT_DIM).pack(side=tk.LEFT, padx=(2, 0))
 
         # ── X-flare / PCA knoppen ─────────────────────────────────────────────
-        def _alert_cb(frame, var, tr_key):
+        def _alert_cb(frame, var, tr_key, tip_key=None):
             cb = tk.Checkbutton(frame, variable=var, command=self._save_cur_settings,
                                 bg=BG_PANEL, fg=TEXT_BODY, selectcolor=BG_SURFACE,
                                 activebackground=BG_PANEL, activeforeground=TEXT_H1,
-                                font=_font(9), text=self._tr(tr_key))
+                                font=_font(9), text=self._tr(tr_key),
+                                cursor="question_arrow" if tip_key else "")
             cb.pack(side=tk.LEFT, padx=(0, 4))
             _tr_cb(cb, tr_key)
+            if tip_key:
+                _bind_tip(cb, tip_key)
 
         rx = tk.Frame(outer, bg=BG_PANEL)
         rx.pack(fill=tk.X, pady=(0, 1))
-        _alert_cb(rx, self._alert_xflare_en_var, "alert_xflare_lbl")
+        _alert_cb(rx, self._alert_xflare_en_var, "alert_xflare_lbl", "tip_xflare_alert")
 
         rp = tk.Frame(outer, bg=BG_PANEL)
         rp.pack(fill=tk.X, pady=(0, 4))
-        _alert_cb(rp, self._alert_pca_en_var, "alert_pca_lbl")
+        _alert_cb(rp, self._alert_pca_en_var, "alert_pca_lbl", "tip_pca_alert")
 
         # ── Satelliet in QTH-zone ─────────────────────────────────────────────
         tk.Frame(outer, bg=BORDER, height=1).pack(fill=tk.X, pady=(4, 4))
@@ -7755,13 +7818,40 @@ class HAMIOSApp:
                         break
 
     def _on_bar_motion(self, event: tk.Event):
-        for y0, y1, _ in self._bar_rows:
+        for idx, (y0, y1, base_tip) in enumerate(self._bar_rows):
             if y0 <= event.y <= y1:
                 self._prop_canvas.config(cursor="hand2")
                 if self._show_tips_var.get():
                     rx = self._prop_canvas.winfo_rootx() + event.x
                     ry = self._prop_canvas.winfo_rooty() + event.y
-                    self._tooltip.show(rx, ry, _)
+                    # Verrijkte tooltip: kwaliteit + advies toevoegen aan bestaande tip
+                    pct = 0
+                    name = ""
+                    if idx < len(self._bar_band_rows):
+                        _, _, name, _ = self._bar_band_rows[idx]
+                        bp = {n: p for n, _, p in getattr(self, "_last_band_pct", [])}
+                        pct = bp.get(name, 0)
+                    if pct <= 0:
+                        quality = "Gesloten"
+                        advice = "Band niet bruikbaar via ionosfeer."
+                    elif pct < 30:
+                        quality = "Slecht"
+                        advice = "Probeer FT8 of CW voor zwakke signalen."
+                    elif pct < 60:
+                        quality = "Matig"
+                        advice = "SSB mogelijk, FT8 geeft extra marge."
+                    elif pct < 85:
+                        quality = "Goed"
+                        advice = "SSB goed bruikbaar. FT8 voor DX."
+                    else:
+                        quality = "Uitstekend"
+                        advice = "Alle modi. Ideaal voor DX en lange skip."
+                    tip = list(base_tip) + [
+                        None,
+                        ("Kwaliteit:", quality),
+                        ("Advies:", advice),
+                    ]
+                    self._tooltip.show(rx, ry, tip)
                 return
         self._prop_canvas.config(cursor="")
         self._tooltip.hide()
