@@ -295,7 +295,7 @@ TEXT_DIM   = "#606870"
 BORDER     = "#383E47"
 
 # ── Draggable panelen ─────────────────────────────────────────────────────────
-_PANEL_GRID = 2    # snap-raster in pixels
+_PANEL_GRID = 10   # snap-raster in pixels (instelbaar via Settings)
 
 # Standaard paneel-layout (id → (x, y, w, h, zichtbaar))
 # v4.5+: coördinaten zijn scherm-absoluut (Toplevel-vensters).
@@ -2467,8 +2467,9 @@ class DraggablePanel:
             self.frame.wm_attributes("-alpha", 0.97)
         except Exception:
             pass
-        # wm_transient zorgt dat panels verdwijnen met het hoofdvenster
-        self.frame.wm_transient(_root)
+        # Geen wm_transient — koppeling aan root.withdraw() veroorzaakt
+        # dat panels bij startup verborgen blijven. Panels worden expliciet
+        # getoond/verborgen via show()/hide().
 
         # Titelbalk — donkere achtergrond, amber tekst
         self._tbar = tk.Frame(self.frame, bg=BG_PANEL, height=self._TITLE_H)
@@ -2536,6 +2537,7 @@ class DraggablePanel:
 
     def show(self):
         self._apply_geometry()
+        self.frame.update_idletasks()   # zorg dat geometrie verwerkt is
         self.frame.deiconify()
         self.frame.lift()
         self._visible = True
@@ -5348,6 +5350,9 @@ class HAMIOSApp:
             if var:
                 var.set(vals[4])
         self._save_cur_settings()
+        # Expliciete show-pass na position: voorkomt dat panels verborgen blijven
+        self.root.after(50, lambda: [
+            p.show() for p in self._panels.values() if p.is_visible()])
         self.root.after(100, self._draw_map)
 
     def _reset_panel_layout(self):
@@ -5369,6 +5374,9 @@ class HAMIOSApp:
             if var:
                 var.set(vis)
         self._save_cur_settings()
+        # Zorg dat alle zichtbare panels echt getoond worden
+        self.root.after(50, lambda: [
+            p.show() for p in self._panels.values() if p.is_visible()])
         self.root.after(100, self._draw_map)
 
     def _save_as_default_layout(self):
@@ -9318,7 +9326,14 @@ class HAMIOSApp:
         threading.Thread(target=self._tray_icon.run, daemon=True).start()
 
     def _tray_show(self, icon=None, item=None):
-        self.root.after(0, lambda: (self.root.deiconify(), self.root.lift()))
+        def _startup_show():
+            self.root.deiconify()
+            self.root.lift()
+            # Toon alle zichtbare panels expliciet na root.deiconify()
+            for _p in getattr(self, "_panels", {}).values():
+                if _p.is_visible():
+                    _p.show()
+        self.root.after(50, _startup_show)
 
     def _tray_quit(self, icon=None, item=None):
         if self._tray_icon:
