@@ -147,7 +147,6 @@ QPushButton {{
     border: 1px solid {BORDER}; padding: 3px 10px; border-radius: 2px;
 }}
 QPushButton:hover {{ background: #32373F; border-color: {ACCENT}; }}
-QPushButton#close {{ background: {ACCENT}; color: {BG_ROOT}; font-weight: bold; }}
 """
 
 # Geordende bandlijst voor filter
@@ -163,7 +162,7 @@ class Ft8Dialog(QDialog):
 
     def __init__(self, parent=None):
         super().__init__(parent)
-        self.setWindowTitle("📡  Digitale modi frequenties — HAMIOS v5")
+        self.setWindowTitle("📡  Digitale modi frequenties — HF Propagation & Atmosphere Monitor")
         self.setMinimumSize(700, 500)
         self.resize(760, 560)
         self.setStyleSheet(_QSS)
@@ -367,6 +366,6 @@ class Ft8Dialog(QDialog):
     def _reset_cat_lbl(self):
         self._cat_lbl.setText("")
 
-    def closeEvent(self, event):
+    def done(self, result):
         save_geom(self, "Ft8Dialog")
-        super().closeEvent(event)
+        super().done(result)

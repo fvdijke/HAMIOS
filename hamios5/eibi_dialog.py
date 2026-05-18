@@ -27,7 +27,7 @@ from .theme import ACCENT, BG_PANEL, BG_SURFACE, BG_ROOT, TEXT_H1, TEXT_DIM, TEX
 from .eibi_codes import translate_lang, translate_target, translate_itu, enrich_row
 from .geometry import save_geom, restore_geom
 
-_HERE       = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+from ._appdir import APP_DIR as _HERE
 _CACHE_FILE = os.path.join(_HERE, "hamios_eibi.csv")
 _META_FILE  = os.path.join(_HERE, "hamios_eibi_meta.json")
 
@@ -264,7 +264,7 @@ class EibiDialog(QDialog):
         btn_dl.setFont(f8)
         btn_dl.clicked.connect(self._download)
         bot.addWidget(btn_dl)
-        btn_close = QPushButton("Sluiten")
+        btn_close = QPushButton("Sluiten"); btn_close.setObjectName("close")
         btn_close.setFont(f8)
         btn_close.clicked.connect(self.accept)
         bot.addWidget(btn_close)
@@ -478,6 +478,7 @@ class EibiDialog(QDialog):
             f"{n:,} van {len(self._all_rows):,} frequenties  ·  Bron: eibispace.de")
         self._status_lbl.setStyleSheet(f"color: {TEXT_DIM}; font-size: 8pt;")
 
-    def closeEvent(self, event):
+    def done(self, result):
+        """Overschrijf done() — wordt aangeroepen door accept(), reject() én X-knop."""
         save_geom(self, "EibiDialog")
-        super().closeEvent(event)
+        super().done(result)

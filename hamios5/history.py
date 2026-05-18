@@ -15,7 +15,7 @@ import datetime
 import os
 import threading
 
-_HERE      = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+from ._appdir import APP_DIR as _HERE
 _FILE      = os.path.join(_HERE, "HAMIOS_history.csv")
 _KEEP_DAYS = 90
 

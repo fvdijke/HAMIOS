@@ -4,7 +4,7 @@ import json
 import os
 from dataclasses import dataclass, field, asdict
 
-_HERE        = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+from ._appdir import APP_DIR as _HERE
 _CONFIG_FILE = os.path.join(_HERE, "hamios_config.json")
 
 
@@ -31,11 +31,12 @@ class AppConfig:
     map_overlay:    bool  = True    # header-knop staat
 
     # ── Bliksem ───────────────────────────────────────────────────────────────
-    lightning_fade:    int   = 600   # seconden
-    lightning_radius:  int   = 500   # km — drempel voor header-melding (0 = uit)
-    lightning_rate:    int   = 500   # ms — animatie-update interval
-    lightning_beep:    bool  = False # piepje bij elke inslag
-    lightning_beep_r:  int   = 0    # piepje alleen binnen radius km (0 = altijd)
+    lightning_fade:       int   = 600   # seconden
+    lightning_radius:     int   = 500   # km — drempel voor header-melding (0 = uit)
+    lightning_rate:       int   = 500   # ms — animatie-update interval
+    lightning_beep:       bool  = False # piepje bij elke inslag
+    lightning_beep_r:     int   = 0     # piepje alleen binnen radius km (0 = altijd)
+    lightning_anim_scale: float = 2.0   # schaal animatie (2.0 = standaard voor 4096px kaart)
 
     # ── Refresh-interval ─────────────────────────────────────────────────────
     refresh_interval:  int   = 5      # minuten (0 = uit)
@@ -46,6 +47,10 @@ class AppConfig:
     sat_font_size:     int   = 8      # satelliet-labels op kaart
     dx_map_font_size:  int   = 7      # DX spots callsigns op kaart
     dx_font_size:      int   = 8      # DX spots tabel
+    grat_step:              int   = 30   # graticule stap in graden (10/20/30)
+    maidenhead_font_size:   int   = 8    # Maidenhead locatorraster label-lettergrootte
+    sun_icon_size:          int   = 24   # zon-icoontje grootte (px)
+    moon_icon_size:         int   = 20   # maan-icoontje grootte (px)
     show_splash:       bool  = True
 
     # ── DX spots status ───────────────────────────────────────────────────────
@@ -61,8 +66,9 @@ class AppConfig:
     sat_path:       list  = field(default_factory=list)
     sat_fp:         list  = field(default_factory=list)
     sat_back_h:     int   = 1
-    sat_fwd_h:      int   = 12
+    sat_fwd_h:      int   = 1
     sat_filter_sel: bool  = True   # "Geselecteerd"-filter actief bij openen
+    sat_zone_ping:  bool  = True   # ping-geluid als satelliet QTH-zone binnenkomt
 
     # ── Meldingen ─────────────────────────────────────────────────────────────
     k_alert:        int   = 4       # K-index drempel (0–9)
@@ -71,6 +77,10 @@ class AppConfig:
     band_alert:     int   = 40      # band-betrouwbaarheid % drempel
     band_alert_en:  bool  = True
     alert_max:      int   = 50     # max aantal meldingen (FIFO)
+
+    # ── Lay-out & vensterposities (panels + dialogen) ─────────────────────────
+    layouts:            dict  = field(default_factory=dict)
+    dialog_geometries:  dict  = field(default_factory=dict)
 
     # ── CAT ───────────────────────────────────────────────────────────────────
     cat_enabled:    bool  = False
@@ -106,6 +116,16 @@ def load_config() -> AppConfig:
 
 def save_config(cfg: AppConfig):
     try:
+        # Merge dialog_geometries en layouts vanuit het bestaande bestand:
+        # geometry.py en settings_dialog.py schrijven deze velden direct naar
+        # JSON; save_config mag ze niet overschrijven met lege dicts.
+        if os.path.exists(_CONFIG_FILE):
+            with open(_CONFIG_FILE, encoding="utf-8") as f:
+                existing = json.load(f)
+            if not cfg.dialog_geometries and existing.get("dialog_geometries"):
+                cfg.dialog_geometries = existing["dialog_geometries"]
+            if not cfg.layouts and existing.get("layouts"):
+                cfg.layouts = existing["layouts"]
         with open(_CONFIG_FILE, "w", encoding="utf-8") as f:
             json.dump(asdict(cfg), f, ensure_ascii=False, indent=2)
     except Exception as e:

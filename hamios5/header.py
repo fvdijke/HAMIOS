@@ -30,7 +30,7 @@ class HeaderBar(QWidget):
         layout.addWidget(bar)
 
         # Titel
-        title = QLabel("📡  HAMIOS v5.0")
+        title = QLabel("📡  HF Propagation & Atmosphere Monitor")
         title.setObjectName("title")
         title.setStyleSheet(
             f"color: {ACCENT}; font-size: 13pt; font-weight: bold; padding: 0 10px;")
@@ -125,10 +125,11 @@ class HeaderBar(QWidget):
             f"color: {TEXT_DIM}; font-size: 9pt; padding: 0 8px;")
 
         # Zomer/wintertijd toggle
-        self._dst_cb = QCheckBox("Z")
+        self._dst_cb = QCheckBox("DST")
         self._dst_cb.setChecked(_is_summer())
         self._dst_cb.setToolTip(
-            "Zomertijd (CEST, UTC+2) / Wintertijd (CET, UTC+1)\n"
+            "DST = Daylight Saving Time (zomertijd)\n"
+            "Aan = CEST (UTC+2)  ·  Uit = CET (UTC+1)\n"
             "Wordt automatisch bepaald maar kan handmatig overschreven worden.")
         self._dst_cb.setStyleSheet(
             f"QCheckBox {{ color: {TEXT_DIM}; font-size: 8pt; spacing: 3px; }}"
@@ -235,6 +236,7 @@ class HeaderBar(QWidget):
         """
         Toon radio-frequentie in de header.
           None      → 'Radio niet verbonden'  (grijs)
+          -1        → 'Radio offline'         (oranje — poort open, geen respons)
           0         → 'Verbonden  —'          (amber, freq onbekend)
           int > 0   → '14.225,000 kHz'        (amber vet)
         """
@@ -242,6 +244,11 @@ class HeaderBar(QWidget):
             self._freq_lbl.setText("Radio niet verbonden")
             self._freq_lbl.setStyleSheet(
                 f"color: {TEXT_DIM}; font-size: 9pt; font-family: Consolas;"
+                f" padding: 0 8px;")
+        elif freq_hz == -1:
+            self._freq_lbl.setText("Radio offline")
+            self._freq_lbl.setStyleSheet(
+                f"color: #FFA726; font-size: 9pt; font-family: Consolas;"
                 f" padding: 0 8px;")
         elif freq_hz == 0:
             self._freq_lbl.setText("Verbonden  —")

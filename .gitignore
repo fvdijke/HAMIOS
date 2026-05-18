@@ -4,19 +4,43 @@ __pycache__/
 *.pyo
 *.pyd
 *.egg-info/
-dist/
 build/
-*.spec
 
-# App data (lokaal, niet in repo)
-HAMIOS.ini
+# PyInstaller output — EXE distributed via GitHub Releases
+dist/
+
+# Runtime data — generated locally, not version controlled
+hamios_config.json
+hamios_layouts.json
+hamios_spy_stations.json
+hamios_tle.json
+hamios_eibi.csv
+hamios_eibi_meta.json
+hamios_history.json
 HAMIOS_history.csv
+HAMIOS.ini
+HAMIOS.log
+HAMIOS_cache.pkl
 worldmap_eq.jpg
+worldmap_eq_hires.jpg
 
-# IDE
+# Legacy v2–v4 files
+HAMIOS.py
+HAMIOS.exe
+HAMIOS.spec
+theme_manager.py
+langs/
+Images/
+README_*.md
+changelog.txt
+release_v5/
+backup_*.tar
+langs*.zip
+spy_stations.json
+
+# IDE / OS
 .vscode/
 *.code-workspace
-
-# Windows
+.claude/
 Thumbs.db
 Desktop.ini

@@ -1,208 +1,191 @@
-# 📡 HAMIOS v5.0
+# 📡 HF Propagation & Atmosphere Monitor
 
-**HF Propagation & DX Monitor for Windows — rebuilt from scratch in PySide6**
+**Real-time HF propagation and DX monitor for amateur radio operators — Windows 10/11**
 
-> v5.0 · May 2026 · by PA3FVD / Frank van Dijke · *Developed with Claude AI (Anthropic)*
+> v5.0 · May 2026 · PA3FVD / Frank van Dijke · *Developed with Claude AI (Anthropic)*
 
-HAMIOS gives amateur radio operators real-time insight into HF propagation conditions, solar weather, DX cluster activity, shortwave schedules, satellite tracking, lightning detection, and direct radio control — all wrapped in a modern, fully customisable dark-theme GUI.
-
----
-
-## ✨ What's new in v5.0
-
-- Complete rewrite from **tkinter/PIL → PySide6 / Qt6** — hardware-accelerated, smooth, scalable
-- 15 **freely floating, draggable and resizable panels** on a virtual desktop canvas
-- **CAT radio interface** — tune your transceiver directly from EIBI, FT8 or SpyStations
-- **Live Blitzortung lightning overlay** with QRN advice, distance alert, and proximity alarm
-- **Satellite tracker** — real-time position, orbit paths, footprint, EME support
-- **EIBI shortwave frequency browser** — searchable, sortable, one-click CAT tuning
-- **FT8 / digital mode frequency reference** — all bands, all modes
-- **SpyStations** — numbers station database with CAT tuning
-- **Band history charts** (CSV) — 90-day archive, all 11 HF bands
-- **Splash screen** with interactive "Continue" button
+[![Release](https://img.shields.io/github/v/release/fvdijke/HAMIOS?label=latest)](https://github.com/fvdijke/HAMIOS/releases/latest)
+[![Platform](https://img.shields.io/badge/platform-Windows%2010%2F11-blue)](https://github.com/fvdijke/HAMIOS/releases/latest)
+[![Python](https://img.shields.io/badge/python-3.10%2B-blue)](https://www.python.org)
 
 ---
 
-## 🖥️ Panels
+## Overview
 
-| Panel | Description |
-|-------|-------------|
-| 🌍 World Map | Equirectangular map with overlays |
-| ☀ Solar / Ionosphere | SFI, SSN, Kp, Bz, X-ray, solar wind |
-| 📶 HF Band Reliability | Signal quality bars for 11 HF bands |
-| 📻 Band Conditions | Colour-coded HF band overview |
-| 🌩 Storm Forecast | Geomagnetic storm probability |
-| 🗓 Band Opening Schedule | Band-by-band propagation times |
-| 📈 Band History | 90-day HF band chart (all 11 bands) |
-| ☀ Solar History | SFI / Kp trend chart |
-| 🧲 Kp 48h | Geomagnetic index chart |
-| ⚡ Bz 24h | IMF Bz chart |
-| ☢ X-ray 24h | Solar X-ray flux chart |
-| ⚡ Lightning | Blitzortung live feed · QRN level · proximity alert |
-| 🔔 Alerts | Aggregated solar/propagation/weather alerts |
-| 📡 Live DX Spots | DX cluster with band filter and heatmap |
-| 💡 Propagation Advice | AI-style analysis cards per band |
+HF Propagation & Atmosphere Monitor gives amateur radio operators real-time insight into HF propagation conditions, solar weather, DX cluster activity, shortwave schedules, satellite tracking, lightning detection, and direct radio control — all in a modern, fully customisable dark-theme GUI built with PySide6/Qt6.
 
 ---
 
-## 🗺️ Map Overlays *(toggleable from header)*
+## ✨ Features
 
-- **Day/night terminator** with smooth transition
-- **Gray line** (~1000 km twilight band)
-- **Aurora oval** (IGRF-2025 geomagnetic dipole model, K-index based)
-- **Sun position** with ray icon
-- **Moon position** with live phase icon and QTH horizon visibility (▲/▼)
-- **Maidenhead locator grid** (20° × 10°)
-- **Live DX spots** on map (callsigns, colour by band)
-- **Satellite positions**, orbit paths, footprints
-- **Lightning strike overlay** (Blitzortung, fade animation)
-- **Lightning radius circles** — red (alert threshold), orange (beep threshold)
-
----
-
-## 📡 CAT Radio Interface
-
-- Supports **Yaesu FT-950/2000/DX series** (8-digit FA command — confirmed working)
-- Supports **Kenwood / Elecraft** (11-digit FA command)
-- Supports **Icom CI-V** (binary BCD)
-- Direct tuning from **EIBI** (AM mode), **FT8/digital** (USB mode), **SpyStations**
-- **Serial monitor** with TX/RX log, manual command input, diagnostics
-- **Radio identification** via `ID;` command (shows model name)
-- Live **frequency display** in header from continuous FA polling
-- Configurable **serial parameters** in CAT window and Settings
+| Category | Description |
+|---|---|
+| ☀ **Solar / Ionosphere** | SFI, SSN, Kp, A-index, Bz, solar wind, X-ray class — colour-coded with full parameter names |
+| 📶 **HF Band Reliability** | Signal quality bars for 11 HF bands (160m–6m), MUF/LUF, click to tune via CAT |
+| 📻 **Band Conditions** | Day/night conditions per band, 24h opening schedule heatmap |
+| 🌩 **Storm Forecast** | NOAA 3-day geomagnetic storm probability (G1–G4+) with HAM radio impact tooltips |
+| 📈 **Band / Solar History** | 90-day CSV archive, interactive 24h/7d/30d/1y range selector, K-index overlay |
+| 📡 **Live DX Spots** | Real-time DX cluster from DXWatch.com, band/continent filter, heatmap |
+| 💡 **Propagation Advice** | AI-style analysis cards per band |
+| 🌍 **World Map** | 4096×2048 map with toggleable overlays — auto-downloaded at first start |
+| 🛰 **Satellite Tracking** | TLE from CelesTrak, real-time position, orbit paths, footprint, QTH zone ping |
+| ⚡ **Lightning Detection** | Live Blitzortung.org feed, animated ripple rings, QRN advice, proximity alert |
+| 🔔 **Alerts** | Aggregated solar / propagation / weather / satellite alerts |
+| 📻 **EIBI Shortwave** | Searchable schedule, auto AM-mode CAT tuning |
+| 📡 **FT8 / Digital** | Reference table for FT8/FT4/WSPR/JS8Call and more |
+| 🕵 **SpyStations** | Numbers stations database with CAT tuning |
+| 📟 **CAT Interface** | Yaesu, Kenwood/Elecraft, Icom CI-V — live frequency display in header |
 
 ---
 
-## 🛰️ Satellite Tracker
+## 🗺️ Map Overlays
+
+Toggleable via the **🗺 Overlays** button in the header:
+
+- Day/night terminator with grayline band
+- Aurora oval (IGRF-2025 geomagnetic dipole model, K-index based)
+- Sun and Moon position with live phase icon and QTH horizon indicator (▲/▼)
+- Maidenhead locator grid (configurable font size)
+- Graticule (configurable 10° / 20° / 30° step)
+- Live DX spots with callsign labels
+- Satellite positions, orbit paths, footprints
+- Lightning strikes with animated ripple rings
+- Alert radius circles (warning + beep threshold)
+
+---
+
+## 🚀 Installation
+
+### Ready-to-use EXE (Windows, no Python needed)
+
+1. Download **[HAMIOS5.exe](https://github.com/fvdijke/HAMIOS/releases/latest)** from the latest release
+2. Place in an empty folder
+3. Run — the world map is **automatically downloaded** on first start (~1–4 MB)
+
+### From source
+
+```bash
+git clone https://github.com/fvdijke/HAMIOS.git
+cd HAMIOS
+pip install PySide6
+pip install pyserial websocket-client   # optional
+python HAMIOS5.py
+```
+
+### Dependencies
+
+| Package | Required | Purpose |
+|---|---|---|
+| PySide6 | ✅ Yes | GUI framework (Qt6) |
+| pyserial | Optional | CAT radio interface |
+| websocket-client | Optional | Live lightning detection |
+
+---
+
+## ⚙️ Configuration
+
+All settings are stored in `hamios_config.json` (auto-created on first run) and applied live without restart:
+
+- **Station** — callsign, QTH (lat/lon or Maidenhead), mode, power, antenna
+- **Map** — graticule step, Maidenhead / overlay font sizes, sun/moon icon sizes
+- **Lightning** — fade duration, alert radii, animation scale, beep settings
+- **Alerts** — K-index threshold, X-flare alert, satellite zone ping
+- **CAT** — serial port, radio type presets (FT-950, FT-817, TS-590, K3…)
+- **Layout** — save/load named profiles, snap-grid
+
+---
+
+## 📟 CAT Radio Interface
+
+Configure via **⚙ Settings → CAT**. Supports:
+
+- **Yaesu FT-950 / 2000 / DX series** — 8-digit FA command, default 38400 baud
+- **Yaesu FT-817 / 857 / 897** — FA command
+- **Kenwood / Elecraft** — 11-digit FA command
+- **Icom CI-V** — binary BCD protocol
+
+Live frequency displayed in the header bar. Click any frequency in the DX, EIBI, FT8, or SpyStations panel to tune directly.
+
+---
+
+## 🛰️ Satellite Tracking
 
 - TLE data from CelesTrak (Amateur, ISS, Weather, CubeSat)
-- Real-time position, orbit paths (past + future, each independently configurable)
-- **Footprint visualisation** — fills yellow (outside QTH), green (within range)
-- Polar footprint rendered as single QPainterPath (no alpha artefacts)
-- **"Geselecteerd" filter** — instantly show only your tracked satellites
-- Selections and filter state saved automatically
+- Real-time position, configurable past/future orbit paths
+- Footprint: yellow (QTH outside range) / green (QTH in range)
+- **Selection filter** — show only your selected satellites
+- **Zone ping** — ascending tone when a satellite enters your QTH zone, descending tone on exit
 
 ---
 
 ## ⚡ Lightning / QRN
 
-- Live WebSocket feed from **Blitzortung.org**
-- Smooth 20 fps animation with quadratic fade
-- **QRN level** based on strikes within 2000 km of QTH (not global count)
-- **Red radius circle** on map — header alert when storms are within threshold
-- **Orange radius circle** — configurable acoustic alert radius
-- **Geiger-counter tick sound** (2800 Hz / 5 ms) — Windows, configurable
-- QRN level changes forwarded to Alerts panel
+- Live WebSocket feed from Blitzortung.org
+- Animated ripple rings: central flash + 2 expanding rings (white → yellow → orange)
+- QRN level based on strikes within 2000 km of QTH
+- Configurable animation scale in **Settings → Lightning**
+- Header alert + acoustic tick when storms are within threshold distance
 
 ---
 
-## 🔊 EIBI & Digital Mode Frequencies
-
-- **EIBI shortwave schedules** — downloaded from eibispace.de, filtered by band/time/language
-- Auto-sets **AM mode** via CAT on EIBI click
-- **FT8 / FT4 / WSPR / JS8Call / MSK144 / Q65 / JT65 / JT9** reference table — 70 entries
-- Auto-sets **USB mode** via CAT on FT8 click
-- **SpyStations** — 8+ pre-loaded numbers stations with CAT tuning per frequency
-
----
-
-## ⚙️ Settings
-
-- **Station** — callsign, QTH (lat/lon/locator), mode, power, antenna
-- **Panels** — visibility toggle per panel
-- **Map** — overlay toggles (also accessible via header button), font sizes, snap grid
-- **Lightning** — enable/disable, fade, QRN radius, beep radius, update interval
-- **Alerts** — K-index threshold, X-flare alert, FIFO limit
-- **CAT** — port (auto-detected), baud, bits, parity, stop, radio type, CI-V address, presets
-- **Layout** — save/load named profiles, reset to default
-- **About** — dependency status, splash toggle
-
----
-
-## 🚀 Requirements
-
-| Package | Required | Install |
-|---------|----------|---------|
-| PySide6 | ✅ Yes | `pip install PySide6` |
-| pyserial | Optional | `pip install pyserial` (CAT interface) |
-| websocket-client | Optional | `pip install websocket-client` (lightning) |
-
-**Python 3.10+** · **Windows 10/11** (primary platform)
-
----
-
-## 📦 Installation
-
-```bash
-# Clone or download to a local folder
-git clone https://github.com/PA3FVD/HAMIOS.git
-cd HAMIOS
-
-# Install dependencies
-pip install -r requirements.txt
-
-# Run
-python HAMIOS5.py
-```
-
-Or simply double-click **`start.bat`** in the `HAMIOS5/` distribution folder.
-
----
-
-## 📁 File structure
+## 📁 File Structure
 
 ```
-HAMIOS5/
+HAMIOS/
 ├── HAMIOS5.py              ← Entry point
-├── start.bat               ← Windows launcher
-├── requirements.txt
-├── worldmap_eq.jpg         ← World map (required)
+├── HAMIOS5.spec            ← PyInstaller build spec
 ├── hamios.ico
 │
-├── hamios5/                ← Python package
-│   ├── mainwindow.py       ← HAMIOSMainWindow
-│   ├── mapview.py          ← Map + overlay layers
-│   ├── layers.py           ← Lightning / Satellite / DX layers
-│   ├── panels5.py          ← All floating panel widgets
-│   ├── charts.py           ← NOAA data manager + chart widgets
-│   ├── config.py           ← AppConfig dataclass
-│   ├── cat_interface.py    ← CAT serial protocol
-│   ├── cat_monitor.py      ← CAT serial monitor window
-│   ├── eibi_dialog.py      ← EIBI shortwave browser
-│   ├── ft8_dialog.py       ← FT8/digital frequency reference
-│   ├── sat_dialog.py       ← Satellite tracking dialog
-│   ├── spy_dialog.py       ← SpyStations dialog
-│   ├── settings_dialog.py  ← Settings dialog
-│   ├── geometry.py         ← Window geometry persistence
-│   ├── history.py          ← Band history CSV
-│   ├── theme.py            ← Dark theme + QSS
-│   └── ...
-│
-└── (auto-created on first run)
-    ├── hamios_config.json
-    ├── hamios_layouts.json
-    ├── HAMIOS_history.csv
-    └── hamios_tle.json
+└── hamios5/                ← Python package
+    ├── mainwindow.py       ← Main window + panel layout
+    ├── mapview.py          ← Hardware-accelerated map (4096×2048)
+    ├── layers.py           ← Lightning / Satellite / DX overlay layers
+    ├── panels5.py          ← All floating panel widgets
+    ├── charts.py           ← NOAA data manager + chart widgets
+    ├── config.py           ← AppConfig dataclass (JSON persistence)
+    ├── cat_interface.py    ← CAT serial protocol implementation
+    ├── cat_monitor.py      ← CAT terminal window
+    ├── settings_dialog.py  ← Settings dialog
+    ├── sat_dialog.py       ← Satellite tracking dialog
+    ├── spy_dialog.py       ← SpyStations dialog
+    ├── eibi_dialog.py      ← EIBI shortwave browser
+    ├── ft8_dialog.py       ← FT8/digital frequency reference
+    ├── help_dialog.py      ← Searchable help
+    └── theme.py            ← Dark theme constants
 ```
 
----
+Auto-created runtime files (not in repository):
 
-## 📜 Changelog
-
-See [`changelog_v5.txt`](changelog_v5.txt) for the full v5 change log.
-
----
-
-## 🙏 Credits
-
-- **Solar data** — NOAA SWPC (Space Weather Prediction Center)
-- **Lightning** — Blitzortung.org community network
-- **EIBI schedules** — eibispace.de (Eike Bierwirth)
-- **DX cluster** — DXWatch.com
-- **Satellite TLE** — CelesTrak (Dr. T.S. Kelso)
-- **World map** — NASA Blue Marble equirectangular
-- **Developed with** — Claude AI (Anthropic), PySide6, Python
+| File | Description |
+|---|---|
+| `hamios_config.json` | All settings, panel positions, CAT config |
+| `worldmap_eq.jpg` | Standard resolution world map (auto-downloaded) |
+| `worldmap_eq_hires.jpg` | 4K world map (auto-downloaded) |
+| `hamios_tle.json` | Satellite TLE data (refreshed from CelesTrak) |
+| `HAMIOS_history.csv` | 90-day band reliability history |
 
 ---
 
-*© 2026 Frank van Dijke (PA3FVD) · HAMIOS is open-source amateur radio software*
+## 🙏 Data Sources
+
+| Source | Data |
+|---|---|
+| [NOAA SWPC](https://www.swpc.noaa.gov/) | Solar data, K-index, Bz, X-ray, storm forecast |
+| [DXWatch.com](https://dxwatch.com/) | Live DX cluster |
+| [Blitzortung.org](https://www.blitzortung.org/) | Worldwide lightning detection (WebSocket) |
+| [eibispace.de](https://www.eibispace.de/) | EIBI shortwave schedules (Eike Bierwirth) |
+| [CelesTrak](https://celestrak.org/) | Satellite TLE data (Dr. T.S. Kelso) |
+| [Wikimedia Commons](https://commons.wikimedia.org/) | NASA Blue Marble world map |
+
+All connections use standard HTTPS/WebSocket. No personal data is transmitted.
+
+---
+
+## 🤝 Contributing
+
+Issues and pull requests are welcome. See [CONTRIBUTING.md](CONTRIBUTING.md).
+
+---
+
+*© 2026 Frank van Dijke (PA3FVD) · Open-source amateur radio software*
+*Developed with [Claude AI](https://claude.ai) (Anthropic) · PySide6 · Python 3.10+*
