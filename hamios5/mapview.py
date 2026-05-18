@@ -13,6 +13,10 @@ Lagen (z-volgorde):
   7  OverlayItems      — QTH-marker, GC-pad
 """
 
+import sys
+if __name__ == "__main__":
+    sys.exit("Start het programma via HAMIOS5.py, niet via mapview.py")
+
 import math
 import os
 import datetime
@@ -34,13 +38,24 @@ from PySide6.QtGui import (
 from .theme import ACCENT, TEXT_DIM, BG_ROOT
 from . import layers as _layers
 
-# Kaartbestand (gedeeld met v4)
+# Kaartbestanden
 from ._appdir import APP_DIR as _HERE
-MAP_FILE = os.path.join(_HERE, "worldmap_eq.jpg")
+MAP_FILE      = os.path.join(_HERE, "worldmap_eq.jpg")
+_HIRES_FILE   = os.path.join(_HERE, "worldmap_eq_hires.jpg")
 
-# Map dimensions (equirectangular, 2:1)
-MAP_W = 2048
-MAP_H = 1024
+# NASA Blue Marble 2004 December — bekende stabiele URL's (record 73909)
+# Wikimedia Commons — NASA Blue Marble (publiek domein, betrouwbare CDN)
+# Thumbnail-formaten: 1920px (~300KB) en 3840px (~1MB)
+_HIRES_URL = ("https://upload.wikimedia.org/wikipedia/commons/thumb/8/8f/"
+              "Whole_world_-_land_and_oceans_12000.jpg/"
+              "3840px-Whole_world_-_land_and_oceans_12000.jpg")
+_STD_URL   = ("https://upload.wikimedia.org/wikipedia/commons/thumb/8/8f/"
+              "Whole_world_-_land_and_oceans_12000.jpg/"
+              "1920px-Whole_world_-_land_and_oceans_12000.jpg")
+
+# Scene-afmetingen — 4096×2048 geeft 2× betere zoom dan de eerdere 2048×1024
+MAP_W = 4096
+MAP_H = 2048
 
 
 # ── Coördinaat-helpers ────────────────────────────────────────────────────────
@@ -63,48 +78,63 @@ def scene_to_latlon(x: float, y: float,
 
 # ── Overlay items ─────────────────────────────────────────────────────────────
 
+# ── Gemeenschappelijke kleuren voor graticule en Maidenhead ──────────────────
+_GRAT_LINE = QColor(80, 120, 170, 180)    # lijnkleur (vast)
+_GRAT_DASH = QColor(80, 120, 170, 140)    # lijnkleur (gestippeld Maidenhead)
+_GRAT_LBL  = QColor(255, 255, 255)        # labelkleur (beide) — wit, maximaal contrast
+
+
 class GraticuleItem(QGraphicsItem):
-    """Lat/lon rooster elke 30°, met graadlabels. z=0.5"""
+    """Lat/lon rooster met instelbare stap, met graadlabels. z=3.9 (boven nacht/aurora)"""
 
     def __init__(self):
         super().__init__()
-        self.setZValue(0.5)
+        self.setZValue(3.9)
         self._font_size = 8
+        self._step = 30
 
     def set_font_size(self, size: int):
         self._font_size = max(6, size)
+        self.update()
+
+    def set_step(self, step: int):
+        self._step = max(10, min(30, step))
         self.update()
 
     def boundingRect(self) -> QRectF:
         return QRectF(0, 0, MAP_W, MAP_H)
 
     def paint(self, painter: QPainter, option, widget=None):
-        pen = QPen(QColor(80, 120, 170, 180), 1.0)
-        lbl = QColor(180, 200, 220, 220)
+        pen = QPen(_GRAT_LINE, 1.0)
         f   = QFont("Segoe UI", self._font_size)
         painter.setFont(f)
         painter.setRenderHint(QPainter.Antialiasing, False)
-        for lat in range(-60, 90, 30):
+        fm   = painter.fontMetrics()
+        th   = fm.ascent() + fm.descent() + 2   # totale tekst-hoogte + marge
+        s = self._step
+        for lat in range(-90 + s, 90, s):
             y = (90 - lat) / 180 * MAP_H
             painter.setPen(pen)
             painter.drawLine(QPointF(0, y), QPointF(MAP_W, y))
-            painter.setPen(lbl)
-            painter.drawText(QPointF(3, y - 1), f"{lat:+d}°")
-        for lon in range(-150, 181, 30):
+            painter.setPen(_GRAT_LBL)
+            # Label altijd ONDER de lijn — nooit boven scene-rand afgeknipt
+            painter.drawText(QPointF(3, y + fm.ascent() + 2), f"{lat:+d}°")
+        for lon in range(-180 + s, 181, s):
             x = (lon + 180) / 360 * MAP_W
             painter.setPen(pen)
             painter.drawLine(QPointF(x, 0), QPointF(x, MAP_H))
-            if lon < 150:
-                painter.setPen(lbl)
-                painter.drawText(QPointF(x + 2, 11), f"{lon:+d}°")
+            if lon != 180:
+                painter.setPen(_GRAT_LBL)
+                # Longitude-label onder de bovenkant: baseline = th pixels van y=0
+                painter.drawText(QPointF(x + 2, th), f"{lon:+d}°")
 
 
 class MaidenheadItem(QGraphicsItem):
-    """Maidenhead locatorraster 20°×10° met 2-letter labels. z=0.6"""
+    """Maidenhead locatorraster 20°×10° met 2-letter labels. z=3.95 (boven nacht/aurora)"""
 
     def __init__(self):
         super().__init__()
-        self.setZValue(0.6)
+        self.setZValue(3.95)
         self._font_size = 8
 
     def set_font_size(self, size: int):
@@ -115,9 +145,7 @@ class MaidenheadItem(QGraphicsItem):
         return QRectF(0, 0, MAP_W, MAP_H)
 
     def paint(self, painter: QPainter, option, widget=None):
-        grid_clr = QColor(100, 160, 220, 140)
-        lbl_clr  = QColor(160, 210, 255, 200)
-        pen = QPen(grid_clr, 0.8, Qt.DashLine)
+        pen = QPen(_GRAT_DASH, 0.8, Qt.DashLine)
         painter.setPen(pen)
         f = QFont("Segoe UI", self._font_size)
         painter.setFont(f)
@@ -134,7 +162,10 @@ class MaidenheadItem(QGraphicsItem):
             painter.setPen(pen)
             painter.drawLine(QPointF(0, gy), QPointF(MAP_W, gy))
 
-        # Labels midden van elk veld
+        # Labels midden van elk veld — rect schaalt met fontgrootte
+        fm     = painter.fontMetrics()
+        half_w = max(fm.horizontalAdvance("WW") // 2 + 4, 16)
+        half_h = max((fm.ascent() + fm.descent()) // 2 + 2, 10)
         for lon_i in range(18):
             for lat_i in range(18):
                 lon_c = -180 + lon_i * 20 + 10
@@ -142,9 +173,9 @@ class MaidenheadItem(QGraphicsItem):
                 cx = (lon_c + 180) / 360 * MAP_W
                 cy = (90 - lat_c) / 180 * MAP_H
                 lbl = chr(ord('A') + lon_i) + chr(ord('A') + (17 - lat_i))
-                painter.setPen(lbl_clr)
+                painter.setPen(_GRAT_LBL)
                 painter.drawText(
-                    QRectF(cx - 14, cy - 7, 28, 14),
+                    QRectF(cx - half_w, cy - half_h, half_w * 2, half_h * 2),
                     Qt.AlignCenter, lbl)
 
 
@@ -170,7 +201,13 @@ class SunMarkerItem(QGraphicsItem):
     def __init__(self):
         super().__init__()
         self.setZValue(3.5)
+        self._r = 6   # kern-radius; stralen schalen mee
         self._update_position()
+
+    def set_size(self, px: int):
+        self._r = max(4, px // 4)
+        self.prepareGeometryChange()
+        self.update()
 
     def _update_position(self):
         lat, lon = _subsolar_point()
@@ -178,36 +215,42 @@ class SunMarkerItem(QGraphicsItem):
         self.setPos(pt)
 
     def boundingRect(self) -> QRectF:
-        return QRectF(-12, -12, 24, 24)
+        m = self._r * 2
+        return QRectF(-m, -m, m * 2, m * 2)
 
     def paint(self, painter: QPainter, option, widget=None):
         painter.setRenderHint(QPainter.Antialiasing)
-        # Stralen
+        r = self._r
         pen = QPen(QColor(255, 215, 0, 180), 1.2)
         painter.setPen(pen)
         painter.setBrush(Qt.NoBrush)
         for angle in range(0, 360, 45):
-            r = math.radians(angle)
-            cx, cy = math.cos(r), math.sin(r)
-            painter.drawLine(QPointF(8*cx, 8*cy), QPointF(11*cx, 11*cy))
-        # Zon-cirkel
+            a = math.radians(angle)
+            cx, cy = math.cos(a), math.sin(a)
+            painter.drawLine(QPointF((r+2)*cx, (r+2)*cy),
+                             QPointF((r+5)*cx, (r+5)*cy))
         painter.setBrush(QBrush(QColor(255, 215, 0)))
         painter.setPen(QPen(QColor(200, 160, 0), 1))
-        painter.drawEllipse(QPointF(0, 0), 6, 6)
+        painter.drawEllipse(QPointF(0, 0), r, r)
 
 
 class MoonMarkerItem(QGraphicsItem):
     """Maan-markering met maanfase-icoon en QTH-zichtbaarheid. z=3.7"""
 
-    _ICON_SIZE = 22
-
     def __init__(self):
         super().__init__()
         self.setZValue(3.7)
+        self._ICON_SIZE = 22
         self._icon: QImage | None = None
         self._elevation: float = 0.0   # graden boven/onder horizon t.o.v. QTH
         self._qth_lat: float = 52.0
         self._qth_lon: float = 5.0
+        self._update_position()
+
+    def set_size(self, px: int):
+        self._ICON_SIZE = max(8, px)
+        self._icon = None   # herrender bij volgende update
+        self.prepareGeometryChange()
         self._update_position()
 
     def set_qth(self, lat: float, lon: float):
@@ -442,31 +485,91 @@ class NightRenderWorker(QObject):
 # ── Kaart herinkleuring (v4-stijl) ───────────────────────────────────────────
 
 class _MapColorizeThread(QThread):
-    """Herinkleurt de NASA kaart naar v4-stijl (oceaan/land donkerblauw)."""
+    """Herinkleurt de NASA kaart naar v4-stijl (oceaan/land donkerblauw).
+    Verwerkt altijd op 2048×1024 voor snelheid, schaalt resultaat naar volledige grootte."""
     done = Signal(QPixmap)
 
-    _OCEAN = (27,  58,  92)   # donkerblauw
-    _LAND  = (45,  96, 128)   # blauwgrijs
+    _OCEAN = (27,  58,  92)
+    _LAND  = (45,  96, 128)
+    _PROC_W, _PROC_H = 2048, 1024   # vaste verwerkingsresolutie
 
     def __init__(self, source: QPixmap):
         super().__init__()
-        self._pix = source
+        self._pix    = source
+        self._out_w  = source.width()
+        self._out_h  = source.height()
 
     def run(self):
-        img    = self._pix.toImage().convertToFormat(QImage.Format_RGB32)
+        # Verklein naar verwerkingsresolutie voor snelheid
+        small  = self._pix.scaled(self._PROC_W, self._PROC_H,
+                                  Qt.IgnoreAspectRatio, Qt.SmoothTransformation)
+        img    = small.toImage().convertToFormat(QImage.Format_RGB32)
         W, H   = img.width(), img.height()
         ptr    = img.bits()
-        data   = bytearray(ptr)            # Format_RGB32 LE: B G R 0xFF per pixel
+        data   = bytearray(ptr)
         OR, OG, OB = self._OCEAN
         LR, LG, LB = self._LAND
         for i in range(0, len(data), 4):
             b, g, r = data[i], data[i+1], data[i+2]
-            if b > r + 15 and b > g:       # oceaan: blauw dominant
+            if b > r + 15 and b > g:
                 data[i], data[i+1], data[i+2] = OB, OG, OR
-            else:                           # land
+            else:
                 data[i], data[i+1], data[i+2] = LB, LG, LR
-        result = QImage(bytes(data), W, H, W * 4, QImage.Format_RGB32)
-        self.done.emit(QPixmap.fromImage(result))
+        result_small = QImage(bytes(data), W, H, W * 4, QImage.Format_RGB32)
+        # Schaal terug naar de originele bronresolutie
+        result_full  = QPixmap.fromImage(result_small).scaled(
+            self._out_w, self._out_h, Qt.IgnoreAspectRatio, Qt.SmoothTransformation)
+        self.done.emit(result_full)
+
+
+class _HiresDownloadThread(QThread):
+    """Download wereldkaart in achtergrond (hires of standaard)."""
+    done     = Signal()          # download geslaagd
+    progress = Signal(int, int)  # (bytes_ontvangen, totaal_bytes)  — 0,0 = onbekend
+    failed   = Signal()          # download mislukt
+
+    def __init__(self, url: str, dest: str, also_save_std: bool = False):
+        super().__init__()
+        self._url           = url
+        self._dest          = dest
+        self._also_save_std = also_save_std
+
+    _UA = "HAMIOS/5.0 (HF Propagation Monitor; contact PA3FVD)"
+
+    def run(self):
+        tmp = self._dest + ".tmp"
+        try:
+            import urllib.request
+            req = urllib.request.Request(self._url, headers={"User-Agent": self._UA})
+            with urllib.request.urlopen(req, timeout=30) as resp:
+                total     = int(resp.headers.get("Content-Length", -1))
+                received  = 0
+                with open(tmp, "wb") as f:
+                    while True:
+                        chunk = resp.read(65536)   # 64 KB blokken
+                        if not chunk:
+                            break
+                        f.write(chunk)
+                        received += len(chunk)
+                        self.progress.emit(received, total)
+            os.replace(tmp, self._dest)
+
+            # Sla ook standaard 2K versie op als die ontbreekt
+            if self._also_save_std and not os.path.exists(MAP_FILE):
+                try:
+                    from PySide6.QtGui import QImage
+                    img = QImage(self._dest)
+                    if not img.isNull():
+                        img.scaled(2048, 1024).save(MAP_FILE, "JPEG", 92)
+                except Exception:
+                    pass
+            self.done.emit()
+        except Exception:
+            try:
+                os.remove(tmp)
+            except OSError:
+                pass
+            self.failed.emit()
 
 
 # ── Hoofd MapView ──────────────────────────────────────────────────────────────
@@ -480,7 +583,9 @@ class MapView(QGraphicsView):
     - Reset: rechter klik
     """
 
-    gc_path_changed = Signal(float, float)   # lat, lon van klikpunt
+    gc_path_changed   = Signal(float, float)   # lat, lon van klikpunt
+    map_download_progress = Signal(str, int, int)  # (bestandsnaam, ontvangen, totaal)
+    map_download_done     = Signal(str)             # bestandsnaam klaar
 
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -574,23 +679,50 @@ class MapView(QGraphicsView):
 
     # ── Kaart laden ───────────────────────────────────────────────────────────
     def _load_base_map(self):
-        """Laad de NASA kaart als QPixmap en start v4-stijl herinkleuring."""
-        if os.path.exists(MAP_FILE):
-            pix = QPixmap(MAP_FILE).scaled(
-                MAP_W, MAP_H,
-                Qt.IgnoreAspectRatio, Qt.SmoothTransformation)
+        """Laad bestaande kaart. Geen download hier — zie download_missing_maps()."""
+        src = _HIRES_FILE if os.path.exists(_HIRES_FILE) else (
+              MAP_FILE    if os.path.exists(MAP_FILE)    else None)
+        if src:
+            pix = QPixmap(src).scaled(
+                MAP_W, MAP_H, Qt.IgnoreAspectRatio, Qt.SmoothTransformation)
         else:
             pix = QPixmap(MAP_W, MAP_H)
-            pix.fill(QColor(27, 58, 92))
+            pix.fill(QColor(27, 58, 92))   # oceaan-placeholder
         self._base_map.setPixmap(pix)
+        if src:
+            t = _MapColorizeThread(pix)
+            t.done.connect(self._base_map.setPixmap)
+            t.finished.connect(t.deleteLater)                  # cleanup NA run()
+            t.finished.connect(lambda th=t: self._threads.discard(th))
+            self._threads.add(t)
+            t.start()
 
-        # Herinkleuring naar v4-stijl in achtergrond
-        t = _MapColorizeThread(pix)
-        t.done.connect(self._base_map.setPixmap)
-        t.done.connect(t.deleteLater)
-        t.finished.connect(lambda: self._threads.discard(t))
-        self._threads.add(t)
-        t.start()
+    def download_missing_maps(self) -> list:
+        """Start downloads voor ontbrekende kaartbestanden.
+        Geeft lijst van gestarte _HiresDownloadThread's terug zodat
+        de aanroeper signals kan verbinden vóór de thread actief is."""
+        threads = []
+        hires_ok = os.path.exists(_HIRES_FILE)
+        std_ok   = os.path.exists(MAP_FILE)
+        if not hires_ok:
+            t = _HiresDownloadThread(_HIRES_URL, _HIRES_FILE,
+                                     also_save_std=not std_ok)
+            t.done.connect(self._load_base_map)
+            t.finished.connect(t.deleteLater)
+            t.finished.connect(lambda th=t: self._threads.discard(th))
+            self._threads.add(t)
+            threads.append(("hires", t))
+            if not std_ok:
+                # Zelfde thread kopieert std na afloop — ook worldmap bijwerken
+                threads.append(("worldmap", t))
+        elif not std_ok:
+            t = _HiresDownloadThread(_STD_URL, MAP_FILE)
+            t.done.connect(self._load_base_map)
+            t.finished.connect(t.deleteLater)
+            t.finished.connect(lambda th=t: self._threads.discard(th))
+            self._threads.add(t)
+            threads.append(("worldmap", t))
+        return threads
 
     # ── Nacht-overlay ─────────────────────────────────────────────────────────
     def _refresh_night(self):
@@ -644,15 +776,23 @@ class MapView(QGraphicsView):
         super().resizeEvent(event)
         self._fit_map()
 
+    def _fit_scale(self) -> float:
+        """Schaalfactor waarbij de hele kaart precies in de viewport past."""
+        vw = self.viewport().width()  or 1
+        vh = self.viewport().height() or 1
+        return min(vw / MAP_W, vh / MAP_H)
+
     def wheelEvent(self, event):
         factor = 1.15 if event.angleDelta().y() > 0 else 1 / 1.15
         self.scale(factor, factor)
-        # Begrens zoom
-        t = self.transform()
+        t  = self.transform()
         sx = t.m11()
-        if sx < 0.5:
+        fs = self._fit_scale()
+        if sx < fs:
+            # Verder uitzoomen dan fit-view: reset
             self.fitInView(QRectF(0, 0, MAP_W, MAP_H), Qt.KeepAspectRatio)
-        elif sx > 16:
+        elif sx > fs * 64:
+            # Max 64× de fit-schaal
             self.scale(1 / factor, 1 / factor)
 
     # ── Pan en klik ──────────────────────────────────────────────────────────
@@ -779,6 +919,18 @@ class MapView(QGraphicsView):
 
     def set_overlay_font_size(self, size: int):
         self._graticule.set_font_size(size)
+
+    def set_maidenhead_font_size(self, size: int):
+        self._maidenhead.set_font_size(size)
+
+    def set_grat_step(self, step: int):
+        self._graticule.set_step(step)
+
+    def set_sun_size(self, px: int):
+        self._sun_marker.set_size(px)
+
+    def set_moon_size(self, px: int):
+        self._moon_marker.set_size(px)
 
     def set_sat_font_size(self, size: int):
         self._sat_layer.set_overlay_font_size(size)

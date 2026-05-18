@@ -29,10 +29,12 @@ class _ResizeGrip(QWidget):
         self._panel = panel
         self._start_global: QPoint | None = None
         self._start_w = self._start_h = 0
+        self._resizing = False
         self.setFixedSize(self.SIZE, self.SIZE)
         self.setCursor(Qt.SizeFDiagCursor)
         self.setAttribute(Qt.WA_TransparentForMouseEvents, False)
         self.raise_()
+        self.hide()
 
     def paintEvent(self, event):
         p = QPainter(self)
@@ -49,6 +51,7 @@ class _ResizeGrip(QWidget):
 
     def mousePressEvent(self, event):
         if event.button() == Qt.LeftButton:
+            self._resizing = True
             self._start_global = event.globalPosition().toPoint()
             self._start_w = self._panel.width()
             self._start_h = self._panel.height()
@@ -68,6 +71,11 @@ class _ResizeGrip(QWidget):
                 max(120, round(self._panel.width()  / g) * g),
                 max(60,  round(self._panel.height() / g) * g))
             self._start_global = None
+            self._resizing = False
+            # Verberg grip als muis het paneel heeft verlaten
+            local = self._panel.mapFromGlobal(event.globalPosition().toPoint())
+            if not self._panel.rect().contains(local):
+                self.hide()
 
 
 # ── Titelbalk ─────────────────────────────────────────────────────────────────
@@ -214,6 +222,16 @@ class FloatingPanel(QWidget):
         self._grip.move(self.width()  - _ResizeGrip.SIZE,
                         self.height() - _ResizeGrip.SIZE)
         self._grip.raise_()
+
+    def enterEvent(self, event):
+        self._grip.show()
+        self._grip.raise_()
+        super().enterEvent(event)
+
+    def leaveEvent(self, event):
+        if not self._grip._resizing:
+            self._grip.hide()
+        super().leaveEvent(event)
 
     def mousePressEvent(self, event):
         """Breng paneel naar voor bij klik."""

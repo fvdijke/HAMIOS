@@ -264,7 +264,7 @@ class EibiDialog(QDialog):
         btn_dl.setFont(f8)
         btn_dl.clicked.connect(self._download)
         bot.addWidget(btn_dl)
-        btn_close = QPushButton("Sluiten")
+        btn_close = QPushButton("Sluiten"); btn_close.setObjectName("close")
         btn_close.setFont(f8)
         btn_close.clicked.connect(self.accept)
         bot.addWidget(btn_close)
@@ -478,6 +478,7 @@ class EibiDialog(QDialog):
             f"{n:,} van {len(self._all_rows):,} frequenties  ·  Bron: eibispace.de")
         self._status_lbl.setStyleSheet(f"color: {TEXT_DIM}; font-size: 8pt;")
 
-    def closeEvent(self, event):
+    def done(self, result):
+        """Overschrijf done() — wordt aangeroepen door accept(), reject() én X-knop."""
         save_geom(self, "EibiDialog")
-        super().closeEvent(event)
+        super().done(result)

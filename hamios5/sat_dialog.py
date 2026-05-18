@@ -112,7 +112,7 @@ class SatelliteDialog(QDialog):
     live_fp_changed   = Signal(set)            # geselecteerde footprints
 
     def __init__(self, sat_selected: list, sat_path: list,
-                 sat_fp: list = None, back_h: int = 1, fwd_h: int = 12,
+                 sat_fp: list = None, back_h: int = 1, fwd_h: int = 1,
                  filter_sel: bool = True, cfg=None, parent=None):
         super().__init__(parent)
         self._selected = set(sat_selected)
@@ -123,7 +123,7 @@ class SatelliteDialog(QDialog):
         self._cfg      = cfg          # voor auto-save bij sluiten
         self._tle_data: dict = {}
         self._cat_filter = "Alle"
-        self.setWindowTitle("🛰  Satellite Tracking — HAMIOS v5")
+        self.setWindowTitle("🛰  Satellite Tracking — HF Propagation & Atmosphere Monitor")
         self.setMinimumSize(580, 600)
         ck = make_checkmark_path()
         self.setStyleSheet(_QSS.replace("SAT_CHECKMARK", ck))
@@ -180,7 +180,7 @@ class SatelliteDialog(QDialog):
         # Vinkje: NIET in de exclusieve radiogroep — zelfstandig aan/uit
         self._sel_toggle = QCheckBox("Geselecteerd")
         self._sel_toggle.setFont(f8)
-        self._sel_toggle.setChecked(True)   # standaard: toon alleen geselecteerde
+        self._sel_toggle.setChecked(False)  # standaard: toon alle satellieten
         self._sel_toggle.setToolTip(
             "Aan: alleen geselecteerde satellieten\n"
             "Uit: alle satellieten (geselecteerde zijn aangevinkt)")
@@ -234,8 +234,8 @@ class SatelliteDialog(QDialog):
         btn_clear.clicked.connect(self._clear_all)
         btn_row.addWidget(btn_clear)
         btn_row.addStretch()
-        btn_ok     = QPushButton("OK");       btn_ok.setObjectName("ok")
-        btn_cancel = QPushButton("Annuleren")
+        btn_ok     = QPushButton("OK");         btn_ok.setObjectName("ok")
+        btn_cancel = QPushButton("Annuleren"); btn_cancel.setObjectName("cancel")
         btn_ok.setFont(f8b)
         btn_cancel.setFont(f8)
         btn_ok.clicked.connect(self._on_ok)
@@ -276,6 +276,14 @@ class SatelliteDialog(QDialog):
     def _on_sel_toggle(self, on: bool):
         """Toggle-knop: AAN = alleen geselecteerd, UIT = categorie-filter."""
         self._populate_tree()
+        # Onmiddellijk opslaan zodat de staat bewaard blijft
+        if self._cfg is not None:
+            self._cfg.sat_filter_sel = on
+            try:
+                from .config import save_config
+                save_config(self._cfg)
+            except Exception:
+                pass
 
     def _set_cat(self, cat: str):
         """Categorie-filter; schakelt de toggle-knop niet uit."""
@@ -399,30 +407,35 @@ class SatelliteDialog(QDialog):
         self.hours_changed.emit(self._back_spin.value(), self._fwd_spin.value())
 
     # ── Selectie uitlezen ─────────────────────────────────────────────────────
+    def _save_state(self):
+        """Sla alle instellingen op in cfg — wordt aangeroepen bij OK én bij sluiten."""
+        if self._cfg is None:
+            return
+        self._cfg.sat_selected   = list(self._selected)
+        self._cfg.sat_path       = list(self._path)
+        self._cfg.sat_fp         = list(self._fp)
+        self._cfg.sat_back_h     = self._back_spin.value()
+        self._cfg.sat_fwd_h      = self._fwd_spin.value()
+        self._cfg.sat_filter_sel = self._sel_toggle.isChecked()
+        try:
+            from .config import save_config
+            save_config(self._cfg)
+        except Exception:
+            pass
+
     def _on_ok(self):
         back_h = self._back_spin.value()
         fwd_h  = self._fwd_spin.value()
+        self._save_state()   # sla filterstand op vóór accept()
         self.selection_changed.emit(
             list(self._selected), list(self._path),
             list(self._fp), back_h, fwd_h)
         self.accept()
 
-    def closeEvent(self, event):
+    def done(self, result):
         save_geom(self, "SatelliteDialog")
-        # Auto-save selecties en filterstand naar cfg (ook bij sluiten via X)
-        if self._cfg is not None:
-            self._cfg.sat_selected  = list(self._selected)
-            self._cfg.sat_path      = list(self._path)
-            self._cfg.sat_fp        = list(self._fp)
-            self._cfg.sat_back_h    = self._back_spin.value()
-            self._cfg.sat_fwd_h     = self._fwd_spin.value()
-            self._cfg.sat_filter_sel = self._sel_toggle.isChecked()
-            try:
-                from .config import save_config
-                save_config(self._cfg)
-            except Exception:
-                pass
-        super().closeEvent(event)
+        self._save_state()
+        super().done(result)
 
     @property
     def tle_data(self) -> dict:

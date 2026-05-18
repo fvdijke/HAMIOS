@@ -47,13 +47,29 @@ def _save_cfg(data: dict):
 # ── Publieke API ──────────────────────────────────────────────────────────────
 
 def save_geom(widget, name: str):
-    """Sla geometrie op in hamios_config.json → dialog_geometries."""
+    """Sla geometrie op in hamios_config.json en in-memory AppConfig.
+
+    Twee-staps aanpak zodat save_config() de geometrie niet overschrijft:
+    1. Schrijf direct naar JSON (read-modify-write)
+    2. Update ook het in-memory cfg-object via de actieve QApplication
+    """
     g    = widget.geometry()
+    geom = [g.x(), g.y(), g.width(), g.height()]
+
+    # Stap 1: JSON bijwerken
     data = _load_cfg()
-    data.setdefault("dialog_geometries", {})[name] = [
-        g.x(), g.y(), g.width(), g.height()
-    ]
+    data.setdefault("dialog_geometries", {})[name] = geom
     _save_cfg(data)
+
+    # Stap 2: In-memory cfg bijwerken (via mainwindow als bereikbaar)
+    try:
+        from PySide6.QtWidgets import QApplication
+        for w in QApplication.topLevelWidgets():
+            if hasattr(w, "_cfg") and hasattr(w._cfg, "dialog_geometries"):
+                w._cfg.dialog_geometries[name] = geom
+                break
+    except Exception:
+        pass
 
 
 def restore_geom(widget, name: str):

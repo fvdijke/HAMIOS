@@ -206,7 +206,7 @@ class SettingsDialog(QDialog):
         self._debounce = QTimer(self)
         self._debounce.setSingleShot(True)
         self._debounce.timeout.connect(self._do_apply)
-        self.setWindowTitle("Instellingen — HAMIOS v5")
+        self.setWindowTitle("Instellingen — HF Propagation & Atmosphere Monitor")
         self.setMinimumSize(480, 480)
         _check_path = make_checkmark_path()
         dialog_qss  = _QSS.replace(
@@ -387,8 +387,6 @@ class SettingsDialog(QDialog):
         note_ov.setStyleSheet(f"color: {TEXT_DIM}; font-size: 7pt; font-style: italic;")
         v.addWidget(note_ov)
 
-        _section(v, "Layout")
-
         def row(lbl, widget):
             h = QHBoxLayout()
             l = QLabel(lbl); l.setFixedWidth(160)
@@ -397,10 +395,12 @@ class SettingsDialog(QDialog):
             h.addStretch()
             v.addLayout(h)
 
-        self._snap_cb = QComboBox()
-        for val in _GRIDS:
-            self._snap_cb.addItem(f"{val} px", val)
-        row("Snap-raster:", self._snap_cb)
+        _section(v, "Graticule")
+
+        self._grat_step_cb = QComboBox()
+        for lbl, val in [("10°", 10), ("20°", 20), ("30°", 30)]:
+            self._grat_step_cb.addItem(lbl, val)
+        row("Meridian-stap:", self._grat_step_cb)
 
         _section(v, "Overlay lettergroottes")
 
@@ -409,6 +409,12 @@ class SettingsDialog(QDialog):
         self._font_spin.setSuffix(" pt")
         self._font_spin.setFixedWidth(80)
         row("Graticule:", self._font_spin)
+
+        self._maid_font_spin = QSpinBox()
+        self._maid_font_spin.setRange(6, 72)
+        self._maid_font_spin.setSuffix(" pt")
+        self._maid_font_spin.setFixedWidth(80)
+        row("Maidenhead labels:", self._maid_font_spin)
 
         self._sat_font_spin = QSpinBox()
         self._sat_font_spin.setRange(6, 72)
@@ -428,18 +434,19 @@ class SettingsDialog(QDialog):
         self._dx_font_spin.setFixedWidth(80)
         row("DX spots (tabel):", self._dx_font_spin)
 
-        _section(v, "Layout acties")
-        btn_row = QHBoxLayout()
-        self._btn_reset  = QPushButton("Reset naar standaard")
-        self._btn_reset.setObjectName("danger")
-        btn_row.addWidget(self._btn_reset)
-        btn_row.addStretch()
-        v.addLayout(btn_row)
+        _section(v, "Icoontje groottes")
 
-        note = QLabel("Reset zet alle panelen terug naar de standaard positie/grootte.")
-        note.setStyleSheet(f"color: {TEXT_DIM}; font-size: 7pt;")
-        note.setWordWrap(True)
-        v.addWidget(note)
+        self._sun_size_spin = QSpinBox()
+        self._sun_size_spin.setRange(8, 64)
+        self._sun_size_spin.setSuffix(" px")
+        self._sun_size_spin.setFixedWidth(80)
+        row("Zon:", self._sun_size_spin)
+
+        self._moon_size_spin = QSpinBox()
+        self._moon_size_spin.setRange(8, 64)
+        self._moon_size_spin.setSuffix(" px")
+        self._moon_size_spin.setFixedWidth(80)
+        row("Maan:", self._moon_size_spin)
 
         v.addStretch()
         return w
@@ -509,6 +516,24 @@ class SettingsDialog(QDialog):
         h_beep.addStretch()
         v.addLayout(h_beep)
 
+        _section(v, "Animatie")
+
+        h_scale = QHBoxLayout()
+        h_scale.addWidget(QLabel("Ring-grootte:"))
+        self._lightn_anim_scale_spin = QDoubleSpinBox()
+        self._lightn_anim_scale_spin.setRange(0.5, 8.0)
+        self._lightn_anim_scale_spin.setSingleStep(0.5)
+        self._lightn_anim_scale_spin.setDecimals(1)
+        self._lightn_anim_scale_spin.setSuffix(" ×")
+        self._lightn_anim_scale_spin.setFixedWidth(80)
+        self._lightn_anim_scale_spin.setToolTip(
+            "Schaal van de uitdijende ring en stip bij een blikseminslag.\n"
+            "2.0 = standaard (aangepast aan hoge-res kaart).\n"
+            "Kleiner = subtielere animatie.  Groter = beter zichtbaar.")
+        h_scale.addWidget(self._lightn_anim_scale_spin)
+        h_scale.addStretch()
+        v.addLayout(h_scale)
+
         _section(v, "Prestaties")
         h3 = QHBoxLayout()
         h3.addWidget(QLabel("Update-interval (ms):"))
@@ -517,11 +542,21 @@ class SettingsDialog(QDialog):
         self._lightn_rate_spin.setSingleStep(100)
         self._lightn_rate_spin.setFixedWidth(80)
         self._lightn_rate_spin.setToolTip(
-            "Hoe vaak de bliksem-overlay wordt bijgewerkt.\n"
-            "Hoger = minder CPU-gebruik. 500ms is een goede standaard.")
+            "Hoe vaak de bliksem-overlay op de kaart wordt hertekend.\n"
+            "Lagere waarde = vloeiendere animatie, maar meer CPU.\n"
+            "Hogere waarde = minder CPU-gebruik, iets minder vloeiend.\n"
+            "Aanbevolen: 100–200 ms voor vloeiend,  500 ms voor normaal gebruik.")
         h3.addWidget(self._lightn_rate_spin)
         h3.addStretch()
         v.addLayout(h3)
+
+        note_rate = QLabel(
+            "100 ms = 10 fps (vloeiend, meer CPU)  ·  "
+            "500 ms = 2 fps (standaard)  ·  "
+            "2000 ms = zuinig")
+        note_rate.setStyleSheet(f"color: {TEXT_DIM}; font-size: 7pt;")
+        note_rate.setWordWrap(True)
+        v.addWidget(note_rate)
 
         v.addStretch()
         return w
@@ -583,6 +618,14 @@ class SettingsDialog(QDialog):
         h4.addStretch()
         v.addLayout(h4)
 
+        _section(v, "Satelliet")
+        self._sat_ping_cb = QCheckBox(
+            "Ping-geluid als satelliet de QTH-zone binnenkomt")
+        self._sat_ping_cb.setToolTip(
+            "Speelt een kort oplopend ping-geluid (880→1320 Hz) als een\n"
+            "geselecteerde satelliet binnen de footprint-afstand van uw QTH komt.")
+        v.addWidget(self._sat_ping_cb)
+
         v.addStretch()
         return w
 
@@ -605,7 +648,7 @@ class SettingsDialog(QDialog):
         _section(v, "CAT interface")
 
         self._cat_en = QCheckBox("CAT inschakelen")
-        self._cat_en.setToolTip("Verbindt HAMIOS met uw radio via seriële poort.")
+        self._cat_en.setToolTip("Verbindt het programma met uw radio via seriële poort.")
         v.addWidget(self._cat_en)
 
         self._cat_monitor_btn = QPushButton("📟  Seriële terminal openen")
@@ -688,7 +731,7 @@ class SettingsDialog(QDialog):
         preset_row = QHBoxLayout()
         preset_row.addWidget(QLabel("Preset:"))
         for label, rtype, baud, bits, par, stop in [
-            ("FT-950",  "Yaesu (FT-950/2000/DX/3000/5000)", 9600,  8, "Geen", "2"),
+            ("FT-950",  "Yaesu (FT-950/2000/DX/3000/5000)", 38400, 8, "Geen", "2"),
             ("FT-817",  "Yaesu (FT-817/857/897)",           9600,  8, "Geen", "1"),
             ("TS-590",  "Kenwood / Elecraft",               9600,  8, "Geen", "1"),
             ("K3/KX3",  "Kenwood / Elecraft",               38400, 8, "Geen", "1"),
@@ -804,7 +847,7 @@ class SettingsDialog(QDialog):
         f8 = QFont("Segoe UI", 8)
 
         _section(v, "Versie")
-        for txt in ["HAMIOS v5.0  ·  by Frank van Dijke",
+        for txt in ["HF Propagation & Atmosphere Monitor  ·  by Frank van Dijke",
                     "Developed with Claude AI  ·  PySide6 / Qt 6"]:
             lbl = QLabel(txt)
             lbl.setFont(f8)
@@ -881,6 +924,22 @@ class SettingsDialog(QDialog):
         v.setContentsMargins(12, 8, 12, 8)
         v.setSpacing(6)
         f8 = QFont("Segoe UI", 8)
+
+        # ── Snap-raster ───────────────────────────────────────────────────
+        _section(v, "Raster")
+
+        snap_row = QHBoxLayout()
+        snap_lbl = QLabel("Snap-raster:")
+        snap_lbl.setFont(f8)
+        snap_lbl.setFixedWidth(160)
+        self._snap_cb = QComboBox()
+        self._snap_cb.setFont(f8)
+        for val in _GRIDS:
+            self._snap_cb.addItem(f"{val} px", val)
+        snap_row.addWidget(snap_lbl)
+        snap_row.addWidget(self._snap_cb)
+        snap_row.addStretch()
+        v.addLayout(snap_row)
 
         # ── Standaard layout ──────────────────────────────────────────────
         _section(v, "Standaard layout")
@@ -1109,10 +1168,14 @@ class SettingsDialog(QDialog):
         self._cb_dxspots.setChecked(c.show_dx_spots)
         self._cb_locator.setChecked(getattr(c, "show_locator", False))
         _set_combo_data(self._snap_cb, c.snap_grid, _GRIDS[2])
+        _set_combo_data(self._grat_step_cb, getattr(c, "grat_step", 30), 30)
         self._font_spin.setValue(c.overlay_font_size)
+        self._maid_font_spin.setValue(getattr(c, "maidenhead_font_size", 8))
         self._sat_font_spin.setValue(getattr(c, "sat_font_size", 8))
         self._dx_map_font_spin.setValue(getattr(c, "dx_map_font_size", 7))
         self._dx_font_spin.setValue(getattr(c, "dx_font_size", 8))
+        self._sun_size_spin.setValue(getattr(c, "sun_icon_size", 24))
+        self._moon_size_spin.setValue(getattr(c, "moon_icon_size", 20))
 
         # Bliksem
         self._fade_spin.setValue(c.lightning_fade)
@@ -1121,6 +1184,7 @@ class SettingsDialog(QDialog):
         self._lightn_rate_spin.setValue(getattr(c, "lightning_rate", 500))
         self._lightn_beep_cb.setChecked(getattr(c, "lightning_beep", False))
         self._lightn_beep_r_spin.setValue(getattr(c, "lightning_beep_r", 0))
+        self._lightn_anim_scale_spin.setValue(getattr(c, "lightning_anim_scale", 2.0))
 
         # Meldingen
         self._k_en.setChecked(c.k_alert_en)
@@ -1129,6 +1193,7 @@ class SettingsDialog(QDialog):
         self._band_en.setChecked(c.band_alert_en)
         self._band_spin.setValue(c.band_alert)
         self._alert_max_spin.setValue(getattr(c, "alert_max", 50))
+        self._sat_ping_cb.setChecked(getattr(c, "sat_zone_ping", True))
 
         # Splash screen — alleen in About tab
         self._splash_about.setChecked(c.show_splash)
@@ -1149,9 +1214,6 @@ class SettingsDialog(QDialog):
             saved_type = CatInterface.RADIO_TYPES[0]
         _set_combo(self._cat_type, saved_type, CatInterface.RADIO_TYPES[0])
         self._cat_civ.setValue(int(getattr(c, "cat_civ_addr", 0x58)))
-
-        # Reset layout knop
-        self._btn_reset.clicked.connect(self._reset_layout)
 
         self._loading = False
         # Verbind alle controls na laden (voorkomt trigger tijdens init)
@@ -1180,14 +1242,19 @@ class SettingsDialog(QDialog):
             show_locator      = self._cb_locator.isChecked(),
             lightning_fade    = self._fade_spin.value(),
             lightning_radius  = self._lightn_radius_spin.value(),
-            lightning_rate    = self._lightn_rate_spin.value(),
-            lightning_beep    = self._lightn_beep_cb.isChecked(),
-            lightning_beep_r  = self._lightn_beep_r_spin.value(),
+            lightning_rate      = self._lightn_rate_spin.value(),
+            lightning_beep      = self._lightn_beep_cb.isChecked(),
+            lightning_beep_r    = self._lightn_beep_r_spin.value(),
+            lightning_anim_scale= self._lightn_anim_scale_spin.value(),
             snap_grid         = self._snap_cb.currentData(),
-            overlay_font_size = self._font_spin.value(),
+            grat_step         = self._grat_step_cb.currentData(),
+            overlay_font_size     = self._font_spin.value(),
+            maidenhead_font_size  = self._maid_font_spin.value(),
             sat_font_size     = self._sat_font_spin.value(),
             dx_map_font_size  = self._dx_map_font_spin.value(),
             dx_font_size      = self._dx_font_spin.value(),
+            sun_icon_size     = self._sun_size_spin.value(),
+            moon_icon_size    = self._moon_size_spin.value(),
             show_splash       = self._splash_about.isChecked(),
             k_alert           = self._k_spin.value(),
             k_alert_en        = self._k_en.isChecked(),
@@ -1195,6 +1262,7 @@ class SettingsDialog(QDialog):
             band_alert        = self._band_spin.value(),
             band_alert_en     = self._band_en.isChecked(),
             alert_max         = self._alert_max_spin.value(),
+            sat_zone_ping     = self._sat_ping_cb.isChecked(),
             cat_enabled       = self._cat_en.isChecked(),
             cat_port          = _get_cat_port(self._cat_port),
             cat_baud          = self._cat_baud.currentData() or 4800,
@@ -1263,7 +1331,7 @@ class SettingsDialog(QDialog):
                    self._xflare_en, self._band_en,
                    self._day_auto_cb,
                    self._cat_en, self._cat_rtscts, self._cat_dtr, self._cat_rts,
-                   self._cb_lightn_en, self._lightn_beep_cb]:
+                   self._cb_lightn_en, self._lightn_beep_cb, self._sat_ping_cb]:
             cb.toggled.connect(lambda: self._live(0))
         # Synchroniseer de twee bliksem-checkboxes (Kaart ↔ Bliksem tab)
         self._cb_lightn.toggled.connect(
@@ -1290,11 +1358,13 @@ class SettingsDialog(QDialog):
         for spin in [self._lat_spin, self._lon_spin, self._k_spin,
                      self._band_spin, self._alert_max_spin, self._fade_spin,
                      self._lightn_radius_spin, self._lightn_rate_spin,
-                   self._lightn_beep_r_spin,
-                     self._font_spin, self._sat_font_spin,
+                     self._lightn_beep_r_spin, self._lightn_anim_scale_spin,
+                     self._font_spin, self._maid_font_spin, self._sat_font_spin,
                      self._dx_map_font_spin, self._dx_font_spin,
+                     self._sun_size_spin, self._moon_size_spin,
                      self._cat_civ]:
             spin.valueChanged.connect(lambda: self._live(400))
+        self._grat_step_cb.currentIndexChanged.connect(lambda: self._live(0))
 
     def _open_cat_monitor_from_settings(self):
         """Open CAT monitor venster vanuit de instellingen."""

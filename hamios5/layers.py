@@ -21,7 +21,7 @@ from PySide6.QtGui import QColor, QPainter, QPen, QBrush, QFont
 from PySide6.QtWidgets import QGraphicsItem
 
 # Kaartafmetingen (moet overeenkomen met mapview.py)
-MAP_W, MAP_H = 2048, 1024
+MAP_W, MAP_H = 4096, 2048
 
 
 def _play_tick():
@@ -31,6 +31,28 @@ def _play_tick():
         winsound.Beep(2800, 5)
     except Exception:
         pass
+
+
+def _play_sat_enter():
+    """Één hoge ping: satelliet komt QTH-zone binnen."""
+    try:
+        import winsound
+        winsound.Beep(1400, 180)
+    except Exception:
+        pass
+
+
+def _play_sat_exit():
+    """Één lage ping: satelliet verlaat QTH-zone."""
+    try:
+        import winsound
+        winsound.Beep(600, 180)
+    except Exception:
+        pass
+
+
+class _SatSignaller(QObject):
+    zone_changed = Signal(str, bool)   # (naam, in_zone)
 
 from ._appdir import APP_DIR as _HERE
 _TLE_CACHE = os.path.join(_HERE, "hamios_tle.json")
@@ -269,6 +291,7 @@ class LightningLayer(QGraphicsItem):
         self._flashes: list  = []  # (x, y, t_mono)  korte ring
         self._lock = threading.Lock()
         self.fade_seconds = 600
+        self._anim_scale = 2.0    # schaal voor ring en stip (default 2.0 voor MAP_W=4096)
         self._cfg = None   # AppConfig — voor piepje-instellingen
 
         self._worker = LightningWorker()
@@ -312,6 +335,10 @@ class LightningLayer(QGraphicsItem):
 
     def set_fade_seconds(self, secs: int):
         self.fade_seconds = max(30, int(secs))
+
+    def set_anim_scale(self, scale: float):
+        """Schaal voor ring-diameter en stip-grootte (1.0 = origineel, 2.0 = dubbel)."""
+        self._anim_scale = max(0.5, min(8.0, float(scale)))
 
     def _on_strike(self, lat: float, lon: float):
         pt  = _xy(lat, lon)
@@ -373,6 +400,7 @@ class LightningLayer(QGraphicsItem):
         painter.setRenderHint(QPainter.Antialiasing)
         painter.setPen(Qt.NoPen)
 
+        sc = self._anim_scale
         for x, y, t in strikes:
             age = now - t
             f   = max(0.0, 1.0 - age / self.fade_seconds)
@@ -383,23 +411,45 @@ class LightningLayer(QGraphicsItem):
             else:
                 r, g, b = int(150 + 105*f), int(60 + 60*f), 0
             r, g, b = int(r*f), int(g*f), int(b*f)
-            sz = max(1.5, 1.5 + 2.5*f)
+            sz = max(1.0, (1.5 + 2.5*f) * sc)
             painter.setBrush(QBrush(QColor(r, g, b, int(220*f))))
             painter.drawEllipse(QPointF(x, y), sz, sz)
 
-        # Uitdijende ring — 4 seconden, kubische afname voor smooth fade
+        # Uitdijende ringen — helder wit → geel → oranje, lineaire fade
+        _RING_DUR = 5.0   # 5 seconden zodat ringen goed zichtbaar blijven
         painter.setBrush(Qt.NoBrush)
-        _RING_DUR = 4.0
         for x, y, t in flashes:
             age = now - t
             if age >= _RING_DUR:
                 continue
-            f   = (1.0 - age / _RING_DUR) ** 2   # kwadratische afname
-            sz  = 4 + age * 18                    # snel uitdijen: 4→76 px in 4s
-            alpha = int(200 * f)
-            c   = QColor(255, int(220 * f + 35), 0, alpha)
-            painter.setPen(QPen(c, max(0.5, 1.5 * f)))
-            painter.drawEllipse(QPointF(x, y), sz, sz)
+
+            # ── Korte centrale flits (eerste 0.3s) ───────────────────────────
+            if age < 0.3:
+                ff = 1.0 - age / 0.3
+                painter.setPen(Qt.NoPen)
+                painter.setBrush(QBrush(QColor(255, 255, 255, int(240 * ff))))
+                painter.drawEllipse(QPointF(x, y), 6 * sc * ff, 6 * sc * ff)
+                painter.setBrush(Qt.NoBrush)
+
+            # ── Ring 1: primaire ring (snel, heller) ──────────────────────────
+            f1  = max(0.0, 1.0 - age / _RING_DUR)           # lineaire fade
+            sz1 = (8 + age * 22) * sc
+            lw1 = max(1.5, 3.5 * f1 * sc)
+            r1  = int(255 * min(1.0, age * 4))               # wit → geel aan het begin
+            g1  = int(200 * f1)
+            c1  = QColor(255, g1, r1 // 4, int(230 * f1))
+            painter.setPen(QPen(c1, lw1))
+            painter.drawEllipse(QPointF(x, y), sz1, sz1)
+
+            # ── Ring 2: vertraagde ring (0.5s later, iets groter) ────────────
+            age2 = age - 0.5
+            if 0.0 <= age2 < _RING_DUR:
+                f2  = max(0.0, 1.0 - age2 / _RING_DUR)
+                sz2 = (8 + age2 * 22) * sc
+                lw2 = max(1.0, 2.0 * f2 * sc)
+                c2  = QColor(255, int(140 * f2), 0, int(160 * f2))
+                painter.setPen(QPen(c2, lw2))
+                painter.drawEllipse(QPointF(x, y), sz2, sz2)
 
 
 # ── Lightning Radius Layer ────────────────────────────────────────────────────
@@ -504,7 +554,10 @@ class SatelliteLayer(QGraphicsItem):
         self._overlay_font_size: int = 8
         self._positions: dict[str, tuple] = {}
         self._paths:     dict[str, tuple] = {}
-        self._lock = threading.Lock()
+        self._ping_enabled: bool = True
+        self._sig = _SatSignaller()
+        self._lock      = threading.Lock()
+        self._calc_lock = threading.Lock()
 
         self._pos_timer  = QTimer()
         self._pos_timer.timeout.connect(lambda: threading.Thread(
@@ -543,6 +596,13 @@ class SatelliteLayer(QGraphicsItem):
             self._qth_lon = lon
         self.update()
 
+    @property
+    def zone_changed(self) -> Signal:
+        return self._sig.zone_changed
+
+    def set_ping_enabled(self, on: bool):
+        self._ping_enabled = on
+
     def set_overlay_font_size(self, size: int):
         self._overlay_font_size = max(6, size)
         self.update()
@@ -553,18 +613,23 @@ class SatelliteLayer(QGraphicsItem):
         threading.Thread(target=self._calc_paths, daemon=True).start()
 
     def _calc_positions(self):
-        with self._lock:
-            sel = set(self._selected)
-            tle = dict(self._tle)
-        pos = {}
-        for name in sel:
-            if name in tle:
-                r = _sgp4_latlon(*tle[name])
-                if r:
-                    pos[name] = r
-        with self._lock:
-            self._positions = pos
-        self.update()
+        if not self._calc_lock.acquire(blocking=False):
+            return   # al bezig in een andere thread — sla over
+        try:
+            with self._lock:
+                sel = set(self._selected)
+                tle = dict(self._tle)
+            pos = {}
+            for name in sel:
+                if name in tle:
+                    r = _sgp4_latlon(*tle[name])
+                    if r:
+                        pos[name] = r
+            with self._lock:
+                self._positions = pos
+            self.update()
+        finally:
+            self._calc_lock.release()
 
     def _calc_paths(self):
         with self._lock:
@@ -623,17 +688,21 @@ class SatelliteLayer(QGraphicsItem):
                 pt = _xy(lat, lon)
                 painter.setRenderHint(QPainter.Antialiasing)
                 _draw_sat_icon(painter, pt, color)
-                # Label rechts naast het icoon
-                short = name.split("(")[0].strip()[:14]
+                # Label gecentreerd onder het icoon
+                short = name.split("(")[0].strip()[:16]
                 lbl_font = QFont("Segoe UI", self._overlay_font_size)
                 lbl_font.setBold(True)
                 painter.setFont(lbl_font)
+                fm     = painter.fontMetrics()
+                tw     = fm.horizontalAdvance(short)
+                lbl_x  = pt.x() - tw / 2          # horizontaal gecentreerd
+                lbl_y  = pt.y() + 8 + self._overlay_font_size  # schaal met fontgrootte
                 # Schaduw
-                painter.setPen(QColor(0, 0, 0, 160))
-                painter.drawText(pt + QPointF(18, 5), short)
+                painter.setPen(QColor(0, 0, 0, 180))
+                painter.drawText(QPointF(lbl_x + 1, lbl_y + 1), short)
                 # Tekst
                 painter.setPen(color.lighter(150))
-                painter.drawText(pt + QPointF(17, 4), short)
+                painter.drawText(QPointF(lbl_x, lbl_y), short)
 
 
 def _qth_in_footprint(sat_lat: float, sat_lon: float,
@@ -711,7 +780,7 @@ def _draw_footprint(painter: QPainter, sat_lat: float, sat_lon: float,
     dist_south = 90.0 + sat_lat   # hoekafstand naar zuidpool
     has_polar  = False
 
-    # ── Polygoon (altijd, ook bij poolsatellieten) ────────────────────────────
+    # ── Polygoon — azimuth-parameterisatie (normaal geval) ───────────────────
     N = 72
     sat_lat_r = math.radians(sat_lat)
     sat_lon_r = math.radians(sat_lon)
@@ -733,41 +802,48 @@ def _draw_footprint(painter: QPainter, sat_lat: float, sat_lon: float,
         pts.append(QPointF((glon + 180) / 360 * MAP_W,
                             (90 - glat) / 180 * MAP_H))
 
-    # ── Polaire kap + polygoon als één enkel pad ──────────────────────────────
-    # Alle drie dx-offsets worden gecombineerd tot één pad en in één enkele
-    # drawPath()-aanroep geteekend.  Zo is er GEEN meervoudige alpha-compositing
-    # over het kapgebied, ongeacht hoeveel offsets er zijn.
     from PySide6.QtGui import QPainterPath as _QPP
 
     painter.setPen(Qt.NoPen)
     painter.setBrush(QBrush(c_fill))
 
-    if dist_north < rho_deg:
-        has_polar = True
-        lat_full = 180.0 - rho_deg - sat_lat
-        yf = max(0.0, min(float(MAP_H) - 1, (90.0 - lat_full) / 180.0 * MAP_H))
-        # Begin met de poolkap-rechthoek, voeg alle drie polygoon-verschuivingen toe
-        combined = _QPP()
-        combined.addRect(QRectF(-2, -2, MAP_W + 4, yf + 2))
-        for dx in (-MAP_W, 0, MAP_W):
-            sub = _QPP()
-            sub.addPolygon(QPolygonF([QPointF(p.x() + dx, p.y()) for p in pts]))
-            sub.closeSubpath()
-            combined = combined.united(sub)
-        painter.drawPath(combined)
+    if dist_north < rho_deg or dist_south < rho_deg:
+        # ── Poolgeval: azimuth-polygoon + poolkap via QPainterPath.united() ───
+        # Probleem: bij az≈0° geeft atan2(0,negatief)=±π → ±180° lengtegraad-
+        # sprong → horizontale/diagonale lijnfout.
+        # Oplossing conform v4: poolkap-rechthoek ∪ alle drie dx-polygonen in
+        # één enkel pad (geen meervoudige alpha-compositing).
+        # De kaplijn wordt 8 px extra uitgebreid zodat punten net onder lat_full
+        # (met iets afwijkende lengtegraad) volledig worden bedekt.
+        north_pole = (dist_north < rho_deg)
+        has_polar  = True
 
-    elif dist_south < rho_deg:
-        has_polar = True
-        lat_full = rho_deg - 180.0 - sat_lat
-        yf = max(0.0, min(float(MAP_H) - 1, (90.0 - lat_full) / 180.0 * MAP_H))
+        if north_pole:
+            lat_full = 180.0 - rho_deg - sat_lat
+        else:
+            lat_full = rho_deg - 180.0 - sat_lat
+        yf = max(0.0, min(float(MAP_H) - 1,
+                          (90.0 - lat_full) / 180.0 * MAP_H))
+
+        MARGIN = 10   # px marge om near-pool punten met foute lengtegraad te dekken
+
         combined = _QPP()
-        combined.addRect(QRectF(-2, yf - 2, MAP_W + 4, MAP_H + 4))
+        if north_pole:
+            combined.addRect(QRectF(-2, -2, MAP_W + 4, yf + MARGIN))
+        else:
+            combined.addRect(QRectF(-2, yf - MARGIN, MAP_W + 4, MAP_H + 4))
+
+        from PySide6.QtGui import QPolygonF as _QPolyF
         for dx in (-MAP_W, 0, MAP_W):
             sub = _QPP()
-            sub.addPolygon(QPolygonF([QPointF(p.x() + dx, p.y()) for p in pts]))
+            sub.addPolygon(_QPolyF(
+                [QPointF(p.x() + dx, p.y()) for p in pts]))
             sub.closeSubpath()
             combined = combined.united(sub)
+
+        painter.setPen(QPen(c_line, 1.0))
         painter.drawPath(combined)
+        painter.setPen(Qt.NoPen)
 
     else:
         # Normaal geval: alleen polygoon met rand

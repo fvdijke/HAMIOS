@@ -36,6 +36,7 @@ from . import history as _history
 from .spy_dialog import SpyStationsDialog
 from .eibi_dialog import EibiDialog
 from .ft8_dialog import Ft8Dialog
+from .help_dialog import HelpDialog
 from . import cat_interface as _cat_mod
 
 # Pad naar layouts-bestand (gedeeld met v4)
@@ -161,7 +162,7 @@ class HAMIOSMainWindow(QMainWindow):
 
     def __init__(self):
         super().__init__()
-        self.setWindowTitle("HAMIOS v5.0  —  HF Propagation & DX Monitor")
+        self.setWindowTitle("HF Propagation & Atmosphere Monitor")
         self.setMinimumSize(900, 600)
         # Initiële grootte en centrering — begrensd tot beschikbaar schermgebied
         from PySide6.QtWidgets import QApplication as _QApp
@@ -304,6 +305,7 @@ class HAMIOSMainWindow(QMainWindow):
         self._header.btn_eibi.clicked.connect(self._open_eibi_dialog)
         self._header.btn_ft8.clicked.connect(self._open_ft8_dialog)
         self._header.btn_overlay.clicked.connect(self._open_overlay_menu)
+        self._header.btn_help.clicked.connect(self._open_help)
         self._header.btn_settings.clicked.connect(self._open_settings)
 
 
@@ -417,6 +419,9 @@ class HAMIOSMainWindow(QMainWindow):
         self._sat_zone_timer.start(30_000)
         QTimer.singleShot(5000, self._check_sat_zone)
 
+        # Satelliet QTH-zone state (lazy-init in _check_sat_zone)
+        self._sat_zone_prev: dict[str, bool] = {}
+
         # Onweer-straal controle elke 10s
         self._lightning_alert_timer = QTimer(self)
         self._lightning_alert_timer.timeout.connect(self._check_lightning_proximity)
@@ -454,9 +459,15 @@ class HAMIOSMainWindow(QMainWindow):
         self.set_qth(cfg.qth_lat, cfg.qth_lon)
         self._map_view.set_lightning_fade(cfg.lightning_fade)
         self._map_view.set_lightning_visible(cfg.show_lightning)
-        self._map_view.set_lightning_radius(int(getattr(cfg, "lightning_radius", 0)))
-        self._map_view.set_lightning_beep_radius(int(getattr(cfg, "lightning_beep_r", 0)))
+        # Radius-cirkels alleen tonen als bliksem ingeschakeld is
+        _lon = cfg.show_lightning
+        self._map_view.set_lightning_radius(
+            int(getattr(cfg, "lightning_radius", 0)) if _lon else 0)
+        self._map_view.set_lightning_beep_radius(
+            int(getattr(cfg, "lightning_beep_r", 0)) if _lon else 0)
         self._map_view._lightning.set_cfg(cfg)
+        self._map_view._lightning.set_anim_scale(
+            getattr(cfg, "lightning_anim_scale", 2.0))
         rate = int(getattr(cfg, "lightning_rate", 500))
         self._map_view._lightning._timer.setInterval(max(100, rate))
         self._map_view.set_dx_spots_visible(cfg.show_dx_spots)
@@ -467,6 +478,10 @@ class HAMIOSMainWindow(QMainWindow):
         self._map_view.set_moon_visible(cfg.show_moon)
         self._map_view.set_locator_visible(getattr(cfg, "show_locator", False))
         self._map_view.set_overlay_font_size(cfg.overlay_font_size)
+        self._map_view.set_maidenhead_font_size(getattr(cfg, "maidenhead_font_size", 8))
+        self._map_view.set_grat_step(getattr(cfg, "grat_step", 30))
+        self._map_view.set_sun_size(getattr(cfg, "sun_icon_size", 24))
+        self._map_view.set_moon_size(getattr(cfg, "moon_icon_size", 20))
         self._map_view.set_sat_font_size(getattr(cfg, "sat_font_size", 8))
         self._map_view.set_dx_map_font_size(getattr(cfg, "dx_map_font_size", 7))
 
@@ -491,9 +506,7 @@ class HAMIOSMainWindow(QMainWindow):
             _cat_mod.set_instance(self._cat)
             was_connected = self._cat.connected
             if getattr(cfg, "cat_enabled", False) and not self._cat.connected:
-                ok, _ = self._cat.connect()
-                if ok and not was_connected:
-                    self._open_cat_monitor()
+                self._cat.connect()
             elif not getattr(cfg, "cat_enabled", False) and self._cat.connected:
                 self._cat.disconnect()
             self._update_cat_button()
@@ -561,22 +574,31 @@ class HAMIOSMainWindow(QMainWindow):
         c = self._cfg
         self.set_qth(c.qth_lat, c.qth_lon)
         self._map_view.set_overlay_font_size(c.overlay_font_size)
+        self._map_view.set_maidenhead_font_size(getattr(c, "maidenhead_font_size", 8))
+        self._map_view.set_grat_step(getattr(c, "grat_step", 30))
+        self._map_view.set_sun_size(getattr(c, "sun_icon_size", 24))
+        self._map_view.set_moon_size(getattr(c, "moon_icon_size", 20))
         self._map_view.set_sat_font_size(getattr(c, "sat_font_size", 8))
         self._map_view.set_dx_map_font_size(getattr(c, "dx_map_font_size", 7))
         if hasattr(self, "_dx_spots_widget"):
             self._dx_spots_widget.set_font_size(c.dx_font_size)
         self._map_view.set_lightning_fade(c.lightning_fade)
         self._map_view.set_lightning_visible(c.show_lightning)
-        self._map_view.set_lightning_radius(int(getattr(c, "lightning_radius", 0)))
-        self._map_view.set_lightning_beep_radius(int(getattr(c, "lightning_beep_r", 0)))
+        _lon = c.show_lightning
+        self._map_view.set_lightning_radius(
+            int(getattr(c, "lightning_radius", 0)) if _lon else 0)
+        self._map_view.set_lightning_beep_radius(
+            int(getattr(c, "lightning_beep_r", 0)) if _lon else 0)
         self._map_view._lightning.set_cfg(c)
+        self._map_view._lightning.set_anim_scale(
+            getattr(c, "lightning_anim_scale", 2.0))
         self._map_view.set_dx_spots_visible(c.show_dx_spots)
         self._map_view._night.setVisible(c.show_night)
         # Uren altijd instellen (ook als geen satellites geselecteerd)
         self._map_view.set_satellite_hours(
             getattr(c, "sat_back_h", 1),
             getattr(c, "sat_fwd_h",  12))
-        self._map_view.set_satellite_visible(bool(c.sat_selected))
+        self._map_view.set_satellite_visible(getattr(c, "sat_visible", False))
         if c.sat_selected:
             self._map_view.set_satellite_selection(set(c.sat_selected))
             self._map_view.set_satellite_paths(set(c.sat_path))
@@ -589,6 +611,10 @@ class HAMIOSMainWindow(QMainWindow):
         self._map_view.set_locator_visible(getattr(c, "show_locator", False))
 
     # ── Instellingen-dialoog ──────────────────────────────────────────────────
+    def _open_help(self):
+        dlg = HelpDialog(self)
+        dlg.exec()
+
     def _open_spy_dialog(self):
         dlg = SpyStationsDialog(self)
         dlg.exec()
@@ -625,8 +651,15 @@ class HAMIOSMainWindow(QMainWindow):
             ("Aurora",                 "show_aurora",    lambda v: self._map_view.set_aurora_visible(v)),
             ("Zon-positie",            "show_sun",       lambda v: self._map_view.set_sun_visible(v)),
             ("Maan-positie",           "show_moon",      lambda v: self._map_view.set_moon_visible(v)),
-            ("Bliksem",                "show_lightning",  lambda v: self._map_view.set_lightning_visible(v)),
+            ("Bliksem",                "show_lightning",  lambda v: (
+                self._map_view.set_lightning_visible(v),
+                self._map_view.set_lightning_radius(
+                    int(getattr(self._cfg, "lightning_radius", 0)) if v else 0),
+                self._map_view.set_lightning_beep_radius(
+                    int(getattr(self._cfg, "lightning_beep_r", 0)) if v else 0),
+            )),
             ("DX spots",               "show_dx_spots",  lambda v: self._map_view.set_dx_spots_visible(v)),
+            ("Satellieten",            "sat_visible",    lambda v: self._map_view.set_satellite_visible(v)),
             ("Maidenhead locatorraster","show_locator",  lambda v: self._map_view.set_locator_visible(v)),
         ]
         for label, attr, fn in overlays:
@@ -671,12 +704,13 @@ class HAMIOSMainWindow(QMainWindow):
     def _on_cat_freq(self, freq_hz):
         """Ontvang frequentie-update van poll-thread (altijd op GUI-thread).
 
-        freq_hz == None  → verbinding verbroken
-        freq_hz == 0     → verbonden maar freq onbekend (?; respons)
+        freq_hz == None  → verbinding verbroken (poort dicht / exception)
+        freq_hz == -1    → radio offline (poort open maar geen respons)
+        freq_hz == 0     → verbonden maar freq onbekend (tijdelijk)
         freq_hz > 0      → geldige frequentie
         """
         self._header.set_radio_freq(freq_hz)
-        # Verbindingsstatus: None = echt verbroken, anders = verbonden
+        # Verbindingsstatus: None = echt verbroken, anders = poort nog open
         self._header.set_cat_connected(freq_hz is not None)
 
     def _open_settings(self):
@@ -724,26 +758,59 @@ class HAMIOSMainWindow(QMainWindow):
         save_config(self._cfg)
 
     def _check_sat_zone(self):
-        """Check welke satellieten zichtbaar zijn van het QTH en update alerts."""
+        """Check welke satellieten zichtbaar zijn van het QTH, speel ping bij overgang."""
         if not hasattr(self, "_alerts_widget"):
             return
-        import math
-        from .layers import _qth_in_footprint
+        import math, time as _time
+        from .layers import _qth_in_footprint, _play_sat_enter, _play_sat_exit
+        import threading as _th
         R = 6371.0
-        visible = []
         sat = self._map_view._sat_layer
         with sat._lock:
             pos = dict(sat._positions)
             ql  = sat._qth_lat
             qn  = sat._qth_lon
-        # Controleer ALLE bekende posities (niet alleen geselecteerde)
+        ping_en = getattr(self._cfg, "sat_zone_ping", True)
+
+        # Lazy-init per-satelliet state (leeft op mainwindow, niet in de rekenthread)
+        if not hasattr(self, "_sat_zone_prev"):
+            self._sat_zone_prev: dict[str, bool] = {}
+
+        visible = []
+        now = _time.monotonic()
         for name, (lat, lon, alt) in pos.items():
-            if alt > 0:
-                rho = math.degrees(math.acos(min(1.0, R / (R + alt))))
-                if _qth_in_footprint(lat, lon, rho, ql, qn):
-                    elev = _sat_elevation(lat, lon, alt, ql, qn, R)
-                    short = name.split("(")[0].strip()[:20]
-                    visible.append(f"{short} ({elev:.0f}°)")
+            if alt <= 0:
+                continue
+            rho     = math.degrees(math.acos(min(1.0, R / (R + alt))))
+            in_zone = _qth_in_footprint(lat, lon, rho, ql, qn)
+            if in_zone:
+                elev  = _sat_elevation(lat, lon, alt, ql, qn, R)
+                short = name.split("(")[0].strip()[:20]
+                visible.append(f"{short} ({elev:.0f}°)")
+
+            was_in = self._sat_zone_prev.get(name)
+            if was_in is None:
+                # Eerste meting — state opslaan, geen ping
+                self._sat_zone_prev[name] = in_zone
+                continue
+            if in_zone != was_in:
+                self._sat_zone_prev[name] = in_zone
+                short = name.split("(")[0].strip()[:20]
+                # Alert
+                if hasattr(self, "_alerts_widget"):
+                    if in_zone:
+                        self._alerts_widget.add_alert(
+                            "🛰", f"{short} zichtbaar boven horizon",
+                            "#4FC3F7", "Satelliet QTH-zone")
+                    else:
+                        self._alerts_widget.add_alert(
+                            "🛰", f"{short} verlaat horizon",
+                            "#7080A0", "Satelliet QTH-zone")
+                # Ping — eenmalig in aparte thread
+                if ping_en:
+                    fn = _play_sat_enter if in_zone else _play_sat_exit
+                    _th.Thread(target=fn, daemon=True).start()
+
         self._alerts_widget.set_sat_zone(visible)
 
     def _check_lightning_proximity(self):
@@ -831,7 +898,7 @@ class HAMIOSMainWindow(QMainWindow):
             self._cfg.sat_path,
             getattr(self._cfg, "sat_fp",         []),
             getattr(self._cfg, "sat_back_h",      1),
-            getattr(self._cfg, "sat_fwd_h",      12),
+            getattr(self._cfg, "sat_fwd_h",       2),
             filter_sel=getattr(self._cfg, "sat_filter_sel", True),
             cfg=self._cfg,
             parent=self)
@@ -840,7 +907,9 @@ class HAMIOSMainWindow(QMainWindow):
         dlg.live_pos_changed.connect(self._map_view.set_satellite_selection)
         dlg.live_path_changed.connect(self._map_view.set_satellite_paths)
         dlg.live_fp_changed.connect(self._map_view.set_satellite_footprints)
-        if dlg.exec():
+
+        # Laad TLE alvast in de kaartlaag zodat live-selectie direct werkt
+        def _load_tle_now():
             tle = {}
             for sats in dlg.tle_data.values():
                 for row in sats:
@@ -848,6 +917,11 @@ class HAMIOSMainWindow(QMainWindow):
                         tle[row[0]] = (row[1], row[2])
             if tle:
                 self._map_view.update_tle(tle)
+        from PySide6.QtCore import QTimer as _QT
+        _QT.singleShot(200, _load_tle_now)
+
+        if dlg.exec():
+            _load_tle_now()   # ook na OK om eventueel verse TLE te verwerken
 
     def _on_sat_selection(self, selected: list, path: list,
                           fp: list, back_h: int, fwd_h: int):

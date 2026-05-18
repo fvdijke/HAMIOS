@@ -692,15 +692,50 @@ class XrayChart(QWidget):
 class SolarParamsWidget(QWidget):
     """Actuele solar-parameters (SFI, SSN, Kp, Bz, solar wind)."""
 
+    # (label, data_key, eenheid, volledige_naam, tooltip, hint_fn)
     _ROWS = [
-        ("SFI",       "sfi",        "Solar Flux Index",   "≥150 = hoog"),
-        ("SSN",       "ssn",        "Zonnevlek-getal",    ""),
-        ("K-index",   "k_index",    "Planetaire K-index", "≥5 = storm"),
-        ("A-index",   "a_index",    "A-index",            "≥30 = actief"),
-        ("X-straling","xray",       "GOES X-ray klasse",  ""),
-        ("SW speed",  "sw_speed",   "Solar wind km/s",    ""),
-        ("SW dichth.","sw_density", "Protonen/cm³",        ""),
-        ("Bz (GSM)",  "sw_bz",      "Zuidwaarts = storm", "<0 = risico"),
+        ("SFI",        "sfi",        "SFU",    "Solar Flux Index",
+         "Solar Flux Index — maat voor ionisatie. Hoog = betere HF-condities.",
+         lambda v: ("laag",   "#4FC3F7") if v < 100 else
+                   ("matig",  "#FFF176") if v < 150 else
+                   ("hoog",   "#FFA726") if v < 200 else
+                   ("zeer hoog","#EF5350")),
+        ("SSN",        "ssn",        "",       "Sunspot Number",
+         "Zonnevlek-getal (Sunspot Number).",
+         lambda v: ("min.",   TEXT_DIM)  if v < 20  else
+                   ("laag",   "#4FC3F7") if v < 80  else
+                   ("matig",  "#FFF176") if v < 150 else
+                   ("hoog",   "#FFA726")),
+        ("K-index",    "k_index",    "(0–9)",  "Planetaire K-index",
+         "Planetaire K-index — geomagnetische activiteit.",
+         lambda v: ("rustig", "#4FC3F7") if v < 3 else
+                   ("actief", "#FFF176") if v < 5 else
+                   ("G1-storm","#FFA726") if v < 7 else
+                   ("G3+ storm","#EF5350")),
+        ("A-index",    "a_index",    "",       "A-index (daggemiddelde)",
+         "Dagelijks geomagnetisch gemiddelde.",
+         lambda v: ("rustig", "#4FC3F7") if v < 15 else
+                   ("actief", "#FFF176") if v < 30 else
+                   ("stormig","#FFA726") if v < 50 else
+                   ("ernstig","#EF5350")),
+        ("X-straling", "xray",       "",       "GOES X-ray klasse",
+         "GOES X-ray klasse. M/X = zonnevlam.",
+         None),
+        ("SW snelheid","sw_speed",   "km/s",   "Zonnewind snelheid",
+         "Snelheid van de zonnewind.",
+         lambda v: ("normaal","#4FC3F7") if v < 500 else
+                   ("verhoogd","#FFA726") if v < 700 else
+                   ("snel",   "#EF5350")),
+        ("SW dichth.", "sw_density", "p/cm³",  "Zonnewind dichtheid",
+         "Dichtheid van de zonnewind (protonen/cm3).",
+         lambda v: ("laag",   "#4FC3F7") if v < 5  else
+                   ("normaal","TEXT_H1") if v < 15 else
+                   ("hoog",   "#FFA726")),
+        ("Bz (GSM)",   "sw_bz",      "nT",     "IMF Bz-component",
+         "IMF Bz-component. Negatief = verhoogd stormsrisico.",
+         lambda v: ("positief","#4FC3F7") if v >= 0 else
+                   ("negatief","#FF8A65") if v > -10 else
+                   ("storm!",  "#EF5350")),
     ]
 
     def __init__(self, parent=None):
@@ -714,33 +749,77 @@ class SolarParamsWidget(QWidget):
         layout.setVerticalSpacing(2)
         layout.setHorizontalSpacing(8)
 
-        f_lbl = QFont("Segoe UI", 8)
-        f_val = QFont("Segoe UI", 9)
-        f_val.setBold(True)
+        f_lbl  = QFont("Segoe UI", 8)
+        f_val  = QFont("Segoe UI", 9); f_val.setBold(True)
+        f_unit = QFont("Segoe UI", 7)
+        f_hint = QFont("Segoe UI", 7)
 
-        for row, (name, key, tooltip, hint) in enumerate(self._ROWS):
+        self._hint_labels: dict[str, QLabel] = {}
+
+        for row, (name, key, unit, full_name, tooltip, _) in enumerate(self._ROWS):
+            # Kolom 0: parameternaam
             lbl = QLabel(name + ":")
             lbl.setFont(f_lbl)
             lbl.setStyleSheet(f"color: {TEXT_DIM};")
-            lbl.setToolTip(f"{tooltip}\n{hint}" if hint else tooltip)
+            lbl.setToolTip(tooltip)
             layout.addWidget(lbl, row, 0)
 
+            # Kolom 1: waarde (vet)
             val = QLabel("—")
             val.setFont(f_val)
             val.setStyleSheet(f"color: {TEXT_H1};")
             layout.addWidget(val, row, 1)
             self._labels[key] = val
 
-        layout.setColumnStretch(1, 1)
+            # Kolom 2: eenheid (klein, grijs)
+            unit_lbl = QLabel(unit)
+            unit_lbl.setFont(f_unit)
+            unit_lbl.setStyleSheet(f"color: {TEXT_DIM};")
+            layout.addWidget(unit_lbl, row, 2)
+
+            # Kolom 3: dynamische duiding (klein, gekleurde tekst)
+            hint_lbl = QLabel("")
+            hint_lbl.setFont(f_hint)
+            hint_lbl.setStyleSheet(f"color: {TEXT_DIM};")
+            layout.addWidget(hint_lbl, row, 3)
+            self._hint_labels[key] = hint_lbl
+
+            # Kolom 4: volledige naam van de parameter
+            full_lbl = QLabel(full_name)
+            full_lbl.setFont(f_unit)
+            full_lbl.setStyleSheet(f"color: {TEXT_DIM}; font-style: italic;")
+            full_lbl.setToolTip(tooltip)
+            layout.addWidget(full_lbl, row, 4)
+
+        layout.setColumnStretch(1, 0)
+        layout.setColumnStretch(3, 0)
+        layout.setColumnStretch(4, 1)
 
 
     def set_data(self, data: dict):
-        for key, lbl in self._labels.items():
-            val = str(data.get(key, "—"))
-            lbl.setText(val)
-            # Kleur op basis van waarde
-            color = self._value_color(key, val)
-            lbl.setStyleSheet(f"color: {color};")
+        for name, key, unit, full_name, tooltip, hint_fn in self._ROWS:
+            raw = data.get(key, "—")
+            val = str(raw)
+            val_lbl  = self._labels.get(key)
+            hint_lbl = self._hint_labels.get(key)
+            if val_lbl:
+                val_lbl.setText(val)
+                val_lbl.setStyleSheet(f"color: {self._value_color(key, val)};")
+            if hint_lbl and hint_fn:
+                try:
+                    v = float(str(val).replace("+", "").replace("—", "nan"))
+                    if not math.isnan(v):
+                        result = hint_fn(v)
+                        if result:
+                            hint_lbl.setText(result[0])
+                            clr = result[1] if result[1] != "TEXT_H1" else TEXT_H1
+                            hint_lbl.setStyleSheet(f"color: {clr}; font-size: 7pt;")
+                        else:
+                            hint_lbl.setText("")
+                    else:
+                        hint_lbl.setText("")
+                except (ValueError, TypeError):
+                    hint_lbl.setText("")
 
 
     @staticmethod

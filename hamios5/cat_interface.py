@@ -153,25 +153,45 @@ class CatInterface:
     def _stop_polling(self):
         self._polling = False
 
+    # Na dit aantal achtereenvolgende lege responsen → radio offline melden
+    _OFFLINE_THRESHOLD = 3
+
     def _poll_loop(self):
         """
         Retourwaarden van _read_freq_hz_raw:
-          int > 0  → geldige frequentie
+          int > 0  → geldige frequentie van radio
           0        → verbonden maar geen geldige respons (?; of leeg)
           None     → verbindingsfout (exception / poort dicht)
+
+        Als _OFFLINE_THRESHOLD opeenvolgende lege responsen binnenkomen, wordt
+        de freq_callback aangeroepen met -1 ('Radio offline') in plaats van 0.
         """
         import time
+        no_response_count = 0
         while self._polling and self.connected:
             freq = self._read_freq_hz_raw()
             cb = self._freq_callback
             if freq is None:
-                # Echte disconnect
+                # Poort dicht / exception → echte disconnect
                 if cb:
                     try: cb(None)
                     except Exception: pass
                 break
+            elif freq == 0:
+                # Geen bruikbare respons van radio
+                no_response_count += 1
+                if no_response_count >= self._OFFLINE_THRESHOLD:
+                    # Radio reageert niet → meld als offline (-1)
+                    if cb:
+                        try: cb(-1)
+                        except Exception: pass
+                else:
+                    if cb:
+                        try: cb(0)
+                        except Exception: pass
             else:
-                # freq >= 0 : doorsturen (0 = verbonden maar freq onbekend)
+                # Geldige frequentie ontvangen → reset teller
+                no_response_count = 0
                 if cb:
                     try: cb(freq)
                     except Exception: pass

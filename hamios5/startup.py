@@ -28,17 +28,13 @@ _EIBI_CSV  = os.path.join(APP_DIR, "hamios_eibi.csv")
 _EIBI_META = os.path.join(APP_DIR, "hamios_eibi_meta.json")
 
 
-# ── Standaard SpyStations (beknopt — wordt aangevuld bij eerste gebruik) ──────
-_DEFAULT_SPY = [
-    {"name": "UVB-76 (The Buzzer)", "country": "Rusland",
-     "frequencies": ["4625 kHz"], "mode": "AM/USB", "active": True,
-     "schedule": "Continu 24/7.",
-     "info": "Continu brom-toon, af en toe onderbroken door Russische spraakberichten."},
-    {"name": "HM01", "country": "Noord-Korea",
-     "frequencies": ["6400 kHz", "9100 kHz"], "mode": "AM", "active": True,
-     "schedule": "Ma/Wo/Vr 00:00 UTC.",
-     "info": "Koreaanse vrouwenstem met nummers, voorafgegaan door muziek."},
-]
+# ── Standaard SpyStations: importeer de volledige lijst uit spy_dialog ────────
+def _get_default_spy() -> list:
+    try:
+        from .spy_dialog import _DEFAULTS
+        return list(_DEFAULTS)
+    except Exception:
+        return []
 
 
 def check_files() -> tuple[list[str], list[str]]:
@@ -52,11 +48,9 @@ def check_files() -> tuple[list[str], list[str]]:
     warnings: list[str] = []
     errors:   list[str] = []
 
-    # ── Vereiste asset: wereldkaart ───────────────────────────────────────────
+    # ── Wereldkaart: waarschuwing (wordt automatisch gedownload door mapview) ───
     if not os.path.exists(_WORLDMAP):
-        errors.append(
-            f"Wereldkaart niet gevonden: {_WORLDMAP}\n"
-            "Plaats worldmap_eq.jpg in dezelfde map als HAMIOS5.exe (of HAMIOS5.py).")
+        warnings.append("Wereldkaart ontbreekt — wordt automatisch gedownload.")
 
     # ── Config: aanmaken als afwezig (defaults worden ingevuld door AppConfig) ─
     if not os.path.exists(_CONFIG):
@@ -70,9 +64,11 @@ def check_files() -> tuple[list[str], list[str]]:
     # ── SpyStations: aanmaken met standaardwaarden ───────────────────────────
     if not os.path.exists(_SPY):
         try:
+            spy_data = _get_default_spy()
             with open(_SPY, "w", encoding="utf-8") as f:
-                json.dump(_DEFAULT_SPY, f, ensure_ascii=False, indent=2)
-            warnings.append(f"SpyStations aangemaakt met standaardwaarden: {_SPY}")
+                json.dump(spy_data, f, ensure_ascii=False, indent=2)
+            warnings.append(
+                f"SpyStations aangemaakt met {len(spy_data)} stations: {_SPY}")
         except Exception as e:
             warnings.append(f"Kan SpyStations niet aanmaken: {e}")
 

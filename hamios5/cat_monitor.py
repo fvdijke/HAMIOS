@@ -16,13 +16,12 @@ import threading
 from PySide6.QtCore import Qt, QTimer
 from PySide6.QtGui import QFont, QColor, QTextCharFormat, QTextCursor
 from PySide6.QtWidgets import (
-    QWidget, QVBoxLayout, QHBoxLayout, QGridLayout,
+    QWidget, QVBoxLayout, QHBoxLayout,
     QLabel, QPushButton, QTextEdit, QLineEdit,
-    QFrame, QCheckBox, QComboBox, QSpinBox
+    QFrame, QCheckBox
 )
 
 from .theme import ACCENT, BG_PANEL, BG_SURFACE, BG_ROOT, TEXT_H1, TEXT_DIM, BORDER
-from .cat_interface import CatInterface
 from .geometry import save_geom, restore_geom
 
 _QSS = f"""
@@ -36,12 +35,12 @@ QTextEdit {{
     background: {BG_ROOT}; color: #C8C8C8;
     border: 1px solid {BORDER}; font-family: Consolas; font-size: 9pt;
 }}
-QLineEdit, QComboBox, QSpinBox {{
+QLineEdit {{
     background: {BG_ROOT}; color: {TEXT_H1};
     border: 1px solid {BORDER}; padding: 3px 5px; border-radius: 2px;
+    font-family: Consolas; font-size: 9pt;
 }}
-QLineEdit {{ font-family: Consolas; font-size: 9pt; }}
-QLineEdit:focus, QComboBox:focus, QSpinBox:focus {{ border-color: {ACCENT}; }}
+QLineEdit:focus {{ border-color: {ACCENT}; }}
 QLabel    {{ color: {TEXT_DIM}; font-size: 8pt; background: transparent; }}
 QCheckBox {{ color: {TEXT_H1}; font-size: 8pt; spacing: 5px; }}
 QPushButton {{
@@ -55,8 +54,6 @@ QPushButton#disconnect {{ background: #5A1010; color: #EF5350; border-color: #8B
 QPushButton#disconnect:hover {{ background: #8B1A1A; color: white; }}
 QPushButton#send   {{ background: {ACCENT}; color: {BG_ROOT}; font-weight: bold; }}
 QPushButton#send:hover {{ background: #E0C060; }}
-QPushButton#close  {{ background: {BG_PANEL}; color: {TEXT_DIM}; }}
-QPushButton#close:hover {{ background: #32373F; color: {TEXT_H1}; }}
 """
 
 _COL_TX   = "#C8A84B"
@@ -64,8 +61,8 @@ _COL_RX   = "#4CAF50"
 _COL_INFO = "#607080"
 _COL_ERR  = "#EF5350"
 
-_COMPACT_H = 330
-_FULL_H    = 600
+_COMPACT_H = 190   # status + terminal-toggle + sluit
+_FULL_H    = 480   # + terminal
 
 
 class CatMonitorWindow(QWidget):
@@ -77,13 +74,12 @@ class CatMonitorWindow(QWidget):
         self._queue: list[tuple[str, str]] = []
         self._qlock = threading.Lock()
 
-        self.setWindowTitle("📟  CAT — HAMIOS v5")
-        self.setMinimumWidth(500)
-        self.resize(540, _COMPACT_H)
+        self.setWindowTitle("📟  CAT — HF Propagation & Atmosphere Monitor")
+        self.setMinimumWidth(420)
+        self.resize(480, _COMPACT_H)
         restore_geom(self, "CatMonitorWindow")
         self.setStyleSheet(_QSS)
         self._build_ui()
-        self._load_params()
 
         self._cat._log_callback = self._queue_entry
 
@@ -151,84 +147,12 @@ class CatMonitorWindow(QWidget):
         cs.addLayout(info)
         root.addWidget(card_status)
 
-        # ── 2. Seriële parameters ─────────────────────────────────────────────
-        card_params = QFrame(); card_params.setObjectName("card")
-        cp = QVBoxLayout(card_params)
-        cp.setContentsMargins(12, 8, 12, 8); cp.setSpacing(5)
-        lbl_hdr = QLabel("Seriële parameters")
-        lbl_hdr.setStyleSheet(f"color:{ACCENT}; font-weight:bold; font-size:8pt; background:transparent;")
-        cp.addWidget(lbl_hdr)
+        # Seriële parameters staan in ⚙ Instellingen → CAT
+        note = QLabel("Seriële instellingen: ⚙  Instellingen → CAT")
+        note.setStyleSheet(f"color:{TEXT_DIM}; font-size:7pt; padding: 0 2px;")
+        root.addWidget(note)
 
-        grid = QGridLayout(); grid.setSpacing(5)
-
-        # Rij 0: Poort
-        self._p_port = QComboBox(); self._p_port.setEditable(True)
-        self._p_port.setFont(f8c)
-        self._p_port.lineEdit().setPlaceholderText("COM3  of  /dev/ttyUSB0")
-        btn_scan = QPushButton("↺"); btn_scan.setFixedWidth(26)
-        btn_scan.setToolTip("Poorten opnieuw scannen")
-        btn_scan.clicked.connect(self._scan_ports)
-        port_row = QHBoxLayout(); port_row.setSpacing(3)
-        port_row.addWidget(self._p_port, 1)
-        port_row.addWidget(btn_scan)
-        grid.addWidget(QLabel("Poort:"),  0, 0)
-        port_w = QWidget(); port_w.setLayout(port_row)
-        grid.addWidget(port_w, 0, 1, 1, 3)
-
-        # Rij 1: Baud + Radiotype
-        self._p_baud = QComboBox()
-        for b in [300, 600, 1200, 2400, 4800, 9600, 19200, 38400, 57600, 115200]:
-            self._p_baud.addItem(str(b), b)
-        grid.addWidget(QLabel("Baudrate:"), 1, 0)
-        grid.addWidget(self._p_baud,        1, 1)
-        self._p_type = QComboBox()
-        self._p_type.addItems(CatInterface.RADIO_TYPES)
-        grid.addWidget(QLabel("Radiotype:"), 1, 2)
-        grid.addWidget(self._p_type,         1, 3)
-
-        # Rij 2: Bits + Pariteit + Stop
-        self._p_bits = QComboBox()
-        for b in [7, 8]: self._p_bits.addItem(str(b), b)
-        self._p_parity = QComboBox()
-        self._p_parity.addItems(["Geen", "Even", "Odd"])
-        self._p_stop = QComboBox()
-        self._p_stop.addItems(["1", "2"])
-        grid.addWidget(QLabel("Databits:"), 2, 0); grid.addWidget(self._p_bits,   2, 1)
-        grid.addWidget(QLabel("Pariteit:"), 2, 2); grid.addWidget(self._p_parity, 2, 3)
-        # stopbits in rij 3 linksonder
-        grid.addWidget(QLabel("Stopbits:"), 3, 0); grid.addWidget(self._p_stop,   3, 1)
-
-        # Rij 3: CI-V adres (rechts) + checkboxes
-        self._p_civ = QSpinBox()
-        self._p_civ.setRange(0, 255)
-        self._p_civ.setDisplayIntegerBase(16)
-        self._p_civ.setPrefix("0x")
-        self._p_civ.setFixedWidth(72)
-        self._p_civ.setToolTip("Icom CI-V adres (hex)")
-        self._p_civ_lbl = QLabel("CI-V adres:")
-        grid.addWidget(self._p_civ_lbl, 3, 2)
-        grid.addWidget(self._p_civ,     3, 3)
-
-        # Rij 4: checkboxes
-        self._p_rtscts = QCheckBox("RTS/CTS")
-        self._p_dtr    = QCheckBox("DTR")
-        self._p_rts    = QCheckBox("RTS")
-        chk_row = QHBoxLayout()
-        for cb in [self._p_rtscts, self._p_dtr, self._p_rts]:
-            chk_row.addWidget(cb)
-        chk_row.addStretch()
-        chk_w = QWidget(); chk_w.setLayout(chk_row)
-        grid.addWidget(chk_w, 4, 0, 1, 4)
-
-        grid.setColumnStretch(1, 1); grid.setColumnStretch(3, 2)
-        cp.addLayout(grid)
-        root.addWidget(card_params)
-
-        # Toon/verberg CI-V adres afhankelijk van radiotype
-        self._p_type.currentTextChanged.connect(self._update_civ_vis)
-        self._update_civ_vis()
-
-        # ── 3. Terminal toggle ────────────────────────────────────────────────
+        # ── 2. Terminal toggle ────────────────────────────────────────────────
         toggle_row = QHBoxLayout()
         self._term_cb = QCheckBox("Seriële terminal tonen")
         self._term_cb.setFont(f8)
@@ -292,77 +216,10 @@ class CatMonitorWindow(QWidget):
         bot.addWidget(btn_close)
         root.addLayout(bot)
 
-    # ── Parameters laden / opslaan ────────────────────────────────────────────
-
-    def _scan_ports(self):
-        current = _get_port_text(self._p_port)
-        self._p_port.blockSignals(True)
-        self._p_port.clear()
-        try:
-            from serial.tools import list_ports
-            ports = sorted(list_ports.comports(), key=lambda p: p.device)
-            for p in ports:
-                label = f"{p.device}  —  {p.description}" if p.description else p.device
-                self._p_port.addItem(label, p.device)
-        except Exception:
-            pass
-        # Herstel
-        if current:
-            for i in range(self._p_port.count()):
-                if self._p_port.itemData(i) == current or \
-                        self._p_port.itemText(i).startswith(current + "  "):
-                    self._p_port.setCurrentIndex(i)
-                    self._p_port.blockSignals(False)
-                    return
-            self._p_port.setEditText(current)
-        self._p_port.blockSignals(False)
-
-    def _load_params(self):
-        """Vul de parameter-velden vanuit de huidige cfg."""
-        self._scan_ports()
-        cfg = self._cat._cfg
-        if not cfg:
-            return
-        _set_port(self._p_port, getattr(cfg, "cat_port", ""))
-        _set_combo_data(self._p_baud, getattr(cfg, "cat_baud", 9600), 9600)
-        _set_combo_data(self._p_bits, getattr(cfg, "cat_databits", 8), 8)
-        _set_combo_text(self._p_parity, getattr(cfg, "cat_parity", "Geen"), "Geen")
-        _set_combo_text(self._p_stop,   getattr(cfg, "cat_stopbits", "1"), "1")
-        _set_combo_text(self._p_type,   getattr(cfg, "cat_radio_type",
-                                                 CatInterface.RADIO_TYPES[0]),
-                        CatInterface.RADIO_TYPES[0])
-        self._p_civ.setValue(int(getattr(cfg, "cat_civ_addr", 0x58)))
-        self._p_rtscts.setChecked(getattr(cfg, "cat_rtscts", False))
-        self._p_dtr.setChecked(getattr(cfg, "cat_dtr", False))
-        self._p_rts.setChecked(getattr(cfg, "cat_rts", False))
-        self._update_civ_vis()
-
-    def _save_params_to_cfg(self):
-        """Schrijf widget-waarden terug naar cfg (voor connect en voor opslaan)."""
-        cfg = self._cat._cfg
-        if not cfg:
-            return
-        cfg.cat_port       = _get_port_text(self._p_port)
-        cfg.cat_baud       = self._p_baud.currentData() or 9600
-        cfg.cat_databits   = self._p_bits.currentData() or 8
-        cfg.cat_parity     = self._p_parity.currentText()
-        cfg.cat_stopbits   = self._p_stop.currentText()
-        cfg.cat_radio_type = self._p_type.currentText()
-        cfg.cat_civ_addr   = self._p_civ.value()
-        cfg.cat_rtscts     = self._p_rtscts.isChecked()
-        cfg.cat_dtr        = self._p_dtr.isChecked()
-        cfg.cat_rts        = self._p_rts.isChecked()
-        cfg.cat_enabled    = True   # als de gebruiker verbindt, zet enabled=True
-
-    def _update_civ_vis(self):
-        show = "Icom" in self._p_type.currentText()
-        self._p_civ.setVisible(show)
-        self._p_civ_lbl.setVisible(show)
-
     # ── Verbinden / verbreken ────────────────────────────────────────────────
 
     def _do_connect(self):
-        self._save_params_to_cfg()
+        """Verbind via de instellingen in ⚙ Instellingen → CAT."""
         ok, msg = self._cat.connect()
         if ok:
             self._log_info("Verbinding tot stand gebracht")
@@ -462,7 +319,6 @@ class CatMonitorWindow(QWidget):
 
     def _send_raw(self, cmd: str):
         if not self._cat.connected:
-            self._save_params_to_cfg()
             ok, err = self._cat.connect()
             if not ok:
                 self._queue_entry("ERR", f"Verbinden mislukt: {err}")
@@ -495,43 +351,3 @@ class CatMonitorWindow(QWidget):
             self._cat._log_callback = None
         super().closeEvent(event)
 
-
-# ── Hulpfuncties ─────────────────────────────────────────────────────────────
-
-def _get_port_text(cb: QComboBox) -> str:
-    data = cb.currentData()
-    if data and isinstance(data, str):
-        return data.strip()
-    txt = cb.currentText().strip()
-    return txt.split("  —  ")[0].strip() if "  —  " in txt else txt
-
-
-def _set_port(cb: QComboBox, port: str):
-    if not port:
-        return
-    for i in range(cb.count()):
-        if cb.itemData(i) == port or cb.itemText(i).startswith(port + "  "):
-            cb.setCurrentIndex(i)
-            return
-    cb.setEditText(port)
-
-
-def _set_combo_data(cb: QComboBox, value, default):
-    for i in range(cb.count()):
-        if cb.itemData(i) == value:
-            cb.setCurrentIndex(i)
-            return
-    for i in range(cb.count()):
-        if cb.itemData(i) == default:
-            cb.setCurrentIndex(i)
-            return
-
-
-def _set_combo_text(cb: QComboBox, value: str, default: str):
-    idx = cb.findText(value)
-    if idx >= 0:
-        cb.setCurrentIndex(idx)
-        return
-    idx = cb.findText(default)
-    if idx >= 0:
-        cb.setCurrentIndex(idx)
