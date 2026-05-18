@@ -7,11 +7,24 @@ import subprocess
 import sys
 
 # Pad naar het layouts-bestand
-_HERE         = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+from ._appdir import APP_DIR as _HERE
+# Legacy layouts-bestand (nog steeds gelezen voor achterwaartse compatibiliteit)
 _LAYOUTS_FILE = os.path.join(_HERE, "hamios_layouts.json")
+_CONFIG_FILE  = os.path.join(_HERE, "hamios_config.json")
 
 
 def _load_layouts() -> dict:
+    """Laad layouts — eerst uit config, dan uit legacy JSON."""
+    # Primair: hamios_config.json → "layouts"
+    try:
+        if os.path.exists(_CONFIG_FILE):
+            with open(_CONFIG_FILE, encoding="utf-8") as f:
+                data = json.load(f)
+            if data.get("layouts"):
+                return data["layouts"]
+    except Exception:
+        pass
+    # Fallback: legacy hamios_layouts.json
     try:
         if os.path.exists(_LAYOUTS_FILE):
             with open(_LAYOUTS_FILE, encoding="utf-8") as f:
@@ -22,6 +35,19 @@ def _load_layouts() -> dict:
 
 
 def _save_layouts(layouts: dict):
+    """Sla layouts op in hamios_config.json → 'layouts' EN legacy JSON."""
+    # Primair: config
+    try:
+        data = {}
+        if os.path.exists(_CONFIG_FILE):
+            with open(_CONFIG_FILE, encoding="utf-8") as f:
+                data = json.load(f)
+        data["layouts"] = layouts
+        with open(_CONFIG_FILE, "w", encoding="utf-8") as f:
+            json.dump(data, f, ensure_ascii=False, indent=2)
+    except Exception:
+        pass
+    # Secundair: legacy (voor v4-tools en scripts die het nog lezen)
     try:
         with open(_LAYOUTS_FILE, "w", encoding="utf-8") as f:
             json.dump(layouts, f, ensure_ascii=False, indent=2)
@@ -816,6 +842,27 @@ class SettingsDialog(QDialog):
                 hint.setFont(f8)
                 row.addWidget(hint)
 
+            row.addStretch()
+            v.addLayout(row)
+
+        _section(v, "Bestanden")
+        from .startup import file_status
+        f7 = QFont("Consolas", 7)
+        for info in file_status():
+            row = QHBoxLayout(); row.setSpacing(4)
+            ok  = info["exists"]
+            dot = QLabel("✔" if ok else "✘")
+            dot.setFont(f8); dot.setFixedWidth(14)
+            dot.setStyleSheet(f"color: {'#4CAF50' if ok else '#EF5350'};")
+            row.addWidget(dot)
+            name_lbl = QLabel(info["name"])
+            name_lbl.setFont(f7)
+            name_lbl.setToolTip(info["path"])
+            row.addWidget(name_lbl)
+            size_lbl = QLabel(f"{info['size_kb']} KB" if ok else f"—  [{info['label']}]")
+            size_lbl.setFont(f7)
+            size_lbl.setStyleSheet(f"color: {'#606870' if ok else '#EF5350'};")
+            row.addWidget(size_lbl)
             row.addStretch()
             v.addLayout(row)
 

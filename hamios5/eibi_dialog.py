@@ -27,7 +27,7 @@ from .theme import ACCENT, BG_PANEL, BG_SURFACE, BG_ROOT, TEXT_H1, TEXT_DIM, TEX
 from .eibi_codes import translate_lang, translate_target, translate_itu, enrich_row
 from .geometry import save_geom, restore_geom
 
-_HERE       = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+from ._appdir import APP_DIR as _HERE
 _CACHE_FILE = os.path.join(_HERE, "hamios_eibi.csv")
 _META_FILE  = os.path.join(_HERE, "hamios_eibi_meta.json")
 

@@ -14,7 +14,7 @@ from PySide6.QtWidgets import (
 from .theme import ACCENT, BG_PANEL, BG_SURFACE, BG_ROOT, TEXT_H1, TEXT_DIM, TEXT_BODY, BORDER
 from .geometry import save_geom, restore_geom
 
-_HERE     = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+from ._appdir import APP_DIR as _HERE
 _SPY_FILE = os.path.join(_HERE, "hamios_spy_stations.json")
 
 _DEFAULTS = [

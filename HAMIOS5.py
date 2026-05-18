@@ -222,6 +222,15 @@ def main():
     app.setApplicationVersion("5.0")
     app.setOrganizationName("PA3FVD")
 
+    # ── Opstartcontrole: bestanden en configuratie ────────────────────────────
+    from hamios5.startup import check_files
+    _warn, _err = check_files()
+    if _err:
+        # Fatale fout — toon en stop
+        _show_error("HAMIOS — Opstartfout", "\n\n".join(_err))
+        sys.exit(1)
+    # Eventuele waarschuwingen worden na het laden getoond (via splash status)
+
     # Onderschep alle onverwerkte exceptions — toon dialoog i.p.v. stil afsluiten
     def _excepthook(exc_type, exc_value, exc_tb):
         msg = "".join(traceback.format_exception(exc_type, exc_value, exc_tb))
@@ -260,7 +269,10 @@ QComboBox::down-arrow {{
 
         # Laad het hoofdvenster terwijl het splash-scherm zichtbaar is
         try:
-            splash.set_status("Kaart en lagen laden…")
+            if _warn:
+                splash.set_status(f"Let op: {_warn[0]}")
+            else:
+                splash.set_status("Kaart en lagen laden…")
             window = HAMIOSMainWindow()
             splash.set_status("Klaar — klik Doorgaan om te starten")
         except Exception:

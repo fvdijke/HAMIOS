@@ -359,7 +359,7 @@ def _xray_class(flux: float) -> tuple[str, QColor]:
 
 # ── Geschiedenis-opslag ───────────────────────────────────────────────────────
 
-_HERE         = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+from ._appdir import APP_DIR as _HERE
 _HISTORY_FILE = os.path.join(_HERE, "hamios_history.json")
 
 

@@ -35,7 +35,7 @@ from .theme import ACCENT, TEXT_DIM, BG_ROOT
 from . import layers as _layers
 
 # Kaartbestand (gedeeld met v4)
-_HERE = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+from ._appdir import APP_DIR as _HERE
 MAP_FILE = os.path.join(_HERE, "worldmap_eq.jpg")
 
 # Map dimensions (equirectangular, 2:1)

@@ -13,6 +13,8 @@ a = Analysis(
         ('worldmap_eq.jpg',              '.'),
         ('hamios.ico',                   '.'),
         ('hamios5/__init__.py',          'hamios5'),
+        ('hamios5/_appdir.py',           'hamios5'),
+        ('hamios5/startup.py',           'hamios5'),
         ('hamios5/cat_interface.py',     'hamios5'),
         ('hamios5/cat_monitor.py',       'hamios5'),
         ('hamios5/charts.py',            'hamios5'),

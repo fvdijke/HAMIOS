@@ -4,7 +4,7 @@ import json
 import os
 from dataclasses import dataclass, field, asdict
 
-_HERE        = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+from ._appdir import APP_DIR as _HERE
 _CONFIG_FILE = os.path.join(_HERE, "hamios_config.json")
 
 
@@ -71,6 +71,10 @@ class AppConfig:
     band_alert:     int   = 40      # band-betrouwbaarheid % drempel
     band_alert_en:  bool  = True
     alert_max:      int   = 50     # max aantal meldingen (FIFO)
+
+    # ── Lay-out & vensterposities (panels + dialogen) ─────────────────────────
+    layouts:            dict  = field(default_factory=dict)
+    dialog_geometries:  dict  = field(default_factory=dict)
 
     # ── CAT ───────────────────────────────────────────────────────────────────
     cat_enabled:    bool  = False

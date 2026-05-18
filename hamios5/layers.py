@@ -32,7 +32,7 @@ def _play_tick():
     except Exception:
         pass
 
-_HERE = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+from ._appdir import APP_DIR as _HERE
 _TLE_CACHE = os.path.join(_HERE, "hamios_tle.json")
 
 TLE_GROUPS = {

@@ -39,8 +39,47 @@ from .ft8_dialog import Ft8Dialog
 from . import cat_interface as _cat_mod
 
 # Pad naar layouts-bestand (gedeeld met v4)
-_HERE = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-_LAYOUTS_FILE = os.path.join(_HERE, "hamios_layouts.json")
+from ._appdir import APP_DIR as _HERE
+_LAYOUTS_FILE = os.path.join(_HERE, "hamios_layouts.json")  # legacy + panels
+_CONFIG_FILE  = os.path.join(_HERE, "hamios_config.json")
+
+
+def _read_layouts() -> dict:
+    """Lees layouts: eerst config, dan legacy JSON."""
+    try:
+        if os.path.exists(_CONFIG_FILE):
+            with open(_CONFIG_FILE, encoding="utf-8") as f:
+                d = json.load(f)
+            if d.get("layouts"):
+                return d["layouts"]
+    except Exception:
+        pass
+    try:
+        if os.path.exists(_LAYOUTS_FILE):
+            with open(_LAYOUTS_FILE, encoding="utf-8") as f:
+                return json.load(f)
+    except Exception:
+        pass
+    return {}
+
+
+def _write_layouts(data: dict):
+    """Schrijf layouts naar config én legacy JSON."""
+    try:
+        cfg_data = {}
+        if os.path.exists(_CONFIG_FILE):
+            with open(_CONFIG_FILE, encoding="utf-8") as f:
+                cfg_data = json.load(f)
+        cfg_data["layouts"] = data
+        with open(_CONFIG_FILE, "w", encoding="utf-8") as f:
+            json.dump(cfg_data, f, ensure_ascii=False, indent=2)
+    except Exception:
+        pass
+    try:
+        with open(_LAYOUTS_FILE, "w", encoding="utf-8") as f:
+            json.dump(data, f, ensure_ascii=False, indent=2)
+    except Exception:
+        pass
 
 # Standaard paneel-layout voor v5 (scherm-relatief t.o.v. desktop-canvas)
 _PANEL_DEFAULTS = {
@@ -472,14 +511,12 @@ class HAMIOSMainWindow(QMainWindow):
 
     # ── Layout opslaan/laden ──────────────────────────────────────────────────
     def _load_layout(self):
-        """Laad panel-layout uit hamios_layouts.json of gebruik defaults."""
+        """Laad panel-layout uit config of gebruik defaults."""
         saved = {}
         try:
-            if os.path.exists(_LAYOUTS_FILE):
-                with open(_LAYOUTS_FILE, encoding="utf-8") as f:
-                    data = json.load(f)
-                if "__default__" in data:
-                    saved = data["__default__"]
+            data = _read_layouts()
+            if "__default__" in data:
+                saved = data["__default__"]
         except Exception:
             pass
 
@@ -512,13 +549,9 @@ class HAMIOSMainWindow(QMainWindow):
             self.x(), self.y(), self.width(), self.height()
         ]
         try:
-            data = {}
-            if os.path.exists(_LAYOUTS_FILE):
-                with open(_LAYOUTS_FILE, encoding="utf-8") as f:
-                    data = json.load(f)
+            data = _read_layouts()
             data["__default__"] = layout
-            with open(_LAYOUTS_FILE, "w", encoding="utf-8") as f:
-                json.dump(data, f, ensure_ascii=False, indent=2)
+            _write_layouts(data)
         except Exception as e:
             print(f"Layout save failed: {e}")
 
@@ -767,11 +800,9 @@ class HAMIOSMainWindow(QMainWindow):
         """Zet panels terug: eerst opgeslagen standaard, dan fabriekswaarden."""
         saved = {}
         try:
-            if os.path.exists(_LAYOUTS_FILE):
-                with open(_LAYOUTS_FILE, encoding="utf-8") as f:
-                    data = json.load(f)
-                if "__default__" in data:
-                    saved = data["__default__"]
+            data = _read_layouts()
+            if "__default__" in data:
+                saved = data["__default__"]
         except Exception:
             pass
 
