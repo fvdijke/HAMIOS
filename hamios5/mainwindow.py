@@ -20,6 +20,7 @@ class _FreqBridge(QObject):
 
 from .theme import BG_ROOT, BG_PANEL, QSS
 from . import theme as _theme
+from .i18n import tr, set_language, get_language, language_changed
 from .header import HeaderBar
 from .panel import FloatingPanel
 from .mapview import MapView
@@ -101,23 +102,29 @@ _PANEL_DEFAULTS = {
     "prop_adv":   (0,    610,  430, 460, True),
 }
 
-_PANEL_TITLES = {
-    "worldmap":   "🌍  Wereldkaart",
-    "solar":      "☀  Solar / Ionosfeer",
-    "band_rel":   "📶  HF Band Betrouwbaarheid",
-    "band_cond":  "📻  Bandcondities",
-    "storm_fc":   "🌩  Stormprognose",
-    "band_sched": "🗓  Bandopenings-schema",
-    "band_hist":  "📈  Band Verloop",
-    "solar_hist": "☀  Solar verloop",
-    "kp_48h":     "🧲  Kp 48u",
-    "bz_24h":     "⚡  Bz 24u (nT)",
-    "xray_24h":   "☢  X-straling 24u",
-    "lightning":  "⚡  Onweer",
-    "alerts":     "🔔  Meldingen",
-    "dx_spots":   "📡  Live DX Spots",
-    "prop_adv":   "💡  Propagatie Advies",
+_PANEL_TITLE_KEYS = {
+    "worldmap":   "panel.map",
+    "solar":      "panel.solar",
+    "band_rel":   "panel.band_rel",
+    "band_cond":  "panel.band_cond",
+    "storm_fc":   "panel.storm_fc",
+    "band_sched": "panel.band_sched",
+    "band_hist":  "panel.band_hist",
+    "solar_hist": "panel.solar_hist",
+    "kp_48h":     "panel.kp",
+    "bz_24h":     "panel.bz",
+    "xray_24h":   "panel.xray",
+    "lightning":  "panel.lightning",
+    "alerts":     "panel.alerts",
+    "dx_spots":   "panel.dx_spots",
+    "prop_adv":   "panel.prop_adv",
 }
+
+def _panel_titles():
+    from .i18n import tr as _tr
+    return {pid: _tr(key) for pid, key in _PANEL_TITLE_KEYS.items()}
+
+_PANEL_TITLES = _panel_titles()
 
 
 def _clamp_window(win, wx: int, wy: int, ww: int, wh: int):
@@ -201,9 +208,13 @@ class HAMIOSMainWindow(QMainWindow):
         layout.addWidget(self._desktop, 1)
         self.setCentralWidget(container)
 
-        # Config laden en snap-grid instellen
+        # Config laden, taal instellen en snap-grid instellen
         self._cfg = load_config()
+        set_language(getattr(self._cfg, "language", "nl"))
         _theme.PANEL_GRID = self._cfg.snap_grid
+
+        # Bijhouden van geopende header-dialogen (meerdere tegelijk mogelijk)
+        self._open_dlgs: dict[str, QDialog] = {}
 
         # Centrale NOAA data-manager (gedeeld tussen alle chart-panels)
         self._data_mgr = NoaaDataManager(self)
@@ -411,7 +422,7 @@ class HAMIOSMainWindow(QMainWindow):
         # QRN-meldingen van het onweer-paneel doorsturen
         if hasattr(self, "_lightning_panel_widget"):
             self._lightning_panel_widget.qrn_alert.connect(
-                lambda icon, txt, clr: w.add_alert(icon, txt, clr, "Onweer QRN niveau"))
+                lambda icon, txt, clr: w.add_alert(icon, txt, clr, tr("alert.qrn_source")))
 
         # Satelliet-zone check elke 30s (referentie bewaren!)
         self._sat_zone_timer = QTimer(self)
@@ -434,7 +445,11 @@ class HAMIOSMainWindow(QMainWindow):
         layout.addWidget(w)
         self._map_view._dx_spots.spots_updated.connect(w.set_data)
         w.settings_changed.connect(self._on_panel_settings_changed)
+        # Synchroniseer kaartfilter met tabelfilter bij elke wijziging
+        w.settings_changed.connect(self._sync_dx_map_filter)
         self._dx_spots_widget = w
+        # Initieel filter toepassen
+        self._sync_dx_map_filter()
 
     def _build_prop_adv_panel(self, panel):
         w = PropAdvWidget(cfg=self._cfg)
@@ -449,17 +464,23 @@ class HAMIOSMainWindow(QMainWindow):
             return
         for icon, text, color in changed_tips[:3]:  # max 3 tegelijk
             self._alerts_widget.add_alert(icon, text[:60], color,
-                                          "Propagatie advies gewijzigd")
+                                          tr("alert.prop_changed"))
 
     def _on_settings_applied(self, cfg: AppConfig):
         self._cfg = cfg
         _theme.PANEL_GRID = cfg.snap_grid
 
+        # Taal wisselen — herlaad alle paneeltitels en UI-teksten
+        new_lang = getattr(cfg, "language", "nl")
+        if new_lang != get_language():
+            set_language(new_lang)
+            self._retranslate_panels()
+            self._header.retranslate()
+
         # Kaart en lagen
         self.set_qth(cfg.qth_lat, cfg.qth_lon)
         self._map_view.set_lightning_fade(cfg.lightning_fade)
-        self._map_view.set_lightning_visible(cfg.show_lightning)
-        # Radius-cirkels alleen tonen als bliksem ingeschakeld is
+        self._map_view.set_lightning_enabled(cfg.show_lightning)   # volledige aan/uit
         _lon = cfg.show_lightning
         self._map_view.set_lightning_radius(
             int(getattr(cfg, "lightning_radius", 0)) if _lon else 0)
@@ -477,6 +498,7 @@ class HAMIOSMainWindow(QMainWindow):
         self._map_view.set_sun_visible(cfg.show_sun)
         self._map_view.set_moon_visible(cfg.show_moon)
         self._map_view.set_locator_visible(getattr(cfg, "show_locator", False))
+        self._map_view._psk.setVisible(getattr(cfg, "show_psk", False))
         self._map_view.set_overlay_font_size(cfg.overlay_font_size)
         self._map_view.set_maidenhead_font_size(getattr(cfg, "maidenhead_font_size", 8))
         self._map_view.set_grat_step(getattr(cfg, "grat_step", 30))
@@ -583,7 +605,7 @@ class HAMIOSMainWindow(QMainWindow):
         if hasattr(self, "_dx_spots_widget"):
             self._dx_spots_widget.set_font_size(c.dx_font_size)
         self._map_view.set_lightning_fade(c.lightning_fade)
-        self._map_view.set_lightning_visible(c.show_lightning)
+        self._map_view.set_lightning_enabled(c.show_lightning)   # volledige aan/uit
         _lon = c.show_lightning
         self._map_view.set_lightning_radius(
             int(getattr(c, "lightning_radius", 0)) if _lon else 0)
@@ -593,6 +615,7 @@ class HAMIOSMainWindow(QMainWindow):
         self._map_view._lightning.set_anim_scale(
             getattr(c, "lightning_anim_scale", 2.0))
         self._map_view.set_dx_spots_visible(c.show_dx_spots)
+        self._sync_dx_map_filter()
         self._map_view._night.setVisible(c.show_night)
         # Uren altijd instellen (ook als geen satellites geselecteerd)
         self._map_view.set_satellite_hours(
@@ -609,23 +632,54 @@ class HAMIOSMainWindow(QMainWindow):
         self._map_view.set_moon_visible(c.show_moon)
         self._map_view.set_graticule_visible(True)
         self._map_view.set_locator_visible(getattr(c, "show_locator", False))
+        self._map_view._psk.setVisible(getattr(c, "show_psk", False))
+
+    # ── Retranslate ───────────────────────────────────────────────────────────
+    def _sync_dx_map_filter(self):
+        """Synchroniseer het kaart-DX-filter met de tabelinstelling."""
+        own_only = getattr(self._cfg, "dx_own_continent", False)
+        self._map_view._dx_spots.set_continent_filter(
+            own_only, self._cfg.qth_lat, self._cfg.qth_lon)
+
+    def _retranslate_panels(self):
+        """Update paneeltitels en widget-teksten na taalwisseling."""
+        titles = _panel_titles()
+        for pid, panel in self._panels.items():
+            if pid in titles:
+                panel.set_title(titles[pid])
+        # language_changed signal zorgt voor directe update in verbonden widgets
+        # (StormFcWidget.retranslate, HelpDialog._on_language_changed, etc.)
 
     # ── Instellingen-dialoog ──────────────────────────────────────────────────
+    # ── Helper: toon dialoog niet-modaal, meerdere tegelijk mogelijk ────────────
+
+    def _show_dialog(self, key: str, dlg: "QDialog"):
+        """Toon dialoog niet-modaal boven het hoofdvenster.
+        Bij herhaald klikken: bestaand venster naar voren brengen."""
+        existing = self._open_dlgs.get(key)
+        if existing and existing.isVisible():
+            existing.raise_()
+            existing.activateWindow()
+            return
+        dlg.setWindowFlag(Qt.Window, True)
+        dlg.setAttribute(Qt.WA_DeleteOnClose, True)
+        dlg.destroyed.connect(lambda _=None, k=key: self._open_dlgs.pop(k, None))
+        self._open_dlgs[key] = dlg
+        dlg.show()
+        dlg.raise_()
+        dlg.activateWindow()
+
     def _open_help(self):
-        dlg = HelpDialog(self)
-        dlg.exec()
+        self._show_dialog("help", HelpDialog(self))
 
     def _open_spy_dialog(self):
-        dlg = SpyStationsDialog(self)
-        dlg.exec()
+        self._show_dialog("spy", SpyStationsDialog(self))
 
     def _open_eibi_dialog(self):
-        dlg = EibiDialog(self)
-        dlg.exec()
+        self._show_dialog("eibi", EibiDialog(self))
 
     def _open_ft8_dialog(self):
-        dlg = Ft8Dialog(self)
-        dlg.exec()
+        self._show_dialog("ft8", Ft8Dialog(self))
 
     def _open_overlay_menu(self):
         """Popup-menu voor alle kaartoverlays."""
@@ -646,21 +700,22 @@ class HAMIOSMainWindow(QMainWindow):
                     .__dict__['save_config'] if False else None)
 
         overlays = [
-            ("Dag/nacht terminator",   "show_night",     lambda v: self._map_view._night.setVisible(v)),
-            ("Grayline",               "show_grayline",  lambda v: self._map_view.set_grayline_visible(v)),
-            ("Aurora",                 "show_aurora",    lambda v: self._map_view.set_aurora_visible(v)),
-            ("Zon-positie",            "show_sun",       lambda v: self._map_view.set_sun_visible(v)),
-            ("Maan-positie",           "show_moon",      lambda v: self._map_view.set_moon_visible(v)),
-            ("Bliksem",                "show_lightning",  lambda v: (
+            (tr("ov.night"),     "show_night",    lambda v: self._map_view._night.setVisible(v)),
+            (tr("ov.grayline"),  "show_grayline", lambda v: self._map_view.set_grayline_visible(v)),
+            (tr("ov.aurora"),    "show_aurora",   lambda v: self._map_view.set_aurora_visible(v)),
+            (tr("ov.sun"),       "show_sun",      lambda v: self._map_view.set_sun_visible(v)),
+            (tr("ov.moon"),      "show_moon",     lambda v: self._map_view.set_moon_visible(v)),
+            (tr("ov.lightning"), "show_lightning", lambda v: (
                 self._map_view.set_lightning_visible(v),
                 self._map_view.set_lightning_radius(
                     int(getattr(self._cfg, "lightning_radius", 0)) if v else 0),
                 self._map_view.set_lightning_beep_radius(
                     int(getattr(self._cfg, "lightning_beep_r", 0)) if v else 0),
             )),
-            ("DX spots",               "show_dx_spots",  lambda v: self._map_view.set_dx_spots_visible(v)),
-            ("Satellieten",            "sat_visible",    lambda v: self._map_view.set_satellite_visible(v)),
-            ("Maidenhead locatorraster","show_locator",  lambda v: self._map_view.set_locator_visible(v)),
+            (tr("ov.dx_spots"),  "show_dx_spots", lambda v: self._map_view.set_dx_spots_visible(v)),
+            (tr("ov.satellites"),"sat_visible",   lambda v: self._map_view.set_satellite_visible(v)),
+            (tr("ov.locator"),   "show_locator",  lambda v: self._map_view.set_locator_visible(v)),
+            (tr("ov.psk"),       "show_psk",      lambda v: self._map_view._psk.setVisible(v)),
         ]
         for label, attr, fn in overlays:
             act = menu.addAction(label)
@@ -800,12 +855,12 @@ class HAMIOSMainWindow(QMainWindow):
                 if hasattr(self, "_alerts_widget"):
                     if in_zone:
                         self._alerts_widget.add_alert(
-                            "🛰", f"{short} zichtbaar boven horizon",
-                            "#4FC3F7", "Satelliet QTH-zone")
+                            "🛰", tr("alerts.sat.enter", name=short),
+                            "#4FC3F7", tr("alert.sat_zone"))
                     else:
                         self._alerts_widget.add_alert(
-                            "🛰", f"{short} verlaat horizon",
-                            "#7080A0", "Satelliet QTH-zone")
+                            "🛰", tr("alerts.sat.exit", name=short),
+                            "#7080A0", tr("alert.sat_zone"))
                 # Ping — eenmalig in aparte thread
                 if ping_en:
                     fn = _play_sat_enter if in_zone else _play_sat_exit
@@ -839,8 +894,8 @@ class HAMIOSMainWindow(QMainWindow):
             if min_km is None or km < min_km:
                 min_km = km
         if min_km is not None and min_km <= radius:
-            self._header.set_lightning_warning(f"⚡ ONWEER {min_km:.0f} km")
-            # Voeg ook melding toe aan het meldingen-paneel (max 1x per 60s)
+            self._header.set_lightning_warning(
+                tr("alert.lightning_hdr", km=min_km))
             if hasattr(self, "_alerts_widget"):
                 import time as _t
                 now_t = _t.time()
@@ -849,9 +904,9 @@ class HAMIOSMainWindow(QMainWindow):
                     self._last_lightning_alert = now_t
                     self._alerts_widget.add_alert(
                         "⚡",
-                        f"Onweer {min_km:.0f} km van QTH",
+                        tr("alert.lightning_msg", km=min_km),
                         "#EF5350",
-                        f"Drempelafstand: {radius} km")
+                        tr("alert.lightning_det", radius=radius))
         else:
             self._header.set_lightning_warning(None)
 
@@ -893,6 +948,12 @@ class HAMIOSMainWindow(QMainWindow):
 
     # ── Satelliet-dialoog ────────────────────────────────────────────────────
     def _open_sat_dialog(self):
+        existing = self._open_dlgs.get("sat")
+        if existing and existing.isVisible():
+            existing.raise_()
+            existing.activateWindow()
+            return
+
         dlg = SatelliteDialog(
             self._cfg.sat_selected,
             self._cfg.sat_path,
@@ -908,7 +969,6 @@ class HAMIOSMainWindow(QMainWindow):
         dlg.live_path_changed.connect(self._map_view.set_satellite_paths)
         dlg.live_fp_changed.connect(self._map_view.set_satellite_footprints)
 
-        # Laad TLE alvast in de kaartlaag zodat live-selectie direct werkt
         def _load_tle_now():
             tle = {}
             for sats in dlg.tle_data.values():
@@ -917,11 +977,12 @@ class HAMIOSMainWindow(QMainWindow):
                         tle[row[0]] = (row[1], row[2])
             if tle:
                 self._map_view.update_tle(tle)
+
         from PySide6.QtCore import QTimer as _QT
         _QT.singleShot(200, _load_tle_now)
+        dlg.accepted.connect(_load_tle_now)
 
-        if dlg.exec():
-            _load_tle_now()   # ook na OK om eventueel verse TLE te verwerken
+        self._show_dialog("sat", dlg)
 
     def _on_sat_selection(self, selected: list, path: list,
                           fp: list, back_h: int, fwd_h: int):

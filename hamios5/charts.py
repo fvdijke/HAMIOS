@@ -29,6 +29,7 @@ from PySide6.QtWidgets import (
 )
 
 from .theme import BG_SURFACE, BG_PANEL, TEXT_DIM, TEXT_H1, TEXT_BODY, ACCENT, BORDER, BG_ROOT
+from .i18n import tr
 
 # ── NOAA / HamQSL endpoints ───────────────────────────────────────────────────
 
@@ -474,7 +475,7 @@ class KpChart(QWidget):
         p.setPen(QColor(TEXT_DIM))
         p.setFont(f6)
         p.drawText(PL, H - PB + 2, 24, PB, Qt.AlignLeft,  "48h")
-        p.drawText(W - PR - 24, H - PB + 2, 24, PB, Qt.AlignRight, "nu")
+        p.drawText(W - PR - 24, H - PB + 2, 24, PB, Qt.AlignRight, tr("sched.now"))
 
         # Huidige Kp waarde
         if self._pts:
@@ -593,7 +594,7 @@ class BzChart(QWidget):
         p.setPen(QColor(TEXT_DIM))
         p.drawText(PL, H - PB + 2, 24, PB, Qt.AlignLeft,   "24h")
         p.drawText(PL + gW//2 - 12, H - PB + 2, 24, PB, Qt.AlignCenter, "12h")
-        p.drawText(W - PR - 24, H - PB + 2, 24, PB, Qt.AlignRight,  "nu")
+        p.drawText(W - PR - 24, H - PB + 2, 24, PB, Qt.AlignRight,  tr("sched.now"))
 
         # Huidige Bz waarde
         if ordered:
@@ -676,7 +677,7 @@ class XrayChart(QWidget):
         p.setFont(f6)
         p.setPen(QColor(TEXT_DIM))
         p.drawText(PL, H - PB + 2, 24, PB, Qt.AlignLeft,  "24h")
-        p.drawText(W - PR - 24, H - PB + 2, 24, PB, Qt.AlignRight, "nu")
+        p.drawText(W - PR - 24, H - PB + 2, 24, PB, Qt.AlignRight, tr("sched.now"))
 
         # Huidige klasse
         if self._pts:
@@ -694,48 +695,48 @@ class SolarParamsWidget(QWidget):
 
     # (label, data_key, eenheid, volledige_naam, tooltip, hint_fn)
     _ROWS = [
-        ("SFI",        "sfi",        "SFU",    "Solar Flux Index",
+        ("SFI",        "sfi",        "SFU",    tr("solar.sfi.full"),
          "Solar Flux Index — maat voor ionisatie. Hoog = betere HF-condities.",
-         lambda v: ("laag",   "#4FC3F7") if v < 100 else
-                   ("matig",  "#FFF176") if v < 150 else
-                   ("hoog",   "#FFA726") if v < 200 else
-                   ("zeer hoog","#EF5350")),
-        ("SSN",        "ssn",        "",       "Sunspot Number",
+         lambda v: (tr("solar.hint.low"),   "#4FC3F7") if v < 100 else
+                   (tr("solar.hint.fair"),  "#FFF176") if v < 150 else
+                   (tr("solar.hint.high"),  "#FFA726") if v < 200 else
+                   (tr("solar.hint.high"),  "#EF5350")),
+        ("SSN",        "ssn",        "",       tr("solar.ssn.full"),
          "Zonnevlek-getal (Sunspot Number).",
-         lambda v: ("min.",   TEXT_DIM)  if v < 20  else
-                   ("laag",   "#4FC3F7") if v < 80  else
-                   ("matig",  "#FFF176") if v < 150 else
-                   ("hoog",   "#FFA726")),
-        ("K-index",    "k_index",    "(0–9)",  "Planetaire K-index",
+         lambda v: ("min.",              TEXT_DIM)  if v < 20  else
+                   (tr("solar.hint.low"),  "#4FC3F7") if v < 80  else
+                   (tr("solar.hint.fair"), "#FFF176") if v < 150 else
+                   (tr("solar.hint.high"), "#FFA726")),
+        ("K-index",    "k_index",    "(0–9)",  tr("solar.k.full"),
          "Planetaire K-index — geomagnetische activiteit.",
-         lambda v: ("rustig", "#4FC3F7") if v < 3 else
-                   ("actief", "#FFF176") if v < 5 else
-                   ("G1-storm","#FFA726") if v < 7 else
-                   ("G3+ storm","#EF5350")),
-        ("A-index",    "a_index",    "",       "A-index (daggemiddelde)",
+         lambda v: (tr("solar.hint.calm"),   "#4FC3F7") if v < 3 else
+                   (tr("solar.hint.active"), "#FFF176") if v < 5 else
+                   (tr("solar.hint.storm"),  "#FFA726") if v < 7 else
+                   (tr("solar.hint.severe"), "#EF5350")),
+        ("A-index",    "a_index",    "",       tr("solar.a.full"),
          "Dagelijks geomagnetisch gemiddelde.",
-         lambda v: ("rustig", "#4FC3F7") if v < 15 else
-                   ("actief", "#FFF176") if v < 30 else
-                   ("stormig","#FFA726") if v < 50 else
-                   ("ernstig","#EF5350")),
-        ("X-straling", "xray",       "",       "GOES X-ray klasse",
+         lambda v: (tr("solar.hint.calm"),    "#4FC3F7") if v < 15 else
+                   (tr("solar.hint.active"),  "#FFF176") if v < 30 else
+                   (tr("solar.hint.stormig"), "#FFA726") if v < 50 else
+                   (tr("solar.hint.ernstig"), "#EF5350")),
+        ("X-straling", "xray",       "",       tr("solar.xray.full"),
          "GOES X-ray klasse. M/X = zonnevlam.",
          None),
-        ("SW snelheid","sw_speed",   "km/s",   "Zonnewind snelheid",
+        ("SW snelheid","sw_speed",   "km/s",   tr("solar.vsw.full"),
          "Snelheid van de zonnewind.",
          lambda v: ("normaal","#4FC3F7") if v < 500 else
                    ("verhoogd","#FFA726") if v < 700 else
                    ("snel",   "#EF5350")),
-        ("SW dichth.", "sw_density", "p/cm³",  "Zonnewind dichtheid",
+        ("SW dichth.", "sw_density", "p/cm³",  tr("solar.nsw.full"),
          "Dichtheid van de zonnewind (protonen/cm3).",
-         lambda v: ("laag",   "#4FC3F7") if v < 5  else
+         lambda v: (tr("solar.hint.low"),   "#4FC3F7") if v < 5  else
                    ("normaal","TEXT_H1") if v < 15 else
-                   ("hoog",   "#FFA726")),
-        ("Bz (GSM)",   "sw_bz",      "nT",     "IMF Bz-component",
+                   (tr("solar.hint.high"),  "#FFA726")),
+        ("Bz (GSM)",   "sw_bz",      "nT",     tr("solar.bz.full"),
          "IMF Bz-component. Negatief = verhoogd stormsrisico.",
-         lambda v: ("positief","#4FC3F7") if v >= 0 else
-                   ("negatief","#FF8A65") if v > -10 else
-                   ("storm!",  "#EF5350")),
+         lambda v: (tr("solar.hint.pos"),      "#4FC3F7") if v >= 0 else
+                   (tr("solar.hint.neg"),      "#FF8A65") if v > -10 else
+                   (tr("solar.hint.storm_ex"), "#EF5350")),
     ]
 
     def __init__(self, parent=None):

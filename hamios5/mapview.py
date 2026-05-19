@@ -654,11 +654,16 @@ class MapView(QGraphicsView):
         self._dx_spots = _layers.DXSpotsLayer()
         self._scene.addItem(self._dx_spots)
 
+        self._psk = _layers.PSKReporterLayer()
+        self._psk.setVisible(False)   # standaard uit; toggelbaar via overlay-menu
+        self._scene.addItem(self._psk)
+
         # TLE laden vanuit cache bij opstart
         QTimer.singleShot(500, self._load_tle_cache)
 
         # GC-pad
         self._gc_line: QGraphicsLineItem | None = None
+        self._spot_popup = None
 
         # Pan-state
         self._pan_start: QPointF | None = None
@@ -836,8 +841,34 @@ class MapView(QGraphicsView):
     def mouseReleaseEvent(self, event):
         if event.button() == Qt.LeftButton and self._pan_start is not None:
             if not self._pan_moved:
-                # Korte klik zonder sleep → GC-marker plaatsen
                 scene_pt = self.mapToScene(event.position().toPoint())
+                zoom = self.transform().m11()
+                radius_scene = max(12.0, 18.0 / zoom)
+
+                # ── PSKReporter klik ──────────────────────────────────────────
+                if self._psk.isVisible():
+                    report = self._psk.find_report_near(
+                        scene_pt.x(), scene_pt.y(), radius_scene)
+                    if report:
+                        self._show_psk_tooltip(report, event.position().toPoint())
+                        self._pan_start = None
+                        self._pan_moved = False
+                        self.setCursor(Qt.ArrowCursor)
+                        super().mouseReleaseEvent(event)
+                        return
+
+                # ── DX-spot detectie ─────────────────────────────────────────
+                if self._dx_spots.isVisible():
+                    spot = self._dx_spots.find_spot_near(
+                        scene_pt.x(), scene_pt.y(), radius_scene)
+                    if spot:
+                        self._show_dx_spot_tooltip(spot, event.position().toPoint())
+                        self._pan_start = None
+                        self._pan_moved = False
+                        self.setCursor(Qt.ArrowCursor)
+                        super().mouseReleaseEvent(event)
+                        return
+                # ── Geen spot → GC-marker ────────────────────────────────────
                 lat, lon = scene_to_latlon(scene_pt.x(), scene_pt.y())
                 if -90 <= lat <= 90 and -180 <= lon <= 180:
                     self._draw_gc_marker(lat, lon)
@@ -850,6 +881,149 @@ class MapView(QGraphicsView):
             self._pan_moved = False
             self.setCursor(Qt.ArrowCursor)
         super().mouseReleaseEvent(event)
+
+    def _show_dx_spot_tooltip(self, spot: dict, viewport_pos):
+        """Toon een floating info-kaart nabij het klikpunt (auto-sluit na 4s)."""
+        from PySide6.QtWidgets import QLabel, QVBoxLayout, QFrame
+        from PySide6.QtCore import QTimer
+
+        # Verwijder eventueel vorig info-venster
+        if self._spot_popup is not None:
+            try:
+                self._spot_popup.hide()
+                self._spot_popup.deleteLater()
+            except RuntimeError:
+                pass   # C++ object al verwijderd
+            self._spot_popup = None
+
+        call    = spot.get("call", "?")
+        freq    = spot.get("freq_khz", 0.0)
+        band    = spot.get("band", "")
+        spotter = spot.get("spotter", "")
+        comment = spot.get("comment", "")
+        time_s  = spot.get("time", "")
+
+        mhz = f"{freq / 1000:.3f} MHz" if freq > 0 else "?"
+        band_str = f"  ({band})" if band else ""
+
+        # Bouw kaart als child-widget van de viewport
+        popup = QFrame(self.viewport())
+        popup.setObjectName("dxpopup")
+        popup.setStyleSheet(
+            "QFrame#dxpopup { background:#1E2230; border:1px solid #C8A84B;"
+            " border-radius:4px; }"
+            "QFrame#dxpopup * { border:none; background:transparent;"
+            " color:#C8D0DC; font-size:8pt; }"
+        )
+        vlay = QVBoxLayout(popup)
+        vlay.setContentsMargins(8, 6, 8, 6)
+        vlay.setSpacing(2)
+
+        hdr = QLabel(f"<b style='color:#C8A84B;font-size:10pt;'>{call}</b>"
+                     f"  <span style='color:#FFF176;'>{mhz}{band_str}</span>")
+        hdr.setTextFormat(Qt.RichText)
+        vlay.addWidget(hdr)
+
+        if spotter:
+            vlay.addWidget(QLabel(f"Spotter:  {spotter}"))
+        if comment:
+            vlay.addWidget(QLabel(f"<i>{comment}</i>"))
+        if time_s:
+            vlay.addWidget(QLabel(f"UTC:  {time_s}"))
+
+        popup.adjustSize()
+
+        # Positie: nabij klikpunt, maar binnen het viewport
+        vp = self.viewport()
+        px = min(viewport_pos.x() + 12, vp.width()  - popup.width()  - 4)
+        py = min(viewport_pos.y() + 12, vp.height() - popup.height() - 4)
+        popup.move(max(4, px), max(4, py))
+        popup.show()
+        popup.raise_()
+
+        self._spot_popup = popup
+
+        # Auto-sluit na 4 seconden en wis referentie
+        def _close_popup():
+            if self._spot_popup is popup:
+                self._spot_popup = None
+            try:
+                popup.hide()
+                popup.deleteLater()
+            except RuntimeError:
+                pass
+
+        t = QTimer(self)
+        t.setSingleShot(True)
+        t.timeout.connect(_close_popup)
+        t.start(4000)
+
+    def _show_psk_tooltip(self, report: dict, viewport_pos):
+        """Toon een floating info-kaart voor een PSKReporter rapport."""
+        from PySide6.QtWidgets import QLabel, QVBoxLayout, QFrame
+        from PySide6.QtCore import QTimer
+
+        if self._spot_popup is not None:
+            try:
+                self._spot_popup.hide()
+                self._spot_popup.deleteLater()
+            except RuntimeError:
+                pass
+            self._spot_popup = None
+
+        tx   = report.get("tx", "?")
+        rx   = report.get("rx", "?")
+        freq = report.get("freq_khz", 0.0)
+        snr  = report.get("snr", 0)
+        mode = report.get("mode", "")
+        band = report.get("band", "")
+        mhz  = f"{freq / 1000:.3f} MHz" if freq > 0 else "?"
+        snr_s = f"{snr:+d} dB" if snr else "?"
+
+        popup = QFrame(self.viewport())
+        popup.setObjectName("dxpopup")
+        popup.setStyleSheet(
+            "QFrame#dxpopup { background:#1E2230; border:1px solid #4FC3F7;"
+            " border-radius:4px; }"
+            "QFrame#dxpopup * { border:none; background:transparent;"
+            " color:#C8D0DC; font-size:8pt; }"
+        )
+        vlay = QVBoxLayout(popup)
+        vlay.setContentsMargins(8, 6, 8, 6)
+        vlay.setSpacing(2)
+
+        hdr = QLabel(
+            f"<b style='color:#4FC3F7;font-size:10pt;'>{tx}</b>"
+            f"  <span style='color:#7080A0;'>→</span>"
+            f"  <b style='color:#80CBC4;'>{rx}</b>")
+        hdr.setTextFormat(Qt.RichText)
+        vlay.addWidget(hdr)
+        vlay.addWidget(QLabel(
+            f"<span style='color:#FFF176;'>{mhz}</span>"
+            f"  {band}  <b>{mode}</b>  SNR {snr_s}"))
+
+        popup.adjustSize()
+        vp = self.viewport()
+        px = min(viewport_pos.x() + 12, vp.width()  - popup.width()  - 4)
+        py = min(viewport_pos.y() + 12, vp.height() - popup.height() - 4)
+        popup.move(max(4, px), max(4, py))
+        popup.show()
+        popup.raise_()
+        self._spot_popup = popup
+
+        def _close():
+            if self._spot_popup is popup:
+                self._spot_popup = None
+            try:
+                popup.hide()
+                popup.deleteLater()
+            except RuntimeError:
+                pass
+
+        t = QTimer(self)
+        t.setSingleShot(True)
+        t.timeout.connect(_close)
+        t.start(4000)
 
     def _reset_view(self):
         self._fit_map()
@@ -885,6 +1059,11 @@ class MapView(QGraphicsView):
 
     # ── Laag-toggles ──────────────────────────────────────────────────────────
     def set_lightning_visible(self, on: bool):
+        """Overlay-knop: alleen tonen/verbergen, geen verbrekking."""
+        self._lightning.set_overlay_visible(on)
+
+    def set_lightning_enabled(self, on: bool):
+        """Instellingen: volledige aan/uit inclusief WebSocket."""
         self._lightning.set_enabled(on)
 
     def set_satellite_visible(self, on: bool):
@@ -941,7 +1120,7 @@ class MapView(QGraphicsView):
     # ── Satelliet data ────────────────────────────────────────────────────────
     def set_satellite_selection(self, names: set):
         self._sat_layer.set_selected(names)
-        self._sat_layer.setVisible(len(names) > 0)
+        # Zichtbaarheid wordt uitsluitend beheerd door set_satellite_visible / sat_visible config
 
     def set_satellite_paths(self, names: set):
         self._sat_layer.set_path_selected(names)

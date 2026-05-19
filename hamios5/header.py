@@ -6,6 +6,7 @@ from PySide6.QtCore import Qt, QTimer, Signal
 from PySide6.QtGui import QFont, QColor, QPalette
 
 from .theme import ACCENT, BG_PANEL, TEXT_H1, TEXT_DIM, HDR_H, BG_ROOT, BG_SURFACE, BORDER
+from .i18n import tr, language_changed
 
 
 class HeaderBar(QWidget):
@@ -57,45 +58,44 @@ class HeaderBar(QWidget):
         self._pulse_timer.setInterval(600)
 
         # Linker knoppen
-        self._btn_sat     = self._btn("🛰  Satellite",   amber=True)
-        self._btn_spy     = self._btn("🕵  SpyStations", amber=True)
-        self._btn_eibi    = self._btn("📻  EIBI",        amber=True)
-        self._btn_ft8     = self._btn("📡  FT8/Dig",     amber=True)
-        self._btn_overlay = self._btn("🗺  Overlays",    amber=True)
-        self._btn_overlay.setToolTip("Kaartoverlays aan/uitzetten")
-        self._btn_exit     = self._btn("Afsluiten", bg="#5A1010", hover="#8B1A1A")
-        self._btn_settings = self._btn("⚙  Instellingen", amber=True)
+        self._btn_sat     = self._btn(tr("hdr.satellite"),   amber=True)
+        self._btn_spy     = self._btn(tr("hdr.spystations"), amber=True)
+        self._btn_eibi    = self._btn(tr("hdr.eibi"),        amber=True)
+        self._btn_ft8     = self._btn(tr("hdr.ft8"),         amber=True)
+        self._btn_overlay = self._btn(tr("hdr.overlays"),    amber=True)
+        self._btn_overlay.setToolTip(tr("hdr.overlays.tip"))
+        self._btn_exit     = self._btn(tr("app.close"), bg="#5A1010", hover="#8B1A1A")
+        self._btn_settings = self._btn(tr("hdr.settings"), amber=True)
 
-        # Refresh-interval spinbox + countdown (zoals v4)
+        # Refresh-interval spinbox + countdown
         _lbl_ref = QLabel("↻")
         _lbl_ref.setStyleSheet(f"color: {ACCENT}; font-size: 11pt; padding: 0 2px;")
         self._spin_refresh = QSpinBox()
         self._spin_refresh.setRange(0, 60)
         self._spin_refresh.setValue(5)
-        self._spin_refresh.setSpecialValueText("Uit")
+        self._spin_refresh.setSpecialValueText(tr("hdr.refresh.off"))
         self._spin_refresh.setFixedWidth(44)
-        self._spin_refresh.setToolTip("Data-verversinterval in minuten (0 = uit)")
+        self._spin_refresh.setToolTip(tr("hdr.refresh.tip"))
         self._spin_refresh.valueChanged.connect(
             lambda v: self.refresh_interval_changed.emit(v))
 
         self._countdown_lbl = QLabel("")
         self._countdown_lbl.setStyleSheet(
             f"color: {ACCENT}; font-size: 9pt; padding: 0 4px;")
-        self._countdown_lbl.setToolTip("Tijd tot volgende verversing")
+        self._countdown_lbl.setToolTip(tr("hdr.countdown.tip"))
 
-        self._next_refresh_at: float = 0.0  # epoch seconds
+        self._next_refresh_at: float = 0.0
 
         for b in [self._btn_sat, self._btn_spy, self._btn_eibi,
                   self._btn_ft8, self._btn_overlay]:
             layout.addWidget(b)
 
-        # Radio frequentie display — direct naast CAT knop
+        # Radio frequentie display
         layout.addWidget(self._make_sep())
-        self._freq_lbl = QLabel("Radio niet verbonden")
+        self._freq_lbl = QLabel(tr("hdr.cat.disconnected"))
         self._freq_lbl.setStyleSheet(
             f"color: {TEXT_DIM}; font-size: 9pt; font-family: Consolas;"
             f" padding: 0 8px;")
-        self._freq_lbl.setToolTip("Huidige VFO-A frequentie van de radio")
         layout.addWidget(self._freq_lbl)
 
         layout.addStretch(1)
@@ -112,9 +112,9 @@ class HeaderBar(QWidget):
         layout.addWidget(self._make_sep())
 
         # ── Rechter kant: FS | Exit | Help | sep | UTC | sep | Lokaal ──────────
-        self._btn_min  = self._btn("─",    amber=True)   # minimize
-        self._btn_fs   = self._btn("⛶",   amber=True)   # fullscreen — uiterst rechts
-        self._btn_help = self._btn("Help", amber=True)
+        self._btn_min  = self._btn("─",                amber=True)
+        self._btn_fs   = self._btn("⛶",              amber=True)
+        self._btn_help = self._btn(tr("hdr.help"),   amber=True)
 
         self._lbl_local = QLabel("--:--:--")
         self._lbl_local.setStyleSheet(
@@ -127,10 +127,7 @@ class HeaderBar(QWidget):
         # Zomer/wintertijd toggle
         self._dst_cb = QCheckBox("DST")
         self._dst_cb.setChecked(_is_summer())
-        self._dst_cb.setToolTip(
-            "DST = Daylight Saving Time (zomertijd)\n"
-            "Aan = CEST (UTC+2)  ·  Uit = CET (UTC+1)\n"
-            "Wordt automatisch bepaald maar kan handmatig overschreven worden.")
+        self._dst_cb.setToolTip(tr("hdr.dst.tip"))
         self._dst_cb.setStyleSheet(
             f"QCheckBox {{ color: {TEXT_DIM}; font-size: 8pt; spacing: 3px; }}"
             f"QCheckBox::indicator {{ width: 12px; height: 12px; }}")
@@ -241,17 +238,17 @@ class HeaderBar(QWidget):
           int > 0   → '14.225,000 kHz'        (amber vet)
         """
         if freq_hz is None:
-            self._freq_lbl.setText("Radio niet verbonden")
+            self._freq_lbl.setText(tr("hdr.cat.disconnected"))
             self._freq_lbl.setStyleSheet(
                 f"color: {TEXT_DIM}; font-size: 9pt; font-family: Consolas;"
                 f" padding: 0 8px;")
         elif freq_hz == -1:
-            self._freq_lbl.setText("Radio offline")
+            self._freq_lbl.setText(tr("hdr.cat.offline"))
             self._freq_lbl.setStyleSheet(
                 f"color: #FFA726; font-size: 9pt; font-family: Consolas;"
                 f" padding: 0 8px;")
         elif freq_hz == 0:
-            self._freq_lbl.setText("Verbonden  —")
+            self._freq_lbl.setText(tr("hdr.cat.connected"))
             self._freq_lbl.setStyleSheet(
                 f"color: {ACCENT}; font-size: 9pt; font-family: Consolas;"
                 f" padding: 0 8px;")
@@ -262,6 +259,22 @@ class HeaderBar(QWidget):
             self._freq_lbl.setStyleSheet(
                 f"color: {ACCENT}; font-size: 10pt; font-weight: bold;"
                 f" font-family: Consolas; padding: 0 8px;")
+
+    def retranslate(self):
+        """Herlaad alle knop- en tooltip-teksten na taalwisseling."""
+        self._btn_sat.setText(tr("hdr.satellite"))
+        self._btn_spy.setText(tr("hdr.spystations"))
+        self._btn_eibi.setText(tr("hdr.eibi"))
+        self._btn_ft8.setText(tr("hdr.ft8"))
+        self._btn_overlay.setText(tr("hdr.overlays"))
+        self._btn_overlay.setToolTip(tr("hdr.overlays.tip"))
+        self._btn_exit.setText(tr("app.close"))
+        self._btn_settings.setText(tr("hdr.settings"))
+        self._btn_help.setText(tr("hdr.help"))
+        self._spin_refresh.setSpecialValueText(tr("hdr.refresh.off"))
+        self._spin_refresh.setToolTip(tr("hdr.refresh.tip"))
+        self._countdown_lbl.setToolTip(tr("hdr.countdown.tip"))
+        self._dst_cb.setToolTip(tr("hdr.dst.tip"))
 
     def set_cat_connected(self, connected: bool):
         """Pas kleur van frequentie-label aan op basis van CAT-verbindingsstatus."""

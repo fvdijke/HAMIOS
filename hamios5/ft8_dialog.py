@@ -16,6 +16,7 @@ from PySide6.QtWidgets import (
 
 from .theme import ACCENT, BG_PANEL, BG_SURFACE, BG_ROOT, TEXT_H1, TEXT_DIM, TEXT_BODY, BORDER
 from .geometry import save_geom, restore_geom
+from .i18n import tr
 
 # ── Frequentietabel ────────────────────────────────────────────────────────────
 # (dial_khz, mode, band, regio, opmerkingen)
@@ -162,7 +163,7 @@ class Ft8Dialog(QDialog):
 
     def __init__(self, parent=None):
         super().__init__(parent)
-        self.setWindowTitle("📡  Digitale modi frequenties — HF Propagation & Atmosphere Monitor")
+        self.setWindowTitle(tr("ft8.title"))
         self.setMinimumSize(700, 500)
         self.resize(760, 560)
         self.setStyleSheet(_QSS)
@@ -183,26 +184,26 @@ class Ft8Dialog(QDialog):
         flt = QHBoxLayout(); flt.setSpacing(6)
 
         self._search = QLineEdit()
-        self._search.setPlaceholderText("🔍  Zoeken op frequentie, mode, band …")
+        self._search.setPlaceholderText(tr("ft8.search"))
         self._search.setFont(f8)
         self._search.textChanged.connect(self._apply_filter)
         flt.addWidget(self._search, 1)
 
-        flt.addWidget(QLabel("Band:"))
+        flt.addWidget(QLabel(tr("ft8.band_lbl")))
         self._band_cb = QComboBox(); self._band_cb.setFont(f8)
         self._band_cb.addItems(_BANDS)
         self._band_cb.setFixedWidth(72)
         self._band_cb.currentIndexChanged.connect(self._apply_filter)
         flt.addWidget(self._band_cb)
 
-        flt.addWidget(QLabel("Mode:"))
+        flt.addWidget(QLabel(tr("ft8.mode_lbl")))
         self._mode_cb = QComboBox(); self._mode_cb.setFont(f8)
         self._mode_cb.addItems(_MODES_FILTER)
         self._mode_cb.setFixedWidth(90)
         self._mode_cb.currentIndexChanged.connect(self._apply_filter)
         flt.addWidget(self._mode_cb)
 
-        self._usb_cb = QCheckBox("USB instellen")
+        self._usb_cb = QCheckBox(tr("ft8.usb_mode"))
         self._usb_cb.setFont(f8)
         self._usb_cb.setChecked(True)
         self._usb_cb.setToolTip(
@@ -214,7 +215,7 @@ class Ft8Dialog(QDialog):
 
         # ── Legenda (kleurcodering) ────────────────────────────────────────────
         leg = QHBoxLayout(); leg.setSpacing(10)
-        leg.addWidget(QLabel("Kleur:"))
+        leg.addWidget(QLabel(tr("ft8.color_lbl")))
         for mode, color in _MODE_COLORS.items():
             dot = QLabel(f"⬤ {mode}")
             dot.setStyleSheet(f"color: {color}; font-size: 7pt; background: transparent;")
@@ -224,7 +225,10 @@ class Ft8Dialog(QDialog):
 
         # ── Tabel ─────────────────────────────────────────────────────────────
         self._model = QStandardItemModel(0, len(_COLS))
-        self._model.setHorizontalHeaderLabels(_COLS)
+        self._model.setHorizontalHeaderLabels([
+            tr("ft8.col.freq"), tr("ft8.col.mode"), tr("ft8.col.band"),
+            "Regio", tr("ft8.col.note"),
+        ])
 
         self._proxy = QSortFilterProxyModel()
         self._proxy.setSourceModel(self._model)
@@ -262,7 +266,7 @@ class Ft8Dialog(QDialog):
         self._cat_lbl.setFont(f8)
         bot.addWidget(self._cat_lbl)
 
-        btn_close = QPushButton("Sluiten"); btn_close.setObjectName("close")
+        btn_close = QPushButton(tr("app.close_btn")); btn_close.setObjectName("close")
         btn_close.setFont(f8)
         btn_close.clicked.connect(self.accept)
         bot.addWidget(btn_close)

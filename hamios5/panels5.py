@@ -34,6 +34,7 @@ from .theme import (
 )
 from .charts import history as _hist
 from . import history as _hist_csv
+from .i18n import tr, language_changed
 
 
 def _play_sat_ping():
@@ -324,7 +325,7 @@ class _BandChart(QWidget):
                 p.setFont(f7)
                 p.setPen(QColor(TEXT_DIM))
                 p.drawText(bar_x, y + 1, bar_max, self.BAR_H - 2,
-                           Qt.AlignCenter, "gesloten")
+                           Qt.AlignCenter, tr("band.closed"))
                 p.setFont(f7b)
                 p.drawText(bar_x + bar_max, y, self.PCT_W, self.BAR_H,
                            Qt.AlignCenter, "0%")
@@ -469,44 +470,35 @@ class BandRelWidget(QWidget):
         self._chart.set_data(band_pct)
         self._muf_lbl.setText(f"MUF: {muf} MHz")
         self._luf_lbl.setText(f"LUF: {luf} MHz")
-        dn = "Dag" if self._day else "Nacht"
+        dn = tr("band.day") if self._day else tr("band.night")
         self._snr_lbl.setText(f"{snr:+d} dB  ·  {dn}")
 
 
 # ── BandCondWidget ────────────────────────────────────────────────────────────
 
-_BAND_INFO = {
-    "160m": ("1.8–2.0 MHz — Nachtsband",
-             "Werkt 's nachts via F2-laag. Overdag sterk geabsorbeerd.\n"
-             "Goed voor regionale DX bij laag K-index."),
-    "80m":  ("3.5–4.0 MHz — Avond/nacht",
-             "Nachtsband, ook vroege ochtend. Skip ~200-2000 km.\nGevoelig voor K-index."),
-    "60m":  ("5 MHz — Noodband",
-             "Beperkte banden per regio. Dag/nacht bruikbaar bij gemiddelde SFI."),
-    "40m":  ("7 MHz — Dagelijks betrouwbaar",
-             "Beste dag-DX band bij lage SFI. Nachts lange skip. MUF ±10-14 MHz."),
-    "30m":  ("10 MHz — WARC-band",
-             "CW/digi only. Bijna altijd open. Overdag regionaal, 's nachts DX."),
-    "20m":  ("14 MHz — Hoofd-DX band",
-             "Meest betrouwbare DX-band. Open bij SFI>80.\nDag: F2-propagatie wereldwijd."),
-    "17m":  ("18 MHz — WARC DX-band",
-             "Uitstekend voor DX bij hoge SFI.\nGevoeliger voor storm dan 20m."),
-    "15m":  ("21 MHz — Zonnecyclus band",
-             "Open bij hoge SFI (>100).\nBeste propagatie rond middaguur lokaal."),
-    "12m":  ("24 MHz — WARC hoge band",
-             "Vereist SFI>110.\nTrans-equatoriaal en F2 bij zonnemaxima."),
-    "10m":  ("28–30 MHz — Ionosfeer afhankelijk",
-             "Gesloten bij laag SFI. Spectaculair open bij SFI>150.\nEs-opens mogelijk."),
-    "6m":   ("50 MHz — Magic band",
-             "Normaal gesloten via ionosfeer.\nSporadisch-E (mei-aug) geeft verrassende DX."),
+def _band_info():
+    return {
+        "160m": ("1.8–2.0 MHz", tr("bandt.160m")),
+        "80m":  ("3.5–4.0 MHz", tr("bandt.80m")),
+        "60m":  ("5 MHz",       tr("bandt.60m")),
+        "40m":  ("7 MHz",       tr("bandt.40m")),
+        "30m":  ("10 MHz",      tr("bandt.30m")),
+        "20m":  ("14 MHz",      tr("bandt.20m")),
+        "17m":  ("18 MHz",      tr("bandt.17m")),
+        "15m":  ("21 MHz",      tr("bandt.15m")),
+        "12m":  ("24 MHz",      tr("bandt.12m")),
+        "10m":  ("28–30 MHz",   tr("bandt.10m")),
+        "6m":   ("50 MHz",      tr("bandt.6m")),
 }
 
 
 def _pct_to_cond(pct: int) -> tuple[str, str]:
-    if pct >= 60: return "Goed",     "#4CAF50"
-    if pct >= 30: return "Matig",    "#FFC107"
-    if pct >= 1:  return "Slecht",   "#F44336"
-    return               "Gesloten", TEXT_DIM
+    if pct >= 60: return tr("band.good"),    "#4CAF50"
+    if pct >= 30: return tr("band.fair"),    "#FFC107"
+    if pct >= 1:  return tr("band.poor"),    "#F44336"
+    return               tr("band.closed"),  TEXT_DIM
+
+_BAND_INFO = _band_info()
 
 
 class BandCondWidget(QWidget):
@@ -543,7 +535,7 @@ class BandCondWidget(QWidget):
 
         f8b = QFont("Segoe UI", 8); f8b.setBold(True)
 
-        for col, txt in enumerate(["Band  ⬡", "Dag", "Nacht"]):
+        for col, txt in enumerate(["Band  ⬡", tr("band.day"), tr("band.night")]):
             lbl = QLabel(txt)
             lbl.setFont(f8b)
             lbl.setStyleSheet(f"color: {ACCENT};")
@@ -556,8 +548,9 @@ class BandCondWidget(QWidget):
             clr = _BAND_COLORS_HF.get(bname, TEXT_DIM)
             name_lbl.setStyleSheet(f"color: {clr};")
             name_lbl.setCursor(Qt.PointingHandCursor)
-            if bname in _BAND_INFO:
-                title, body = _BAND_INFO[bname]
+            info = _band_info()
+            if bname in info:
+                title, body = info[bname]
                 name_lbl.setToolTip(
                     f"<b>{title}</b><br>{body.replace(chr(10), '<br>')}<br>"
                     f"<i>Klik om naar CAT te sturen</i>")
@@ -625,35 +618,35 @@ class BandCondWidget(QWidget):
 class StormFcWidget(QWidget):
     """3-daagse NOAA stormprognose."""
 
-    # (label, key, Kp-bereik, tooltip)
+    # (tr-key, data-key, Kp-bereik, tooltip)
     _LEVELS = [
-        ("Actief",    "active",   "Kp 3–4",
+        ("storm.active",    "active",   "Kp 3–4",
          "<b>Actief (Kp 3–4)</b><br>"
          "Lichte geomagnetische activiteit.<br>"
          "HF-propagatie op polaire paden iets verminderd.<br>"
          "Geen merkbaar effect op mid-latitude banden.<br>"
          "Aurora mogelijk boven 65°N."),
-        ("G1 Minor",  "minor",    "Kp 5",
+        ("storm.minor",  "minor",    "Kp 5",
          "<b>G1 Minor storm (Kp 5)</b><br>"
          "HF-degradatie op hoge-breedtegraad-paden (boven 60°N).<br>"
          "160m/80m kunnen verslechteren door verhoogde absorptie.<br>"
          "QRN toename op lage banden mogelijk.<br>"
          "Aurora zichtbaar tot ~60°N."),
-        ("G2 Matig",  "moderate", "Kp 6",
+        ("storm.moderate",  "moderate", "Kp 6",
          "<b>G2 Moderate storm (Kp 6)</b><br>"
          "Merkbare HF-uitval op polaire en hoge breedtepaden.<br>"
          "160m/80m/40m sterk verzwakt; MUF daalt.<br>"
          "Verhoogde QRN, bandruis neemt toe.<br>"
          "DX op lage banden moeilijk; hogere banden kunnen openen.<br>"
          "Aurora tot ~55°N."),
-        ("G3 Sterk",  "severe",   "Kp 7",
+        ("storm.severe",  "severe",   "Kp 7",
          "<b>G3 Strong storm (Kp 7)</b><br>"
          "Intermitterende HF-uitval op veel paden.<br>"
          "160m t/m 20m zwaar verstoord of gesloten.<br>"
          "Sterke QRN op alle lage banden; pratical QSO moeilijk.<br>"
          "Navigatie-GPS mogelijke afwijkingen.<br>"
          "Aurora tot ~50°N."),
-        ("G4+ Extr.", "extreme",  "Kp ≥8",
+        ("storm.extreme", "extreme",  "Kp ≥8",
          "<b>G4–G5 Severe/Extreme storm (Kp ≥8)</b><br>"
          "Grootschalige HF-uitval, volledige bandsluitingen mogelijk.<br>"
          "Alle lage banden (160m–20m) praktisch gesloten.<br>"
@@ -665,25 +658,35 @@ class StormFcWidget(QWidget):
     def __init__(self, parent=None):
         super().__init__(parent)
         self._build_ui()
+        language_changed.connect(self.retranslate)
+
+    def retranslate(self, _=None):
+        """Update alle labels na taalwisseling."""
+        self._sub_lbl.setText(tr("storm.subtitle"))
+        for i, key in enumerate(["storm.col.act","storm.col.d1","storm.col.d2","storm.col.d3"]):
+            self._hdr_lbls[i].setText(tr(key))
+        for i, (trkey, _key, kp, _tip) in enumerate(self._LEVELS):
+            self._row_lbls[i].setText(
+                f"{tr(trkey)}  <small style='color:#555;'>{kp}</small>")
+        self._legend_lbl.setText(
+            f'<span style="color:{TEXT_DIM};">{tr("storm.legend.low")}</span>'
+            f'&nbsp;&nbsp;'
+            f'<span style="color:#FFF176;">{tr("storm.legend.fair")}</span>'
+            f'&nbsp;&nbsp;'
+            f'<span style="color:#FFA726;">{tr("storm.legend.high")}</span>'
+            f'&nbsp;&nbsp;'
+            f'<span style="color:#EF5350;">{tr("storm.legend.crit")}</span>')
 
     def _build_ui(self):
         outer = QVBoxLayout(self)
         outer.setContentsMargins(6, 4, 6, 4)
         outer.setSpacing(2)
 
-        # Subtitle: wat de percentages betekenen
-        sub = QLabel("Kans op geomagnetische storm per dag (NOAA SWPC)")
-        sub.setFont(QFont("Segoe UI", 6))
-        sub.setStyleSheet(f"color: {TEXT_DIM}; background: transparent;")
-        sub.setAlignment(Qt.AlignCenter)
-        sub.setToolTip(
-            "<b>Geomagnetische storm kansen</b><br>"
-            "De percentages geven de kans (%) dat de geomagnetische activiteit<br>"
-            "op een bepaalde dag de betreffende G-drempel <i>bereikt of overschrijdt</i>.<br><br>"
-            "Bron: NOAA Space Weather Prediction Center (3-day forecast).<br>"
-            "Bijgewerkt elke 6 uur."
-        )
-        outer.addWidget(sub)
+        self._sub_lbl = QLabel(tr("storm.subtitle"))
+        self._sub_lbl.setFont(QFont("Segoe UI", 6))
+        self._sub_lbl.setStyleSheet(f"color: {TEXT_DIM}; background: transparent;")
+        self._sub_lbl.setAlignment(Qt.AlignCenter)
+        outer.addWidget(self._sub_lbl)
 
         grid = QGridLayout()
         grid.setContentsMargins(0, 0, 0, 0)
@@ -693,21 +696,25 @@ class StormFcWidget(QWidget):
         f7  = QFont("Segoe UI", 7)
         f7b = QFont("Segoe UI", 7); f7b.setBold(True)
 
-        for col, txt in enumerate(["Activiteit", "Dag 1", "Dag 2", "Dag 3"]):
-            lbl = QLabel(txt)
+        self._hdr_lbls = []
+        for col, key in enumerate(["storm.col.act","storm.col.d1","storm.col.d2","storm.col.d3"]):
+            lbl = QLabel(tr(key))
             lbl.setFont(f7b)
             lbl.setStyleSheet(f"color: {TEXT_DIM};")
             lbl.setAlignment(Qt.AlignCenter)
             grid.addWidget(lbl, 0, col)
+            self._hdr_lbls.append(lbl)
 
         self._cells: dict[tuple, QLabel] = {}
-        for row, (name, key, kp, tip) in enumerate(self._LEVELS, start=1):
-            lbl = QLabel(f"{name}  <small style='color:#555;'>{kp}</small>")
+        self._row_lbls = []
+        for row, (trkey, key, kp, tip) in enumerate(self._LEVELS, start=1):
+            lbl = QLabel(f"{tr(trkey)}  <small style='color:#555;'>{kp}</small>")
             lbl.setTextFormat(Qt.RichText)
             lbl.setFont(f7)
             lbl.setStyleSheet(f"color: {TEXT_DIM};")
             lbl.setToolTip(tip)
             grid.addWidget(lbl, row, 0)
+            self._row_lbls.append(lbl)
             for day in range(3):
                 cell = QLabel("—")
                 cell.setFont(f7b)
@@ -717,22 +724,16 @@ class StormFcWidget(QWidget):
                 self._cells[(key, day)] = cell
 
         legend_row = len(self._LEVELS) + 1
-        legend = QLabel(
-            f'<span style="color:{TEXT_DIM};">&lt;10% laag</span>'
-            f'&nbsp;&nbsp;'
-            f'<span style="color:#FFF176;">10% matig</span>'
-            f'&nbsp;&nbsp;'
-            f'<span style="color:#FFA726;">25% hoog</span>'
-            f'&nbsp;&nbsp;'
-            f'<span style="color:#EF5350;">50% kritiek</span>'
-        )
-        legend.setFont(QFont("Segoe UI", 6))
-        legend.setAlignment(Qt.AlignCenter)
-        legend.setStyleSheet("background: transparent;")
-        grid.addWidget(legend, legend_row, 0, 1, 4)
+        self._legend_lbl = QLabel()
+        self._legend_lbl.setFont(QFont("Segoe UI", 6))
+        self._legend_lbl.setAlignment(Qt.AlignCenter)
+        self._legend_lbl.setStyleSheet("background: transparent;")
+        grid.addWidget(self._legend_lbl, legend_row, 0, 1, 4)
+        # Vul initieel via retranslate
+        self.retranslate()
 
     def set_data(self, storm: dict):
-        for _label, key, _kp, _tip in self._LEVELS:
+        for _trkey, key, _kp, _tip in self._LEVELS:
             vals = storm.get(key, [0, 0, 0])
             for day, val in enumerate(vals[:3]):
                 cell = self._cells.get((key, day))
@@ -946,8 +947,8 @@ class BandSchedWidget(QWidget):
         if 0 <= col < lay["nh"] and 0 <= row < lay["nb"]:
             bname, bfreq = _BANDS_HF[row]
             pct  = self._grid[row][col]
-            kwal = ("Goed" if pct >= 60 else "Matig" if pct >= 30
-                    else "Slecht" if pct >= 1 else "Gesloten")
+            kwal = (tr("band.good") if pct >= 60 else tr("band.fair") if pct >= 30
+                    else tr("band.poor") if pct >= 1 else tr("band.closed"))
             tip  = (f"{bname}  —  {col:02d}:00–{(col+1)%24:02d}:00 lokaal\n"
                     f"Betrouwbaarheid: {pct}%  ({kwal})\n"
                     f"Frequentie: {bfreq:.3f} MHz\n"
@@ -1049,7 +1050,7 @@ class SolarHistChart(QWidget):
             p.setPen(QColor(TEXT_DIM))
             p.setFont(QFont("Segoe UI", 8))
             p.drawText(0, PT, W, H - PT, Qt.AlignCenter,
-                       "Geen historiekdata — vult na eerste refresh")
+                       tr("shist.no_data"))
             return
 
         # Auto-scale SFI: ±10% marge rondom het databereik
@@ -1116,7 +1117,7 @@ class SolarHistChart(QWidget):
         p.setFont(f6)
         lbl = f"{int(self._hours)}h" if self._hours < 48 else f"{int(self._hours/24)}d"
         p.drawText(PL, H - PB + 2, 24, PB, Qt.AlignLeft, lbl)
-        p.drawText(W - PR - 16, H - PB + 2, 16, PB, Qt.AlignRight, "nu")
+        p.drawText(W - PR - 16, H - PB + 2, 16, PB, Qt.AlignRight, tr("sched.now"))
         p.setPen(QColor("#FFA726"))
         p.drawText(PL + 2, PT, 24, 10, Qt.AlignLeft, "SFI")
 
@@ -1196,7 +1197,7 @@ class BandHistChart(QWidget):
             p.setPen(QColor(TEXT_DIM))
             p.setFont(QFont("Segoe UI", 8))
             p.drawText(0, PT, W, H - PT - PB_total, Qt.AlignCenter,
-                       "Geen historiekdata — vult na eerste refresh")
+                       tr("hist.no_data"))
             self._draw_legend(p, W, H)
             return
 
@@ -1236,7 +1237,7 @@ class BandHistChart(QWidget):
         p.setFont(f6)
         lbl = f"{int(self._hours)}h" if self._hours < 48 else f"{int(self._hours/24)}d"
         p.drawText(PL, y_time, 24, 10, Qt.AlignLeft, lbl)
-        p.drawText(W - PR - 20, y_time, 20, 10, Qt.AlignRight, "nu")
+        p.drawText(W - PR - 20, y_time, 20, 10, Qt.AlignRight, tr("sched.now"))
 
         # Legenda onder tijdlabels
         self._draw_legend(p, W, H)
@@ -1321,9 +1322,10 @@ class LightningPanel(QWidget):
         super().__init__(parent)
         self._layer     = lightning_layer
         self._cfg       = cfg
-        self._qrn_level = 0   # vorige QRN-niveau (0=geen, 1=laag, 2=matig, 3=hoog, 4=zwaar)
+        self._qrn_level = 0
         self._build_ui()
         lightning_layer.status_signal.connect(self._on_status)
+        language_changed.connect(self._retranslate)
         if cfg:
             self._layer.set_fade_seconds(cfg.lightning_fade)
 
@@ -1341,9 +1343,10 @@ class LightningPanel(QWidget):
 
         # Status
         row = QHBoxLayout()
-        row.addWidget(QLabel("Status:", font=f8,
-                              styleSheet=f"color:{TEXT_DIM};"))
-        self._status_lbl = QLabel("Verbinden…")
+        self._status_hdr = QLabel(tr("lightn.status") + ":", font=f8,
+                                   styleSheet=f"color:{TEXT_DIM};")
+        row.addWidget(self._status_hdr)
+        self._status_lbl = QLabel(tr("lightn.connecting"))
         self._status_lbl.setFont(f9b)
         self._status_lbl.setStyleSheet(f"color:{TEXT_DIM};")
         row.addWidget(self._status_lbl)
@@ -1352,8 +1355,9 @@ class LightningPanel(QWidget):
 
         # Teller
         row2 = QHBoxLayout()
-        row2.addWidget(QLabel("Ontladingen:", font=f8,
-                               styleSheet=f"color:{TEXT_DIM};"))
+        self._count_hdr = QLabel(tr("lightn.discharges") + ":", font=f8,
+                                  styleSheet=f"color:{TEXT_DIM};")
+        row2.addWidget(self._count_hdr)
         self._count_lbl = QLabel("0")
         self._count_lbl.setFont(f9b)
         self._count_lbl.setStyleSheet(f"color:{TEXT_H1};")
@@ -1380,12 +1384,16 @@ class LightningPanel(QWidget):
 
         layout.addStretch()
 
+    def _retranslate(self, _=None):
+        self._status_hdr.setText(tr("lightn.status") + ":")
+        self._count_hdr.setText(tr("lightn.discharges") + ":")
+
     def _on_status(self, status: str):
         msgs = {
-            "live":     ("Live",                   "#4CAF50"),
-            "disc":     ("Verbroken",              "#EF5350"),
-            "no_lib":   ("Geen websocket-client",  "#FFA726"),
-            "disabled": ("Uitgeschakeld",          TEXT_DIM),
+            "live":     (tr("lightn.connected"),     "#4CAF50"),
+            "disc":     (tr("lightn.disconnected"),  "#EF5350"),
+            "no_lib":   (tr("lightn.no_lib"),        "#FFA726"),
+            "disabled": (tr("lightn.disabled"),      TEXT_DIM),
         }
         txt, clr = msgs.get(status, ("…", TEXT_DIM))
         self._status_lbl.setText(txt)
@@ -1439,15 +1447,15 @@ class LightningPanel(QWidget):
 
         # QRN-niveau + advies
         if n == 0:
-            lvl, qrn, qrn_clr = 0, "Geen activiteit",                         TEXT_DIM
+            lvl, qrn, qrn_clr = 0, tr("lightn.qrn.none"),                         TEXT_DIM
         elif n < 10:
-            lvl, qrn, qrn_clr = 1, "Lage activiteit — weinig QRN verwacht",   "#4CAF50"
+            lvl, qrn, qrn_clr = 1, tr("qrn.low"),    "#4CAF50"
         elif n < 50:
-            lvl, qrn, qrn_clr = 2, "Matige activiteit — enige QRN op LF/MF/160m", "#FFA726"
+            lvl, qrn, qrn_clr = 2, tr("qrn.medium"), "#FFA726"
         elif n < 200:
-            lvl, qrn, qrn_clr = 3, "Hoge activiteit — QRN op 160m/80m/40m",  "#FF7043"
+            lvl, qrn, qrn_clr = 3, tr("qrn.high"),   "#FF7043"
         else:
-            lvl, qrn, qrn_clr = 4, "Zware storm — sterke QRN op alle lage banden!", "#EF5350"
+            lvl, qrn, qrn_clr = 4, tr("qrn.severe"),  "#EF5350"
         radius_lbl = f" ({n} inslagen ≤{self._QRN_RADIUS_KM//1000}Mm)" if n > 0 else ""
         self._qrn_lbl.setText(f"QRN: {qrn}{radius_lbl}")
         self._qrn_lbl.setStyleSheet(f"color:{qrn_clr}; font-size:8pt;")
@@ -1475,7 +1483,7 @@ class LightningPanel(QWidget):
                     if min_km is None or km < min_km:
                         min_km = km
                 if min_km is not None:
-                    self._near_lbl.setText(f"Meest nabije ontlading: {min_km:.0f} km")
+                    self._near_lbl.setText(f"{tr('lightn.nearest')}: {min_km:.0f} {tr('lightn.km')}")
                     clr = "#EF5350" if min_km < 100 else "#FFA726" if min_km < 300 else TEXT_DIM
                     self._near_lbl.setStyleSheet(f"color:{clr}; font-size:8pt;")
                 else:
@@ -1525,7 +1533,7 @@ class AlertsWidget(QWidget):
         self._count_lbl.setStyleSheet(f"color: {TEXT_DIM};")
         top.addWidget(self._count_lbl)
         top.addStretch()
-        btn_wis = QPushButton("Wis alles"); btn_wis.setObjectName("danger")
+        btn_wis = QPushButton(tr("alerts.clear")); btn_wis.setObjectName("danger")
         btn_wis.setFont(f8)
         btn_wis.clicked.connect(self._clear)
         top.addWidget(btn_wis)
@@ -1618,7 +1626,7 @@ class AlertsWidget(QWidget):
             k_clr = ("#EF5350" if k >= 7 else "#FFA726" if k >= 5
                      else "#FFF176" if k >= 3 else "#4FC3F7")
             xray  = str(data.get("xray", "—"))
-            items.append((k_clr, "🧲", f"K-index: {k:.0f}  ·  X-straling: {xray}", "", ""))
+            items.append((k_clr, "🧲", tr("alert.k_status", k=f"{k:.0f}", xray=xray), "", ""))
         except (ValueError, TypeError):
             pass
 
@@ -1632,19 +1640,19 @@ class AlertsWidget(QWidget):
             if k >= threshold:
                 clr = "#EF5350" if k >= 7 else "#FFA726"
                 items.append((clr, "🚨",
-                    f"K-STORM  K={k:.0f} ≥ drempel {threshold}",
-                    "Geomagnetische storm — poolroutes verstoord", ""))
+                    tr("alert.k_storm", k=f"{k:.0f}", thr=threshold),
+                    tr("alert.k_storm_detail"), ""))
 
         # ── X-flare alert ─────────────────────────────────────────────────────
         if not cfg or getattr(cfg, "xflare_alert_en", True):
             xray = str(data.get("xray", ""))
             if xray and xray[0].upper() in ("M", "X"):
                 clr = "#EF5350" if xray[0].upper() == "X" else "#FFA726"
-                items.append((clr, "☢", f"Zonnevlam {xray}", "", ""))
+                items.append((clr, "☢", tr("alert.xflare", xray=xray), "", ""))
 
         # ── Satellieten in QTH-zone ────────────────────────────────────────────
         for entry in self._sat_zone:
-            items.append(("#4CAF50", "🛰", f"{entry} boven QTH", "", ""))
+            items.append(("#4CAF50", "🛰", tr("alert.sat_qth", name=entry), "", ""))
 
         # ── Externe meldingen (analyse, enz.) uit _alert_log ──────────────────
         import time as _t
@@ -1654,9 +1662,9 @@ class AlertsWidget(QWidget):
             mins = int(age / 60)
             secs = int(age % 60)
             if mins > 0:
-                tstr = f"  {mins}m geleden"
+                tstr = tr("alert.min_ago", m=mins)
             else:
-                tstr = f"  {secs}s geleden"
+                tstr = tr("alert.sec_ago", s=secs)
             items.append((color, icon, text, detail or "", tstr))
 
         # ── Bouw widgets ──────────────────────────────────────────────────────
@@ -1670,7 +1678,7 @@ class AlertsWidget(QWidget):
         f7 = QFont("Segoe UI", 7)
 
         if not items:
-            lbl = QLabel("Geen actieve meldingen")
+            lbl = QLabel(tr("alerts.none_active"))
             lbl.setFont(f8)
             lbl.setStyleSheet(f"color: {TEXT_DIM};")
             lbl.setAlignment(Qt.AlignCenter)
@@ -1835,7 +1843,7 @@ class DXSpotsTable(QWidget):
         self._history:    list = []
         self._dx_font_sz: int  = getattr(cfg, "dx_font_size", 8) if cfg else 8
         self._build_ui()
-        # Herstel opgeslagen staat
+        language_changed.connect(self._retranslate)
         if cfg:
             self._own_cb.setChecked(getattr(cfg, "dx_own_continent", False))
             if getattr(cfg, "dx_heatmap", False):
@@ -1850,6 +1858,13 @@ class DXSpotsTable(QWidget):
 
     def set_font_size(self, size: int):
         self._set_font_size(size)
+
+    def _retranslate(self, _=None):
+        self._table.setHorizontalHeaderLabels(
+            [tr("dx.col.utc"), tr("dx.col.band"), tr("dx.col.mhz"),
+             tr("dx.col.dx"), tr("dx.col.spotter"), tr("dx.col.comment")])
+        self._own_cb.setText(tr("dx.filter.continent"))
+        self._heatmap_btn.setText(tr("dx.heatmap"))
 
     def _set_font_size(self, size: int):
         self._dx_font_sz = max(6, size)
@@ -1868,12 +1883,12 @@ class DXSpotsTable(QWidget):
         # ── Bedieningsrij ────────────────────────────────────────────────────
         ctrl = QHBoxLayout()
         ctrl.setSpacing(6)
-        self._own_cb = QCheckBox("Eigen continent")
+        self._own_cb = QCheckBox(tr("dx.filter.continent"))
         self._own_cb.setFont(f8)
         self._own_cb.toggled.connect(self._apply_filter)
         ctrl.addWidget(self._own_cb)
 
-        self._heatmap_btn = QPushButton("Heatmap")
+        self._heatmap_btn = QPushButton(tr("dx.heatmap"))
         self._heatmap_btn.setFont(f8)
         self._heatmap_btn.setCheckable(True)
         self._heatmap_btn.toggled.connect(self._toggle_heatmap)
@@ -1892,7 +1907,8 @@ class DXSpotsTable(QWidget):
         # Tabel
         self._table = QTableWidget(0, 6)
         self._table.setHorizontalHeaderLabels(
-            ["UTC", "Band", "MHz", "DX", "Spotter", "Comment"])
+            [tr("dx.col.utc"), tr("dx.col.band"), tr("dx.col.mhz"),
+             tr("dx.col.dx"), tr("dx.col.spotter"), tr("dx.col.comment")])
         self._table.verticalHeader().setVisible(False)
         self._table.setEditTriggers(QAbstractItemView.NoEditTriggers)
         self._table.setSelectionBehavior(QAbstractItemView.SelectRows)
@@ -2235,53 +2251,32 @@ class PropAdvWidget(QWidget):
         if hf_open:
             best = hf_open[:5]
             bstr = "  ·  ".join(f"{n} {p}%" for n, p in best)
-            extra = f"  (+{len(hf_open)-5} meer)" if len(hf_open) > 5 else ""
-            tips.append(("📡", f"Beste banden: {bstr}{extra}", "#4CAF50"))
+            extra = f"  (+{len(hf_open)-5})" if len(hf_open) > 5 else ""
+            tips.append(("📡", tr("prop.adv.best", bands=bstr + extra), "#4CAF50"))
         else:
-            tips.append(("📡", "Geen banden significant open", TEXT_DIM))
+            tips.append(("📡", tr("prop.adv.no_data"), TEXT_DIM))
 
         # ── 2. Geomagnetische condities ──────────────────────────────────────
-        a_kwal = ("Rustig" if a_index < 10 else
-                  "Onrustig" if a_index < 30 else
-                  "Storm" if a_index < 100 else "Zware storm")
         if k_index >= 7:
-            tips.append(("🚨",
-                f"ZWARE STORM K={k_i} A={a_i} — HF grotendeels onbruikbaar. "
-                f"Poolroutes zwaar verstoord.", "#F44336"))
+            tips.append(("🚨", tr("prop.adv.storm4", k_i=k_i, a_i=a_i), "#F44336"))
         elif k_index >= 5:
-            tips.append(("⚠️",
-                f"Geomagnetische storm K={k_i} A={a_i} ({a_kwal}) — "
-                f"40m/80m meest betrouwbaar. Polaire paden verstoord.", "#F44336"))
+            tips.append(("⚠️", tr("prop.adv.storm3", k_i=k_i, a_i=a_i), "#F44336"))
         elif k_index >= 3:
-            tips.append(("⚡",
-                f"Verhoogde activiteit K={k_i} A={a_i} ({a_kwal}) — "
-                f"Lichte verstoringen op hogere banden mogelijk.", "#FFC107"))
+            tips.append(("⚡", tr("prop.adv.storm2", k_i=k_i, a_i=a_i), "#FFC107"))
         else:
-            tips.append(("✅",
-                f"Geomagnetisch rustig K={k_i} A={a_i} — "
-                f"Optimale condities voor alle banden.", "#4CAF50"))
+            tips.append(("✅", tr("prop.adv.storm0", k_i=k_i, a_i=a_i), "#4CAF50"))
 
         # ── 3. Zonactiviteit ─────────────────────────────────────────────────
         if sfi >= 200:
-            tips.append(("🌟",
-                f"Uitzonderlijke activiteit SFI={s_i} SSN={ss_i} — Zonnecyclus maximum. "
-                f"10m/12m/15m open wereldwijd. Es-versterking en TEP mogelijk.", ACCENT))
+            tips.append(("🌟", tr("prop.adv.sfi.exc",  s_i=s_i, ss_i=ss_i), ACCENT))
         elif sfi >= 150:
-            tips.append(("☀️",
-                f"Hoge activiteit SFI={s_i} SSN={ss_i} — Uitstekend voor 10m–17m DX. "
-                f"F2 sterk, MUF hoog, grote skips mogelijk.", ACCENT))
+            tips.append(("☀️", tr("prop.adv.sfi.high", s_i=s_i, ss_i=ss_i), ACCENT))
         elif sfi >= 100:
-            tips.append(("🌤",
-                f"Goede activiteit SFI={s_i} SSN={ss_i} — 20m en 17m primaire DX-banden. "
-                f"15m overdag open. Betrouwbare F2-propagatie.", ACCENT))
+            tips.append(("🌤",  tr("prop.adv.sfi.med",  s_i=s_i, ss_i=ss_i), ACCENT))
         elif sfi >= 80:
-            tips.append(("🌥",
-                f"Matige activiteit SFI={s_i} SSN={ss_i} — 20m/40m meest betrouwbaar. "
-                f"Hoge banden onzeker. 80m goed voor regionaal.", TEXT_BODY))
+            tips.append(("🌥",  tr("prop.adv.sfi.low",  s_i=s_i, ss_i=ss_i), TEXT_BODY))
         else:
-            tips.append(("🌧",
-                f"Lage activiteit SFI={s_i} SSN={ss_i} — 40m en 80m beste kansen. "
-                f"Banden ≥15m grotendeels gesloten. 160m voor nacht-DX.", TEXT_DIM))
+            tips.append(("🌧",  tr("prop.adv.sfi.min",  s_i=s_i, ss_i=ss_i), TEXT_DIM))
 
         # ── 4. Solarwind en Bz ───────────────────────────────────────────────
         try:
@@ -2289,69 +2284,39 @@ class PropAdvWidget(QWidget):
             bz  = float(sw_bz)
             spd_s, bz_s = str(int(spd)), f"{bz:+.1f}"
             if spd > 700 or bz <= -20:
-                tips.append(("🌪",
-                    f"Stormachtige solarwind {spd_s} km/s  Bz={bz_s} nT — "
-                    f"Sterke geomagnetische storing verwacht.", "#F44336"))
+                tips.append(("🌪", tr("prop.adv.sw.storm", spd_s=spd_s, bz_s=bz_s), "#F44336"))
             elif spd > 500 or bz <= -10:
-                tips.append(("💨",
-                    f"Verhoogde solarwind {spd_s} km/s  Bz={bz_s} nT — "
-                    f"Lichte storing mogelijk op hoge banden.", "#FFC107"))
+                tips.append(("💨", tr("prop.adv.sw.high",  spd_s=spd_s, bz_s=bz_s), "#FFC107"))
             elif bz > 5:
-                tips.append(("🛡",
-                    f"Rustige solarwind {spd_s} km/s  Bz={bz_s} nT — "
-                    f"Noordwaartse Bz gunstig voor propagatie.", "#4CAF50"))
+                tips.append(("🛡", tr("prop.adv.sw.north", spd_s=spd_s, bz_s=bz_s), "#4CAF50"))
             else:
-                tips.append(("💫",
-                    f"Normale solarwind {spd_s} km/s  Bz={bz_s} nT — "
-                    f"Geen bijzonderheden.", TEXT_BODY))
+                tips.append(("💫", tr("prop.adv.sw.normal",spd_s=spd_s, bz_s=bz_s), TEXT_BODY))
         except (ValueError, TypeError):
             pass
 
         # ── 5. X-straling / flares ───────────────────────────────────────────
         xclass = xray[:1].upper() if xray else ""
         if xclass == "X":
-            tips.append(("☢",
-                f"X-flare {xray} — Sterke ionosferische storing. "
-                f"HF uitval op dagzijde mogelijk. LUF sterk verhoogd.", "#F44336"))
+            tips.append(("☢", tr("prop.adv.flare_x", xray=xray), "#F44336"))
         elif xclass == "M":
-            tips.append(("⚡",
-                f"M-flare {xray} — Lichte radio-blackout op dagzijde. "
-                f"10m–15m verstoord. Monitor condities.", "#FFC107"))
+            tips.append(("⚡", tr("prop.adv.flare_m", xray=xray), "#FFC107"))
 
         # ── 6. Dag/nacht en grijze lijn ──────────────────────────────────────
         h_s = f"{lok_h:02d}"
         if is_day:
             if 6 <= lok_h < 10:
-                tips.append(("🌅",
-                    f"Ochtend ({h_s}:xx lokaal) — F2 bouwt op. "
-                    f"20m wordt snel bruikbaar. Grijze lijn kansen naar Amerika en Azië.",
-                    TEXT_BODY))
+                tips.append(("🌅", tr("prop.adv.day.morn", h_s=h_s), TEXT_BODY))
             elif 10 <= lok_h < 16:
-                tips.append(("🌞",
-                    f"Middag ({h_s}:xx lokaal) — F2 maximaal. "
-                    f"Beste venster voor 15m/17m/20m DX. Trans-Atlantische QSO's goed mogelijk.",
-                    TEXT_BODY))
+                tips.append(("🌞", tr("prop.adv.day.noon", h_s=h_s), TEXT_BODY))
             else:
-                tips.append(("🌇",
-                    f"Namiddag ({h_s}:xx lokaal) — Grijze lijn nadert. "
-                    f"Uitstekend voor DX naar Azië en Pacific. 15m en 17m vaak excellent.",
-                    TEXT_BODY))
+                tips.append(("🌇", tr("prop.adv.day.aft",  h_s=h_s), TEXT_BODY))
         else:
             if 22 <= lok_h or lok_h < 2:
-                tips.append(("🌃",
-                    f"Vroege nacht ({h_s}:xx lokaal) — 40m en 80m open voor regionaal. "
-                    f"F2 daalt. LUF stijgt op korte paden.",
-                    TEXT_BODY))
+                tips.append(("🌃", tr("prop.adv.night.eve", h_s=h_s), TEXT_BODY))
             elif 2 <= lok_h < 6:
-                tips.append(("🌌",
-                    f"Nacht ({h_s}:xx lokaal) — 160m en 80m actief voor trans-Atlantisch DX. "
-                    f"40m goed voor Noord-Amerika. FT8 op lage banden voor >5000 km.",
-                    TEXT_BODY))
+                tips.append(("🌌", tr("prop.adv.night.mid", h_s=h_s), TEXT_BODY))
             else:
-                tips.append(("🌄",
-                    f"Pre-ochtend ({h_s}:xx lokaal) — Grijze lijn nadert. "
-                    f"80m/40m DX naar Azië/Pacific. 20m begint te openen naar Amerika.",
-                    TEXT_BODY))
+                tips.append(("🌄", tr("prop.adv.night.pre", h_s=h_s), TEXT_BODY))
 
         # ── 7. Modus / vermogen advies ───────────────────────────────────────
         if self._cfg and hf_open:
@@ -2360,29 +2325,20 @@ class PropAdvWidget(QWidget):
             ant   = self._cfg.antenna
             snr   = (_MODE_DB.get(mode, 0) + _POWER_DB.get(power, 0) +
                      _ANT_DB.get(ant, 0))
-            bn0, bp0 = hf_open[0]   # bn0 = bandnaam, bp0 = percentage
+            bn0, bp0 = hf_open[0]
             snr_s = f"{snr:+d}"
             if bp0 < 30 and mode == "SSB":
-                tips.append(("🔧",
-                    f"Band {bn0} matig ({bp0}%) — Overweeg FT8/CW voor betere kansen "
-                    f"(SNR-voordeel {snr_s} dB t.o.v. SSB).", "#FFC107"))
+                tips.append(("🔧", tr("prop.adv.mode.weak", bn0=bn0, bp0=bp0, snr_s=snr_s), "#FFC107"))
             else:
-                tips.append(("🔧",
-                    f"{mode} op {bn0} ({bp0}%) met {power} — "
-                    f"Effectief SNR {snr_s} dB. {ant}.", TEXT_BODY))
+                tips.append(("🔧", tr("prop.adv.mode.ok", mode=mode, bn0=bn0, bp0=bp0, power=power, snr_s=snr_s, ant=ant), TEXT_BODY))
 
         # ── 8. Absorptie op hoge breedte ─────────────────────────────────────
         if self._cfg:
             lat = abs(self._cfg.qth_lat)
             if lat > 50 and k_index >= 4:
-                tips.append(("🧲",
-                    f"Auroraire absorptie (K={k_i}, QTH {lat:.0f}°) — "
-                    f"Trans-polaire paden (EU→Canada, EU→Japan via pool) sterk gedempt. "
-                    f"Gebruik equatoriale routes via 20m/17m.", "#FFC107"))
+                tips.append(("🧲", tr("prop.adv.aurora.hi", k_i=k_i, lat=lat), "#FFC107"))
             elif lat > 45 and k_index >= 3:
-                tips.append(("🧲",
-                    f"Lichte absorptie mogelijk (K={k_i}, QTH {lat:.0f}°) — "
-                    f"Polaire paden sporadisch verstoord. Monitor 40m.", TEXT_BODY))
+                tips.append(("🧲", tr("prop.adv.aurora.lo", k_i=k_i, lat=lat), TEXT_BODY))
 
         # ── 9. Sporadic-E ────────────────────────────────────────────────────
         es_score = 0
@@ -2392,34 +2348,22 @@ class PropAdvWidget(QWidget):
             es_score = 1
         es_time = (9 <= lok_h < 14) or (17 <= lok_h < 22)
         if es_score >= 2 and es_time:
-            tips.append(("⚡",
-                f"Sporadic-E kans HOOG (maand {month}, {h_s}:xx) — "
-                f"6m/4m/2m kunnen onverwacht openen (700–2500 km). "
-                f"Monitor 50.313 MHz (FT8) en 50.150 MHz (SSB).", "#66BB6A"))
+            tips.append(("⚡", tr("prop.adv.es.high",   month=month, h_s=h_s), "#66BB6A"))
         elif es_score >= 2:
-            tips.append(("⚡",
-                f"Sporadic-E seizoen actief (maand {month}) — "
-                f"Kans op 6m opens laag buiten piekuren (09-14u en 17-22u).", TEXT_DIM))
+            tips.append(("⚡", tr("prop.adv.es.season", month=month), TEXT_DIM))
 
         # ── 10. DX-routes ────────────────────────────────────────────────────
         dx_routes = []
         if is_day:
-            if 5 <= utc_h < 10 and sfi >= 100:
-                dx_routes.append("EU→JA (20m/17m)")
-            if 12 <= utc_h < 18 and sfi >= 80:
-                dx_routes.append("EU→W (20m/15m)")
-            if 8 <= utc_h < 14 and sfi >= 80:
-                dx_routes.append("EU→AF (20m/17m)")
-            if 14 <= utc_h < 20 and sfi >= 120:
-                dx_routes.append("EU→OC (15m/10m)")
+            if 5 <= utc_h < 10 and sfi >= 100: dx_routes.append("EU→JA (20m/17m)")
+            if 12 <= utc_h < 18 and sfi >= 80:  dx_routes.append("EU→W (20m/15m)")
+            if 8 <= utc_h < 14 and sfi >= 80:   dx_routes.append("EU→AF (20m/17m)")
+            if 14 <= utc_h < 20 and sfi >= 120: dx_routes.append("EU→OC (15m/10m)")
         else:
-            if 22 <= utc_h or utc_h < 4:
-                dx_routes.append("EU→W (40m/80m)")
-            if 2 <= utc_h < 8:
-                dx_routes.append("EU→JA (40m grijze lijn)")
+            if 22 <= utc_h or utc_h < 4: dx_routes.append("EU→W (40m/80m)")
+            if 2 <= utc_h < 8:           dx_routes.append("EU→JA (40m gray line)")
         if dx_routes:
-            tips.append(("🌍",
-                f"DX-routes nu open: {'  ·  '.join(dx_routes)}", "#4FC3F7"))
+            tips.append(("🌍", tr("prop.adv.dx.routes", routes="  ·  ".join(dx_routes)), "#4FC3F7"))
 
         # ── 11. Algehele beoordeling ─────────────────────────────────────────
         score = 0
@@ -2434,15 +2378,13 @@ class PropAdvWidget(QWidget):
             if float(sw_bz) < -10: score -= 1
         except (ValueError, TypeError):
             pass
-        overall = ("Uitstekend" if score >= 6 else "Goed" if score >= 4
-                   else "Matig" if score >= 2 else "Slecht")
+        overall = (tr("band.excellent") if score >= 6 else tr("band.good") if score >= 4
+                   else tr("band.fair") if score >= 2 else tr("band.poor"))
         overall_clr = ("#4CAF50" if score >= 6 else "#8BC34A" if score >= 4
                        else "#FFC107" if score >= 2 else "#F44336")
-        dn = "dag" if is_day else "nacht"
         lat_s = f"{self._cfg.qth_lat:.1f}" if self._cfg else "?"
         tips.append(("📊",
-            f"Algehele beoordeling: {overall}  "
-            f"(SFI {s_i} · K {k_i} · {len(hf_open)} banden open)  "
-            f"{dn.capitalize()}, QTH {lat_s}°N.", overall_clr))
+            tr("prop.adv.overall", overall=overall) + f"  (SFI {s_i} · K {k_i} · {len(hf_open)})",
+            overall_clr))
 
         return tips

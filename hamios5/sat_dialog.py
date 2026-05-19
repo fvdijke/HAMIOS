@@ -22,6 +22,7 @@ from .theme import (
 )
 from .geometry import save_geom, restore_geom
 from .layers import TLE_GROUPS, fetch_tle_group, load_tle_cache, save_tle_cache
+from .i18n import tr
 
 _QSS = f"""
 QDialog {{ background: {BG_PANEL}; }}
@@ -122,8 +123,8 @@ class SatelliteDialog(QDialog):
         self._fwd_h    = fwd_h
         self._cfg      = cfg          # voor auto-save bij sluiten
         self._tle_data: dict = {}
-        self._cat_filter = "Alle"
-        self.setWindowTitle("🛰  Satellite Tracking — HF Propagation & Atmosphere Monitor")
+        self._cat_filter = tr("sat.filter.all")
+        self.setWindowTitle(tr("sat.title"))
         self.setMinimumSize(580, 600)
         ck = make_checkmark_path()
         self.setStyleSheet(_QSS.replace("SAT_CHECKMARK", ck))
@@ -144,10 +145,10 @@ class SatelliteDialog(QDialog):
 
         # ── Status + TLE-refresh ──────────────────────────────────────────
         top = QHBoxLayout()
-        self._status_lbl = QLabel("TLE laden uit cache…")
+        self._status_lbl = QLabel(tr("sat.tle_loading"))
         self._status_lbl.setFont(f8)
         top.addWidget(self._status_lbl, 1)
-        self._refresh_btn = QPushButton("↻  TLE vernieuwen")
+        self._refresh_btn = QPushButton(tr("sat.tle_refresh"))
         self._refresh_btn.setFont(f8)
         self._refresh_btn.clicked.connect(self._refresh_tle)
         top.addWidget(self._refresh_btn)
@@ -161,15 +162,15 @@ class SatelliteDialog(QDialog):
         # ── Categorie-filter ──────────────────────────────────────────────
         cat_row = QHBoxLayout()
         cat_row.setSpacing(8)
-        lbl_cat = QLabel("Categorie:")
+        lbl_cat = QLabel(tr("sat.cat_lbl"))
         lbl_cat.setFont(f8)
         cat_row.addWidget(lbl_cat)
         self._cat_group = QButtonGroup(self)
         self._cat_btns: dict[str, QRadioButton] = {}
-        for cat in ["Alle"] + sorted(TLE_GROUPS.keys()):
+        for cat in [tr("sat.filter.all")] + sorted(TLE_GROUPS.keys()):
             rb = QRadioButton(cat)
             rb.setFont(f8)
-            rb.setChecked(cat == "Alle")
+            rb.setChecked(cat == tr("sat.filter.all"))
             # Gebruik toggled (betrouwbaar bij exclusieve QButtonGroup):
             # on=True alleen als deze knop net geselecteerd wordt
             rb.pressed.connect(lambda c=cat: self._set_cat(c))
@@ -178,12 +179,10 @@ class SatelliteDialog(QDialog):
             cat_row.addWidget(rb)
         cat_row.addStretch()
         # Vinkje: NIET in de exclusieve radiogroep — zelfstandig aan/uit
-        self._sel_toggle = QCheckBox("Geselecteerd")
+        self._sel_toggle = QCheckBox(tr("sat.filter.sel"))
         self._sel_toggle.setFont(f8)
         self._sel_toggle.setChecked(False)  # standaard: toon alle satellieten
-        self._sel_toggle.setToolTip(
-            "Aan: alleen geselecteerde satellieten\n"
-            "Uit: alle satellieten (geselecteerde zijn aangevinkt)")
+        self._sel_toggle.setToolTip(tr("sat.sel_tip"))
         self._sel_toggle.toggled.connect(self._on_sel_toggle)
         cat_row.addWidget(self._sel_toggle)
         v.addLayout(cat_row)
@@ -191,7 +190,7 @@ class SatelliteDialog(QDialog):
         # ── Satelliet tabel ───────────────────────────────────────────────
         self._tree = QTreeWidget()
         self._tree.setColumnCount(4)
-        self._tree.setHeaderLabels(["Satelliet", "Positie", "Pad", "Footprint"])
+        self._tree.setHeaderLabels([tr("sat.col.name"), tr("sat.col.pos"), tr("sat.col.path"), tr("sat.col.fp")])
         self._tree.header().setSectionResizeMode(0, QHeaderView.Stretch)
         for col in (1, 2, 3):
             self._tree.header().setSectionResizeMode(col, QHeaderView.Fixed)
@@ -210,8 +209,8 @@ class SatelliteDialog(QDialog):
         hrs = QHBoxLayout()
         hrs.setSpacing(10)
         for lbl_txt, attr, spin_attr in [
-            ("Verleden (uur):", "_back_h", "_back_spin"),
-            ("Toekomst (uur):", "_fwd_h",  "_fwd_spin"),
+            (tr("sat.back"), "_back_h", "_back_spin"),
+            (tr("sat.fwd"),  "_fwd_h",  "_fwd_spin"),
         ]:
             hrs.addWidget(QLabel(lbl_txt))
             spin = QSpinBox()
@@ -228,14 +227,14 @@ class SatelliteDialog(QDialog):
 
         # ── Knoppen onderaan ──────────────────────────────────────────────
         btn_row = QHBoxLayout()
-        btn_clear = QPushButton("Alles wissen")
+        btn_clear = QPushButton(tr("alerts.clear"))
         btn_clear.setFont(f8)
         btn_clear.setObjectName("danger")
         btn_clear.clicked.connect(self._clear_all)
         btn_row.addWidget(btn_clear)
         btn_row.addStretch()
-        btn_ok     = QPushButton("OK");         btn_ok.setObjectName("ok")
-        btn_cancel = QPushButton("Annuleren"); btn_cancel.setObjectName("cancel")
+        btn_ok     = QPushButton(tr("app.close_btn")); btn_ok.setObjectName("ok")
+        btn_cancel = QPushButton(tr("app.cancel"));   btn_cancel.setObjectName("cancel")
         btn_ok.setFont(f8b)
         btn_cancel.setFont(f8)
         btn_ok.clicked.connect(self._on_ok)
@@ -251,9 +250,9 @@ class SatelliteDialog(QDialog):
             self._tle_data = cache
             self._populate_tree()
             n = sum(len(v) for v in cache.values())
-            self._status_lbl.setText(f"{n} satellieten geladen uit cache")
+            self._status_lbl.setText(tr("sat.cache_loaded", n=n))
         else:
-            self._status_lbl.setText("Geen cache — klik '↻ TLE vernieuwen'")
+            self._status_lbl.setText(tr("sat.tle_loading"))
 
     def _refresh_tle(self):
         self._refresh_btn.setEnabled(False)
@@ -270,7 +269,7 @@ class SatelliteDialog(QDialog):
         self._progress.hide()
         self._refresh_btn.setEnabled(True)
         n = sum(len(v) for v in cache.values())
-        self._status_lbl.setText(f"{n} satellieten bijgewerkt")
+        self._status_lbl.setText(f"{n} {tr('sat.tle_ok')}")
 
     # ── Boom bouwen ───────────────────────────────────────────────────────────
     def _on_sel_toggle(self, on: bool):
@@ -302,7 +301,7 @@ class SatelliteDialog(QDialog):
 
         for group, sats in sorted(self._tle_data.items()):
             # Categorie-filter (geldt ook in "Geselecteerd"-modus)
-            if self._cat_filter != "Alle" and group != self._cat_filter:
+            if self._cat_filter != tr("sat.filter.all") and group != self._cat_filter:
                 continue
 
             # Bepaal welke satellieten in deze groep zichtbaar zijn

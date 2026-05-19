@@ -28,6 +28,7 @@ class AppConfig:
     show_lightning: bool  = True
     show_dx_spots:  bool  = True
     show_locator:   bool  = False
+    show_psk:       bool  = False    # PSKReporter digitale propagatiepaden
     map_overlay:    bool  = True    # header-knop staat
 
     # ── Bliksem ───────────────────────────────────────────────────────────────
@@ -47,6 +48,7 @@ class AppConfig:
     sat_font_size:     int   = 8      # satelliet-labels op kaart
     dx_map_font_size:  int   = 7      # DX spots callsigns op kaart
     dx_font_size:      int   = 8      # DX spots tabel
+    language:               str   = "en"  # "en" or "nl"
     grat_step:              int   = 30   # graticule stap in graden (10/20/30)
     maidenhead_font_size:   int   = 8    # Maidenhead locatorraster label-lettergrootte
     sun_icon_size:          int   = 24   # zon-icoontje grootte (px)

@@ -1,25 +1,7 @@
 """
 HAMIOS v5.0 — PySide6 versie
-by Frank van Dijke · Developed with Claude AI
+Developed with Claude AI
 
-==================================================================================
-TODO:
-==================================================================================
-- Maak de resolutie van de kaart beter bij inzoomen
-v Maak de grote van het icoontje van de zon en maan instelbaar (instellingen/kaart)
-v Maak de resize driehoekjes alleen zichtbaar wanneer het paneel actief is.
-v Bij opstarten wil ik in het splashscreen de status van de bestanden en aghankelijkheden zien (zoals in instellingen/over).
-- Vertaal het gehele programma ook neet Engels en zet in instellingen/over een keuze voor Engels of Nederlands.
-v In de header verander de Z (zomertijd) naast DST
-v In bandverloop moet de grafiek voor Dag, Week, Maand, Jaar.
-v Controleer de werking can het Solar verloop paneel. Ik zie daar weinig gebeuren.
-- Laat alleen een Ping horen wanneer een satelliet de QTH zone inkomt. Geef een lage ping als hij de QTH zone verlaat.
-v Ik mis de +150 graden op de kaart. Nu zijn de medianen per 30gr. Ik wil dit kunnen instellen in instellingen/kaart (per 10 graden en dynamisch)
-v Snap-raster in instellingen/kaart moet naar instellingen/layout
-v Verwijder Layout acties in instellingen/kaart
-- Kijk nog eens goed naar de footprint bij de polen (bewaar de huidige programmering want deze is bijna goed). Nu lijkt de footprint dichtst bij de polen afgeplat. Ik wil weer terug kunnen naar de huidige code als het niet goed gaat.
-v Zet satelliet weergave ook in Overlay paneel (header)
-==================================================================================
 """
 
 import sys
@@ -127,36 +109,37 @@ def _make_header_pixmap() -> QPixmap:
     p.setFont(QFont("Segoe UI", 9))
     p.setPen(LIGHT)
     p.drawText(TX, 60, W - TX - 12, 20, Qt.AlignLeft | Qt.AlignVCenter,
-               "HF Propagation & Atmosphere Monitor")
+               "HF Propagation & Atmosphere Monitor  ·  by Frank van Dijke")
 
     p.setFont(QFont("Segoe UI", 7))
     p.setPen(DIM)
     p.drawText(TX, 86, W - TX - 12, 14, Qt.AlignLeft,
-               "PA3FVD · Frank van Dijke  ·  Developed with Claude AI  ·  PySide6")
+               "Frank van Dijke  ·  Developed with Claude AI  ·  PySide6")
 
     p.end()
     return pix
 
 
-# ── Check-definities ──────────────────────────────────────────────────────────
-# (key, weergave-label, initiële detail-tekst)
-_FILE_CHECKS = [
-    ("worldmap",  "worldmap_eq.jpg",          "kaartafbeelding"),
-    ("hires",     "worldmap_eq_hires.jpg",    "4K kaart"),
-    ("config",    "hamios_config.json",        "configuratie"),
-    ("history",   "HAMIOS_history.csv",        "bandverloop"),
-    ("tle",       "hamios_tle.json",           "satelliet TLE"),
-    ("spy",       "hamios_spy_stations.json",  "SpyStations"),
-]
+# ── Check-definities — dynamisch op basis van actieve taal ───────────────────
+# Worden aangemaakt in _make_checks() zodat tr() de juiste taal gebruikt.
 
-_DEP_CHECKS = [
-    ("pyside6",   "PySide6",           "GUI framework"),
-    ("pyserial",  "pyserial",          "CAT interface"),
-    ("websocket", "websocket-client",  "bliksemdetectie"),
-    ("app",       "Applicatie",        "modules laden"),
-]
-
-_CHECKS = _FILE_CHECKS + _DEP_CHECKS
+def _make_checks():
+    from hamios5.i18n import tr as _tr
+    file_checks = [
+        ("worldmap",  "worldmap_eq.jpg",         _tr("splash.detail.map")),
+        ("hires",     "worldmap_eq_hires.jpg",   _tr("splash.detail.hires")),
+        ("config",    "hamios_config.json",       _tr("splash.detail.config")),
+        ("history",   "HAMIOS_history.csv",       _tr("splash.detail.hist")),
+        ("tle",       "hamios_tle.json",          _tr("splash.detail.tle")),
+        ("spy",       "hamios_spy_stations.json", _tr("splash.detail.spy")),
+    ]
+    dep_checks = [
+        ("pyside6",   "PySide6",           _tr("splash.detail.fw")),
+        ("pyserial",  "pyserial",          _tr("splash.detail.cat")),
+        ("websocket", "websocket-client",  _tr("splash.detail.lightn")),
+        ("app",       _tr("splash.app_name"), _tr("splash.detail.app")),
+    ]
+    return file_checks, dep_checks
 
 # state → (kleur, symbool)
 _STATE = {
@@ -188,25 +171,30 @@ class SplashDialog(QDialog):
         self.setModal(True)
         self.setFixedWidth(_SW)
 
+        # Bouw check-lijsten in de actieve taal
+        from hamios5.i18n import tr as _tr
+        file_checks, dep_checks = _make_checks()
+        all_checks = file_checks + dep_checks
+
         root = QVBoxLayout(self)
         root.setContentsMargins(0, 0, 0, 0)
         root.setSpacing(0)
 
         self._rows: dict[str, tuple[QLabel, QLabel]] = {}
 
-        # ── Header (geen amber strepen) ───────────────────────────────────────
+        # ── Header ────────────────────────────────────────────────────────────
         hdr_lbl = QLabel()
         hdr_lbl.setPixmap(_make_header_pixmap())
         root.addWidget(hdr_lbl)
 
         # ── Amber lijn → Bestanden → Amber lijn → Afhankelijkheden ───────────
         root.addWidget(self._amber_line())
-        root.addWidget(self._section("Bestanden", _FILE_CHECKS))
+        root.addWidget(self._section(_tr("splash.section.files"), file_checks))
         root.addWidget(self._amber_line())
-        root.addWidget(self._section("Afhankelijkheden", _DEP_CHECKS))
+        root.addWidget(self._section(_tr("splash.section.deps"),  dep_checks))
 
         # Initieel alle rijen op pending
-        for key, _, detail in _CHECKS:
+        for key, _, detail in all_checks:
             self._apply(key, "pending", detail)
 
         # ── Statusbalk + Doorgaan-knop ────────────────────────────────────────
@@ -220,7 +208,7 @@ class SplashDialog(QDialog):
             "color:#C8A84B; font-size:8pt; background:transparent;")
         bl.addWidget(self._status_lbl, 1)
 
-        self._btn = QPushButton("Laden…")
+        self._btn = QPushButton(_tr("splash.loading"))
         self._btn.setFixedSize(120, 28)
         self._btn.setEnabled(False)
         self._btn.setStyleSheet(self._BTN_WAIT)
@@ -265,7 +253,7 @@ class SplashDialog(QDialog):
         grid.setHorizontalSpacing(16)
         grid.setVerticalSpacing(1)
 
-        for idx, (key, _, detail) in enumerate(checks):
+        for idx, (key, filename, detail) in enumerate(checks):
             col_base = (idx // half) * 2
             row      = idx % half
 
@@ -278,7 +266,7 @@ class SplashDialog(QDialog):
             det_lbl.setAlignment(Qt.AlignLeft | Qt.AlignVCenter)
             det_lbl.setStyleSheet("color:#3A4050; font-size:7pt; background:transparent;")
 
-            self._rows[key] = (name_lbl, det_lbl)
+            self._rows[key] = (name_lbl, det_lbl, filename)   # filename opgeslagen
             grid.addWidget(name_lbl, row, col_base)
             grid.addWidget(det_lbl,  row, col_base + 1)
 
@@ -291,8 +279,7 @@ class SplashDialog(QDialog):
         if key not in self._rows:
             return
         clr, sym = _STATE.get(state, _STATE["pending"])
-        icon_name, det = self._rows[key]
-        label = next((c[1] for c in _CHECKS if c[0] == key), key)
+        icon_name, det, label = self._rows[key]
         icon_name.setText(
             f'<span style="color:{clr};font-size:10pt;font-weight:bold;">{sym}</span>'
             f'<span style="color:#B0BAC8;font-size:8pt;"> {label}</span>')
@@ -329,8 +316,9 @@ class SplashDialog(QDialog):
         QApplication.processEvents()
 
     def enable_button(self):
+        from hamios5.i18n import tr as _tr
         self._btn.setEnabled(True)
-        self._btn.setText("Doorgaan  →")
+        self._btn.setText(_tr("btn.continue"))
         self._btn.setStyleSheet(self._BTN_ACTIVE)
         QApplication.processEvents()
 
@@ -358,7 +346,7 @@ def main():
     app = QApplication(sys.argv)
     app.setApplicationName("HAMIOS")
     app.setApplicationVersion("5.0")
-    app.setOrganizationName("PA3FVD")
+    app.setOrganizationName("")
 
     # Opstartcontrole
     from hamios5.startup import check_files
@@ -408,16 +396,27 @@ QComboBox::down-arrow {{
             "tle":       "hamios_tle.json",
             "spy":       "hamios_spy_stations.json",
         }
+        # Taal instellen vóór UI-teksten
+        from hamios5.i18n import set_language as _set_lang, tr as _tr
+        _set_lang(getattr(_boot_cfg, "language", "nl"))
+
+        _ok_str      = "ok"
+        _miss_str    = _tr("app.error").lower() + "!"  if _boot_cfg.language == "en" else "ontbreekt!"
+        _dl_str      = "downloading…"                  if _boot_cfg.language == "en" else "wordt gedownload…"
+        _nf_str      = "not found"                     if _boot_cfg.language == "en" else "niet gevonden"
+        _load_str    = "loading…"                      if _boot_cfg.language == "en" else "laden…"
+        _map_str     = "Loading map and layers…"       if _boot_cfg.language == "en" else "Kaart en lagen laden…"
+
         for key, fname in _file_keys.items():
             info = _fmap.get(fname)
             if info and info["exists"]:
                 sz = info["size_kb"]
-                detail = f"{sz} KB" if sz >= 1 else "aanwezig"
+                detail = f"{sz} KB" if sz >= 1 else _ok_str
                 splash.set_check(key, "ok", detail)
             elif fname in _req:
-                splash.set_check(key, "error", "ontbreekt!")
+                splash.set_check(key, "error", _miss_str)
             else:
-                splash.set_check(key, "warn", "wordt gedownload…")
+                splash.set_check(key, "warn", _dl_str)
 
         # 4K kaart: apart checken (niet in startup file_status)
         import os as _os
@@ -425,16 +424,16 @@ QComboBox::down-arrow {{
             sz = round(_os.path.getsize(_HIRES_FILE) / 1024, 0)
             splash.set_check("hires", "ok", f"{int(sz)} KB")
         else:
-            splash.set_check("hires", "loading", "wordt gedownload…")
+            splash.set_check("hires", "loading", _dl_str)
 
         # ── Afhankelijkheden ──────────────────────────────────────────────────
         def _dep(mod):
             try:
                 m = __import__(mod)
                 v = getattr(m, "__version__", "")
-                return True, (f"v{v}" if v else "ok")
+                return True, (f"v{v}" if v else _ok_str)
             except ImportError:
-                return False, "niet gevonden"
+                return False, _nf_str
 
         ok6,  d6  = _dep("PySide6")
         okser, dser = _dep("serial")
@@ -445,8 +444,8 @@ QComboBox::down-arrow {{
         splash.set_check("websocket", "ok"   if okws  else "warn",  dws)
 
         # ── Applicatie laden ──────────────────────────────────────────────────
-        splash.set_check("app", "loading", "laden…")
-        splash.set_status("Kaart en lagen laden…")
+        splash.set_check("app", "loading", _load_str)
+        splash.set_status(_map_str)
 
         try:
             window = HAMIOSMainWindow()

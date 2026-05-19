@@ -13,6 +13,7 @@ from PySide6.QtWidgets import (
 
 from .theme import ACCENT, BG_PANEL, BG_SURFACE, BG_ROOT, TEXT_H1, TEXT_DIM, TEXT_BODY, BORDER
 from .geometry import save_geom, restore_geom
+from .i18n import tr
 
 from ._appdir import APP_DIR as _HERE
 _SPY_FILE = os.path.join(_HERE, "hamios_spy_stations.json")
@@ -238,15 +239,12 @@ def _load_stations() -> list:
 class SpyStationsDialog(QDialog):
     """SpyStations — overzicht van nummerstations en spy-uitzendingen."""
 
-    _SORT_KEYS = {"●": "active", "Naam": "name", "Land": "country",
-                  "Freq.": "freq", "Mode": "mode"}
-
     def __init__(self, parent=None):
         super().__init__(parent)
         self._stations  = _load_stations()
-        self._sort_col  = "Naam"
+        self._sort_col  = tr("spy.col.name")
         self._sort_asc  = True
-        self.setWindowTitle("🕵  SpyStations — HF Propagation & Atmosphere Monitor")
+        self.setWindowTitle(tr("spy.title"))
         self.setMinimumSize(700, 520)
         self.setStyleSheet(_QSS)
         self._build_ui()
@@ -264,14 +262,14 @@ class SpyStationsDialog(QDialog):
         flt = QHBoxLayout()
         flt.setSpacing(8)
         self._search = QLineEdit()
-        self._search.setPlaceholderText("Zoeken op naam, land of frequentie…")
+        self._search.setPlaceholderText(tr("spy.search"))
         self._search.setFont(f8)
         self._search.textChanged.connect(self._refresh)
         flt.addWidget(self._search, 1)
 
         self._filter_cb = QComboBox()
         self._filter_cb.setFont(f8)
-        self._filter_cb.addItems(["Alle", "Actief", "Inactief"])
+        self._filter_cb.addItems([tr("spy.filter.all"), tr("spy.filter.active"), tr("spy.filter.inactive")])
         self._filter_cb.currentTextChanged.connect(self._refresh)
         flt.addWidget(self._filter_cb)
         v.addLayout(flt)
@@ -282,7 +280,7 @@ class SpyStationsDialog(QDialog):
         # Tabel
         self._tree = QTreeWidget()
         self._tree.setColumnCount(5)
-        self._tree.setHeaderLabels(["●", "Naam", "Land", "Freq.", "Mode"])
+        self._tree.setHeaderLabels(["●", tr("spy.col.name"), tr("spy.col.country"), tr("spy.col.freq"), tr("spy.col.mode")])
         hdr = self._tree.header()
         hdr.setSectionResizeMode(0, QHeaderView.Fixed);  self._tree.setColumnWidth(0, 24)
         hdr.setSectionResizeMode(1, QHeaderView.Stretch)
@@ -312,7 +310,7 @@ class SpyStationsDialog(QDialog):
         self._cat_lbl = QLabel("")
         self._cat_lbl.setStyleSheet(f"color: #4CAF50; font-size: 8pt;")
         bot.addWidget(self._cat_lbl)
-        btn_close = QPushButton("Sluiten"); btn_close.setObjectName("close")
+        btn_close = QPushButton(tr("app.close_btn")); btn_close.setObjectName("close")
         btn_close.clicked.connect(self.accept)
         bot.addWidget(btn_close)
         v.addLayout(bot)
@@ -323,8 +321,8 @@ class SpyStationsDialog(QDialog):
         out  = []
         for s in self._stations:
             active = s.get("active", False)
-            if show == "Actief"   and not active: continue
-            if show == "Inactief" and active:     continue
+            if show == tr("spy.filter.active")   and not active: continue
+            if show == tr("spy.filter.inactive") and active:     continue
             if q and not (
                 q in s.get("name",    "").lower() or
                 q in s.get("country", "").lower() or
@@ -336,12 +334,12 @@ class SpyStationsDialog(QDialog):
         rev = not self._sort_asc
         if key == "●":
             out.sort(key=lambda s: 0 if s.get("active") else 1, reverse=rev)
-        elif key == "Freq.":
+        elif key == tr("spy.col.freq"):
             out.sort(key=lambda s: s.get("frequencies", [""])[0], reverse=rev)
-        elif key == "Mode":
+        elif key == tr("spy.col.mode"):
             out.sort(key=lambda s: s.get("mode", ""), reverse=rev)
         else:
-            col = {"Naam": "name", "Land": "country"}.get(key, "name")
+            col = {tr("spy.col.name"): "name", tr("spy.col.country"): "country"}.get(key, "name")
             out.sort(key=lambda s: s.get(col, "").lower(), reverse=rev)
         return out
 
@@ -365,7 +363,7 @@ class SpyStationsDialog(QDialog):
         t = len(self._stations)
         self._status_lbl.setText(f"{n} van {t} stations")
         # Sorteerindicatoren in kolomkoppen
-        labels = ["●", "Naam", "Land", "Freq.", "Mode"]
+        labels = ["●", tr("spy.col.name"), tr("spy.col.country"), tr("spy.col.freq"), tr("spy.col.mode")]
         arrow  = " ↑" if self._sort_asc else " ↓"
         for i, lbl in enumerate(labels):
             self._tree.headerItem().setText(
@@ -399,12 +397,12 @@ class SpyStationsDialog(QDialog):
         f8 = QFont("Consolas", 8)
         w = QWidget()
         row = QHBoxLayout(w); row.setContentsMargins(0,0,0,0); row.setSpacing(4)
-        row.addWidget(QLabel("CAT →"))
+        row.addWidget(QLabel(tr("spy.cat_arrow")))
         for freq_str in freqs:
             btn = QPushButton(freq_str)
             btn.setFont(f8)
             btn.setFixedHeight(20)
-            btn.setToolTip(f"Stem radio af op {freq_str}")
+            btn.setToolTip(tr("spy.tune_tip", freq=freq_str))
             btn.clicked.connect(
                 lambda _=0, fs=freq_str, m=mode: self._send_cat(fs, m))
             row.addWidget(btn)
@@ -418,7 +416,7 @@ class SpyStationsDialog(QDialog):
         from .cat_interface import get_instance
         cat = get_instance()
         if cat is None:
-            self._cat_lbl.setText("Geen CAT")
+            self._cat_lbl.setText(tr("spy.no_cat"))
             self._cat_lbl.setStyleSheet("color: #EF5350; font-size: 8pt;")
             return
         # Parseer "4625 kHz" → Hz
@@ -428,7 +426,7 @@ class SpyStationsDialog(QDialog):
                 khz *= 1000
             hz = int(khz * 1000)
         except ValueError:
-            self._cat_lbl.setText(f"Ongeldige freq: {freq_str}")
+            self._cat_lbl.setText(tr("spy.invalid_freq", freq=freq_str))
             return
         ok, msg = cat.set_freq_hz(hz)
         if ok:
@@ -447,7 +445,7 @@ class SpyStationsDialog(QDialog):
         QTimer.singleShot(4000, lambda: self._cat_lbl.setText(""))
 
     def _on_header_click(self, col: int):
-        labels = ["●", "Naam", "Land", "Freq.", "Mode"]
+        labels = ["●", tr("spy.col.name"), tr("spy.col.country"), tr("spy.col.freq"), tr("spy.col.mode")]
         if col < len(labels):
             lbl = labels[col]
             if lbl == self._sort_col:

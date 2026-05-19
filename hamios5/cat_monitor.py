@@ -23,6 +23,7 @@ from PySide6.QtWidgets import (
 
 from .theme import ACCENT, BG_PANEL, BG_SURFACE, BG_ROOT, TEXT_H1, TEXT_DIM, BORDER
 from .geometry import save_geom, restore_geom
+from .i18n import tr
 
 _QSS = f"""
 QWidget   {{ background: {BG_PANEL}; }}
@@ -74,7 +75,7 @@ class CatMonitorWindow(QWidget):
         self._queue: list[tuple[str, str]] = []
         self._qlock = threading.Lock()
 
-        self.setWindowTitle("📟  CAT — HF Propagation & Atmosphere Monitor")
+        self.setWindowTitle(tr("cat.title"))
         self.setMinimumWidth(420)
         self.resize(480, _COMPACT_H)
         restore_geom(self, "CatMonitorWindow")
@@ -113,15 +114,15 @@ class CatMonitorWindow(QWidget):
         self._dot_lbl  = QLabel("⬤")
         self._dot_lbl.setStyleSheet(
             f"color:{TEXT_DIM}; font-size:14pt; background:transparent;")
-        self._conn_lbl = QLabel("Niet verbonden")
+        self._conn_lbl = QLabel(tr("cat.disconnected"))
         self._conn_lbl.setStyleSheet(
             f"color:{TEXT_DIM}; font-size:10pt; font-weight:bold; background:transparent;")
         top.addWidget(self._dot_lbl)
         top.addWidget(self._conn_lbl)
         top.addStretch()
-        self._btn_connect    = QPushButton("Verbinden")
+        self._btn_connect    = QPushButton(tr("cat.connect"))
         self._btn_connect.setObjectName("connect")
-        self._btn_disconnect = QPushButton("Verbreken")
+        self._btn_disconnect = QPushButton(tr("cat.disconnect"))
         self._btn_disconnect.setObjectName("disconnect")
         self._btn_connect.clicked.connect(self._do_connect)
         self._btn_disconnect.clicked.connect(self._do_disconnect)
@@ -148,13 +149,13 @@ class CatMonitorWindow(QWidget):
         root.addWidget(card_status)
 
         # Seriële parameters staan in ⚙ Instellingen → CAT
-        note = QLabel("Seriële instellingen: ⚙  Instellingen → CAT")
+        note = QLabel(tr("cat.serial_note"))
         note.setStyleSheet(f"color:{TEXT_DIM}; font-size:7pt; padding: 0 2px;")
         root.addWidget(note)
 
         # ── 2. Terminal toggle ────────────────────────────────────────────────
         toggle_row = QHBoxLayout()
-        self._term_cb = QCheckBox("Seriële terminal tonen")
+        self._term_cb = QCheckBox(tr("cat.terminal_cb"))
         self._term_cb.setFont(f8)
         self._term_cb.toggled.connect(self._toggle_terminal)
         toggle_row.addWidget(self._term_cb)
@@ -167,9 +168,9 @@ class CatMonitorWindow(QWidget):
         tw.setContentsMargins(0, 0, 0, 0); tw.setSpacing(4)
 
         log_top = QHBoxLayout()
-        log_top.addWidget(QLabel("Log:"))
+        log_top.addWidget(QLabel(tr("cat.log_lbl")))
         log_top.addStretch()
-        btn_clr = QPushButton("Wis"); btn_clr.setFixedWidth(50)
+        btn_clr = QPushButton(tr("cat.clear")); btn_clr.setFixedWidth(50)
         log_top.addWidget(btn_clr)
         tw.addLayout(log_top)
 
@@ -184,22 +185,22 @@ class CatMonitorWindow(QWidget):
         tw.addWidget(sep2)
 
         cmd_row = QHBoxLayout()
-        cmd_row.addWidget(QLabel("Commando:"))
+        cmd_row.addWidget(QLabel(tr("cat.cmd_lbl")))
         self._cmd_edit = QLineEdit()
-        self._cmd_edit.setPlaceholderText("bijv.  IF;   of   FA00014225000;")
+        self._cmd_edit.setPlaceholderText(tr("cat.cmd_ph"))
         self._cmd_edit.returnPressed.connect(self._send_manual)
-        btn_send = QPushButton("Stuur"); btn_send.setObjectName("send")
+        btn_send = QPushButton(tr("cat.send")); btn_send.setObjectName("send")
         btn_send.clicked.connect(self._send_manual)
         cmd_row.addWidget(self._cmd_edit, 1)
         cmd_row.addWidget(btn_send)
         tw.addLayout(cmd_row)
 
         quick = QHBoxLayout()
-        quick.addWidget(QLabel("Snel:"))
+        quick.addWidget(QLabel(tr("cat.quick_lbl")))
         for label, cmd in [("IF;","IF;"),("FA;","FA;"),("MD;","MD;"),("ID;","ID;")]:
             b = QPushButton(label); b.setFixedWidth(44)
             b.setFont(QFont("Consolas", 8))
-            b.setToolTip(f"Stuur: {cmd}")
+            b.setToolTip(tr("cat.send_tip", cmd=cmd))
             b.clicked.connect(lambda _=0, c=cmd: self._send_raw(c))
             quick.addWidget(b)
         quick.addStretch()
@@ -211,7 +212,7 @@ class CatMonitorWindow(QWidget):
         # ── 5. Sluiten-knop ───────────────────────────────────────────────────
         bot = QHBoxLayout()
         bot.addStretch()
-        btn_close = QPushButton("Sluiten"); btn_close.setObjectName("close")
+        btn_close = QPushButton(tr("app.close_btn")); btn_close.setObjectName("close")
         btn_close.clicked.connect(self.close)
         bot.addWidget(btn_close)
         root.addLayout(bot)
@@ -248,7 +249,7 @@ class CatMonitorWindow(QWidget):
         if self._cat.connected:
             self._dot_lbl.setStyleSheet(
                 "color:#4CAF50; font-size:14pt; background:transparent;")
-            self._conn_lbl.setText("Verbonden")
+            self._conn_lbl.setText(tr("cat.connected"))
             self._conn_lbl.setStyleSheet(
                 "color:#4CAF50; font-size:10pt; font-weight:bold; background:transparent;")
             self._btn_connect.setEnabled(False)
@@ -256,7 +257,7 @@ class CatMonitorWindow(QWidget):
         else:
             self._dot_lbl.setStyleSheet(
                 f"color:{TEXT_DIM}; font-size:14pt; background:transparent;")
-            self._conn_lbl.setText("Niet verbonden")
+            self._conn_lbl.setText(tr("cat.disconnected"))
             self._conn_lbl.setStyleSheet(
                 f"color:{TEXT_DIM}; font-size:10pt; font-weight:bold; background:transparent;")
             self._btn_connect.setEnabled(True)

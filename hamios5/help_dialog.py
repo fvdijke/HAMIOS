@@ -14,8 +14,9 @@ from PySide6.QtWidgets import (
 
 from .theme import ACCENT, BG_PANEL, BG_SURFACE, BG_ROOT, TEXT_H1, TEXT_DIM, TEXT_BODY, BORDER
 from .geometry import save_geom, restore_geom
+from .i18n import tr, get_language, language_changed
 
-# ── Help-inhoud per categorie ─────────────────────────────────────────────────
+# ── Help-inhoud per taal ──────────────────────────────────────────────────────
 # Elk item: (categorie, titel, html_inhoud)
 
 _HELP = [
@@ -464,17 +465,355 @@ Het programma verstuurt geen persoonlijke gegevens.</p>
 """),
 ]
 
-# Index voor zoeken
-def _build_index():
+# ── English help content ──────────────────────────────────────────────────────
+
+_HELP_EN = [
+    ("🚀 Getting started", "Welcome", """
+<h3>Welcome to HF Propagation &amp; Atmosphere Monitor</h3>
+<p>A real-time HF propagation and DX monitor for amateur radio operators.
+Displays solar data, band conditions, live DX spots, satellite tracking,
+lightning detection and more — all on one screen.</p>
+<h4>First steps</h4>
+<ol>
+<li>Set your <b>callsign, QTH and antenna</b> via <b>⚙ Settings → Station</b>.</li>
+<li>Enter your <b>Maidenhead locator</b> (e.g. JO22NC) or use lat/lon.</li>
+<li>Adjust the <b>refresh interval</b> in the header (default 5 minutes).</li>
+<li>Drag and resize <b>panels</b> as desired. Save layout via Settings → Layout.</li>
+</ol>
+"""),
+    ("🚀 Getting started", "Panels and layout", """
+<h3>Panels and layout</h3>
+<p>The application has <b>15 freely moveable panels</b> on a virtual desktop:</p>
+<ul>
+<li>Drag a panel by its title bar.</li>
+<li>Resize via the bottom-right corner grip (visible on hover).</li>
+<li>Close a panel via ✕ in the title bar; reopen via <b>Settings → Panels</b>.</li>
+<li>Save the current layout as default or as a named profile via <b>Settings → Layout</b>.</li>
+</ul>
+"""),
+    ("🌍 Map", "World map and overlays", """
+<h3>World map</h3>
+<p>Equirectangular NASA map (auto-downloaded at first start). Overlays are
+toggled via the <b>🗺 Overlays</b> button in the header.</p>
+<h4>Available overlays</h4>
+<ul>
+<li><b>Day/night terminator</b> — shows where it is day or night.</li>
+<li><b>Gray line</b> — twilight band of ~1000 km, ideal for DX.</li>
+<li><b>Aurora oval</b> — based on current K-index (IGRF-2025 model).</li>
+<li><b>Sun position</b> — with ray icon.</li>
+<li><b>Moon position</b> — live phase icon and QTH horizon indicator (▲/▼).</li>
+<li><b>Live DX spots</b> — colour-coded dots per band.</li>
+<li><b>Satellite paths</b> — position, orbit path and footprint.</li>
+<li><b>Lightning</b> — live discharges from Blitzortung.org.</li>
+<li><b>Maidenhead grid</b> — 20°×10° fields with 2-letter labels.</li>
+</ul>
+"""),
+    ("🌍 Map", "QTH and great-circle path", """
+<h3>QTH marker</h3>
+<p>Your QTH is shown as a blue cross on the map.
+Set your location via Settings → Station (lat/lon or Maidenhead locator).</p>
+<h4>Great-circle path</h4>
+<p>Click any point on the map to draw the great-circle path from your QTH to that point,
+showing distance (km), bearing and best band for that path.</p>
+"""),
+    ("☀ Solar &amp; Propagation", "Solar / Ionosphere panel", """
+<h3>Solar / Ionosphere</h3>
+<p>This panel shows current solar parameters that determine propagation.
+Each row has <b>five columns</b>:</p>
+<ol>
+<li><b>Abbreviation</b> — e.g. SFI, SSN, K, A, Bz</li>
+<li><b>Value</b> — current measurement (bold)</li>
+<li><b>Unit</b> — e.g. SFU, nT, km/s</li>
+<li><b>Indication</b> — colour-coded assessment</li>
+<li><b>Full name</b> — expanded meaning of the abbreviation (italic)</li>
+</ol>
+<h4>Parameters</h4>
+<ul>
+<li><b>SFI</b> — <i>Solar Flux Index</i> — ionospheric ionisation. High = better HF conditions.</li>
+<li><b>SSN</b> — <i>Sunspot Number</i> — correlates with SFI.</li>
+<li><b>K</b> — <i>K-index</i> — geomagnetic activity (0–9). Low = stable. ≥5 = storm.</li>
+<li><b>A</b> — <i>A-index</i> — daily average geomagnetic activity.</li>
+<li><b>Bz</b> — <i>IMF Bz component</i> — negative = increased storm risk.</li>
+<li><b>Vsw</b> — <i>Solar wind speed</i> (km/s).</li>
+<li><b>Nsw</b> — <i>Solar wind density</i> (p/cm³).</li>
+<li><b>Xray</b> — <i>X-ray class</i> (A/B/C/M/X). M and X = solar flare.</li>
+</ul>
+<p>Source: NOAA SWPC, updated every <i>N</i> minutes (set in header).</p>
+"""),
+    ("☀ Solar &amp; Propagation", "Band Reliability", """
+<h3>HF Band Reliability</h3>
+<p>Shows calculated reliability percentage for each HF band (160m–6m), plus current MUF and LUF.</p>
+<h4>Colour coding</h4>
+<ul>
+<li><b>≥ 75%</b> — Excellent (green)</li>
+<li><b>50–74%</b> — Good</li>
+<li><b>25–49%</b> — Fair (orange)</li>
+<li><b>< 25%</b> — Poor (red)</li>
+<li><b>0%</b> — Closed (grey)</li>
+</ul>
+<h4>Click a bar</h4>
+<p>Clicking a band opens a popup with frequencies (SSB/CW/FT8/WSPR) for direct CAT tuning.</p>
+"""),
+    ("☀ Solar &amp; Propagation", "Band Conditions and Schedule", """
+<h3>Band Conditions</h3>
+<p>Shows day/night condition per band (Excellent/Good/Fair/Poor/Closed).
+Click a band name to tune your radio via CAT.</p>
+<h3>Band Opening Schedule</h3>
+<p>A 24-hour grid showing reliability per band per hour.
+Green = open, orange = fair, red = poor, dark = closed.
+Current local time is highlighted in amber.</p>
+<p>Hover for details. Click to tune via CAT.</p>
+"""),
+    ("☀ Solar &amp; Propagation", "Propagation Advice", """
+<h3>Propagation Advice</h3>
+<p>AI-style analysis cards giving summarised advice per band.
+Cards are updated on each solar refresh.</p>
+<p>Changes in advice are also forwarded to the <b>Alerts panel</b>.</p>
+"""),
+    ("📈 History", "Band History and Solar History", """
+<h3>Band History</h3>
+<p>Shows calculated band reliability for all 11 HF bands over the past 24h (configurable).
+Data is saved on each refresh in <b>HAMIOS_history.csv</b> (90 days retained).</p>
+<p><b>Click a band in the legend</b> to toggle it on/off.</p>
+<p>Use the <b>range selector</b> (top right) to switch between 24h / 7d / 30d / 1y.</p>
+<h3>Solar History</h3>
+<p>Shows SFI trend over time. K-index shown as a red line on the right axis.
+Red background shading indicates elevated K-index periods.</p>
+"""),
+    ("📡 DX Spots", "Live DX Spots", """
+<h3>Live DX Spots</h3>
+<p>Real-time DX cluster data from <b>DXWatch.com</b>.
+Table is updated on each solar refresh (default 5 minutes).</p>
+<h4>Columns</h4>
+<ul>
+<li><b>UTC</b> — spot time</li>
+<li><b>Band</b> — HF band (colour coded)</li>
+<li><b>MHz</b> — exact frequency</li>
+<li><b>DX</b> — DX callsign</li>
+<li><b>Spotter</b> — who spotted it</li>
+<li><b>Comment</b> — optional remark</li>
+</ul>
+<h4>Filters</h4>
+<ul>
+<li><b>Own continent</b> — show only spots by spotters on your continent.</li>
+<li><b>Heatmap</b> — switch to a band activity chart over 24h.</li>
+</ul>
+<h4>CAT tuning</h4>
+<p>Click any row to tune your radio directly to the spot frequency (SSB mode).</p>
+"""),
+    ("🛰 Satellites", "Satellite Tracking", """
+<h3>Satellite Tracking</h3>
+<p>Real-time position, orbit paths and footprints of HAM satellites, ISS, weather sats.
+TLE data from <b>CelesTrak</b>.</p>
+<h4>Usage</h4>
+<ol>
+<li>Click <b>🛰 Satellite</b> in the header.</li>
+<li>Choose a category (All/Amateur/ISS/Weather/CubeSat).</li>
+<li>Tick <b>Position</b> to show the satellite on the map.</li>
+<li>Tick <b>Path</b> to show the orbit path (past + future configurable).</li>
+<li>Tick <b>Footprint</b> to show the coverage area
+  (yellow = QTH outside range, green = QTH in range).</li>
+</ol>
+<h4>Selected filter</h4>
+<p>Tick <b>Selected</b> to show only your selected satellites.
+Unticked = all satellites visible. Setting is remembered between sessions.</p>
+<h4>TLE refresh</h4>
+<p>Click <b>↻ Refresh TLE</b> for fresh orbital elements from CelesTrak.</p>
+<h4>Orbit paths</h4>
+<p>Past (default 1h) and future (default 1h) are independently configurable.
+Value 0 = no path displayed.</p>
+<h4>Satellite alert</h4>
+<p>Via <b>Settings → Alerts → Satellite ping</b> you can enable a tone
+when a selected satellite enters your QTH zone (ascending tone) or leaves it (descending tone).</p>
+"""),
+    ("⚡ Lightning", "Lightning detection and QRN", """
+<h3>Lightning detection</h3>
+<p>Live lightning discharges from the worldwide <b>Blitzortung.org</b> network.
+Each discharge appears as an animated ring on the map that slowly fades.</p>
+<h4>QRN advice</h4>
+<p>The Lightning panel shows the QRN level based on the number of discharges
+within <b>2000 km</b> of your QTH:</p>
+<ul>
+<li><b>No activity</b> — no discharges nearby</li>
+<li><b>Low</b> — little QRN expected</li>
+<li><b>Moderate</b> — some QRN on LF/MF/160m</li>
+<li><b>High</b> — QRN on 160m/80m/40m</li>
+<li><b>Severe</b> — strong QRN on all low bands</li>
+</ul>
+<h4>Discharge count</h4>
+<p>The panel shows the <b>total discharges</b> within the fade duration period,
+e.g. <code>127 /10m</code>.</p>
+<h4>Nearest discharge</h4>
+<p>The distance to the closest recent discharge is shown as <b>Nearest discharge</b>.</p>
+<h4>Radius alerts</h4>
+<p>Set a threshold distance in <b>Settings → Lightning</b> for:</p>
+<ul>
+<li><b>Header alert (red)</b> — ⚡ LIGHTNING X km appears centred in the header.</li>
+<li><b>Acoustic alert (orange)</b> — Geiger-counter tick sound for discharges within the set radius.</li>
+</ul>
+<p>Both circles are visible on the map while lightning detection is enabled.</p>
+"""),
+    ("🕵 SpyStations", "SpyStations and numbers stations", """
+<h3>SpyStations</h3>
+<p>A database of known numbers stations, military signal stations, time signals
+and weather services on HF.</p>
+<h4>Usage</h4>
+<ul>
+<li>Search by name, country or frequency via the search bar.</li>
+<li>Filter by Active/Inactive.</li>
+<li>Click a column header to sort (↑/↓).</li>
+<li>Click a station → frequency buttons appear bottom right.
+  Click a frequency to tune your radio directly via CAT.</li>
+</ul>
+"""),
+    ("📻 EIBI", "EIBI Shortwave Frequency List", """
+<h3>EIBI Shortwave Frequency List</h3>
+<p>Current shortwave broadcast schedule from <b>eibispace.de</b> (Eike Bierwirth).
+Thousands of frequencies from international broadcasters worldwide.</p>
+<h4>Usage</h4>
+<ul>
+<li>Click <b>⬇ Update list</b> to download the latest schedule.</li>
+<li>Search by station, language, country or frequency.</li>
+<li>Filter by band or enable <b>Active now</b> for the current time.</li>
+<li>Click a row to tune your radio (AM mode via CAT).</li>
+</ul>
+"""),
+    ("📡 FT8/Digital", "Digital mode frequencies", """
+<h3>FT8 / Digital mode frequencies</h3>
+<p>Standard dial frequencies for FT8, FT4, WSPR, JS8Call, MSK144, Q65, JT65 and JT9
+on all bands (2200m through 23cm).</p>
+<h4>Usage</h4>
+<ul>
+<li>Filter by band or mode.</li>
+<li>Click a row to tune your radio (USB mode via CAT).</li>
+</ul>
+<h4>"Set USB mode" checkbox</h4>
+<p>Enabled by default: mode is automatically set to USB when clicking.</p>
+"""),
+    ("📟 CAT", "CAT radio interface", """
+<h3>CAT Radio Interface</h3>
+<p>CAT (Computer Aided Transceiver) enables direct control of your radio
+via the serial port. Supported radios:</p>
+<ul>
+<li><b>Yaesu FT-950/2000/DX/3000/5000</b> — FA command (8 digits), default 38400 baud</li>
+<li><b>Yaesu FT-817/857/897</b> — FA command</li>
+<li><b>Kenwood / Elecraft</b> — FA command (11 digits)</li>
+<li><b>Icom CI-V</b> — binary BCD protocol</li>
+</ul>
+<h4>Configuration (Settings → CAT)</h4>
+<ol>
+<li>Click <b>⚙ Settings → CAT</b>.</li>
+<li>Select the serial port (auto-scanned).</li>
+<li>Choose your radio type or use a <b>Preset</b> (FT-950, FT-817, TS-590, K3/KX3).</li>
+<li>Set baud rate, data bits, parity and stop bits (or use preset defaults).</li>
+<li>Enable <b>CAT</b> and test with <b>Test connection</b>.</li>
+</ol>
+<h4>Serial terminal</h4>
+<p>Open via <b>Settings → CAT → Open serial terminal</b>.
+Shows connection status and lets you type CAT commands manually.
+All serial parameters are configured exclusively in Settings → CAT.</p>
+<h4>Frequency in header</h4>
+<p>Once CAT is connected, the current VFO-A frequency appears in the header bar.
+The radio is polled every 2 seconds.</p>
+"""),
+    ("🔔 Alerts", "Alerts panel", """
+<h3>Alerts panel</h3>
+<p>Collects all alerts in one place:</p>
+<ul>
+<li><b>K-storm</b> — when K-index ≥ threshold (configurable)</li>
+<li><b>X-flare</b> — on M- or X-class solar flare</li>
+<li><b>QRN level</b> — when local QRN level rises</li>
+<li><b>Lightning nearby</b> — when lightning is within set radius</li>
+<li><b>Satellite above QTH</b> — when a selected satellite enters your footprint</li>
+<li><b>Propagation advice</b> — when band analysis changes</li>
+</ul>
+<h4>FIFO limit</h4>
+<p>Set the maximum number of alerts to retain in Settings → Alerts (default 50).
+Oldest alerts are automatically removed.</p>
+"""),
+    ("⚙ Settings", "Settings overview", """
+<h3>Settings</h3>
+<p>All configuration via <b>⚙ Settings</b> in the header.
+All changes are <b>live</b> — visible immediately without restarting.</p>
+<h4>Tabs</h4>
+<ul>
+<li><b>📡 Station</b> — callsign, QTH, mode, power, antenna</li>
+<li><b>🪟 Panels</b> — show/hide panels</li>
+<li><b>🗺 Map</b> — snap grid, overlay font sizes, icon sizes</li>
+<li><b>⚡ Lightning</b> — fade duration, proximity alert, sound, animation scale</li>
+<li><b>🔔 Alerts</b> — K-threshold, X-flare, band threshold, FIFO limit</li>
+<li><b>📟 CAT</b> — serial port, radio type, presets, terminal</li>
+<li><b>📐 Layout</b> — save/restore default, profiles, snap grid</li>
+<li><b>📦 About</b> — version, dependencies, file status, language</li>
+</ul>
+<h4>Settings stored in</h4>
+<p><code>hamios_config.json</code> in the application folder. All settings —
+panel positions, CAT configuration, lightning settings and satellite data — are
+in this single file.</p>
+"""),
+    ("⚙ Settings", "Layout profiles", """
+<h3>Layout profiles</h3>
+<p>Save multiple panel layouts as profiles (e.g. "Contest", "DX hunting", "Portable").</p>
+<ol>
+<li>Arrange panels as desired.</li>
+<li>Go to <b>Settings → Layout → Profiles</b>.</li>
+<li>Enter a name and click <b>Save as profile</b>.</li>
+<li>Later: click <b>Load</b> next to the desired profile.</li>
+</ol>
+"""),
+    ("🔧 Technical", "Requirements and files", """
+<h3>Technical requirements</h3>
+<ul>
+<li><b>Windows 10/11</b> (64-bit)</li>
+<li><b>PySide6</b> ≥ 6.4 (required)</li>
+<li><b>pyserial</b> (optional, for CAT)</li>
+<li><b>websocket-client</b> (optional, for lightning detection)</li>
+</ul>
+<h4>Auto-created files</h4>
+<ul>
+<li><code>HAMIOS5.exe</code> — executable</li>
+<li><code>worldmap_eq.jpg</code> — world map (auto-downloaded)</li>
+<li><code>worldmap_eq_hires.jpg</code> — 4K world map (auto-downloaded)</li>
+<li><code>hamios_config.json</code> — all settings and window positions</li>
+<li><code>hamios_spy_stations.json</code> — SpyStations database</li>
+<li><code>hamios_tle.json</code> — satellite TLE (downloaded)</li>
+<li><code>hamios_eibi.csv</code> — EIBI schedule (downloaded)</li>
+<li><code>HAMIOS_history.csv</code> — band history (90 days)</li>
+</ul>
+"""),
+    ("🔧 Technical", "Data sources", """
+<h3>Data sources</h3>
+<ul>
+<li><b>NOAA SWPC</b> — solar data, K-index, Bz, X-ray, storm forecast</li>
+<li><b>DXWatch.com</b> — live DX cluster data</li>
+<li><b>Blitzortung.org</b> — worldwide lightning detection network (WebSocket)</li>
+<li><b>eibispace.de</b> — EIBI shortwave schedule (Eike Bierwirth)</li>
+<li><b>CelesTrak</b> — satellite TLE data (Dr. T.S. Kelso)</li>
+<li><b>Wikimedia Commons</b> — NASA Blue Marble world map</li>
+</ul>
+<p>All external connections use standard HTTPS/WebSocket.
+No personal data is transmitted.</p>
+"""),
+]
+
+# ── Index bouwen ──────────────────────────────────────────────────────────────
+
+def _build_index(items):
+    import re
     idx = []
-    for cat, title, html in _HELP:
-        # Strip HTML-tags voor zoektekst
-        import re
+    for cat, title, html in items:
         plain = re.sub(r'<[^>]+>', ' ', html)
         idx.append((cat, title, html, (cat + " " + title + " " + plain).lower()))
     return idx
 
-_INDEX = _build_index()
+_INDEX_NL = _build_index(_HELP)
+_INDEX_EN = _build_index(_HELP_EN)
+
+def _get_index():
+    return _INDEX_EN if get_language() == "en" else _INDEX_NL
+
+# Legacy alias
+_INDEX = _INDEX_NL
 
 
 _QSS = f"""
@@ -508,17 +847,25 @@ QPushButton:hover {{ background: #32373F; border-color: {ACCENT}; }}
 
 
 class HelpDialog(QDialog):
-    """HAMIOS5 Help — doorzoekbaar per categorie."""
+    """Help dialog — searchable by category, bilingual."""
 
     def __init__(self, parent=None):
         super().__init__(parent)
-        self.setWindowTitle("HF Propagation & Atmosphere Monitor — Help")
+        self.setWindowTitle(tr("help.title"))
         self.setMinimumSize(820, 560)
         self.resize(920, 640)
         self.setStyleSheet(_QSS)
         self._build_ui()
         self._populate(None)
         restore_geom(self, "HelpDialog")
+        language_changed.connect(self._on_language_changed)
+
+    def _on_language_changed(self, _lang: str):
+        self.setWindowTitle(tr("help.title"))
+        self._title_lbl.setText(tr("help.header"))
+        self._search.setPlaceholderText(tr("help.search"))
+        self._close_btn.setText(tr("help.close"))
+        self._populate(None)
 
     def _build_ui(self):
         v = QVBoxLayout(self)
@@ -532,15 +879,14 @@ class HelpDialog(QDialog):
         hdr_lay = QHBoxLayout(hdr)
         hdr_lay.setContentsMargins(16, 0, 16, 0)
 
-        title = QLabel("📖  HF Propagation & Atmosphere Monitor — Help")
-        title.setFont(QFont("Segoe UI", 14, QFont.Bold))
-        title.setStyleSheet(f"color: {ACCENT}; background: transparent;")
-        hdr_lay.addWidget(title)
+        self._title_lbl = QLabel(tr("help.header"))
+        self._title_lbl.setFont(QFont("Segoe UI", 14, QFont.Bold))
+        self._title_lbl.setStyleSheet(f"color: {ACCENT}; background: transparent;")
+        hdr_lay.addWidget(self._title_lbl)
         hdr_lay.addStretch()
 
-        # Zoekbalk in header
         self._search = QLineEdit()
-        self._search.setPlaceholderText("🔍  Zoeken in help…")
+        self._search.setPlaceholderText(tr("help.search"))
         self._search.setFixedWidth(260)
         self._search.setStyleSheet(
             f"background: #2A2D32; color: {TEXT_H1}; border: 1px solid {BORDER};"
@@ -585,25 +931,26 @@ class HelpDialog(QDialog):
         splitter.setSizes([240, 660])
         body_lay.addWidget(splitter, 1)
 
-        # Sluitknop
         bot = QHBoxLayout()
         bot.addStretch()
-        btn = QPushButton("Sluiten"); btn.setObjectName("close")
-        btn.clicked.connect(self.accept)
-        bot.addWidget(btn)
+        self._close_btn = QPushButton(tr("help.close"))
+        self._close_btn.setObjectName("close")
+        self._close_btn.clicked.connect(self.accept)
+        bot.addWidget(self._close_btn)
         body_lay.addLayout(bot)
 
     def _populate(self, query: str | None):
-        """Vul de lijst op basis van zoekterm (None = alles)."""
+        """Fill list based on search query (None = all)."""
         self._list.clear()
         self._entries = []
+        idx = _get_index()
 
         if query:
             q = query.lower().strip()
-            matches = [(cat, title, html) for cat, title, html, plain in _INDEX
+            matches = [(cat, title, html) for cat, title, html, plain in idx
                        if q in plain]
         else:
-            matches = [(cat, title, html) for cat, title, html, _ in _INDEX]
+            matches = [(cat, title, html) for cat, title, html, _ in idx]
 
         last_cat = None
         for cat, title, html in matches:

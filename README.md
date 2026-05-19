@@ -7,12 +7,15 @@
 [![Release](https://img.shields.io/github/v/release/fvdijke/HAMIOS?label=latest)](https://github.com/fvdijke/HAMIOS/releases/latest)
 [![Platform](https://img.shields.io/badge/platform-Windows%2010%2F11-blue)](https://github.com/fvdijke/HAMIOS/releases/latest)
 [![Python](https://img.shields.io/badge/python-3.10%2B-blue)](https://www.python.org)
+[![Language](https://img.shields.io/badge/language-EN%20%7C%20NL-green)](https://github.com/fvdijke/HAMIOS)
 
 ---
 
 ## Overview
 
 HF Propagation & Atmosphere Monitor gives amateur radio operators real-time insight into HF propagation conditions, solar weather, DX cluster activity, shortwave schedules, satellite tracking, lightning detection, and direct radio control — all in a modern, fully customisable dark-theme GUI built with PySide6/Qt6.
+
+**Fully bilingual** — switch between English and Dutch at any time via Settings → About.
 
 ---
 
@@ -25,9 +28,11 @@ HF Propagation & Atmosphere Monitor gives amateur radio operators real-time insi
 | 📻 **Band Conditions** | Day/night conditions per band, 24h opening schedule heatmap |
 | 🌩 **Storm Forecast** | NOAA 3-day geomagnetic storm probability (G1–G4+) with HAM radio impact tooltips |
 | 📈 **Band / Solar History** | 90-day CSV archive, interactive 24h/7d/30d/1y range selector, K-index overlay |
-| 📡 **Live DX Spots** | Real-time DX cluster from DXWatch.com, band/continent filter, heatmap |
+| 📡 **Live DX Spots** | Real-time DX cluster from DXWatch.com (100 spots), band/continent filter, heatmap, click for info |
+| 📡 **PSKReporter** | Real-time FT8/FT4 propagation paths from PSKReporter.info — thousands of paths with SNR |
 | 💡 **Propagation Advice** | AI-style analysis cards per band |
-| 🌍 **World Map** | 4096×2048 map with toggleable overlays — auto-downloaded at first start |
+| 🌍 **World Map** | 4096×2048 map with overlays — world map auto-downloaded at first start |
+| 🌐 **Bilingual** | Full English / Dutch interface — switch instantly via Settings → About |
 | 🛰 **Satellite Tracking** | TLE from CelesTrak, real-time position, orbit paths, footprint, QTH zone ping |
 | ⚡ **Lightning Detection** | Live Blitzortung.org feed, animated ripple rings, QRN advice, proximity alert |
 | 🔔 **Alerts** | Aggregated solar / propagation / weather / satellite alerts |
@@ -47,7 +52,8 @@ Toggleable via the **🗺 Overlays** button in the header:
 - Sun and Moon position with live phase icon and QTH horizon indicator (▲/▼)
 - Maidenhead locator grid (configurable font size)
 - Graticule (configurable 10° / 20° / 30° step)
-- Live DX spots with callsign labels
+- Live DX spots with callsign labels and animated connection lines (click for info)
+- **PSKReporter** — real-time FT8/FT4 propagation paths coloured by band (click for info)
 - Satellite positions, orbit paths, footprints
 - Lightning strikes with animated ripple rings
 - Alert radius circles (warning + beep threshold)

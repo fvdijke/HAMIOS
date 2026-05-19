@@ -66,6 +66,7 @@ from PySide6.QtWidgets import (
 from .theme import ACCENT, BG_PANEL, BG_SURFACE, BG_ROOT, TEXT_H1, TEXT_DIM, BORDER, make_checkmark_path
 from .config import AppConfig
 from .cat_interface import CatInterface, serial_available, get_instance
+from .i18n import tr
 
 _MODES    = ["SSB", "CW", "FT8", "FT4", "WSPR", "AM", "FM", "PSK31", "RTTY"]
 _POWERS   = ["5W", "10W", "25W", "50W", "100W", "200W", "400W", "1kW", "1.5kW"]
@@ -206,7 +207,7 @@ class SettingsDialog(QDialog):
         self._debounce = QTimer(self)
         self._debounce.setSingleShot(True)
         self._debounce.timeout.connect(self._do_apply)
-        self.setWindowTitle("Instellingen — HF Propagation & Atmosphere Monitor")
+        self.setWindowTitle(tr("set.title"))
         self.setMinimumSize(480, 480)
         _check_path = make_checkmark_path()
         dialog_qss  = _QSS.replace(
@@ -228,14 +229,14 @@ class SettingsDialog(QDialog):
         self._tabs = QTabWidget()
         outer.addWidget(self._tabs, 1)
 
-        self._tabs.addTab(self._tab_station(),   "📡  Station")
-        self._tabs.addTab(self._tab_panels(),    "🪟  Panelen")
-        self._tabs.addTab(self._tab_map(),       "🗺  Kaart")
-        self._tabs.addTab(self._tab_lightning(), "⚡  Bliksem")
-        self._tabs.addTab(self._tab_alerts(),    "🔔  Meldingen")
-        self._tabs.addTab(self._tab_cat(),       "📟  CAT")
-        self._tabs.addTab(self._tab_layout(),    "📐  Layout")
-        self._tabs.addTab(self._tab_about(),     "📦  Over")
+        self._tabs.addTab(self._tab_station(),   tr("set.tab.station.lbl"))
+        self._tabs.addTab(self._tab_panels(),    tr("set.tab.panels.lbl"))
+        self._tabs.addTab(self._tab_map(),       tr("set.tab.map.lbl"))
+        self._tabs.addTab(self._tab_lightning(), tr("set.tab.lightn.lbl"))
+        self._tabs.addTab(self._tab_alerts(),    tr("set.tab.alerts.lbl"))
+        self._tabs.addTab(self._tab_cat(),       tr("set.tab.cat.lbl"))
+        self._tabs.addTab(self._tab_layout(),    tr("set.tab.layout.lbl"))
+        self._tabs.addTab(self._tab_about(),     tr("set.tab.about.lbl"))
 
         # Status-label voor feedback
         self._status_lbl = QLabel("")
@@ -248,8 +249,8 @@ class SettingsDialog(QDialog):
         btn_row = QHBoxLayout()
         btn_row.addWidget(self._status_lbl)
         btn_row.addStretch()
-        self._btn_ok     = QPushButton("Sluiten");   self._btn_ok.setObjectName("ok")
-        self._btn_cancel = QPushButton("Annuleren"); self._btn_cancel.setObjectName("cancel")
+        self._btn_ok     = QPushButton(tr("app.close_btn")); self._btn_ok.setObjectName("ok")
+        self._btn_cancel = QPushButton(tr("app.cancel"));    self._btn_cancel.setObjectName("cancel")
         for b in [self._btn_cancel, self._btn_ok]:
             b.setMinimumWidth(90)
             btn_row.addWidget(b)
@@ -277,16 +278,16 @@ class SettingsDialog(QDialog):
             h.addWidget(widget, 1)
             v.addLayout(h)
 
-        _section(v, "QTH & Roepletters")
+        _section(v, tr("sec.qth"))
 
         self._call_edit = QLineEdit()
-        self._call_edit.setPlaceholderText("PA3FVD")
-        row("Roepletters:", self._call_edit)
+        self._call_edit.setPlaceholderText("PD0ABC")
+        row(tr("set.station.call_lbl"), self._call_edit)
 
         self._loc_edit = QLineEdit()
         self._loc_edit.setPlaceholderText("JO22NC")
         self._loc_edit.editingFinished.connect(self._locator_to_latlon)
-        row("Locator:", self._loc_edit)
+        row(tr("set.station.loc_lbl"), self._loc_edit)
 
         self._lat_spin = QDoubleSpinBox()
         self._lat_spin.setRange(-90, 90); self._lat_spin.setDecimals(4)
@@ -298,7 +299,7 @@ class SettingsDialog(QDialog):
         self._lon_spin.valueChanged.connect(self._latlon_to_locator)
         row("Longitude (°E):", self._lon_spin)
 
-        _section(v, "Opstelling")
+        _section(v, tr("sec.setup"))
 
         self._mode_cb = QComboBox()
         self._mode_cb.addItems(_MODES)
@@ -312,8 +313,8 @@ class SettingsDialog(QDialog):
         self._ant_cb.addItems(_ANTENNAS)
         row("Antenne:", self._ant_cb)
 
-        self._day_auto_cb = QCheckBox("Dag/nacht automatisch bepalen")
-        self._day_auto_cb.setToolTip("Bepaal dag/nacht op basis van de zon op jouw QTH.")
+        self._day_auto_cb = QCheckBox(tr("day_auto_cb"))
+        self._day_auto_cb.setToolTip(tr("tip.day_auto"))
         v.addWidget(self._day_auto_cb)
 
         v.addStretch()
@@ -326,34 +327,21 @@ class SettingsDialog(QDialog):
         v.setContentsMargins(12, 8, 12, 8)
         v.setSpacing(3)
 
-        _section(v, "Panelen zichtbaarheid")
+        _section(v, tr("set.tab.panels.lbl"))
 
-        _LABELS = [
-            ("worldmap",   "🌍  Wereldkaart"),
-            ("solar",      "☀  Solar / Ionosfeer"),
-            ("band_rel",   "📶  HF Band Betrouwbaarheid"),
-            ("band_cond",  "📻  Bandcondities"),
-            ("storm_fc",   "🌩  Stormprognose"),
-            ("band_sched", "🗓  Bandopenings-schema"),
-            ("band_hist",  "📈  Band Verloop"),
-            ("solar_hist", "☀  Solar Verloop"),
-            ("kp_48h",     "🧲  Kp 48u"),
-            ("bz_24h",     "⚡  Bz 24u"),
-            ("xray_24h",   "☢  X-straling 24u"),
-            ("lightning",  "⚡  Onweer"),
-            ("alerts",     "🔔  Meldingen"),
-            ("dx_spots",   "📡  Live DX Spots"),
-            ("prop_adv",   "💡  Propagatie Advies"),
+        _PANEL_KEYS = [
+            "worldmap", "solar", "band_rel", "band_cond", "storm_fc",
+            "band_sched", "band_hist", "solar_hist", "kp_48h", "bz_24h",
+            "xray_24h", "lightning", "alerts", "dx_spots", "prop_adv",
         ]
 
-        # 2-kolom raster voor compacte weergave
         from PySide6.QtWidgets import QGridLayout
         grid = QGridLayout()
         grid.setSpacing(2)
         self._panel_cbs: dict[str, QCheckBox] = {}
-        for i, (pid, lbl) in enumerate(_LABELS):
+        for i, pid in enumerate(_PANEL_KEYS):
             panel = self._panels.get(pid)
-            cb = QCheckBox(lbl)
+            cb = QCheckBox(tr(f"panels.{pid}"))
             cb.setChecked(panel.is_panel_visible() if panel else False)
             if panel:
                 cb.toggled.connect(
@@ -383,7 +371,7 @@ class SettingsDialog(QDialog):
         self._cb_dxspots  = QCheckBox(); self._cb_dxspots.hide()
         self._cb_locator  = QCheckBox(); self._cb_locator.hide()
 
-        note_ov = QLabel("Overlay-instellingen: klik op 🗺 Overlays in de header.")
+        note_ov = QLabel(tr("overlay_note"))
         note_ov.setStyleSheet(f"color: {TEXT_DIM}; font-size: 7pt; font-style: italic;")
         v.addWidget(note_ov)
 
@@ -395,14 +383,14 @@ class SettingsDialog(QDialog):
             h.addStretch()
             v.addLayout(h)
 
-        _section(v, "Graticule")
+        _section(v, tr("sec.grat"))
 
         self._grat_step_cb = QComboBox()
         for lbl, val in [("10°", 10), ("20°", 20), ("30°", 30)]:
             self._grat_step_cb.addItem(lbl, val)
         row("Meridian-stap:", self._grat_step_cb)
 
-        _section(v, "Overlay lettergroottes")
+        _section(v, tr("sec.overlay_fonts2"))
 
         self._font_spin = QSpinBox()
         self._font_spin.setRange(6, 72)
@@ -434,7 +422,7 @@ class SettingsDialog(QDialog):
         self._dx_font_spin.setFixedWidth(80)
         row("DX spots (tabel):", self._dx_font_spin)
 
-        _section(v, "Icoontje groottes")
+        _section(v, tr("sec.icon_sizes2"))
 
         self._sun_size_spin = QSpinBox()
         self._sun_size_spin.setRange(8, 64)
@@ -458,16 +446,14 @@ class SettingsDialog(QDialog):
         v.setContentsMargins(12, 8, 12, 8)
         v.setSpacing(4)
 
-        _section(v, "Blitzortung bliksemdetectie")
+        _section(v, tr("sec.lightn_blitz"))
 
-        self._cb_lightn_en = QCheckBox("Bliksem inschakelen (Blitzortung live feed)")
-        self._cb_lightn_en.setToolTip(
-            "Verbindt met Blitzortung.org voor live bliksemdetectie wereldwijd.\n"
-            "Vereist een actieve internetverbinding.")
+        self._cb_lightn_en = QCheckBox(tr("set.lightn.enable"))
+        self._cb_lightn_en.setToolTip(tr("tip.lightn.en"))
         v.addWidget(self._cb_lightn_en)
 
         h = QHBoxLayout()
-        h.addWidget(QLabel("Fade-duur (seconden):"))
+        h.addWidget(QLabel(tr("set.lightn.fade")))
         self._fade_spin = QSpinBox()
         self._fade_spin.setRange(30, 3600)
         self._fade_spin.setSingleStep(30)
@@ -476,87 +462,61 @@ class SettingsDialog(QDialog):
         h.addStretch()
         v.addLayout(h)
 
-        note = QLabel("Inslagen verdwijnen langzaam na deze duur.\n"
-                       "30s = snel faden  ·  600s = 10 minuten  ·  3600s = 1 uur")
-        note.setStyleSheet(f"color: {TEXT_DIM}; font-size: 7pt;")
-        note.setWordWrap(True)
-        v.addWidget(note)
-
-        _section(v, "Header-melding bij nabijheid")
+        _section(v, tr("set.lightn.sound_sec").split()[0] + " / Alert")
         h2 = QHBoxLayout()
-        h2.addWidget(QLabel("Drempelafstand (km, 0 = uit):"))
+        h2.addWidget(QLabel(tr("set.lightn.alert")))
         self._lightn_radius_spin = QSpinBox()
         self._lightn_radius_spin.setRange(0, 5000)
         self._lightn_radius_spin.setSingleStep(50)
         self._lightn_radius_spin.setFixedWidth(80)
-        self._lightn_radius_spin.setToolTip(
-            "Toon rode melding in header als er inslagen binnen deze straal van uw QTH zijn.\n"
-            "0 = melding uitgeschakeld.")
+        self._lightn_radius_spin.setToolTip(tr("tip.lightn.radius"))
         h2.addWidget(self._lightn_radius_spin)
         h2.addStretch()
         v.addLayout(h2)
 
-        _section(v, "Geluid")
+        _section(v, tr("set.lightn.sound_sec"))
 
-        self._lightn_beep_cb = QCheckBox("Piepje bij elke blikseminslag")
-        self._lightn_beep_cb.setToolTip(
-            "Speelt een kort piepje af via de systeemspreker bij elke nieuwe inslag.")
+        self._lightn_beep_cb = QCheckBox(tr("set.lightn.beep"))
+        self._lightn_beep_cb.setToolTip(tr("tip.lightn.beep"))
         v.addWidget(self._lightn_beep_cb)
 
         h_beep = QHBoxLayout()
-        h_beep.addWidget(QLabel("Alleen binnen (km, 0 = altijd):"))
+        h_beep.addWidget(QLabel(tr("set.lightn.beep_r")))
         self._lightn_beep_r_spin = QSpinBox()
         self._lightn_beep_r_spin.setRange(0, 5000)
         self._lightn_beep_r_spin.setSingleStep(50)
         self._lightn_beep_r_spin.setFixedWidth(80)
-        self._lightn_beep_r_spin.setToolTip(
-            "Piep alleen als de inslag binnen deze afstand van uw QTH is.\n"
-            "0 = altijd piepen ongeacht afstand.")
+        self._lightn_beep_r_spin.setToolTip(tr("tip.lightn.beep_r"))
         h_beep.addWidget(self._lightn_beep_r_spin)
         h_beep.addStretch()
         v.addLayout(h_beep)
 
-        _section(v, "Animatie")
+        _section(v, tr("set.lightn.anim"))
 
         h_scale = QHBoxLayout()
-        h_scale.addWidget(QLabel("Ring-grootte:"))
+        h_scale.addWidget(QLabel(tr("set.lightn.ring_size")))
         self._lightn_anim_scale_spin = QDoubleSpinBox()
         self._lightn_anim_scale_spin.setRange(0.5, 8.0)
         self._lightn_anim_scale_spin.setSingleStep(0.5)
         self._lightn_anim_scale_spin.setDecimals(1)
         self._lightn_anim_scale_spin.setSuffix(" ×")
         self._lightn_anim_scale_spin.setFixedWidth(80)
-        self._lightn_anim_scale_spin.setToolTip(
-            "Schaal van de uitdijende ring en stip bij een blikseminslag.\n"
-            "2.0 = standaard (aangepast aan hoge-res kaart).\n"
-            "Kleiner = subtielere animatie.  Groter = beter zichtbaar.")
+        self._lightn_anim_scale_spin.setToolTip(tr("tip.lightn.scale"))
         h_scale.addWidget(self._lightn_anim_scale_spin)
         h_scale.addStretch()
         v.addLayout(h_scale)
 
-        _section(v, "Prestaties")
+        _section(v, tr("set.lightn.perf"))
         h3 = QHBoxLayout()
-        h3.addWidget(QLabel("Update-interval (ms):"))
+        h3.addWidget(QLabel(tr("set.lightn.interval")))
         self._lightn_rate_spin = QSpinBox()
         self._lightn_rate_spin.setRange(100, 5000)
         self._lightn_rate_spin.setSingleStep(100)
         self._lightn_rate_spin.setFixedWidth(80)
-        self._lightn_rate_spin.setToolTip(
-            "Hoe vaak de bliksem-overlay op de kaart wordt hertekend.\n"
-            "Lagere waarde = vloeiendere animatie, maar meer CPU.\n"
-            "Hogere waarde = minder CPU-gebruik, iets minder vloeiend.\n"
-            "Aanbevolen: 100–200 ms voor vloeiend,  500 ms voor normaal gebruik.")
+        self._lightn_rate_spin.setToolTip(tr("tip.lightn.rate"))
         h3.addWidget(self._lightn_rate_spin)
         h3.addStretch()
         v.addLayout(h3)
-
-        note_rate = QLabel(
-            "100 ms = 10 fps (vloeiend, meer CPU)  ·  "
-            "500 ms = 2 fps (standaard)  ·  "
-            "2000 ms = zuinig")
-        note_rate.setStyleSheet(f"color: {TEXT_DIM}; font-size: 7pt;")
-        note_rate.setWordWrap(True)
-        v.addWidget(note_rate)
 
         v.addStretch()
         return w
@@ -568,62 +528,58 @@ class SettingsDialog(QDialog):
         v.setContentsMargins(12, 8, 12, 8)
         v.setSpacing(4)
 
-        _section(v, "K-index storm")
+        _section(v, tr("sec.k_storm"))
 
         h = QHBoxLayout()
-        self._k_en = QCheckBox("K-storm melding inschakelen")
+        self._k_en = QCheckBox(tr("k_en_cb"))
         v.addWidget(self._k_en)
 
         h2 = QHBoxLayout()
-        h2.addWidget(QLabel("Drempel K-index (0–9):"))
+        h2.addWidget(QLabel(tr("k_thr_lbl")))
         self._k_spin = QSpinBox()
         self._k_spin.setRange(0, 9); self._k_spin.setFixedWidth(60)
         h2.addWidget(self._k_spin)
         h2.addStretch()
         v.addLayout(h2)
 
-        note_k = QLabel("Melding bij K ≥ drempel. K=4 = lichte storm  ·  K=5 = G1  ·  K=7 = G3")
+        note_k = QLabel(tr("k_note"))
         note_k.setStyleSheet(f"color: {TEXT_DIM}; font-size: 7pt;")
         note_k.setWordWrap(True)
         v.addWidget(note_k)
 
-        _section(v, "X-straling")
+        _section(v, tr("sec.xray"))
 
-        self._xflare_en = QCheckBox("X-flare melding inschakelen (M1 en hoger)")
+        self._xflare_en = QCheckBox(tr("xflare_en_cb"))
         v.addWidget(self._xflare_en)
 
-        _section(v, "Bandcondities")
+        _section(v, tr("sec.bandcond"))
 
-        self._band_en = QCheckBox("Band-betrouwbaarheidsmelding inschakelen")
+        self._band_en = QCheckBox(tr("band_en_cb"))
         v.addWidget(self._band_en)
 
         h3 = QHBoxLayout()
-        h3.addWidget(QLabel("Drempel betrouwbaarheid (%):"))
+        h3.addWidget(QLabel(tr("band_thr_lbl")))
         self._band_spin = QSpinBox()
         self._band_spin.setRange(0, 100); self._band_spin.setFixedWidth(60)
         h3.addWidget(self._band_spin)
         h3.addStretch()
         v.addLayout(h3)
 
-        _section(v, "Meldingen FIFO")
+        _section(v, tr("set.alerts.fifo"))
         h4 = QHBoxLayout()
-        h4.addWidget(QLabel("Max. te bewaren meldingen:"))
+        h4.addWidget(QLabel(tr("set.alerts.fifo_max")))
         self._alert_max_spin = QSpinBox()
         self._alert_max_spin.setRange(5, 500)
         self._alert_max_spin.setValue(50)
         self._alert_max_spin.setFixedWidth(70)
-        self._alert_max_spin.setToolTip(
-            "Oudste meldingen worden automatisch verwijderd als dit aantal bereikt is.")
+        self._alert_max_spin.setToolTip(tr("tip.alert.max"))
         h4.addWidget(self._alert_max_spin)
         h4.addStretch()
         v.addLayout(h4)
 
-        _section(v, "Satelliet")
-        self._sat_ping_cb = QCheckBox(
-            "Ping-geluid als satelliet de QTH-zone binnenkomt")
-        self._sat_ping_cb.setToolTip(
-            "Speelt een kort oplopend ping-geluid (880→1320 Hz) als een\n"
-            "geselecteerde satelliet binnen de footprint-afstand van uw QTH komt.")
+        _section(v, tr("set.alerts.sat"))
+        self._sat_ping_cb = QCheckBox(tr("set.alerts.sat_ping_en"))
+        self._sat_ping_cb.setToolTip(tr("tip.sat.ping"))
         v.addWidget(self._sat_ping_cb)
 
         v.addStretch()
@@ -645,96 +601,97 @@ class SettingsDialog(QDialog):
             h.addStretch()
             v.addLayout(h)
 
-        _section(v, "CAT interface")
+        _section(v, tr("sec.cat"))
 
-        self._cat_en = QCheckBox("CAT inschakelen")
-        self._cat_en.setToolTip("Verbindt het programma met uw radio via seriële poort.")
+        self._cat_en = QCheckBox(tr("cat.enable_cb"))
+        self._cat_en.setToolTip(tr("tip.cat.en"))
         v.addWidget(self._cat_en)
 
-        self._cat_monitor_btn = QPushButton("📟  Seriële terminal openen")
+        self._cat_monitor_btn = QPushButton(tr("set.cat.terminal"))
         self._cat_monitor_btn.setObjectName("ok")
         self._cat_monitor_btn.setFont(f8)
-        self._cat_monitor_btn.setToolTip(
-            "Open het CAT monitor venster met TX/RX log en handmatige invoer.")
+        self._cat_monitor_btn.setToolTip(tr("cat.monitor_tip"))
         self._cat_monitor_btn.clicked.connect(self._open_cat_monitor_from_settings)
         v.addWidget(self._cat_monitor_btn)
 
-        _section(v, "Verbinding")
+        _section(v, tr("sec.connection"))
 
-        # Poort: combobox met beschikbare poorten + handmatige invoer + vernieuwen
         port_row = QHBoxLayout()
-        port_lbl = QLabel("Poort:"); port_lbl.setFixedWidth(130)
+        port_lbl = QLabel(tr("cat.port_lbl")); port_lbl.setFixedWidth(130)
         self._cat_port = QComboBox()
         self._cat_port.setEditable(True)
         self._cat_port.setFont(QFont("Consolas", 8))
         self._cat_port.setMinimumWidth(160)
-        self._cat_port.lineEdit().setPlaceholderText("COM3  of  /dev/ttyUSB0")
+        self._cat_port.lineEdit().setPlaceholderText("COM3  /  /dev/ttyUSB0")
         btn_scan = QPushButton("↺")
         btn_scan.setFixedWidth(28)
-        btn_scan.setToolTip("Poorten opnieuw scannen")
+        btn_scan.setToolTip(tr("tip.port.scan"))
         btn_scan.setFont(QFont("Segoe UI", 9))
         btn_scan.clicked.connect(self._scan_cat_ports)
         port_row.addWidget(port_lbl)
         port_row.addWidget(self._cat_port, 1)
         port_row.addWidget(btn_scan)
         v.addLayout(port_row)
-        self._scan_cat_ports()   # vul bij aanmaken
+        self._scan_cat_ports()
 
         self._cat_baud = QComboBox()
         for b in [300, 600, 1200, 2400, 4800, 9600, 19200, 38400, 57600, 115200]:
             self._cat_baud.addItem(str(b), b)
-        row("Baudrate:", self._cat_baud)
+        row(tr("cat.baud_lbl"), self._cat_baud)
 
         self._cat_bits = QComboBox()
         for b in [7, 8]:
             self._cat_bits.addItem(str(b), b)
-        row("Databits:", self._cat_bits)
+        row(tr("cat.bits_lbl"), self._cat_bits)
 
         self._cat_parity = QComboBox()
-        self._cat_parity.addItems(["Geen", "Even", "Odd"])
-        row("Pariteit:", self._cat_parity)
+        # Data = interne waarde (voor cat_interface), display = vertaald
+        for internal, tr_key in [("Geen", "cat.parity.none"),
+                                  ("Even", "cat.parity.even"),
+                                  ("Odd",  "cat.parity.odd")]:
+            self._cat_parity.addItem(tr(tr_key), internal)
+        row(tr("cat.parity_lbl"), self._cat_parity)
 
         self._cat_stop = QComboBox()
         self._cat_stop.addItems(["1", "2"])
-        row("Stopbits:", self._cat_stop)
+        row(tr("cat.stop_lbl"), self._cat_stop)
 
-        self._cat_rtscts = QCheckBox("RTS/CTS hardware handshaking")
+        self._cat_rtscts = QCheckBox(tr("cat.rtscts"))
         v.addWidget(self._cat_rtscts)
-        self._cat_dtr = QCheckBox("DTR aan bij verbinden")
+        self._cat_dtr = QCheckBox(tr("cat.dtr"))
         v.addWidget(self._cat_dtr)
-        self._cat_rts = QCheckBox("RTS aan bij verbinden")
+        self._cat_rts = QCheckBox(tr("cat.rts"))
         v.addWidget(self._cat_rts)
 
-        _section(v, "Radiotype")
+        _section(v, tr("sec.radio_type"))
 
         self._cat_type = QComboBox()
         self._cat_type.addItems(CatInterface.RADIO_TYPES)
-        row("Radiotype:", self._cat_type)
+        row(tr("cat.type_lbl"), self._cat_type)
 
         self._cat_civ = QSpinBox()
         self._cat_civ.setRange(0, 255)
         self._cat_civ.setDisplayIntegerBase(16)
         self._cat_civ.setPrefix("0x")
         self._cat_civ.setFixedWidth(80)
-        self._cat_civ.setToolTip("Icom CI-V adres (hex). Standaard: 0x58 voor veel rigs.")
-        row("Icom CI-V adres:", self._cat_civ)
+        self._cat_civ.setToolTip(tr("tip.civ"))
+        row(tr("cat.civ_lbl"), self._cat_civ)
 
-        # Verberg/toon CI-V adres op basis van radiotype
         def _update_civ_vis():
             show = "Icom" in self._cat_type.currentText()
             self._cat_civ.setEnabled(show)
         self._cat_type.currentTextChanged.connect(_update_civ_vis)
         _update_civ_vis()
 
-        # Snelinstelling presets
-        _section(v, "Snelinstelling")
+        _section(v, tr("sec.preset"))
         preset_row = QHBoxLayout()
-        preset_row.addWidget(QLabel("Preset:"))
+        preset_row.addWidget(QLabel(tr("cat.preset_lbl")))
+        _none = tr("cat.parity.none")
         for label, rtype, baud, bits, par, stop in [
-            ("FT-950",  "Yaesu (FT-950/2000/DX/3000/5000)", 38400, 8, "Geen", "2"),
-            ("FT-817",  "Yaesu (FT-817/857/897)",           9600,  8, "Geen", "1"),
-            ("TS-590",  "Kenwood / Elecraft",               9600,  8, "Geen", "1"),
-            ("K3/KX3",  "Kenwood / Elecraft",               38400, 8, "Geen", "1"),
+            ("FT-950",  "Yaesu (FT-950/2000/DX/3000/5000)", 38400, 8, _none, "2"),
+            ("FT-817",  "Yaesu (FT-817/857/897)",           9600,  8, _none, "1"),
+            ("TS-590",  "Kenwood / Elecraft",               9600,  8, _none, "1"),
+            ("K3/KX3",  "Kenwood / Elecraft",               38400, 8, _none, "1"),
         ]:
             b = QPushButton(label)
             b.setFont(f8)
@@ -746,10 +703,10 @@ class SettingsDialog(QDialog):
         preset_row.addStretch()
         v.addLayout(preset_row)
 
-        _section(v, "Test")
+        _section(v, tr("sec.test"))
 
         btn_row = QHBoxLayout()
-        self._cat_test_btn = QPushButton("Verbinding testen")
+        self._cat_test_btn = QPushButton(tr("btn.test_conn"))
         self._cat_test_btn.setFont(f8)
         self._cat_status_lbl = QLabel("")
         self._cat_status_lbl.setFont(f8)
@@ -776,17 +733,16 @@ class SettingsDialog(QDialog):
             if id_ok:
                 # ID0310 = FT-950, andere waarden voor andere rigs
                 rig = _RADIO_ID_MAP.get(id_resp, id_resp)
-                self._cat_status_lbl.setText(f"✔  Verbonden  ·  {rig}")
+                self._cat_status_lbl.setText(tr("cat.status.ok", rig=rig))
                 self._cat_status_lbl.setStyleSheet("color: #4CAF50; font-size: 8pt;")
             else:
-                # Poort open maar radio antwoordt niet op ID; — toch verbonden
-                self._cat_status_lbl.setText("✔  Poort open  (geen ID-respons)")
+                self._cat_status_lbl.setText(tr("cat.status.open"))
                 self._cat_status_lbl.setStyleSheet("color: #FFA726; font-size: 8pt;")
 
         self._cat_test_btn.clicked.connect(_test_connection)
 
         if not serial_available():
-            note = QLabel("⚠  pyserial niet gevonden — pip install pyserial")
+            note = QLabel(tr("cat.no_pyserial"))
             note.setStyleSheet("color: #EF5350; font-size: 7pt;")
             v.addWidget(note)
 
@@ -799,7 +755,7 @@ class SettingsDialog(QDialog):
         _set_combo(self._cat_type, radio_type, CatInterface.RADIO_TYPES[0])
         _set_combo_data(self._cat_baud, baud, 9600)
         _set_combo_data(self._cat_bits, bits, 8)
-        _set_combo(self._cat_parity, parity, "Geen")
+        _set_combo_data(self._cat_parity, parity, "Geen")
         _set_combo(self._cat_stop, stopbits, "1")
         self._live(0)
 
@@ -831,7 +787,7 @@ class SettingsDialog(QDialog):
         n = len(ports)
         if hasattr(self, "_cat_status_lbl"):
             if n == 0:
-                self._cat_status_lbl.setText("Geen poorten gevonden")
+                self._cat_status_lbl.setText(tr("cat.no_ports"))
                 self._cat_status_lbl.setStyleSheet("color: #EF5350; font-size: 8pt;")
             else:
                 self._cat_status_lbl.setText(f"{n} poort{'en' if n > 1 else ''} gevonden")
@@ -846,19 +802,21 @@ class SettingsDialog(QDialog):
 
         f8 = QFont("Segoe UI", 8)
 
-        _section(v, "Versie")
-        for txt in ["HF Propagation & Atmosphere Monitor  ·  by Frank van Dijke",
-                    "Developed with Claude AI  ·  PySide6 / Qt 6"]:
+        _section(v, tr("sec.version"))
+        for txt in [tr("set.about.app_line"), tr("set.about.dev_line")]:
             lbl = QLabel(txt)
             lbl.setFont(f8)
             v.addWidget(lbl)
 
-        _section(v, "Afhankelijkheden")
+        _section(v, tr("sec.deps"))
 
+        _req_str = "[required]" if tr("set.tab.about.lbl") == "📦  About" else "[vereist]"
+        _opt_str = "[optional]" if tr("set.tab.about.lbl") == "📦  About" else "[optioneel]"
+        _copy_str = "← copy" if tr("set.tab.about.lbl") == "📦  About" else "← kopieer"
         DEPS = [
-            ("PySide6",          "[vereist]",   "pip install PySide6"),
-            ("websocket-client", "[optioneel]", "pip install websocket-client"),
-            ("pyserial",         "[optioneel]", "pip install pyserial"),
+            ("PySide6",          _req_str, "pip install PySide6"),
+            ("websocket-client", _opt_str, "pip install websocket-client"),
+            ("pyserial",         _opt_str, "pip install pyserial"),
         ]
         for pkg, kind, cmd in DEPS:
             ok  = _check_dep(pkg)
@@ -878,17 +836,17 @@ class SettingsDialog(QDialog):
             if not ok:
                 btn = QPushButton(cmd)
                 btn.setFont(QFont("Consolas", 8))
-                btn.setToolTip("Klik om te kopiëren")
+                btn.setToolTip(tr("tip.copy"))
                 btn.clicked.connect(lambda _, c=cmd: _copy_to_clipboard(c))
                 row.addWidget(btn)
-                hint = QLabel("← kopieer")
+                hint = QLabel(_copy_str)
                 hint.setFont(f8)
                 row.addWidget(hint)
 
             row.addStretch()
             v.addLayout(row)
 
-        _section(v, "Bestanden")
+        _section(v, tr("sec.files"))
         from .startup import file_status
         f7 = QFont("Consolas", 7)
         for info in file_status():
@@ -909,10 +867,31 @@ class SettingsDialog(QDialog):
             row.addStretch()
             v.addLayout(row)
 
-        _section(v, "Opties")
-        self._splash_about = QCheckBox("Splash screen tonen bij opstarten")
+        _section(v, tr("sec.options"))
+        self._splash_about = QCheckBox(tr("about.splash"))
         self._splash_about.setFont(f8)
         v.addWidget(self._splash_about)
+
+        _section(v, tr("set.lang_section"))
+        lang_row = QHBoxLayout()
+        from PySide6.QtWidgets import QRadioButton, QButtonGroup
+        self._lang_nl = QRadioButton("Nederlands")
+        self._lang_en = QRadioButton("English")
+        self._lang_nl.setFont(f8)
+        self._lang_en.setFont(f8)
+        self._lang_group = QButtonGroup(self)
+        self._lang_group.addButton(self._lang_nl, 0)
+        self._lang_group.addButton(self._lang_en, 1)
+        lang_row.addWidget(self._lang_nl)
+        lang_row.addWidget(self._lang_en)
+        lang_row.addStretch()
+        v.addLayout(lang_row)
+        lang_note = QLabel(tr("about.lang_note"))
+        lang_note.setFont(f8)
+        lang_note.setStyleSheet(f"color: {TEXT_DIM}; font-style: italic;")
+        lang_note.setWordWrap(True)
+        v.addWidget(lang_note)
+        self._lang_nl.toggled.connect(lambda: self._live(0))
 
         v.addStretch()
         return w
@@ -926,10 +905,10 @@ class SettingsDialog(QDialog):
         f8 = QFont("Segoe UI", 8)
 
         # ── Snap-raster ───────────────────────────────────────────────────
-        _section(v, "Raster")
+        _section(v, tr("sec.raster"))
 
         snap_row = QHBoxLayout()
-        snap_lbl = QLabel("Snap-raster:")
+        snap_lbl = QLabel(tr("set.layout.snap"))
         snap_lbl.setFont(f8)
         snap_lbl.setFixedWidth(160)
         self._snap_cb = QComboBox()
@@ -942,11 +921,11 @@ class SettingsDialog(QDialog):
         v.addLayout(snap_row)
 
         # ── Standaard layout ──────────────────────────────────────────────
-        _section(v, "Standaard layout")
+        _section(v, tr("sec.default_layout"))
 
         br = QHBoxLayout()
-        btn_save_def = QPushButton("💾  Opslaan als standaard")
-        btn_reset    = QPushButton("↺  Reset naar standaard")
+        btn_save_def = QPushButton(tr("btn.save_default"))
+        btn_reset    = QPushButton(tr("btn.reset_default"))
         btn_reset.setObjectName("danger")
         br.addWidget(btn_save_def)
         br.addWidget(btn_reset)
@@ -962,13 +941,13 @@ class SettingsDialog(QDialog):
         v.addWidget(note_def)
 
         # ── Benoemde profielen ────────────────────────────────────────────
-        _section(v, "Profielen")
+        _section(v, tr("sec.profiles"))
 
         new_row = QHBoxLayout()
         self._profile_name = QLineEdit()
         self._profile_name.setPlaceholderText("Naam voor nieuw profiel…")
         self._profile_name.setFont(f8)
-        btn_new = QPushButton("Opslaan als profiel")
+        btn_new = QPushButton(tr("btn.save_profile"))
         btn_new.setFont(f8)
         new_row.addWidget(self._profile_name, 1)
         new_row.addWidget(btn_new)
@@ -1013,7 +992,7 @@ class SettingsDialog(QDialog):
         profiles = sorted(k for k in layouts if not k.startswith("__"))
 
         if not profiles:
-            lbl = QLabel("Geen opgeslagen profielen.")
+            lbl = QLabel(tr("no_profiles"))
             lbl.setFont(f8)
             lbl.setStyleSheet(f"color: {TEXT_DIM};")
             vbox.addWidget(lbl)
@@ -1032,7 +1011,7 @@ class SettingsDialog(QDialog):
                 row_layout.addWidget(lbl, 1)
 
                 for btn_txt, clr, action in [
-                    ("Laden",         ACCENT,    lambda _=0, n=name: self._load_profile(n)),
+                    (tr("btn.load"),   ACCENT,    lambda _=0, n=name: self._load_profile(n)),
                     ("Overschrijven", TEXT_DIM,  lambda _=0, n=name: self._overwrite_profile(n)),
                     ("Verwijderen",   "#EF5350", lambda _=0, n=name: self._delete_profile(n)),
                 ]:
@@ -1088,7 +1067,7 @@ class SettingsDialog(QDialog):
         layouts = _load_layouts()
         layouts["__default__"] = self._current_layout_dict()
         _save_layouts(layouts)
-        self._status_lbl.setText("✓  Standaard opgeslagen")
+        self._status_lbl.setText(tr("set.saved_default"))
         self._status_lbl.setStyleSheet("color: #4CAF50; font-size: 8pt;")
         self._status_timer.start(2500)
 
@@ -1197,13 +1176,15 @@ class SettingsDialog(QDialog):
 
         # Splash screen — alleen in About tab
         self._splash_about.setChecked(c.show_splash)
+        lang = getattr(c, "language", "nl")
+        (self._lang_en if lang == "en" else self._lang_nl).setChecked(True)
 
         # CAT
         self._cat_en.setChecked(getattr(c, "cat_enabled", False))
         _set_cat_port(self._cat_port, getattr(c, "cat_port", ""))
         _set_combo_data(self._cat_baud,   getattr(c, "cat_baud",     9600), 9600)
         _set_combo_data(self._cat_bits,   getattr(c, "cat_databits", 8),    8)
-        _set_combo(self._cat_parity, getattr(c, "cat_parity",   "Geen"), "Geen")
+        _set_combo_data(self._cat_parity, getattr(c, "cat_parity", "Geen"), "Geen")
         _set_combo(self._cat_stop,   getattr(c, "cat_stopbits", "1"),   "1")
         self._cat_rtscts.setChecked(getattr(c, "cat_rtscts", False))
         self._cat_dtr.setChecked(getattr(c, "cat_dtr", False))
@@ -1256,6 +1237,7 @@ class SettingsDialog(QDialog):
             sun_icon_size     = self._sun_size_spin.value(),
             moon_icon_size    = self._moon_size_spin.value(),
             show_splash       = self._splash_about.isChecked(),
+            language          = "en" if self._lang_en.isChecked() else "nl",
             k_alert           = self._k_spin.value(),
             k_alert_en        = self._k_en.isChecked(),
             xflare_alert_en   = self._xflare_en.isChecked(),
@@ -1267,7 +1249,7 @@ class SettingsDialog(QDialog):
             cat_port          = _get_cat_port(self._cat_port),
             cat_baud          = self._cat_baud.currentData() or 4800,
             cat_databits      = self._cat_bits.currentData() or 8,
-            cat_parity        = self._cat_parity.currentText(),
+            cat_parity        = self._cat_parity.currentData() or "Geen",
             cat_stopbits      = self._cat_stop.currentText(),
             cat_rtscts        = self._cat_rtscts.isChecked(),
             cat_dtr           = self._cat_dtr.isChecked(),

@@ -313,8 +313,12 @@ class LightningLayer(QGraphicsItem):
     def status_signal(self) -> Signal:
         return self._worker.status
 
+    def set_overlay_visible(self, on: bool):
+        """Toon of verberg de overlay — worker blijft draaien (gebruikt door Overlay-knop)."""
+        self.setVisible(on)
+
     def set_enabled(self, on: bool):
-        """Start of stop de WebSocket-verbinding én maak de overlay zichtbaar/onzichtbaar."""
+        """Start of stop de WebSocket-verbinding én overlay (gebruikt door Instellingen)."""
         self.setVisible(on)
         if on:
             if not self._worker._running:
@@ -871,70 +875,186 @@ def _draw_path(painter: QPainter, pts: list, pen: QPen):
 
 # ── DX Spots Layer ────────────────────────────────────────────────────────────
 
-# Compact DXCC prefix → (lat, lon)
+# Uitgebreide DXCC prefix → (lat, lon)  — dekt >300 entiteiten
 _DXCC: dict[str, tuple[float, float]] = {
-    # Noord-Amerika
-    "W":   (38.0, -97.0), "K":   (38.0, -97.0), "N":   (38.0, -97.0),
-    "AA":  (38.0, -97.0), "AB":  (38.0, -97.0), "AC":  (38.0, -97.0),
-    "AD":  (38.0, -97.0), "AE":  (38.0, -97.0), "AF":  (38.0, -97.0),
-    "AG":  (38.0, -97.0), "AH":  (38.0, -97.0), "AI":  (38.0, -97.0),
-    "AJ":  (38.0, -97.0), "AK":  (38.0, -97.0),
-    "VE":  (56.0, -96.0), "VA":  (56.0, -96.0),
-    "KH6": (20.5,-157.0), "KL":  (64.0,-152.0),
-    "XE":  (23.0,-102.0),
-    # Zuid-Amerika
-    "PY":  (-15.0, -50.0), "PU": (-15.0, -50.0), "PP": (-15.0, -50.0),
-    "LU":  (-34.0, -64.0), "CE": (-30.0, -71.0), "OA": (-10.0, -75.0),
-    "HC":  ( -1.8, -78.0), "YV": (  8.0, -66.0), "CX": (-32.8, -56.0),
-    "ZP":  (-23.0, -58.0), "CP": (-16.0, -64.0),
-    # West-Europa
-    "DL":  (52.0, 10.0), "F":  (46.0,  2.0), "G":  (52.0,  -2.0),
-    "GW":  (52.0, -4.0), "GM": (57.0, -4.0), "GI": (54.5,  -6.5),
-    "I":   (42.0, 12.0), "IT9":(37.5, 14.0), "IS": (40.0,   9.0),
-    "SP":  (52.0, 21.0), "SQ": (52.0, 21.0),
-    "OM":  (48.7, 19.0), "OK": (50.0, 15.0), "HA": (47.0,  19.0),
-    "OH":  (64.0, 26.0), "SM": (62.0, 17.0), "LA": (62.0,  10.0),
-    "OZ":  (56.0, 10.0), "PA": (52.3,  5.3), "ON": (50.5,   4.5),
-    "HB":  (47.0,  8.0), "OE": (47.5, 14.5),
-    "EA":  (40.0, -4.0), "EA8":(28.3,-14.0),
-    "CT":  (39.5, -8.0), "CS": (39.5, -8.0),
-    "YO":  (46.0, 25.0), "LZ": (43.0, 25.0), "SV": (38.0,  23.0),
-    "SV9": (35.3, 25.0), "TA": (39.0, 35.0),
-    "TF":  (65.0,-19.0), "EI": (53.0, -8.0),
-    "YU":  (44.0, 21.0), "9A": (45.0, 16.0), "S5": (46.0,  15.0),
-    "YL":  (57.0, 25.0), "LY": (56.0, 24.0), "ES": (59.0,  25.0),
-    "5B":  (35.0, 33.0), "9H": (35.9, 14.5),
-    # Rusland
-    "UA":  (55.0, 60.0), "RA":  (55.0, 60.0), "RZ": (55.0, 60.0),
-    "R":   (55.0, 60.0), "UA9": (60.0, 90.0), "UA0":(60.0,130.0),
-    # Midden-Oosten
-    "4X":  (31.5, 34.8), "4Z": (31.5, 34.8),
-    "A9":  (26.0, 50.5), "A4": (23.0, 57.0), "A6": (24.5, 54.5),
-    "HZ":  (25.0, 45.0), "JY": (31.0, 36.0), "EP": (32.0, 53.0),
-    "AP":  (30.0, 70.0),
-    # Azië
-    "JA":  (36.0,138.0), "HL": (37.0,127.0), "DS": (37.0,127.0),
-    "BY":  (35.0,104.0), "BA": (35.0,104.0), "BD": (35.0,104.0),
-    "BG":  (35.0,104.0),
-    "VR":  (22.3,114.2), "BV": (23.5,121.0),
-    "9V":  ( 1.3,103.8), "VU": (20.0, 77.0),
-    "HS":  (13.0,101.0), "DU": (13.0,122.0),
-    "YB":  (-5.0,120.0), "YC": (-5.0,120.0),
-    # Oceanië
-    "VK":  (-25.0,135.0), "ZL": (-40.0,175.0),
-    "FK":  (-21.0,165.0), "FO": (-18.0,-149.0),
-    "KH0": (15.2, 145.7), "H44":(-9.0, 160.0),
-    # Afrika
-    "ZS":  (-30.0, 25.0), "ZR": (-30.0, 25.0), "ZU": (-30.0, 25.0),
-    "V5":  (-22.0, 17.0), "A2": (-22.0, 24.0), "Z2": (-20.0, 30.0),
-    "5H":  ( -6.0, 35.0), "5Z": (  1.0, 38.0), "5X": (  1.3, 32.0),
-    "ET":  (  9.0, 38.7), "SU": ( 26.0, 30.0),
-    "CN":  ( 32.0, -6.0), "7X": ( 28.0,  2.0), "TS": (34.0, 9.0),
-    "5A":  ( 27.0, 17.0), "3B8":(-20.2, 57.5),
-    # Eilanden
-    "ZD8": ( -7.9,-14.4), "VP9":(32.3,-64.8),
-    "VP8": (-51.7,-57.8), "3DA":(-26.3, 31.5),
+    # ── USA / Canada / Noord-Amerika ──────────────────────────────────────────
+    "W":   ( 38.0, -97.0), "K":   ( 38.0, -97.0), "N":   ( 38.0, -97.0),
+    "AA":  ( 38.0, -97.0), "AB":  ( 38.0, -97.0), "AC":  ( 38.0, -97.0),
+    "AD":  ( 38.0, -97.0), "AE":  ( 38.0, -97.0), "AF":  ( 38.0, -97.0),
+    "AG":  ( 38.0, -97.0), "AH":  ( 38.0, -97.0), "AI":  ( 38.0, -97.0),
+    "AJ":  ( 38.0, -97.0), "AK":  ( 38.0, -97.0),
+    "WH2": ( 13.5, 144.8), "WH0": ( 15.2, 145.7), "KH2": ( 13.5, 144.8),
+    "KH0": ( 15.2, 145.7), "KH6": ( 20.5,-157.0), "KH8": (-14.3,-170.7),
+    "KP2": ( 17.7, -64.8), "KP4": ( 18.2, -66.5),
+    "KL":  ( 64.0,-152.0),
+    "VE":  ( 56.0, -96.0), "VA":  ( 56.0, -96.0), "VO":  ( 53.0, -60.0),
+    "VY":  ( 63.0,-136.0),
+    "XE":  ( 23.0,-102.0), "XF":  ( 23.0,-102.0),
+    "TG":  ( 15.5, -90.3), "TI":  (  9.9, -84.1), "HP":  (  8.9, -79.5),
+    "YN":  ( 12.9, -85.6), "HR":  ( 15.0, -86.5), "HH":  ( 19.0, -72.3),
+    "HI":  ( 19.0, -70.7), "J3":  ( 12.1, -61.7), "J6":  ( 14.0, -61.0),
+    "J7":  ( 15.3, -61.4), "VP2E":( 17.1, -61.8), "VP2M":( 16.7, -62.2),
+    "VP2V":( 18.4, -64.6), "VP5": ( 21.8, -71.9),
+    "CO":  ( 22.0, -80.0), "CM":  ( 22.0, -80.0),
+    "ZF":  ( 19.3, -81.4), "V3":  ( 17.2, -88.8),
+    # ── Zuid-Amerika ──────────────────────────────────────────────────────────
+    "PY":  (-15.0, -50.0), "PU":  (-15.0, -50.0), "PP":  (-15.0, -50.0),
+    "PQ":  (-15.0, -50.0), "PR":  (-15.0, -50.0), "PS":  (-15.0, -50.0),
+    "PT":  (-15.0, -50.0), "PV":  (-15.0, -50.0), "PW":  (-15.0, -50.0),
+    "LU":  (-34.0, -64.0), "CE":  (-30.0, -71.0),
+    "OA":  (-10.0, -75.0), "OB":  (-10.0, -75.0),
+    "HC":  ( -1.8, -78.0), "YV":  (  8.0, -66.0), "YW":  (  8.0, -66.0),
+    "CX":  (-32.8, -56.0), "ZP":  (-23.0, -58.0), "CP":  (-16.0, -64.0),
+    "HK":  (  4.0, -74.0), "GY":  (  5.0, -59.0), "8R":  (  5.0, -59.0),
+    "9Y":  ( 10.5, -61.3), "9Z":  ( 10.5, -61.3),
+    "FY":  (  4.0, -53.0), "PZ":  (  4.0, -56.0),
+    "VP8": (-51.7, -57.8),
+    # ── West-Europa ───────────────────────────────────────────────────────────
+    "G":   ( 52.0,  -2.0), "GW":  ( 52.0,  -4.0), "GM":  ( 57.0,  -4.0),
+    "GI":  ( 54.5,  -6.5), "GU":  ( 49.5,  -2.4), "GJ":  ( 49.2,  -2.1),
+    "EI":  ( 53.0,  -8.0), "TF":  ( 65.0, -19.0),
+    "F":   ( 46.0,   2.0), "TK":  ( 42.0,   9.0),
+    "DL":  ( 52.0,  10.0), "DJ":  ( 52.0,  10.0), "DK":  ( 52.0,  10.0),
+    "DA":  ( 52.0,  10.0), "DB":  ( 52.0,  10.0), "DC":  ( 52.0,  10.0),
+    "DD":  ( 52.0,  10.0), "DE":  ( 52.0,  10.0), "DF":  ( 52.0,  10.0),
+    "DG":  ( 52.0,  10.0), "DH":  ( 52.0,  10.0), "DI":  ( 52.0,  10.0),
+    "PA":  ( 52.3,   5.3), "PB":  ( 52.3,   5.3), "PC":  ( 52.3,   5.3),
+    "PD":  ( 52.3,   5.3), "PE":  ( 52.3,   5.3), "PF":  ( 52.3,   5.3),
+    "PG":  ( 52.3,   5.3), "PH":  ( 52.3,   5.3), "PI":  ( 52.3,   5.3),
+    "ON":  ( 50.5,   4.5), "OT":  ( 50.5,   4.5),
+    "LX":  ( 49.8,   6.1), "HB":  ( 47.0,   8.0), "HB0": ( 47.1,   9.5),
+    "OE":  ( 47.5,  14.5),
+    "I":   ( 42.0,  12.0), "IT9": ( 37.5,  14.0), "IS":  ( 40.0,   9.0),
+    "IG9": ( 35.5,  12.6),
+    "EA":  ( 40.0,  -4.0), "EA6": ( 39.6,   3.0), "EA8": ( 28.3, -14.0),
+    "EA9": ( 35.9,  -5.3),
+    "CT":  ( 39.5,  -8.0), "CS":  ( 39.5,  -8.0), "CR":  ( 39.5,  -8.0),
+    "SM":  ( 62.0,  17.0), "SK":  ( 62.0,  17.0), "SL":  ( 62.0,  17.0),
+    "SE":  ( 62.0,  17.0), "SF":  ( 62.0,  17.0), "SG":  ( 62.0,  17.0),
+    "SH":  ( 62.0,  17.0), "SI":  ( 62.0,  17.0),
+    "LA":  ( 62.0,  10.0), "LB":  ( 62.0,  10.0),
+    "OZ":  ( 56.0,  10.0), "OY":  ( 62.0,  -7.0), "OX":  ( 72.0, -25.0),
+    "OH":  ( 64.0,  26.0), "OF":  ( 64.0,  26.0), "OG":  ( 64.0,  26.0),
+    "OH0": ( 60.2,  20.0),
+    "SP":  ( 52.0,  21.0), "SQ":  ( 52.0,  21.0), "SR":  ( 52.0,  21.0),
+    "OK":  ( 50.0,  15.0), "OL":  ( 50.0,  15.0),
+    "OM":  ( 48.7,  19.0),
+    "HA":  ( 47.0,  19.0), "HG":  ( 47.0,  19.0),
+    "YO":  ( 46.0,  25.0), "YP":  ( 46.0,  25.0), "YQ":  ( 46.0,  25.0),
+    "YR":  ( 46.0,  25.0),
+    "LZ":  ( 43.0,  25.0),
+    "SV":  ( 38.0,  23.0), "SW":  ( 38.0,  23.0), "SX":  ( 38.0,  23.0),
+    "SY":  ( 38.0,  23.0), "SZ":  ( 38.0,  23.0),
+    "SV5": ( 36.2,  27.9), "SV9": ( 35.3,  25.0),
+    "5B":  ( 35.0,  33.0), "C4":  ( 35.0,  33.0),
+    "9H":  ( 35.9,  14.5),
+    "YU":  ( 44.0,  21.0), "YT":  ( 44.0,  21.0), "YZ":  ( 44.0,  21.0),
+    "9A":  ( 45.0,  16.0),
+    "S5":  ( 46.0,  15.0),
+    "T9":  ( 44.0,  17.5), "E7":  ( 44.0,  17.5),
+    "4O":  ( 42.8,  19.5),
+    "Z3":  ( 41.6,  21.7), "Z32": ( 41.6,  21.7),
+    "LY":  ( 56.0,  24.0),
+    "YL":  ( 57.0,  25.0),
+    "ES":  ( 59.0,  25.0),
+    # ── Oost-Europa / Centraal-Azië ───────────────────────────────────────────
+    "UA":  ( 55.0,  40.0), "RA":  ( 55.0,  40.0), "RZ":  ( 55.0,  40.0),
+    "R":   ( 55.0,  40.0), "RK":  ( 55.0,  40.0), "RL":  ( 55.0,  40.0),
+    "RM":  ( 55.0,  40.0), "RN":  ( 55.0,  40.0), "RO":  ( 55.0,  40.0),
+    "RP":  ( 55.0,  40.0), "RQ":  ( 55.0,  40.0), "RT":  ( 55.0,  40.0),
+    "RU":  ( 55.0,  40.0), "RV":  ( 55.0,  40.0), "RW":  ( 55.0,  40.0),
+    "RX":  ( 55.0,  40.0), "RY":  ( 55.0,  40.0),
+    "UA9": ( 60.0,  90.0), "UA0": ( 60.0, 130.0),
+    "UR":  ( 49.0,  32.0), "US":  ( 49.0,  32.0), "UT":  ( 49.0,  32.0),
+    "UU":  ( 49.0,  32.0), "UV":  ( 49.0,  32.0), "UW":  ( 49.0,  32.0),
+    "UX":  ( 49.0,  32.0), "UY":  ( 49.0,  32.0), "UZ":  ( 49.0,  32.0),
+    "EW":  ( 53.5,  28.0),
+    "EU":  ( 53.5,  28.0),
+    "EK":  ( 40.0,  45.0),
+    "4J":  ( 40.4,  49.8), "4K":  ( 40.4,  49.8),
+    "EX":  ( 41.0,  75.0), "EY":  ( 38.5,  71.0), "EZ":  ( 38.0,  58.0),
+    "UK":  ( 41.0,  64.0), "UJ":  ( 41.0,  64.0),
+    "UN":  ( 50.0,  70.0), "UO":  ( 50.0,  70.0),
+    "TA":  ( 39.0,  35.0), "TC":  ( 39.0,  35.0),
+    "4L":  ( 42.0,  43.5),
+    # ── Midden-Oosten ─────────────────────────────────────────────────────────
+    "4X":  ( 31.5,  34.8), "4Z":  ( 31.5,  34.8),
+    "OD":  ( 33.8,  35.5),
+    "YK":  ( 34.8,  38.5),
+    "A4":  ( 23.0,  57.0), "A6":  ( 24.5,  54.5), "A7":  ( 25.3,  51.5),
+    "A9":  ( 26.0,  50.5), "A8":  (  6.3, -10.8),
+    "HZ":  ( 25.0,  45.0),
+    "JY":  ( 31.0,  36.0),
+    "EP":  ( 32.0,  53.0),
+    "YA":  ( 34.5,  69.2),
+    "AP":  ( 30.0,  70.0),
+    # ── Azië ──────────────────────────────────────────────────────────────────
+    "JA":  ( 36.0, 138.0), "7J":  ( 36.0, 138.0),
+    "HL":  ( 37.0, 127.0), "DS":  ( 37.0, 127.0), "6K":  ( 37.0, 127.0),
+    "BY":  ( 35.0, 104.0), "BA":  ( 35.0, 104.0), "BD":  ( 35.0, 104.0),
+    "BE":  ( 35.0, 104.0), "BG":  ( 35.0, 104.0), "BH":  ( 35.0, 104.0),
+    "BI":  ( 35.0, 104.0), "BJ":  ( 35.0, 104.0),
+    "VR":  ( 22.3, 114.2), "BV":  ( 23.5, 121.0),
+    "XU":  ( 12.5, 105.0), "XV":  ( 16.0, 106.0), "3W":  ( 16.0, 106.0),
+    "XW":  ( 18.0, 103.0),
+    "HS":  ( 13.0, 101.0), "E2":  ( 13.0, 101.0),
+    "DU":  ( 13.0, 122.0), "DX":  ( 13.0, 122.0),
+    "YB":  ( -5.0, 120.0), "YC":  ( -5.0, 120.0), "YD":  ( -5.0, 120.0),
+    "YE":  ( -5.0, 120.0), "YF":  ( -5.0, 120.0), "YG":  ( -5.0, 120.0),
+    "YH":  ( -5.0, 120.0),
+    "9V":  (  1.3, 103.8),
+    "VU":  ( 20.0,  77.0), "AT":  ( 20.0,  77.0), "AU":  ( 20.0,  77.0),
+    "AW":  ( 20.0,  77.0),
+    "9N":  ( 28.0,  84.0), "9M2": (  4.0, 110.0), "9M8": (  2.0, 113.0),
+    "9M6": (  6.0, 116.0), "9W":  (  4.0, 110.0),
+    "S2":  ( 24.0,  90.0),
+    "4S":  (  7.9,  80.7),
+    "8Q":  (  4.2,  73.5),
+    "VQ9": (-7.3,  72.4),
+    "VK9": (-10.5, 105.7),
+    # ── Oceanië ───────────────────────────────────────────────────────────────
+    "VK":  (-25.0, 135.0),
+    "ZL":  (-40.0, 175.0), "ZL7": (-44.0,-176.5), "ZL8": (-29.1,-177.9),
+    "ZL9": (-52.5, 169.1),
+    "FK":  (-21.0, 165.0),
+    "FO":  (-18.0,-149.0), "FO/A":(-9.0,-140.0),
+    "KH0": ( 15.2, 145.7),
+    "T2":  ( -8.0, 178.0), "T30": (  3.4, 172.1),
+    "T31": (  2.0,-157.5), "T32": (  1.9,-157.5),
+    "H44": ( -9.0, 160.0), "H40": ( -9.0, 158.0),
+    "YJ":  (-17.7, 168.3), "A3":  (-20.0,-175.0),
+    "3D2": (-18.1, 179.0),
+    "V7":  (  7.1, 171.4), "KX6": (  7.1, 171.4),
+    # ── Afrika ────────────────────────────────────────────────────────────────
+    "ZS":  (-30.0,  25.0), "ZR":  (-30.0,  25.0), "ZT":  (-30.0,  25.0),
+    "ZU":  (-30.0,  25.0),
+    "V5":  (-22.0,  17.0), "A2":  (-22.0,  24.0), "Z2":  (-20.0,  30.0),
+    "7P":  (-29.5,  28.2), "8P":  ( 13.2, -59.6),
+    "5H":  ( -6.0,  35.0), "5Z":  (  1.0,  38.0), "5X":  (  1.3,  32.0),
+    "ET":  (  9.0,  38.7), "6O":  ( 10.0,  49.0),
+    "SU":  ( 26.0,  30.0),
+    "CN":  ( 32.0,  -6.0), "7X":  ( 28.0,   2.0), "TS":  ( 34.0,   9.0),
+    "5A":  ( 27.0,  17.0),
+    "ST":  ( 15.6,  32.5),
+    "EL":  (  6.3, -10.8), "D4":  ( 16.0, -24.0), "6W":  ( 14.7, -17.4),
+    "TU":  (  7.5,  -5.5), "TY":  (  9.3,   2.3), "TZ":  ( 17.3,  -4.0),
+    "TJ":  (  4.0,  12.4), "TR":  ( -1.0,  11.8), "TN":  ( -4.3,  15.3),
+    "5R":  (-20.0,  47.0), "FR":  (-21.1,  55.5),
+    "3B8": (-20.2,  57.5), "3B6": (-10.4,  40.0), "3B7": ( -9.8,  50.7),
+    "3B9": (-19.7,  63.4),
+    "VQ9": ( -7.3,  72.4),
+    "9J":  (-15.0,  30.0), "9I":  (-15.0,  30.0),
+    "ZD7": (-15.9,  -5.7), "ZD8": ( -7.9, -14.4), "ZD9": (-37.1, -12.3),
+    "9L":  (  8.5, -13.3), "9G":  (  7.9,  -1.1),
+    "D2":  (-12.0,  18.0), "D3":  (-12.0,  18.0),
+    "C5":  ( 13.5, -15.5), "C3":  ( 42.6,   1.5),
+    "J5":  ( 12.0, -15.0), "3C":  (  1.7,   9.0),
+    "7Q":  (-13.0,  34.0), "7O":  ( 15.5,  48.0),
+    "C9":  (-18.0,  35.0), "CR7": (-18.0,  35.0),
+    "5V":  (  8.7,   1.2), "6Y":  ( 18.2, -77.3),
+    "T5":  (  2.0,  45.3), "6V":  ( 14.7, -17.4),
 }
+
 
 
 def _call_to_latlon(call: str) -> tuple[float, float] | None:
@@ -965,7 +1085,7 @@ class _DXFetchThread(QThread):
     spots_ready = Signal(list)
 
     # v4-formaat: s={id: [dx_call, freq_khz, spotter, comment, "HHMMz DD Mon", ...]}
-    _URL = "https://dxwatch.com/dxsd1/s.php?s=0&r=30&cdxc=0"
+    _URL = "https://dxwatch.com/dxsd1/s.php?s=0&r=100&cdxc=0"
 
     def run(self):
         try:
@@ -1032,12 +1152,30 @@ class DXSpotsLayer(QGraphicsItem):
     def __init__(self):
         super().__init__()
         self.setZValue(6)
-        self._spots: list = []
+        self._spots: list      = []
+        self._raw_spots: list  = []
+        self._spot_dicts: list = []
+        self._own_only: bool   = False
+        self._qth_lat: float  = 52.0
+        self._qth_lon: float  = 5.0
         self._lock = threading.Lock()
         self._signals = _DXSignals()
         self.spots_updated = self._signals.spots_updated
         self._fetch_thread = None
         self._label_font_size: int = 7
+        self._anim_phase: float = 0.0   # rijdende dash-offset voor animatie
+
+        # Animatietimer — 20 fps, beweegt de streepjes langs de lijn
+        self._anim_timer = QTimer()
+        self._anim_timer.timeout.connect(self._anim_tick)
+        self._anim_timer.start(50)
+
+    def _anim_tick(self):
+        self._anim_phase = (self._anim_phase + 1.2) % 18.0
+        with self._lock:
+            has_spots = bool(self._spots)
+        if has_spots:
+            self.update()
 
     def set_label_font_size(self, size: int):
         self._label_font_size = max(6, size)
@@ -1061,9 +1199,64 @@ class DXSpotsLayer(QGraphicsItem):
     def _on_fetch_done(self):
         self._fetch_thread = None
 
+    def set_continent_filter(self, own_only: bool,
+                             qth_lat: float, qth_lon: float):
+        """Pas zichtbaarheid op kaart aan op basis van continent-filter."""
+        self._own_only = own_only
+        self._qth_lat  = qth_lat
+        self._qth_lon  = qth_lon
+        self._refilter()
+
+    def _refilter(self):
+        """Herbereken zichtbare spots op kaart vanuit ruwe data."""
+        from .panels5 import _callsign_continent, _qth_to_continent
+        map_spots = []
+        my_cont = (_qth_to_continent(self._qth_lat, self._qth_lon)
+                   if self._own_only else None)
+        for raw in self._raw_spots:
+            dx_lat, dx_lon, call, freq, de_lat, de_lon, spotter = raw
+            if my_cont and _callsign_continent(spotter) != my_cont:
+                continue
+            map_spots.append((dx_lat, dx_lon, call, freq, de_lat, de_lon))
+        with self._lock:
+            self._spots = map_spots
+        self.update()
+
+    def find_spot_near(self, scene_x: float, scene_y: float,
+                       radius: float = 14.0) -> dict | None:
+        """Geef de dichtstbijzijnde DX-spot terug als die binnen radius px valt."""
+        best_d, best = radius * radius, None
+        with self._lock:
+            visible = list(self._spots)
+        raw_by_call = {r[2]: r for r in self._raw_spots}
+        for lat, lon, call, freq, *_ in visible:
+            pt = _xy(lat, lon)
+            d = (pt.x() - scene_x) ** 2 + (pt.y() - scene_y) ** 2
+            if d < best_d:
+                best_d, best = d, (call, freq, raw_by_call.get(call))
+        if best:
+            call, freq, raw = best
+            info = {
+                "call": call,
+                "freq_khz": freq,
+                "spotter": raw[6] if raw else "",
+                "comment": "",
+                "time": "",
+            }
+            # Zoek volledige data op in de dict-lijst
+            for s in self._spot_dicts:
+                if s.get("dx", "").upper() == call.upper():
+                    info["comment"] = s.get("comment", "")
+                    info["time"]    = s.get("time", "")
+                    info["band"]    = s.get("band", "")
+                    break
+            return info
+        return None
+
     def _on_spots(self, spots: list):
         """spots = [{time, dx, freq_khz, band, spotter, comment}, ...]"""
-        map_spots = []
+        self._spot_dicts = spots   # bewaar voor info-lookup bij klik
+        raw = []
         for s in spots:
             call    = s.get("dx", "")
             freq    = s.get("freq_khz", 0.0)
@@ -1071,15 +1264,15 @@ class DXSpotsLayer(QGraphicsItem):
             dx_loc  = _call_to_latlon(call)
             de_loc  = _call_to_latlon(spotter)
             if dx_loc:
-                map_spots.append((
+                raw.append((
                     dx_loc[0], dx_loc[1], call, freq,
                     de_loc[0] if de_loc else None,
                     de_loc[1] if de_loc else None,
+                    spotter,
                 ))
-        with self._lock:
-            self._spots = map_spots
+        self._raw_spots = raw
+        self._refilter()
         self._signals.spots_updated.emit(spots)  # ruwe dicts voor tabel
-        self.update()
 
     def boundingRect(self) -> QRectF:
         return QRectF(0, 0, MAP_W, MAP_H)
@@ -1092,22 +1285,206 @@ class DXSpotsLayer(QGraphicsItem):
         font = QFont("Segoe UI", self._label_font_size)
         painter.setFont(font)
 
+        phase = self._anim_phase
         for lat, lon, call, freq, de_lat, de_lon in spots:
             color = _band_color(freq)
             pt    = _xy(lat, lon)
 
-            # Verbindingslijn spotter → DX (gestippeld)
+            # ── Geanimeerde verbindingslijn spotter → DX ─────────────────────
             if de_lat is not None:
                 de_pt = _xy(de_lat, de_lon)
-                painter.setPen(QPen(color.darker(180), 0.5, Qt.DotLine))
+
+                # Schaduwlijn voor contrast
+                shadow_pen = QPen(QColor(0, 0, 0, 60), 3.5)
+                shadow_pen.setCapStyle(Qt.RoundCap)
+                painter.setPen(shadow_pen)
                 painter.setBrush(Qt.NoBrush)
                 painter.drawLine(de_pt, pt)
 
-            # DX station stip — 5px, wit randje voor zichtbaarheid op donkere kaart
-            painter.setPen(QPen(QColor(255, 255, 255, 120), 1))
-            painter.setBrush(QBrush(color))
-            painter.drawEllipse(pt, 5, 5)
+                # Geanimeerde streepjes — rijden van spotter (DE) naar DX
+                line_color = QColor(color.red(), color.green(), color.blue(), 200)
+                line_pen = QPen(line_color, 2.2)
+                line_pen.setCapStyle(Qt.RoundCap)
+                line_pen.setStyle(Qt.CustomDashLine)
+                line_pen.setDashPattern([5.0, 4.0])
+                line_pen.setDashOffset(phase)
+                painter.setPen(line_pen)
+                painter.drawLine(de_pt, pt)
 
-            # Callsign label
-            painter.setPen(color.lighter(160))
-            painter.drawText(pt + QPointF(7, 4), call[:9])
+                # ── Spotter (DE) eindpunt — kleine open cirkel ───────────────
+                painter.setPen(QPen(QColor(255, 255, 255, 180), 1.2))
+                painter.setBrush(QBrush(color.darker(130)))
+                painter.drawEllipse(de_pt, 3.5, 3.5)
+
+            # ── DX station eindpunt — gevulde cirkel met halo ────────────────
+            painter.setPen(QPen(QColor(255, 255, 255, 180), 1.5))
+            painter.setBrush(QBrush(color))
+            painter.drawEllipse(pt, 6, 6)
+
+            # ── Callsign label ───────────────────────────────────────────────
+            painter.setPen(color.lighter(170))
+            painter.drawText(pt + QPointF(8, 5), call[:9])
+
+
+# ── PSKReporter Layer ──────────────────────────────────────────────────────────
+
+def _maidenhead_to_latlon(locator: str) -> tuple[float, float] | None:
+    """Maidenhead locator → (lat, lon) middelpunt van het veld."""
+    if not locator or len(locator) < 4:
+        return None
+    loc = locator.upper()
+    try:
+        lon = (ord(loc[0]) - ord('A')) * 20 - 180
+        lat = (ord(loc[1]) - ord('A')) * 10 - 90
+        lon += int(loc[2]) * 2
+        lat += int(loc[3])
+        if len(loc) >= 6:
+            lon += (ord(loc[4]) - ord('A')) * 2 / 24
+            lat += (ord(loc[5]) - ord('A')) / 24
+            lon += 1 / 24     # middelpunt subsquare
+            lat += 0.5 / 24
+        else:
+            lon += 1.0        # middelpunt square
+            lat += 0.5
+        return (lat, lon)
+    except (ValueError, IndexError):
+        return None
+
+
+class _PSKFetchThread(QThread):
+    """Haalt PSKReporter ontvangstmeldingen op (FT8/FT4/digital, laatste 15 min)."""
+    ready = Signal(list)
+
+    _URL = ("https://pskreporter.info/cgi-bin/pskquery5.pl"
+            "?encap=0&callback=_&statistics=0&noactive=1&nolocator=1"
+            "&lastseenminutes=15&rronly=1&flowstart=0&appcontact=HAMIOS5")
+
+    def run(self):
+        try:
+            req = urllib.request.Request(
+                self._URL, headers={"User-Agent": "HAMIOS/5.0"})
+            with urllib.request.urlopen(req, timeout=20) as r:
+                raw = r.read().decode("utf-8", errors="replace")
+
+            # Respons: JSON-object met "receptionReport" key
+            data    = json.loads(raw)
+            items   = data.get("receptionReport", [])
+            reports = []
+
+            for item in items:
+                tx_loc_str = item.get("senderLocator",   "")
+                rx_loc_str = item.get("receiverLocator", "")
+                freq_hz    = item.get("frequency", 0)
+                snr        = item.get("sNR", 0)
+                mode       = str(item.get("mode", ""))
+                tx_call    = str(item.get("senderCallsign",   ""))
+                rx_call    = str(item.get("receiverCallsign", ""))
+
+                if not freq_hz:
+                    continue
+
+                # Maidenhead locator geeft precieze coördinaten
+                tx_loc = _maidenhead_to_latlon(tx_loc_str)
+                rx_loc = _maidenhead_to_latlon(rx_loc_str)
+
+                # Fallback op DXCC-code als locator ontbreekt
+                if not tx_loc:
+                    tx_loc = _call_to_latlon(item.get("senderDXCCCode", tx_call))
+                if not rx_loc:
+                    rx_loc = _call_to_latlon(rx_call)
+
+                if tx_loc and rx_loc:
+                    reports.append((tx_loc, rx_loc, freq_hz / 1000.0,
+                                    snr, mode, tx_call, rx_call))
+
+            self.ready.emit(reports)
+        except Exception:
+            self.ready.emit([])
+
+
+class PSKReporterLayer(QGraphicsItem):
+    """PSKReporter ontvangst-lijnen — toont actuele digitale propagatiepaden."""
+
+    def __init__(self):
+        super().__init__()
+        self.setZValue(5.5)   # tussen DX spots (6) en lightning (5)
+        self._reports: list = []
+        self._lock = threading.Lock()
+        self._fetch_thread = None
+
+        self._timer = QTimer()
+        self._timer.timeout.connect(self._fetch)
+        self._timer.start(5 * 60 * 1000)   # elke 5 minuten
+        QTimer.singleShot(6000, self._fetch)
+
+    def _fetch(self):
+        if self._fetch_thread is not None:
+            return
+        t = _PSKFetchThread()
+        t.ready.connect(self._on_data)
+        t.finished.connect(lambda: setattr(self, "_fetch_thread", None))
+        t.finished.connect(t.deleteLater)
+        self._fetch_thread = t
+        t.start()
+
+    def _on_data(self, reports: list):
+        with self._lock:
+            self._reports = reports
+        self.update()
+
+    def find_report_near(self, scene_x: float, scene_y: float,
+                         radius: float = 14.0) -> dict | None:
+        """Geef het dichtstbijzijnde PSKReporter-rapport als dat binnen radius valt.
+        Controleert zowel het TX-punt als het RX-punt."""
+        best_d = radius * radius
+        best   = None
+        with self._lock:
+            reports = list(self._reports)
+        for tx_loc, rx_loc, freq_khz, snr, mode, tx, rx in reports:
+            for loc, role in ((tx_loc, "TX"), (rx_loc, "RX")):
+                pt = _xy(loc[0], loc[1])
+                d  = (pt.x() - scene_x) ** 2 + (pt.y() - scene_y) ** 2
+                if d < best_d:
+                    best_d = d
+                    best   = {
+                        "tx": tx, "rx": rx,
+                        "freq_khz": freq_khz, "snr": snr, "mode": mode,
+                        "role": role,
+                        "band": _freq_to_band_name(freq_khz),
+                    }
+        return best
+
+    def boundingRect(self) -> QRectF:
+        return QRectF(0, 0, MAP_W, MAP_H)
+
+    def paint(self, painter: QPainter, option, widget=None):
+        with self._lock:
+            reports = list(self._reports)
+
+        if not reports:
+            return
+
+        painter.setRenderHint(QPainter.Antialiasing)
+        painter.setBrush(Qt.NoBrush)
+
+        for tx_loc, rx_loc, freq_khz, snr, mode, tx, rx in reports:
+            color = _band_color(freq_khz)
+
+            # Alpha op basis van SNR: sterkere signalen zijn helderder
+            snr_norm = max(0.0, min(1.0, (snr + 30) / 50.0))
+            alpha = int(25 + snr_norm * 55)    # 25–80
+            lw    = 0.6 + snr_norm * 0.8       # 0.6–1.4 px
+
+            tx_pt = _xy(tx_loc[0], tx_loc[1])
+            rx_pt = _xy(rx_loc[0], rx_loc[1])
+
+            c = QColor(color.red(), color.green(), color.blue(), alpha)
+            painter.setPen(QPen(c, lw))
+            painter.drawLine(tx_pt, rx_pt)
+
+            # Kleine stip op TX-locatie
+            painter.setPen(Qt.NoPen)
+            painter.setBrush(QBrush(QColor(color.red(), color.green(),
+                                           color.blue(), min(alpha + 40, 180))))
+            painter.drawEllipse(tx_pt, 2.0, 2.0)
+            painter.setBrush(Qt.NoBrush)

@@ -26,6 +26,7 @@ from PySide6.QtWidgets import (
 from .theme import ACCENT, BG_PANEL, BG_SURFACE, BG_ROOT, TEXT_H1, TEXT_DIM, TEXT_BODY, BORDER
 from .eibi_codes import translate_lang, translate_target, translate_itu, enrich_row
 from .geometry import save_geom, restore_geom
+from .i18n import tr
 
 from ._appdir import APP_DIR as _HERE
 _CACHE_FILE = os.path.join(_HERE, "hamios_eibi.csv")
@@ -158,7 +159,7 @@ class EibiDialog(QDialog):
     def __init__(self, parent=None):
         super().__init__(parent)
         self._all_rows: list[list[str]] = []
-        self.setWindowTitle("📻  EIBI Kortegolf-frequentielijst")
+        self.setWindowTitle(tr("eibi.title"))
         self.setMinimumSize(920, 600)
         self.setStyleSheet(_QSS)
         self._build_ui()
@@ -177,12 +178,12 @@ class EibiDialog(QDialog):
         flt = QHBoxLayout(); flt.setSpacing(6)
 
         self._search = QLineEdit()
-        self._search.setPlaceholderText("🔍  Zoeken op station, taal, land, frequentie …")
+        self._search.setPlaceholderText(tr("eibi.search"))
         self._search.setFont(f8)
         self._search.textChanged.connect(self._apply_filter)
         flt.addWidget(self._search, 1)
 
-        flt.addWidget(QLabel("Band:"))
+        flt.addWidget(QLabel(tr("eibi.band_lbl")))
         self._band_cb = QComboBox(); self._band_cb.setFont(f8)
         self._band_cb.addItems([
             "Alle", "LF/MF (< 1600 kHz)", "60m (4–5 MHz)",
@@ -196,12 +197,12 @@ class EibiDialog(QDialog):
         self._band_cb.setFixedWidth(160)
         flt.addWidget(self._band_cb)
 
-        self._now_cb = QCheckBox("Alleen nu actief")
+        self._now_cb = QCheckBox(tr("eibi.now_active"))
         self._now_cb.setFont(f8)
         self._now_cb.toggled.connect(self._apply_filter)
         flt.addWidget(self._now_cb)
 
-        self._translate_cb = QCheckBox("Volledige namen")
+        self._translate_cb = QCheckBox(tr("eibi.full_names"))
         self._translate_cb.setFont(f8)
         self._translate_cb.setChecked(True)
         self._translate_cb.setToolTip(
@@ -210,7 +211,7 @@ class EibiDialog(QDialog):
         self._translate_cb.toggled.connect(self._apply_filter)
         flt.addWidget(self._translate_cb)
 
-        self._am_cb = QCheckBox("AM instellen")
+        self._am_cb = QCheckBox(tr("eibi.am_cb"))
         self._am_cb.setFont(f8)
         self._am_cb.setChecked(True)
         self._am_cb.setToolTip(
@@ -222,7 +223,10 @@ class EibiDialog(QDialog):
 
         # ── Tabel ─────────────────────────────────────────────────────────────
         self._model = QStandardItemModel(0, len(_COL_HEADERS))
-        self._model.setHorizontalHeaderLabels(_COL_HEADERS)
+        self._model.setHorizontalHeaderLabels([
+            tr("eibi.col.freq"), tr("eibi.col.time"), "Dagen", "Land",
+            tr("eibi.col.station"), tr("eibi.col.lang"), tr("eibi.col.target"), "Opmerkingen",
+        ])
 
         self._proxy = QSortFilterProxyModel()
         self._proxy.setSourceModel(self._model)
@@ -253,18 +257,18 @@ class EibiDialog(QDialog):
 
         # ── Statusrij + knoppen ───────────────────────────────────────────────
         bot = QHBoxLayout(); bot.setSpacing(8)
-        self._status_lbl = QLabel("Laden …")
+        self._status_lbl = QLabel(tr("eibi.status.loading"))
         bot.addWidget(self._status_lbl, 1)
         self._progress = QProgressBar()
         self._progress.setRange(0, 0)
         self._progress.setFixedWidth(100)
         self._progress.hide()
         bot.addWidget(self._progress)
-        btn_dl = QPushButton("⬇  Lijst bijwerken"); btn_dl.setObjectName("dl")
+        btn_dl = QPushButton(tr("eibi.update")); btn_dl.setObjectName("dl")
         btn_dl.setFont(f8)
         btn_dl.clicked.connect(self._download)
         bot.addWidget(btn_dl)
-        btn_close = QPushButton("Sluiten"); btn_close.setObjectName("close")
+        btn_close = QPushButton(tr("app.close_btn")); btn_close.setObjectName("close")
         btn_close.setFont(f8)
         btn_close.clicked.connect(self.accept)
         bot.addWidget(btn_close)
@@ -281,11 +285,11 @@ class EibiDialog(QDialog):
                 f"{len(rows):,} frequenties  ·  bijgewerkt {upd}  ·  "
                 f"Bron: eibispace.de")
         else:
-            self._status_lbl.setText("Geen cache — klik '⬇ Lijst bijwerken'")
+            self._status_lbl.setText(tr("eibi.status.no_cache"))
 
     def _download(self):
         self._progress.show()
-        self._status_lbl.setText("Downloaden …")
+        self._status_lbl.setText(tr("eibi.status.dl"))
         t = _EibiDownloadThread(self)
         t.progress.connect(self._status_lbl.setText)
         t.done.connect(self._on_downloaded)
