@@ -432,6 +432,7 @@ in dit één bestand.</p>
 <li><b>PySide6</b> ≥ 6.4 (vereist)</li>
 <li><b>pyserial</b> (optioneel, voor CAT)</li>
 <li><b>websocket-client</b> (optioneel, voor bliksemdetectie)</li>
+<li><b>timezonefinder</b> (optioneel, voor lokale tijdzone op basis van QTH)</li>
 </ul>
 
 <h4>Bestanden</h4>
@@ -768,6 +769,7 @@ in this single file.</p>
 <li><b>PySide6</b> ≥ 6.4 (required)</li>
 <li><b>pyserial</b> (optional, for CAT)</li>
 <li><b>websocket-client</b> (optional, for lightning detection)</li>
+<li><b>timezonefinder</b> (optional, for local timezone based on QTH)</li>
 </ul>
 <h4>Auto-created files</h4>
 <ul>

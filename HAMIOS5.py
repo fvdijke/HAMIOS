@@ -157,10 +157,11 @@ def _make_checks():
         ("spy",       "hamios_spy_stations.json", _tr("splash.detail.spy")),
     ]
     dep_checks = [
-        ("pyside6",   "PySide6",           _tr("splash.detail.fw")),
-        ("pyserial",  "pyserial",          _tr("splash.detail.cat")),
-        ("websocket", "websocket-client",  _tr("splash.detail.lightn")),
-        ("app",       _tr("splash.app_name"), _tr("splash.detail.app")),
+        ("pyside6",    "PySide6",            _tr("splash.detail.fw")),
+        ("pyserial",   "pyserial",           _tr("splash.detail.cat")),
+        ("websocket",  "websocket-client",   _tr("splash.detail.lightn")),
+        ("tzfinder",   "timezonefinder",     _tr("splash.detail.tzfinder")),
+        ("app",        _tr("splash.app_name"), _tr("splash.detail.app")),
     ]
     return file_checks, dep_checks
 
@@ -458,13 +459,15 @@ QComboBox::down-arrow {{
             except ImportError:
                 return False, _nf_str
 
-        ok6,  d6  = _dep("PySide6")
+        ok6,   d6   = _dep("PySide6")
         okser, dser = _dep("serial")
         okws,  dws  = _dep("websocket")
+        oktz,  dtz  = _dep("timezonefinder")
 
-        splash.set_check("pyside6",   "ok"   if ok6  else "error", d6)
-        splash.set_check("pyserial",  "ok"   if okser else "warn",  dser)
-        splash.set_check("websocket", "ok"   if okws  else "warn",  dws)
+        splash.set_check("pyside6",   "ok"   if ok6   else "error", d6)
+        splash.set_check("pyserial",  "ok"   if okser  else "warn",  dser)
+        splash.set_check("websocket", "ok"   if okws   else "warn",  dws)
+        splash.set_check("tzfinder",  "ok"   if oktz   else "warn",  dtz)
 
         # ── Applicatie laden ──────────────────────────────────────────────────
         splash.set_check("app", "loading", _load_str)

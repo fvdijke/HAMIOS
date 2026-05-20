@@ -817,6 +817,7 @@ class SettingsDialog(QDialog):
             ("PySide6",          _req_str, "pip install PySide6"),
             ("websocket-client", _opt_str, "pip install websocket-client"),
             ("pyserial",         _opt_str, "pip install pyserial"),
+            ("timezonefinder",   _opt_str, "pip install timezonefinder"),
         ]
         for pkg, kind, cmd in DEPS:
             ok  = _check_dep(pkg)
@@ -1476,7 +1477,7 @@ def _list_serial_ports() -> list[tuple[str, str]]:
     return []
 
 
-_IMPORT_MAP = {"pyserial": "serial", "websocket-client": "websocket"}
+_IMPORT_MAP = {"pyserial": "serial", "websocket-client": "websocket", "timezonefinder": "timezonefinder"}
 
 
 def _check_dep(pkg: str) -> bool:
