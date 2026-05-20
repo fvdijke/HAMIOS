@@ -8,6 +8,7 @@
 
 > v5.0 · May 2026 · PA3FVD / Frank van Dijke · *Developed with Claude AI (Anthropic)*
 
+[![Website](https://img.shields.io/badge/website-hamios.space-orange)](https://hamios.space)
 [![Release](https://img.shields.io/github/v/release/fvdijke/HAMIOS?label=latest)](https://github.com/fvdijke/HAMIOS/releases/latest)
 [![Platform](https://img.shields.io/badge/platform-Windows%2010%2F11-blue)](https://github.com/fvdijke/HAMIOS/releases/latest)
 [![Python](https://img.shields.io/badge/python-3.10%2B-blue)](https://www.python.org)
