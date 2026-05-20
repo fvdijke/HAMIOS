@@ -1,7 +1,7 @@
 """HAMIOS v5 — Header balk (PySide6) — gelijk aan v4 stijl"""
 import datetime
 
-from PySide6.QtWidgets import QWidget, QHBoxLayout, QLabel, QPushButton, QFrame, QSpinBox, QCheckBox
+from PySide6.QtWidgets import QWidget, QHBoxLayout, QLabel, QPushButton, QFrame, QSpinBox
 from PySide6.QtCore import Qt, QTimer, Signal
 from PySide6.QtGui import QFont, QColor, QPalette
 
@@ -85,6 +85,7 @@ class HeaderBar(QWidget):
         self._countdown_lbl.setToolTip(tr("hdr.countdown.tip"))
 
         self._next_refresh_at: float = 0.0
+        self._local_tz = _tz_from_latlon(52.0, 5.0)   # default NL; update via set_qth()
 
         for b in [self._btn_sat, self._btn_spy, self._btn_eibi,
                   self._btn_ft8, self._btn_overlay]:
@@ -124,16 +125,7 @@ class HeaderBar(QWidget):
         self._lbl_utc.setStyleSheet(
             f"color: {TEXT_DIM}; font-size: 9pt; padding: 0 8px;")
 
-        # Zomer/wintertijd toggle
-        self._dst_cb = QCheckBox("DST")
-        self._dst_cb.setChecked(_is_summer())
-        self._dst_cb.setToolTip(tr("hdr.dst.tip"))
-        self._dst_cb.setStyleSheet(
-            f"QCheckBox {{ color: {TEXT_DIM}; font-size: 8pt; spacing: 3px; }}"
-            f"QCheckBox::indicator {{ width: 12px; height: 12px; }}")
-
-        # Volgorde rechts → links: FS | MIN | ⚙ | Exit | ? | sep | UTC | sep | DST | Local
-        layout.addWidget(self._dst_cb)
+        # Volgorde rechts → links: FS | MIN | ⚙ | Exit | ? | sep | UTC | sep | Local
         layout.addWidget(self._lbl_local)
         layout.addWidget(self._make_sep())
         layout.addWidget(self._lbl_utc)
@@ -185,8 +177,8 @@ class HeaderBar(QWidget):
                 f"color: {TEXT_DIM}; font-size: 9pt; padding: 0 4px;")
 
     def _tick(self):
-        now = datetime.datetime.now()
-        utc = datetime.datetime.now(datetime.timezone.utc)
+        utc   = datetime.datetime.now(datetime.timezone.utc)
+        local = utc.astimezone(self._local_tz)
         # Countdown bijwerken
         if self._next_refresh_at > 0:
             import time as _time
@@ -199,12 +191,14 @@ class HeaderBar(QWidget):
             pass   # "Uit" is al gezet door set_next_refresh
         else:
             self._countdown_lbl.setText("")
-        # Tijdzone: gebruik checkbox als override, anders automatische detectie
-        is_summer = self._dst_cb.isChecked()
-        zone = "CEST" if is_summer else "CET"
-        self._lbl_local.setText(f"{zone}  {now.strftime('%H:%M:%S')}")
+        zone = local.strftime('%Z') or local.strftime('UTC%z')
+        self._lbl_local.setText(f"{zone}  {local.strftime('%H:%M:%S')}")
         self._lbl_utc.setText(
             f"UTC  {utc.strftime('%Y-%m-%d')}  {utc.strftime('%H:%M:%S')}")
+
+    def set_qth(self, lat: float, lon: float):
+        """Update lokale tijdzone op basis van QTH-coördinaten."""
+        self._local_tz = _tz_from_latlon(lat, lon)
 
     def set_offline(self, offline: bool):
         """Toon/verberg OFFLINE indicator."""
@@ -274,7 +268,6 @@ class HeaderBar(QWidget):
         self._spin_refresh.setSpecialValueText(tr("hdr.refresh.off"))
         self._spin_refresh.setToolTip(tr("hdr.refresh.tip"))
         self._countdown_lbl.setToolTip(tr("hdr.countdown.tip"))
-        self._dst_cb.setToolTip(tr("hdr.dst.tip"))
 
     def set_cat_connected(self, connected: bool):
         """Pas kleur van frequentie-label aan op basis van CAT-verbindingsstatus."""
@@ -306,15 +299,17 @@ class HeaderBar(QWidget):
     def btn_fullscreen(self): return self._btn_fs
 
 
-def _is_summer() -> bool:
-    """Eenvoudige zomertijd detectie voor West-Europa."""
-    now = datetime.datetime.now()
-    # DST in NL: laatste zondag maart – laatste zondag oktober
-    month = now.month
-    if month < 3 or month > 10: return False
-    if 4 <= month <= 9:          return True
-    day, weekday = now.day, now.weekday()
-    last_sunday = day + (6 - weekday) % 7 - 7 + (7 if (6 - weekday) % 7 < day % 7 else 0)
-    if month == 3:  return day >= last_sunday
-    if month == 10: return day < last_sunday
-    return False
+def _tz_from_latlon(lat: float, lon: float):
+    """Bepaal tijdzone vanuit QTH-coördinaten.
+
+    Probeert timezonefinder; valt terug op de OS-systeemtijdzone.
+    """
+    try:
+        from timezonefinder import TimezoneFinder
+        import zoneinfo
+        tz_name = TimezoneFinder().timezone_at(lat=lat, lng=lon)
+        if tz_name:
+            return zoneinfo.ZoneInfo(tz_name)
+    except ImportError:
+        pass
+    return datetime.datetime.now().astimezone().tzinfo

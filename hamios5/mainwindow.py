@@ -1026,10 +1026,12 @@ class HAMIOSMainWindow(QMainWindow):
 
     # ── Publieke interface ────────────────────────────────────────────────────
     def set_qth(self, lat: float, lon: float):
-        """Stel QTH-positie in op de kaart en satellietlaag."""
+        """Stel QTH-positie in op de kaart, satellietlaag en header-klok."""
         if hasattr(self, "_map_view"):
             self._map_view.set_qth(lat, lon)
             self._map_view._sat_layer.set_qth(lat, lon)
+        if hasattr(self, "_header"):
+            self._header.set_qth(lat, lon)
 
     # ── Overige ───────────────────────────────────────────────────────────────
     def _toggle_fullscreen(self):
