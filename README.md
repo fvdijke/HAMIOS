@@ -1,4 +1,8 @@
-# 📡 HF Propagation & Atmosphere Monitor
+<p align="center">
+  <img src="HAMIOS_LOGO.png" alt="HAMIOS Logo" width="200"/>
+</p>
+
+# HF Propagation & Atmosphere Monitor
 
 **Real-time HF propagation and DX monitor for amateur radio operators — Windows 10/11**
 

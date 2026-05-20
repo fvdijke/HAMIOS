@@ -11,6 +11,7 @@ a = Analysis(
     binaries=[],
     datas=[
         ('worldmap_eq.jpg',              '.'),
+        ('HAMIOS_LOGO.png',              '.'),
         ('hamios.ico',                   '.'),
         ('hamios5/__init__.py',          'hamios5'),
         ('hamios5/_appdir.py',           'hamios5'),

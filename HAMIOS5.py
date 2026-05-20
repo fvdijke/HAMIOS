@@ -81,40 +81,63 @@ def _draw_logo(p: QPainter, cx: float, cy: float, scale: float = 1.0):
 
 _SW = 560   # splash breedte
 
+# Logo bestandspad — naast de EXE of het Python-script
+_LOGO_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), "HAMIOS_LOGO.png")
+
 def _make_header_pixmap() -> QPixmap:
-    W, H = _SW, 120
+    W, H = _SW, 130
     pix = QPixmap(W, H)
     pix.fill(QColor("#1A1D22"))
     p = QPainter(pix)
 
-    AMBER = QColor("#C8A84B")
     LIGHT = QColor("#C8D0DC")
     DIM   = QColor("#505860")
+    AMBER = QColor("#C8A84B")
 
-    # Logo gecentreerd in de linker kolom (geen amber balk links)
-    _draw_logo(p, 80, H // 2, scale=0.62)
+    # ── Logo links (PNG met transparante achtergrond) ────────────────────────
+    logo_area_w = 160
+    logo_margin = 6
+    if os.path.exists(_LOGO_FILE):
+        logo_pix = QPixmap(_LOGO_FILE).scaled(
+            logo_area_w - logo_margin * 2,
+            H - logo_margin * 2,
+            Qt.KeepAspectRatio,
+            Qt.SmoothTransformation)
+        lx = logo_margin + (logo_area_w - logo_margin * 2 - logo_pix.width())  // 2
+        ly = logo_margin + (H - logo_margin * 2 - logo_pix.height()) // 2
+        p.drawPixmap(lx, ly, logo_pix)
+    else:
+        # Fallback: procedureel logo als PNG ontbreekt
+        _draw_logo(p, logo_area_w // 2, H // 2, scale=0.58)
 
+    # ── Verticale scheidingslijn ─────────────────────────────────────────────
     p.setPen(QPen(QColor("#2A3040"), 1))
-    p.drawLine(156, 10, 156, H - 10)
+    p.drawLine(logo_area_w, 10, logo_area_w, H - 10)
 
-    TX = 172
-    p.setFont(QFont("Segoe UI", 24, QFont.Bold))
+    # ── Tekst rechts ──────────────────────────────────────────────────────────
+    TX = logo_area_w + 14
+    p.setFont(QFont("Segoe UI", 22, QFont.Bold))
     p.setPen(AMBER)
-    p.drawText(TX, 10, W - TX - 12, 46, Qt.AlignLeft | Qt.AlignVCenter, "HAMIOS")
+    p.drawText(TX, 8, W - TX - 12, 44, Qt.AlignLeft | Qt.AlignVCenter, "HAMIOS")
 
-    p.setFont(QFont("Segoe UI", 11))
+    p.setFont(QFont("Segoe UI", 10))
     p.setPen(QColor(200, 168, 75, 130))
-    p.drawText(TX + 134, 10, 50, 46, Qt.AlignLeft | Qt.AlignVCenter, "v5.0")
+    p.drawText(TX + 124, 8, 50, 44, Qt.AlignLeft | Qt.AlignVCenter, "v5.0")
 
-    p.setFont(QFont("Segoe UI", 9))
+    p.setFont(QFont("Segoe UI", 8))
     p.setPen(LIGHT)
-    p.drawText(TX, 60, W - TX - 12, 20, Qt.AlignLeft | Qt.AlignVCenter,
-               "HF Propagation & Atmosphere Monitor  ·  by Frank van Dijke")
+    p.drawText(TX, 56, W - TX - 12, 20, Qt.AlignLeft | Qt.AlignVCenter,
+               "HF Propagation & Atmosphere Monitor")
 
     p.setFont(QFont("Segoe UI", 7))
     p.setPen(DIM)
-    p.drawText(TX, 86, W - TX - 12, 14, Qt.AlignLeft,
-               "Frank van Dijke  ·  Developed with Claude AI  ·  PySide6")
+    p.drawText(TX, 78, W - TX - 12, 13, Qt.AlignLeft,
+               "by Frank van Dijke  ·  Developed with Claude AI  ·  PySide6")
+
+    p.setFont(QFont("Segoe UI", 7))
+    p.setPen(QColor(200, 168, 75, 80))
+    p.drawText(TX, 96, W - TX - 12, 13, Qt.AlignLeft,
+               "DX & Propagation Monitor")
 
     p.end()
     return pix
