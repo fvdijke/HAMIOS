@@ -14,7 +14,7 @@
 [![Language](https://img.shields.io/badge/language-EN%20%7C%20NL-green)](https://github.com/fvdijke/HAMIOS)
 
 ---
-
+<img width="3040" height="1842" alt="HF Propagation   Atmosphere Monitor" src="https://github.com/user-attachments/assets/45e06d0e-b817-416f-878c-bdb4730d0712" />
 ## Overview
 
 HF Propagation & Atmosphere Monitor gives amateur radio operators real-time insight into HF propagation conditions, solar weather, DX cluster activity, shortwave schedules, satellite tracking, lightning detection, and direct radio control — all in a modern, fully customisable dark-theme GUI built with PySide6/Qt6.
