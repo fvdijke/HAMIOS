@@ -1,5 +1,5 @@
 """
-HAMIOS v5.0 — PySide6 versie
+HAMIOS v5.1 — PySide6 versie
 Developed with Claude AI
 
 """
@@ -122,7 +122,7 @@ def _make_header_pixmap() -> QPixmap:
 
     p.setFont(QFont("Segoe UI", 10))
     p.setPen(QColor(200, 168, 75, 130))
-    p.drawText(TX + 124, 8, 50, 44, Qt.AlignLeft | Qt.AlignVCenter, "v5.0")
+    p.drawText(TX + 124, 8, 50, 44, Qt.AlignLeft | Qt.AlignVCenter, "v5.1")
 
     p.setFont(QFont("Segoe UI", 8))
     p.setPen(LIGHT)
@@ -369,7 +369,7 @@ def main():
 
     app = QApplication(sys.argv)
     app.setApplicationName("HAMIOS")
-    app.setApplicationVersion("5.0")
+    app.setApplicationVersion("5.1")
     app.setOrganizationName("")
 
     # Opstartcontrole
