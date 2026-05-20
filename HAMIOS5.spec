@@ -1,5 +1,5 @@
 # -*- mode: python ; coding: utf-8 -*-
-# PyInstaller spec for HAMIOS v5.0 (PySide6)
+# PyInstaller spec for HAMIOS v5.1 (PySide6)
 
 import os
 
@@ -34,6 +34,8 @@ a = Analysis(
         ('hamios5/sat_dialog.py',        'hamios5'),
         ('hamios5/settings_dialog.py',   'hamios5'),
         ('hamios5/spy_dialog.py',        'hamios5'),
+        ('hamios5/help_dialog.py',       'hamios5'),
+        ('hamios5/i18n.py',              'hamios5'),
         ('hamios5/theme.py',             'hamios5'),
     ],
     hiddenimports=[
@@ -47,6 +49,8 @@ a = Analysis(
         'websocket',
         'websocket._core',
         'websocket._http',
+        'timezonefinder',
+        'zoneinfo',
     ],
     hookspath=[],
     hooksconfig={},
