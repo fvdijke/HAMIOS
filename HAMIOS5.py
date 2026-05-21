@@ -149,10 +149,11 @@ def _make_header_pixmap() -> QPixmap:
 def _make_checks():
     from hamios5.i18n import tr as _tr
     fs_checks = [
-        ("fs_create", _tr("splash.fs.create_lbl"), _tr("splash.detail.fs_create")),
-        ("fs_write",  _tr("splash.fs.write_lbl"),  _tr("splash.detail.fs_write")),
-        ("fs_read",   _tr("splash.fs.read_lbl"),   _tr("splash.detail.fs_read")),
-        ("fs_delete", _tr("splash.fs.delete_lbl"), _tr("splash.detail.fs_delete")),
+        ("fs_create",   _tr("splash.fs.create_lbl"),   _tr("splash.detail.fs_create")),
+        ("fs_write",    _tr("splash.fs.write_lbl"),    _tr("splash.detail.fs_write")),
+        ("fs_read",     _tr("splash.fs.read_lbl"),     _tr("splash.detail.fs_read")),
+        ("fs_delete",   _tr("splash.fs.delete_lbl"),   _tr("splash.detail.fs_delete")),
+        ("fs_internet", _tr("splash.fs.internet_lbl"), _tr("splash.detail.fs_internet")),
     ]
     file_checks = [
         ("worldmap",  "worldmap_eq.jpg",         _tr("splash.detail.map")),
@@ -220,7 +221,7 @@ class SplashDialog(QDialog):
         # ── Amber lijn → Maprechten → Dim lijn → Bestanden → Amber lijn → Deps
         root.addWidget(self._amber_line())
         root.addWidget(self._section(_tr("splash.section.fs"),    fs_checks))
-        root.addWidget(self._dim_line())
+        root.addWidget(self._amber_line())
         root.addWidget(self._section(_tr("splash.section.files"), file_checks))
         root.addWidget(self._amber_line())
         root.addWidget(self._section(_tr("splash.section.deps"),  dep_checks))
@@ -476,6 +477,27 @@ QComboBox::down-arrow {{
         splash.set_check("fs_write",  "ok" if _ok_write  else "error", _ok_str if _ok_write  else _err_str)
         splash.set_check("fs_read",   "ok" if _ok_read   else "error", _ok_str if _ok_read   else _err_str)
         splash.set_check("fs_delete", "ok" if _ok_delete else "error", _ok_str if _ok_delete else _err_str)
+
+        # ── Internetcheck — worldmap URL bereikbaar? ───────────────────────────
+        import urllib.request as _urlreq
+        _MAP_CHECK_URL = ("https://upload.wikimedia.org/wikipedia/commons/thumb/8/8f/"
+                          "Whole_world_-_land_and_oceans_12000.jpg/"
+                          "1920px-Whole_world_-_land_and_oceans_12000.jpg")
+        splash.set_check("fs_internet", "loading", "…")
+        _ok_internet = False
+        _inet_detail = _nf_str
+        try:
+            _req = _urlreq.Request(
+                _MAP_CHECK_URL, method="HEAD",
+                headers={"User-Agent": "HAMIOS/5.1"})
+            with _urlreq.urlopen(_req, timeout=6) as _r:
+                _ok_internet = _r.status < 400
+                _inet_detail = f"HTTP {_r.status}"
+        except Exception as _e:
+            _inet_detail = str(_e)[:30]
+        splash.set_check("fs_internet",
+                         "ok" if _ok_internet else "warn",
+                         _ok_str if _ok_internet else _inet_detail)
 
         for key, fname in _file_keys.items():
             info = _fmap.get(fname)
