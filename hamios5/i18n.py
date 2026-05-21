@@ -382,6 +382,15 @@ _S: dict[str, dict[str, str]] = {
 "prop.no_data":       "Geen solar-data beschikbaar.",
 
 # ── Splash screen ────────────────────────────────────────────────────────────
+"splash.section.fs":    "Maprechten",
+"splash.fs.create_lbl": "Aanmaken",
+"splash.fs.write_lbl":  "Schrijven",
+"splash.fs.read_lbl":   "Lezen",
+"splash.fs.delete_lbl": "Verwijderen",
+"splash.detail.fs_create": "bestand aanmaken",
+"splash.detail.fs_write":  "bestand beschrijven",
+"splash.detail.fs_read":   "bestand lezen",
+"splash.detail.fs_delete": "bestand verwijderen",
 "splash.section.files": "Bestanden",
 "splash.section.deps":  "Afhankelijkheden",
 "splash.loading":       "Laden…",
@@ -987,6 +996,15 @@ _S: dict[str, dict[str, str]] = {
 "prop.no_data":       "No solar data available.",
 
 # ── Splash screen ────────────────────────────────────────────────────────────
+"splash.section.fs":    "Folder access",
+"splash.fs.create_lbl": "Create",
+"splash.fs.write_lbl":  "Write",
+"splash.fs.read_lbl":   "Read",
+"splash.fs.delete_lbl": "Delete",
+"splash.detail.fs_create": "create file",
+"splash.detail.fs_write":  "write file",
+"splash.detail.fs_read":   "read file",
+"splash.detail.fs_delete": "delete file",
 "splash.section.files": "Files",
 "splash.section.deps":  "Dependencies",
 "splash.loading":       "Loading…",

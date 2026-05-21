@@ -148,6 +148,12 @@ def _make_header_pixmap() -> QPixmap:
 
 def _make_checks():
     from hamios5.i18n import tr as _tr
+    fs_checks = [
+        ("fs_create", _tr("splash.fs.create_lbl"), _tr("splash.detail.fs_create")),
+        ("fs_write",  _tr("splash.fs.write_lbl"),  _tr("splash.detail.fs_write")),
+        ("fs_read",   _tr("splash.fs.read_lbl"),   _tr("splash.detail.fs_read")),
+        ("fs_delete", _tr("splash.fs.delete_lbl"), _tr("splash.detail.fs_delete")),
+    ]
     file_checks = [
         ("worldmap",  "worldmap_eq.jpg",         _tr("splash.detail.map")),
         ("hires",     "worldmap_eq_hires.jpg",   _tr("splash.detail.hires")),
@@ -163,7 +169,7 @@ def _make_checks():
         ("tzfinder",   "timezonefinder",     _tr("splash.detail.tzfinder")),
         ("app",        _tr("splash.app_name"), _tr("splash.detail.app")),
     ]
-    return file_checks, dep_checks
+    return fs_checks, file_checks, dep_checks
 
 # state → (kleur, symbool)
 _STATE = {
@@ -197,8 +203,8 @@ class SplashDialog(QDialog):
 
         # Bouw check-lijsten in de actieve taal
         from hamios5.i18n import tr as _tr
-        file_checks, dep_checks = _make_checks()
-        all_checks = file_checks + dep_checks
+        fs_checks, file_checks, dep_checks = _make_checks()
+        all_checks = fs_checks + file_checks + dep_checks
 
         root = QVBoxLayout(self)
         root.setContentsMargins(0, 0, 0, 0)
@@ -211,8 +217,10 @@ class SplashDialog(QDialog):
         hdr_lbl.setPixmap(_make_header_pixmap())
         root.addWidget(hdr_lbl)
 
-        # ── Amber lijn → Bestanden → Amber lijn → Afhankelijkheden ───────────
+        # ── Amber lijn → Maprechten → Dim lijn → Bestanden → Amber lijn → Deps
         root.addWidget(self._amber_line())
+        root.addWidget(self._section(_tr("splash.section.fs"),    fs_checks))
+        root.addWidget(self._dim_line())
         root.addWidget(self._section(_tr("splash.section.files"), file_checks))
         root.addWidget(self._amber_line())
         root.addWidget(self._section(_tr("splash.section.deps"),  dep_checks))
@@ -249,6 +257,13 @@ class SplashDialog(QDialog):
         f = QFrame()
         f.setFixedHeight(1)
         f.setStyleSheet("background:#C8A84B;")
+        return f
+
+    @staticmethod
+    def _dim_line() -> QFrame:
+        f = QFrame()
+        f.setFixedHeight(1)
+        f.setStyleSheet("background:#2A3040;")
         return f
 
     def _section(self, title: str, checks: list) -> QWidget:
@@ -430,6 +445,37 @@ QComboBox::down-arrow {{
         _nf_str      = "not found"                     if _boot_cfg.language == "en" else "niet gevonden"
         _load_str    = "loading…"                      if _boot_cfg.language == "en" else "laden…"
         _map_str     = "Loading map and layers…"       if _boot_cfg.language == "en" else "Kaart en lagen laden…"
+        _err_str     = "error!"                        if _boot_cfg.language == "en" else "fout!"
+
+        # ── Maprechten test ───────────────────────────────────────────────────
+        import sys as _sys
+        _APP_DIR   = (os.path.dirname(_sys.executable) if getattr(_sys, "frozen", False)
+                      else os.path.dirname(os.path.abspath(__file__)))
+        _test_path = os.path.join(_APP_DIR, "_hamios_fs_test_.tmp")
+        _ok_create = _ok_write = _ok_read = _ok_delete = False
+        try:
+            open(_test_path, 'w').close()
+            _ok_create = True
+            with open(_test_path, 'w') as _f:
+                _f.write("hamios")
+            _ok_write = True
+            with open(_test_path, 'r') as _f:
+                _f.read()
+            _ok_read = True
+            os.remove(_test_path)
+            _ok_delete = True
+        except OSError:
+            pass
+        finally:
+            try:
+                os.remove(_test_path)   # opruimen als delete-stap mislukte
+            except OSError:
+                pass
+
+        splash.set_check("fs_create", "ok" if _ok_create else "error", _ok_str if _ok_create else _err_str)
+        splash.set_check("fs_write",  "ok" if _ok_write  else "error", _ok_str if _ok_write  else _err_str)
+        splash.set_check("fs_read",   "ok" if _ok_read   else "error", _ok_str if _ok_read   else _err_str)
+        splash.set_check("fs_delete", "ok" if _ok_delete else "error", _ok_str if _ok_delete else _err_str)
 
         for key, fname in _file_keys.items():
             info = _fmap.get(fname)
