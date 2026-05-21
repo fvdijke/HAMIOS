@@ -487,10 +487,10 @@ QComboBox::down-arrow {{
         _ok_internet = False
         _inet_detail = _nf_str
         try:
-            _req = _urlreq.Request(
+            _inet_req = _urlreq.Request(
                 _MAP_CHECK_URL, method="HEAD",
                 headers={"User-Agent": "HAMIOS/5.1"})
-            with _urlreq.urlopen(_req, timeout=6) as _r:
+            with _urlreq.urlopen(_inet_req, timeout=6) as _r:
                 _ok_internet = _r.status < 400
                 _inet_detail = f"HTTP {_r.status}"
         except Exception as _e:
