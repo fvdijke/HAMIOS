@@ -333,6 +333,16 @@ class SplashDialog(QDialog):
         self._apply(key, state, detail)
         QApplication.processEvents()
 
+    def connect_tle_download(self, key: str, thread):
+        """Verbind TleFetchThread signals voor voortgang en voltooiing."""
+        thread.progress.connect(
+            lambda grp, k=key: self._apply(k, "loading", grp))
+        thread.done.connect(
+            lambda cache, k=key: self._apply(
+                k,
+                "ok" if cache else "warn",
+                (f"{sum(len(v) for v in cache.values())} sats") if cache else "mislukt"))
+
     def connect_download(self, key: str, thread):
         """Verbind download-thread signals voor voortgang en voltooiing."""
         thread.progress.connect(
@@ -426,7 +436,9 @@ QComboBox::down-arrow {{
         from hamios5.startup import file_status as _file_status
         _fmap = {f["name"]: f for f in _file_status()}
         # worldmap_eq.jpg is niet meer verplicht — wordt automatisch gedownload
-        _req  = {"hamios_config.json"}
+        _req    = {"hamios_config.json"}
+        # TLE wordt niet automatisch gedownload — via satelliet-dialog
+        _manual = {"hamios_tle.json"}
 
         from hamios5.mapview import _HIRES_FILE
         _file_keys = {
@@ -507,6 +519,8 @@ QComboBox::down-arrow {{
                 splash.set_check(key, "ok", detail)
             elif fname in _req:
                 splash.set_check(key, "error", _miss_str)
+            elif fname in _manual:
+                splash.set_check(key, "loading", _dl_str)
             else:
                 splash.set_check(key, "warn", _dl_str)
 
@@ -561,6 +575,13 @@ QComboBox::down-arrow {{
             if id(thread) not in started:
                 thread.start()          # start elke thread slechts één keer
                 started.add(id(thread))
+
+        # ── TLE downloaden als cache ontbreekt ────────────────────────────────
+        if not os.path.exists(os.path.join(_APP_DIR, "hamios_tle.json")):
+            from hamios5.layers import TleFetchThread as _TleFetchThread  # noqa: PLC0415
+            _tle_thread = _TleFetchThread()
+            splash.connect_tle_download("tle", _tle_thread)
+            _tle_thread.start()
 
         splash.enable_button()
         splash.exec()

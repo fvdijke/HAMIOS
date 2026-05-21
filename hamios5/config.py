@@ -69,7 +69,7 @@ class AppConfig:
     sat_fp:         list  = field(default_factory=list)
     sat_back_h:     int   = 1
     sat_fwd_h:      int   = 1
-    sat_filter_sel: bool  = True   # "Geselecteerd"-filter actief bij openen
+    sat_filter_sel: bool  = False  # "Geselecteerd"-filter actief bij openen
     sat_zone_ping:  bool  = True   # ping-geluid als satelliet QTH-zone binnenkomt
 
     # ── Meldingen ─────────────────────────────────────────────────────────────

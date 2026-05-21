@@ -21,7 +21,7 @@ from .theme import (
     TEXT_BODY, BORDER, make_checkmark_path
 )
 from .geometry import save_geom, restore_geom
-from .layers import TLE_GROUPS, fetch_tle_group, load_tle_cache, save_tle_cache
+from .layers import TLE_GROUPS, fetch_tle_group, load_tle_cache, save_tle_cache, TleFetchThread
 from .i18n import tr
 
 _QSS = f"""
@@ -86,20 +86,6 @@ _COL_PATH = 2
 _COL_FP   = 3
 
 
-class _TleFetchThread(QThread):
-    progress = Signal(str)
-    done     = Signal(dict)
-
-    def run(self):
-        cache = {}
-        for group, url in TLE_GROUPS.items():
-            self.progress.emit(f"Laden: {group}…")
-            sats = fetch_tle_group(url)
-            if sats:
-                cache[group] = [[n, l1, l2] for n, l1, l2 in sats]
-        save_tle_cache(cache)
-        self.done.emit(cache)
-
 
 class SatelliteDialog(QDialog):
     """Satelliet-selectie dialoog — v4 stijl."""
@@ -114,7 +100,7 @@ class SatelliteDialog(QDialog):
 
     def __init__(self, sat_selected: list, sat_path: list,
                  sat_fp: list = None, back_h: int = 1, fwd_h: int = 1,
-                 filter_sel: bool = True, cfg=None, parent=None):
+                 filter_sel: bool = False, cfg=None, parent=None):
         super().__init__(parent)
         self._selected = set(sat_selected)
         self._path     = set(sat_path)
@@ -257,7 +243,7 @@ class SatelliteDialog(QDialog):
     def _refresh_tle(self):
         self._refresh_btn.setEnabled(False)
         self._progress.show()
-        t = _TleFetchThread(self)
+        t = TleFetchThread(self)
         t.progress.connect(self._status_lbl.setText)
         t.done.connect(self._on_tle_done)
         t.finished.connect(t.deleteLater)

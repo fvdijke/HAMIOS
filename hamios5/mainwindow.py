@@ -960,7 +960,7 @@ class HAMIOSMainWindow(QMainWindow):
             getattr(self._cfg, "sat_fp",         []),
             getattr(self._cfg, "sat_back_h",      1),
             getattr(self._cfg, "sat_fwd_h",       2),
-            filter_sel=getattr(self._cfg, "sat_filter_sel", True),
+            filter_sel=getattr(self._cfg, "sat_filter_sel", False),
             cfg=self._cfg,
             parent=self)
         dlg.selection_changed.connect(self._on_sat_selection)

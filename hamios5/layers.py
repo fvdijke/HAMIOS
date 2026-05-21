@@ -104,11 +104,27 @@ def save_tle_cache(data: dict):
 
 def fetch_tle_group(url: str) -> list[tuple[str, str, str]]:
     try:
-        req = urllib.request.Request(url, headers={"User-Agent": "HAMIOS/5.0"})
+        req = urllib.request.Request(url, headers={"User-Agent": "HAMIOS/5.1"})
         with urllib.request.urlopen(req, timeout=15) as r:
             return parse_tle_text(r.read().decode("utf-8", errors="replace"))
     except Exception:
         return []
+
+
+class TleFetchThread(QThread):
+    """Download alle TLE-groepen van CelesTrak en sla op als cache."""
+    progress = Signal(str)   # groepsnaam die nu geladen wordt
+    done     = Signal(dict)  # volledige cache na afronden
+
+    def run(self):
+        cache = {}
+        for group, url in TLE_GROUPS.items():
+            self.progress.emit(group)
+            sats = fetch_tle_group(url)
+            if sats:
+                cache[group] = [[n, l1, l2] for n, l1, l2 in sats]
+        save_tle_cache(cache)
+        self.done.emit(cache)
 
 
 # ── Orbital mechanics (geen externe library nodig) ────────────────────────────
