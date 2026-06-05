@@ -1,339 +1,221 @@
-# 📡 HAMIOS v4.0.1
-<img width="1973" height="1277" alt="HAMIOS v4 0 1a" src="https://github.com/user-attachments/assets/72a806d5-4789-4c7c-9b06-52b04deb6f91" />
-- 
-<img width="1967" height="1272" alt="HAMIOS v4 0 1b" src="https://github.com/user-attachments/assets/2c91fd71-a2de-4ea3-b2a6-989ffd72760a" />
+<p align="center">
+  <img src="HAMIOS_LOGO.png" alt="HAMIOS Logo" width="200"/>
+</p>
 
-     
-**HAM radio propagation and DX monitor for Windows**
+# HF Propagation & Atmosphere Monitor
 
-> v4.0.1 — Draggable resizable panels · Unified Settings dialog · Performance optimizations · Solar history chart
+**Real-time HF propagation and DX monitor for amateur radio operators — Windows 10/11**
 
-*Conceived by Frank van Dijke · Developed with Claude AI*
+> v5.2 · June 2026 · Frank van Dijke · *Developed with Claude AI (Anthropic)*
 
-HAMIOS gives radio amateurs real-time insight into HF propagation, solar activity and DX opportunities — wrapped in a modern dark GUI.
+[![Website](https://img.shields.io/badge/website-hamios.space-orange)](https://hamios.space)
+[![Release](https://img.shields.io/github/v/release/fvdijke/HAMIOS?label=latest)](https://github.com/fvdijke/HAMIOS/releases/latest)
+[![Platform](https://img.shields.io/badge/platform-Windows%2010%2F11-blue)](https://github.com/fvdijke/HAMIOS/releases/latest)
+[![Python](https://img.shields.io/badge/python-3.10%2B-blue)](https://www.python.org)
+[![Language](https://img.shields.io/badge/language-EN%20%7C%20NL-green)](https://github.com/fvdijke/HAMIOS)
+
+---
+<img width="3040" height="1842" alt="HF Propagation   Atmosphere Monitor" src="https://github.com/user-attachments/assets/45e06d0e-b817-416f-878c-bdb4730d0712" />
+## Overview
+
+HF Propagation & Atmosphere Monitor gives amateur radio operators real-time insight into HF propagation conditions, solar weather, DX cluster activity, shortwave schedules, satellite tracking, lightning detection, and direct radio control — all in a modern, fully customisable dark-theme GUI built with PySide6/Qt6.
+
+**Fully bilingual** — switch between English and Dutch at any time via Settings → About.
 
 ---
 
 ## ✨ Features
 
-### 🌍 Interactive World Map *(centred in the window)*
-- Equirectangular NASA map, automatically downloaded on first use
-- **Fixed height (380 px)** with correct 2:1 rendering — no horizontal distortion
-- **Day/night terminator** with soft transition zone
-- **Gray line** (amber band, ~1000 km wide)
-- **Sun and moon position** (geocentric calculation)
-- **QTH marker** (blue crosshair) — lat/lon configurable in header
-- **Great-circle path**: click on map → distance + bearing + **band quality for that path**
-- **ITU region overlay** R1/R2/R3 (official ITU RR Art. 5)
-- **Maidenhead locator grid** (20° × 10°, labels AA–RR)
-- **Callsign prefix layer** (~110 DXCC entities)
-- **Zoom/pan**: scroll wheel 1×–8×, click+drag to pan, right-click to reset
-- **Map overlays grouped** below the map:
-  - *Display:* Sun · Moon · Gray line · Aurora · Sat
-  - *Data:* WSPR · Spots · CS · Locator
-
-### 🛰️ Propagation Path Map
-- **Band quality** calculated at the midpoint of the great-circle path
-- Day/night correction at the midpoint
-- Number of hops estimated (≈ distance / 3500 km)
-- Top-5 open bands: `↳  8,847 km / 3 hops / day  ▸  20m 87%  ·  17m 72%  ·  15m 54%  (MUF 24.1 MHz)`
-- **Great-circle line colour follows the best band**
-
-### 🌌 Aurora Ring Overlay
-- Magnetic aurora oval based on K-index (Feldstein/Holzworth, IGRF-2025)
-- **Colour by K-index**: green (K < 3) · yellow (K 3–5) · red (K ≥ 6)
-
-### 🖥️ Panel System *(v4.0.1)*
-- **11 freely draggable and resizable panels** placed on a free desktop canvas
-- Each panel has an amber 1px border, title bar with ✕ close button, and ◢ resize handle
-- **Snap-to-grid** (2px) on drag/resize release for clean alignment
-- Panels: HF Band Reliability · World Map · Solar/Ionosphere · Alerts · Band Schedule · Band History · Kp 48h · Bz 24h · X-ray 24h · DX Spots · Propagation Advice
-- **⚙ Settings dialog** contains all configuration: QTH · Language · Theme · Tooltips · Ticker · DST · Panel visibility · Layout management
-- **Layout presets**: save/load/overwrite/delete named profiles stored in `hamios_layouts.json`
-- **Save as default**: persists current layout as the startup layout
-
-### 🛰 Satellite Tracking *(🛰 Sat button in header)*
-- TLE data downloaded from **Celestrak** (Amateur / ISS / Weather / CubeSat)
-- **Category filter**: All · Amateur · ISS · Weather · CubeSat
-- Per satellite: toggle **position dot** (●), **orbital path** (~) and **footprint** on map
-- **Footprint turns green** when your QTH is inside the satellite's coverage zone
-- **Notifications panel** shows satellites currently overhead with elevation angle
-- Orbital path times displayed in local time (CEST / CET)
-- **↻ TLE** button for on-demand refresh of orbital elements
-- Cached in `hamios_tle.json`
-
-### 🕵 Spy / Numbers Stations *(🕵 Spy button in header)*
-- Scrollable table of 24 known numbers stations and spy radio stations
-- Columns: status (● active / historical), name, country, frequencies, mode
-- **Sortable columns** — click any header to sort; click again to reverse
-- **Filter** by active/inactive status and free-text search (name, country, frequency)
-- **Hover** over a row to see full description + broadcast schedule
-- Data file: `hamios_spy_stations.json` (editable)
-
-### 🔵 WSPR / PSKReporter Spots on Map
-- Live propagation paths from **wspr.rocks** (WSPR) and **pskreporter.info** (FT8/FT4)
-- Connection lines: **colour = band**, **thickness = SNR**
-
-### 📍 DX Spot Markers on Map
-- Active DX cluster spots: dot at DX location + line to spotter, colour-coded by band
-- Click a dot to show callsign, frequency and comment
-
-### 🌞 Solar & Ionosphere Data
-
-| Parameter | Source | Description |
-|-----------|--------|-------------|
-| SFI | hamqsl.com | Solar Flux Index (10.7 cm) |
-| SSN | hamqsl.com | Sunspot Number |
-| A-index | hamqsl.com | Daily geomagnetic activity |
-| K-index | hamqsl.com | 3-hour geomagnetic activity (0–9) |
-| X-ray | hamqsl.com | GOES X-ray flux (A/B/C/M/X class) |
-| MUF | internal model | Maximum Usable Frequency |
-| LUF | internal model | Lowest Usable Frequency |
-| Solar wind speed | NOAA SWPC | km/s via DSCOVR/ACE |
-| Bz | NOAA SWPC | Interplanetary magnetic field Z-component (nT) |
-| foF2 | GIRO/LGDC | Measured F2-layer critical frequency (ionosonde) |
-
-### 📊 Bz 24-hour Chart *(dedicated panel)*
-- **Blue** = positive Bz (favourable) · **Red** = negative Bz (geo-effective)
-- Y-labels −20 / 0 / +20 nT · scales automatically with the panel
-
-### 📶 HF Band Reliability *(redesigned in v3.0)*
-- Internal MUF/LUF model based on SFI, SSN, K-index and QTH latitude
-- SNR budget corrected for **mode**, **power** and **antenna**
-- **Gradient bars in band-specific colour** (light → dark) with gloss line
-- Band name **bold and in band colour** — every band has its own identity
-- Columns: start MHz · modes · FT8 frequency
-
-### 🔔 Notifications & Alerts
-
-| Notification | Setting | Description |
-|-------------|---------|-------------|
-| ⚠️ K-index storm | Checkbox + threshold (1–9) | Alert when K rises above threshold |
-| 📡 Band open | Checkbox + threshold (10–90 %) | Alert when band opens |
-| 🛰 Satellite overhead | Always active | Shows which selected satellites are above QTH with elevation |
-
-Thresholds are saved to `HAMIOS.ini`.
-
-### 🔌 CAT Interface *(temporarily disabled)*
-> The CAT interface is temporarily disabled pending further development. Code is intact and will be completed in a future release.
-
-### 🕐 Band Opening Schedule
-- 24-hour heatmap for all 11 HF bands
-- Time axis in local time (CET/CEST), current time highlighted
-- Hover tooltip: band · hour · quality · modes · FT8 frequency
-
-### 📈 Band History
-- Time graph of all HF bands (%) — 90 days kept in CSV
-- Time range: Hours · Days · Weeks · Months
-- Clickable legend to toggle individual bands
-
-### 📡 Live DX Spots *(full-height right column)*
-- JSON feed from dxwatch.com, refreshed every 5 minutes
-- Columns: UTC · Band · DX · MHz · Spotter · Comment
-- **Own-continent filter** — show only spots from your own continent
-- **Heatmap mode**: band × UTC-hour activity pattern (24h buffer)
-- Spots also shown as markers on the world map (toggleable)
-
-### 💡 Propagation Analysis & Advice
-12 analysis cards in 3 columns × 4 rows.
-
-| # | Card | Contents |
-|---|------|----------|
-| 1 | 📡 Best bands | Top-5 open bands with quality percentage |
-| 2 | ✅/⚠️ Geo-storm | K + A-index, route advice, severity |
-| 3 | ☀️ Solar activity | SFI + SSN, solar cycle phase |
-| 4 | 💨 Solar wind | Speed + Bz impact |
-| 5 | ☢️ X-flare/SWF | X-ray class, recovery estimate |
-| 6 | 📶 Ionosphere | MUF, LUF, F2 layer |
-| 7 | 🌅 Day/night | Gray-line time windows |
-| 8 | 🔧 Mode advice | FT8 vs SSB/CW based on SNR budget |
-| 9 | 🧲 Absorption | Auroral absorption polar routes |
-| 10 | 📊 Overall score | Composite propagation rating |
-
-### 🌐 Multilingual
-**14 languages** via external language pack system (`langs/*.json`).
-
-| Code | Language | Code | Language |
-|------|----------|------|----------|
-| EN | English *(built-in)* | NO | Norsk |
-| NL | Nederlands | PL | Polski |
-| DE | Deutsch | SV | Svenska |
-| FR | Français | DA | Dansk |
-| IT | Italiano | FI | Suomi |
-| ES | Español | PT | Português |
-| JA | 日本語 | RU | Русский |
-
-### ⚙️ Other
-- **Dynamic themes**: Midnight · DeepOcean · HighContrast
-- **System tray**: minimise to tray, tray notifications
-- **Tooltips** with explanation per solar parameter
-- **Auto-refresh**: Off / 30 s / 1 min / 5 min / 10 min / 30 min / 1 hour
-- **Scrolling ticker** with current propagation tips
-- **Draggable panel system**: freely arrange and resize all panels
-- **Layout presets**: save and switch between custom panel arrangements
-- All settings saved to `HAMIOS.ini`
+| Category | Description |
+|---|---|
+| ☀ **Solar / Ionosphere** | SFI, SSN, Kp, A-index, Bz, solar wind, X-ray class — colour-coded with full parameter names |
+| 📶 **HF Band Reliability** | Signal quality bars for 11 HF bands (160m–6m), MUF/LUF, click to tune via CAT |
+| 📻 **Band Conditions** | Day/night conditions per band, 24h opening schedule heatmap |
+| 🌩 **Storm Forecast** | NOAA 3-day geomagnetic storm probability (G1–G4+) with HAM radio impact tooltips |
+| 📈 **Band / Solar History** | 90-day CSV archive, interactive 24h/7d/30d/1y range selector, K-index overlay |
+| 📡 **Live DX Spots** | Real-time DX cluster from DXWatch.com (100 spots), band/continent filter, heatmap, click for info |
+| 📡 **PSKReporter** | Real-time FT8/FT4 propagation paths from PSKReporter.info — thousands of paths with SNR |
+| 💡 **Propagation Advice** | AI-style analysis cards per band |
+| 🌍 **World Map** | 4096×2048 map with overlays — world map auto-downloaded at first start |
+| 🌐 **Bilingual** | Full English / Dutch interface — switch instantly via Settings → About |
+| 🛰 **Satellite Tracking** | TLE from CelesTrak, real-time position, orbit paths, footprint, QTH zone ping |
+| ⚡ **Lightning Detection** | Live Blitzortung.org feed, animated ripple rings, QRN advice, proximity alert |
+| 🔔 **Alerts** | Aggregated solar / propagation / weather / satellite alerts |
+| 📻 **EIBI Shortwave** | Searchable schedule, auto AM-mode CAT tuning |
+| 📡 **FT8 / Digital** | Reference table for FT8/FT4/WSPR/JS8Call and more |
+| 🕵 **SpyStations** | Numbers stations database with CAT tuning |
+| 📟 **CAT Interface** | Yaesu, Kenwood/Elecraft, Icom CI-V — live frequency display in header |
 
 ---
 
-## 🖥️ Layout (v4.0.1) — Free-floating panels
+## 🗺️ Map Overlays
 
-```
-┌─────────────────────────────────────────────────────────────────────────┐
-│  ⚙ Settings   (QTH · Language · Theme · Tooltips · Ticker · DST · Panels · Layouts) │
-├─────────────────────────────────────────────────────────────────────────┤
-│                                                                         │
-│  ┌──────────────┐  ┌──────────────────────────────┐  ┌──────────────┐  │
-│  │Solar/Ionosph.│  │        World Map         ✕   │  │ HF Band  ✕  │  │
-│  │     ✕    ◢  │  │   zoom/pan · overlays     ◢  │  │Reliability◢ │  │
-│  └──────────────┘  └──────────────────────────────┘  └──────────────┘  │
-│                                                                         │
-│  ┌─────────────┐  ┌─────────────┐  ┌──────────┐  ┌──────────────────┐  │
-│  │Band Schedule│  │Band History │  │  Kp 48h  │  │    DX Spots  ✕  │  │
-│  │    ✕    ◢  │  │    ✕    ◢  │  │  ✕    ◢  │  │             ◢  │  │
-│  └─────────────┘  └─────────────┘  └──────────┘  └──────────────────┘  │
-│                                                                         │
-│  ┌──────────┐  ┌──────────┐  ┌──────────────────────────────────────┐  │
-│  │  Bz 24h  │  │ X-ray 24h│  │     Propagation Advice           ✕  │  │
-│  │  ✕    ◢  │  │  ✕    ◢  │  │                               ◢  │  │
-│  └──────────┘  └──────────┘  └──────────────────────────────────────┘  │
-│                                                                         │
-│  ┌─────────────────────────────────────────────────────────────────┐   │
-│  │  Alerts  ✕  ◢                                                   │   │
-│  └─────────────────────────────────────────────────────────────────┘   │
-│                                                                         │
-│  All panels: amber border · ✕ close · ◢ resize · snap-to-grid (2px)   │
-└─────────────────────────────────────────────────────────────────────────┘
-```
+Toggleable via the **🗺 Overlays** button in the header:
+
+- Day/night terminator with grayline band
+- Aurora oval (IGRF-2025 geomagnetic dipole model, K-index based)
+- Sun and Moon position with live phase icon and QTH horizon indicator (▲/▼)
+- Maidenhead locator grid (configurable font size)
+- Graticule (configurable 10° / 20° / 30° step)
+- Live DX spots with callsign labels and animated connection lines (click for info)
+- **PSKReporter** — real-time FT8/FT4 propagation paths coloured by band (click for info)
+- Satellite positions, orbit paths, footprints
+- Lightning strikes with animated ripple rings
+- Alert radius circles (warning + beep threshold)
 
 ---
 
-## 🖥️ Installation
+## 🚀 Installation
 
-### Step 1 — Python requirements
+### Ready-to-use EXE (Windows, no Python needed)
+
+1. Download **[HAMIOS5.exe](https://github.com/fvdijke/HAMIOS/releases/latest)** from the latest release
+2. Place in an empty folder
+3. Run — the world map is **automatically downloaded** on first start (~1–4 MB)
+
+### From source
 
 ```bash
-pip install pillow
+git clone https://github.com/fvdijke/HAMIOS.git
+cd HAMIOS
+pip install PySide6
+pip install pyserial websocket-client   # optional
+python HAMIOS5.py
 ```
 
-Optional for system tray notifications:
+### Dependencies
 
-```bash
-pip install pystray
-```
-
-### Step 2 — Install language packs
-
-HAMIOS ships with English as the built-in language. All other languages are in separate `.json` files.
-
-**Download:**
-Get the language files from the [latest release](https://github.com/fvdijke/HAMIOS/releases) — download `langs.zip`.
-
-**Directory structure:**
-```
-HAMIOS.exe  (or HAMIOS.py)
-langs\
-  lang_nl.json    ← Nederlands
-  lang_de.json    ← Deutsch
-  lang_fr.json    ← Français
-  lang_it.json    ← Italiano
-  lang_es.json    ← Español
-  lang_no.json    ← Norsk
-  lang_pl.json    ← Polski
-  lang_sv.json    ← Svenska
-  lang_da.json    ← Dansk
-  lang_fi.json    ← Suomi
-  lang_pt.json    ← Português
-  lang_ja.json    ← 日本語
-  lang_ru.json    ← Русский
-```
-
-> The `langs/` folder must be placed **next to** `HAMIOS.exe` or `HAMIOS.py`.
-
-**Creating your own language pack:**
-Copy an existing `.json` file, change `meta.code` and `meta.name`, then translate the `strings` and `solar_tips` sections. HAMIOS will detect the new pack automatically on startup.
-
-### Step 3 — Run
-
-```bash
-python HAMIOS.py
-```
-
-### Standalone EXE (Windows) — recommended
-
-Download `HAMIOS.exe` and the `langs/` folder from the [latest release](https://github.com/fvdijke/HAMIOS/releases). No Python required.
-
-Build from source:
-
-```bash
-pip install pyinstaller
-pyinstaller HAMIOS.spec
-# → dist\HAMIOS.exe
-# Then copy langs\ next to the EXE
-```
+| Package | Required | Purpose |
+|---|---|---|
+| PySide6 | ✅ Yes | GUI framework (Qt6) |
+| pyserial | Optional | CAT radio interface |
+| websocket-client | Optional | Live lightning detection |
 
 ---
 
-## 📁 Data Files
+## ⚙️ Configuration
 
-| File | Contents |
-|------|----------|
-| `HAMIOS.ini` | All user settings (QTH, theme, language, alert thresholds, …) |
-| `hamios_layouts.json` | Panel layout presets |
-| `hamios_tle.json` | Cached TLE orbital elements for satellite tracking |
-| `hamios_spy_stations.json` | Spy / numbers station database (editable) |
-| `langs/*.json` | Language packs |
+All settings are stored in `hamios_config.json` (auto-created on first run) and applied live without restart:
+
+- **Station** — callsign, QTH (lat/lon or Maidenhead), mode, power, antenna
+- **Map** — graticule step, Maidenhead / overlay font sizes, sun/moon icon sizes
+- **Lightning** — fade duration, alert radii, animation scale, beep settings
+- **Alerts** — K-index threshold, X-flare alert, satellite zone ping
+- **CAT** — serial port, radio type presets (FT-950, FT-817, TS-590, K3…)
+- **Layout** — save/load named profiles, snap-grid
 
 ---
 
-## 🔭 Propagation Model
+## 📟 CAT Radio Interface
+
+Configure via **⚙ Settings → CAT**. Supports:
+
+- **Yaesu FT-950 / 2000 / DX series** — 8-digit FA command, default 38400 baud
+- **Yaesu FT-817 / 857 / 897** — FA command
+- **Kenwood / Elecraft** — 11-digit FA command
+- **Icom CI-V** — binary BCD protocol
+
+Live frequency displayed in the header bar. Click any frequency in the DX, EIBI, FT8, or SpyStations panel to tune directly.
+
+---
+
+## 🛰️ Satellite Tracking
+
+- TLE data from CelesTrak (Amateur, ISS, Weather, CubeSat)
+- Real-time position, configurable past/future orbit paths
+- Footprint: yellow (QTH outside range) / green (QTH in range)
+- **Selection filter** — show only your selected satellites
+- **Zone ping** — ascending tone when a satellite enters your QTH zone, descending tone on exit
+
+---
+
+## ⚡ Lightning / QRN
+
+- Live WebSocket feed from Blitzortung.org
+- Animated ripple rings: central flash + 2 expanding rings (white → yellow → orange)
+- QRN level based on strikes within 2000 km of QTH
+- Configurable animation scale in **Settings → Lightning**
+- Header alert + acoustic tick when storms are within threshold distance
+
+---
+
+## 📁 File Structure
 
 ```
-foF2 = 4.0 + (SFI − 70) × 0.065 + SSN × 0.012
-MUF  = foF2 × latitude-factor × day/night-factor × 3.8
-LUF  = (3.5 + K × 0.8) × auroral-factor / 10^(SNR/20)
+HAMIOS/
+├── HAMIOS5.py              ← Entry point
+├── HAMIOS5.spec            ← PyInstaller build spec
+├── hamios.ico
+│
+└── hamios5/                ← Python package
+    ├── mainwindow.py       ← Main window + panel layout
+    ├── mapview.py          ← Hardware-accelerated map (4096×2048)
+    ├── layers.py           ← Lightning / Satellite / DX overlay layers
+    ├── panels5.py          ← All floating panel widgets
+    ├── charts.py           ← NOAA data manager + chart widgets
+    ├── config.py           ← AppConfig dataclass (JSON persistence)
+    ├── cat_interface.py    ← CAT serial protocol implementation
+    ├── cat_monitor.py      ← CAT terminal window
+    ├── settings_dialog.py  ← Settings dialog
+    ├── sat_dialog.py       ← Satellite tracking dialog
+    ├── spy_dialog.py       ← SpyStations dialog
+    ├── eibi_dialog.py      ← EIBI shortwave browser
+    ├── ft8_dialog.py       ← FT8/digital frequency reference
+    ├── help_dialog.py      ← Searchable help
+    └── theme.py            ← Dark theme constants
 ```
 
-**Band quality**: optimum around 55 % of the MUF/LUF window → 100 %.
+Auto-created runtime files (not in repository):
+
+| File | Description |
+|---|---|
+| `hamios_config.json` | All settings, panel positions, CAT config |
+| `worldmap_eq.jpg` | Standard resolution world map (auto-downloaded) |
+| `worldmap_eq_hires.jpg` | 4K world map (auto-downloaded) |
+| `hamios_tle.json` | Satellite TLE data (refreshed from CelesTrak) |
+| `HAMIOS_history.csv` | 90-day band reliability history |
 
 ---
 
-## ⌨️ Mouse Interaction
+## 🙏 Data Sources
 
-| Action | Effect |
-|--------|--------|
-| Scroll wheel on map | Zoom 1×–8× |
-| Click + drag on map | Pan viewport |
-| Left-click on map | Great-circle path + path propagation |
-| Right-click on map | Reset zoom/pan · clear path |
-| Hover on map / bands / chart | Detailed tooltip |
-| Click on legend label | Toggle band in history chart |
+| Source | Data |
+|---|---|
+| [NOAA SWPC](https://www.swpc.noaa.gov/) | Solar data, K-index, Bz, X-ray, storm forecast |
+| [DXWatch.com](https://dxwatch.com/) | Live DX cluster |
+| [Blitzortung.org](https://www.blitzortung.org/) | Worldwide lightning detection (WebSocket) |
+| [eibispace.de](https://www.eibispace.de/) | EIBI shortwave schedules (Eike Bierwirth) |
+| [CelesTrak](https://celestrak.org/) | Satellite TLE data (Dr. T.S. Kelso) |
+| [Wikimedia Commons](https://commons.wikimedia.org/) | NASA Blue Marble world map |
 
----
-
-## 💻 System Requirements
-
-| | Minimum | Recommended |
-|-|---------|------------|
-| OS | Windows 10 | Windows 11 |
-| Screen resolution | 1280 × 900 | 1920 × 1080 or wider |
-| Python | 3.10 | 3.12+ |
-| Internet | Required (data feeds) | — |
-
-> v4.0.1 uses a free-floating panel canvas. Arrange panels freely on any screen size. A wide display (≥ 1920 px) provides the most comfortable workspace.
+All connections use standard HTTPS/WebSocket. No personal data is transmitted.
 
 ---
 
-## 🔧 Future Ideas
+## 📋 Changelog
 
-- Stabilise CAT interface (Yaesu/Kenwood/Icom)
-- SDR integration
-- Logging connection (ADIF/WSJTX)
+### v5.2 — June 2026
+- **EIBI**: list now sorted by kHz (numeric) by default; station name moved to second column
+- **Satellite tracking**: configurable orbit path line width (Settings → Map)
+- **Settings / Map tab**: all controls now apply live (no restart needed); labels fully translated EN/NL
+
+### v5.1 — May 2026
+- Header clock timezone derived automatically from QTH coordinates (via `timezonefinder`)
+- Graceful fallback to OS system timezone if `timezonefinder` is not installed
+- Splash screen checks: folder access (create/write/read/delete) + internet connectivity
+
+### v5.0 — May 2026
+- Complete rewrite to PySide6 / Qt6
+- Hardware-accelerated world map — no PIL/Pillow dependency
+- Ready-to-use EXE — no Python installation required
 
 ---
 
-## 📜 Licence
+## 🤝 Contributing
 
-Free for personal, non-commercial amateur radio use.
+Issues and pull requests are welcome. See [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ---
 
+*© 2026 Frank van Dijke · Open-source amateur radio software*
+*Developed with [Claude AI](https://claude.ai) (Anthropic) · PySide6 · Python 3.10+*

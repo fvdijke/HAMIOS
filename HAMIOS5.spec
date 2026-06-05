@@ -1,0 +1,92 @@
+# -*- mode: python ; coding: utf-8 -*-
+# PyInstaller spec for HAMIOS v5.2 (PySide6)
+
+import os
+
+block_cipher = None
+
+a = Analysis(
+    ['HAMIOS5.py'],
+    pathex=[os.path.abspath('.')],
+    binaries=[],
+    datas=[
+        ('worldmap_eq.jpg',              '.'),
+        ('HAMIOS_LOGO.png',              '.'),
+        ('hamios.ico',                   '.'),
+        ('hamios5/__init__.py',          'hamios5'),
+        ('hamios5/_appdir.py',           'hamios5'),
+        ('hamios5/startup.py',           'hamios5'),
+        ('hamios5/cat_interface.py',     'hamios5'),
+        ('hamios5/cat_monitor.py',       'hamios5'),
+        ('hamios5/charts.py',            'hamios5'),
+        ('hamios5/config.py',            'hamios5'),
+        ('hamios5/eibi_codes.py',        'hamios5'),
+        ('hamios5/eibi_dialog.py',       'hamios5'),
+        ('hamios5/ft8_dialog.py',        'hamios5'),
+        ('hamios5/geometry.py',          'hamios5'),
+        ('hamios5/header.py',            'hamios5'),
+        ('hamios5/history.py',           'hamios5'),
+        ('hamios5/layers.py',            'hamios5'),
+        ('hamios5/mainwindow.py',        'hamios5'),
+        ('hamios5/mapview.py',           'hamios5'),
+        ('hamios5/panel.py',             'hamios5'),
+        ('hamios5/panels5.py',           'hamios5'),
+        ('hamios5/sat_dialog.py',        'hamios5'),
+        ('hamios5/settings_dialog.py',   'hamios5'),
+        ('hamios5/spy_dialog.py',        'hamios5'),
+        ('hamios5/help_dialog.py',       'hamios5'),
+        ('hamios5/i18n.py',              'hamios5'),
+        ('hamios5/theme.py',             'hamios5'),
+    ],
+    hiddenimports=[
+        'PySide6.QtCore',
+        'PySide6.QtGui',
+        'PySide6.QtWidgets',
+        'PySide6.QtNetwork',
+        'serial',
+        'serial.tools',
+        'serial.tools.list_ports',
+        'websocket',
+        'websocket._core',
+        'websocket._http',
+        'timezonefinder',
+        'zoneinfo',
+    ],
+    hookspath=[],
+    hooksconfig={},
+    runtime_hooks=[],
+    excludes=[
+        'tkinter', 'matplotlib', 'numpy', 'scipy',
+        'PIL', 'Pillow', 'cv2', 'pandas',
+    ],
+    win_no_prefer_redirects=False,
+    win_private_assemblies=False,
+    cipher=block_cipher,
+    noarchive=False,
+)
+
+pyz = PYZ(a.pure, a.zipped_data, cipher=block_cipher)
+
+exe = EXE(
+    pyz,
+    a.scripts,
+    a.binaries,
+    a.zipfiles,
+    a.datas,
+    [],
+    name='HAMIOS5',
+    debug=False,
+    bootloader_ignore_signals=False,
+    strip=False,
+    upx=True,
+    upx_exclude=[],
+    runtime_tmpdir=None,
+    console=False,
+    disable_windowed_traceback=False,
+    argv_emulation=False,
+    target_arch=None,
+    codesign_identity=None,
+    entitlements_file=None,
+    icon='hamios.ico',
+    version_file=None,
+)
