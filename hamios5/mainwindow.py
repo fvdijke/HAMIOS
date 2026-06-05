@@ -505,6 +505,7 @@ class HAMIOSMainWindow(QMainWindow):
         self._map_view.set_sun_size(getattr(cfg, "sun_icon_size", 24))
         self._map_view.set_moon_size(getattr(cfg, "moon_icon_size", 20))
         self._map_view.set_sat_font_size(getattr(cfg, "sat_font_size", 8))
+        self._map_view.set_satellite_path_width(getattr(cfg, "sat_path_width", 1.2))
         self._map_view.set_dx_map_font_size(getattr(cfg, "dx_map_font_size", 7))
 
         # Sync cfg-referentie in ALLE panel-widgets die cfg bewaren
@@ -601,6 +602,7 @@ class HAMIOSMainWindow(QMainWindow):
         self._map_view.set_sun_size(getattr(c, "sun_icon_size", 24))
         self._map_view.set_moon_size(getattr(c, "moon_icon_size", 20))
         self._map_view.set_sat_font_size(getattr(c, "sat_font_size", 8))
+        self._map_view.set_satellite_path_width(getattr(c, "sat_path_width", 1.2))
         self._map_view.set_dx_map_font_size(getattr(c, "dx_map_font_size", 7))
         if hasattr(self, "_dx_spots_widget"):
             self._dx_spots_widget.set_font_size(c.dx_font_size)

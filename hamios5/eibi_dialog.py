@@ -15,7 +15,7 @@ import os
 import threading
 import urllib.request
 
-from PySide6.QtCore import Qt, QThread, Signal, QSortFilterProxyModel, QTimer
+from PySide6.QtCore import Qt, QThread, Signal, QSortFilterProxyModel, QTimer, QModelIndex
 from PySide6.QtGui import QFont, QColor, QStandardItemModel, QStandardItem
 from PySide6.QtWidgets import (
     QDialog, QVBoxLayout, QHBoxLayout, QLabel, QLineEdit,
@@ -110,11 +110,26 @@ class _EibiDownloadThread(QThread):
             self.error.emit(str(e))
 
 
+# ── Numerieke proxy (sorteert kHz-kolom als float) ───────────────────────────
+
+class _EibiSortProxy(QSortFilterProxyModel):
+    def lessThan(self, left: QModelIndex, right: QModelIndex) -> bool:
+        if left.column() == 0:
+            try:
+                return float(left.data() or 0) < float(right.data() or 0)
+            except (ValueError, TypeError):
+                pass
+        return super().lessThan(left, right)
+
+
 # ── Dialoog ───────────────────────────────────────────────────────────────────
 
-_COL_HEADERS = ["kHz", "Tijd (UTC)", "Dagen", "Land", "Station",
+_COL_HEADERS = ["kHz", "Station", "Tijd (UTC)", "Dagen", "Land",
                  "Taal", "Doelgebied", "Opmerkingen"]
-_COL_WIDTHS  = [72, 95, 60, 45, 200, 45, 80, 160]
+_COL_WIDTHS  = [72, 200, 95, 60, 45, 45, 80, 160]
+
+# Mapping display-kolom → CSV-kolom (0=kHz,1=Tijd,2=Dagen,3=Land,4=Station,5=Taal,6=Doel,7=Opm)
+_DISPLAY_ORDER = [0, 4, 1, 2, 3, 5, 6, 7]
 
 _QSS = f"""
 QDialog   {{ background: {BG_PANEL}; }}
@@ -224,11 +239,11 @@ class EibiDialog(QDialog):
         # ── Tabel ─────────────────────────────────────────────────────────────
         self._model = QStandardItemModel(0, len(_COL_HEADERS))
         self._model.setHorizontalHeaderLabels([
-            tr("eibi.col.freq"), tr("eibi.col.time"), "Dagen", "Land",
-            tr("eibi.col.station"), tr("eibi.col.lang"), tr("eibi.col.target"), "Opmerkingen",
+            tr("eibi.col.freq"), tr("eibi.col.station"), tr("eibi.col.time"), "Dagen",
+            "Land", tr("eibi.col.lang"), tr("eibi.col.target"), "Opmerkingen",
         ])
 
-        self._proxy = QSortFilterProxyModel()
+        self._proxy = _EibiSortProxy()
         self._proxy.setSourceModel(self._model)
         self._proxy.setFilterCaseSensitivity(Qt.CaseInsensitive)
         self._proxy.setFilterKeyColumn(-1)   # zoek in alle kolommen
@@ -324,6 +339,7 @@ class EibiDialog(QDialog):
         self._all_rows = rows
         self._apply_filter()
         self._resize_columns()
+        self._table.sortByColumn(0, Qt.AscendingOrder)
 
     # ── Filteren ──────────────────────────────────────────────────────────────
     def _apply_filter(self):
@@ -399,29 +415,29 @@ class EibiDialog(QDialog):
             itu_full    = tr["itu_full"]
 
             items = []
-            for j, val in enumerate(fields):
-                raw_val = val.strip()
+            for csv_j in _DISPLAY_ORDER:
+                raw_val = fields[csv_j].strip()
 
-                # Vertaalde weergave voor kolommen 3 (Land), 5 (Taal), 6 (Doel)
-                if translate and j == 3 and itu_full:
+                # Vertaalde weergave voor Land (csv 3), Taal (csv 5), Doelgebied (csv 6)
+                if translate and csv_j == 3 and itu_full:
                     display = f"{raw_val} – {itu_full}"
-                elif translate and j == 5 and lang_full:
+                elif translate and csv_j == 5 and lang_full:
                     display = f"{raw_val} – {lang_full}"
-                elif translate and j == 6 and target_full:
+                elif translate and csv_j == 6 and target_full:
                     display = f"{raw_val} – {target_full}"
                 else:
                     display = raw_val
 
                 item = QStandardItem(display)
-                item.setFont(f_mono if j == 0 else f8)
+                item.setFont(f_mono if csv_j == 0 else f8)
                 item.setForeground(QColor(TEXT_BODY))
 
                 # Tooltip: altijd de volledige naam, ook als niet vertaald
-                if j == 3 and itu_full:
+                if csv_j == 3 and itu_full:
                     item.setToolTip(itu_full)
-                elif j == 5 and lang_full:
+                elif csv_j == 5 and lang_full:
                     item.setToolTip(lang_full)
-                elif j == 6 and target_full:
+                elif csv_j == 6 and target_full:
                     item.setToolTip(target_full)
 
                 items.append(item)

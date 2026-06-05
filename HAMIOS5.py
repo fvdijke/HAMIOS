@@ -1,5 +1,5 @@
 """
-HAMIOS v5.1 — PySide6 versie
+HAMIOS v5.2 — PySide6 versie
 Developed with Claude AI
 
 """
@@ -122,7 +122,7 @@ def _make_header_pixmap() -> QPixmap:
 
     p.setFont(QFont("Segoe UI", 10))
     p.setPen(QColor(200, 168, 75, 130))
-    p.drawText(TX + 124, 8, 50, 44, Qt.AlignLeft | Qt.AlignVCenter, "v5.1")
+    p.drawText(TX + 124, 8, 50, 44, Qt.AlignLeft | Qt.AlignVCenter, "v5.2")
 
     p.setFont(QFont("Segoe UI", 8))
     p.setPen(LIGHT)
@@ -395,7 +395,7 @@ def main():
 
     app = QApplication(sys.argv)
     app.setApplicationName("HAMIOS")
-    app.setApplicationVersion("5.1")
+    app.setApplicationVersion("5.2")
     app.setOrganizationName("")
 
     # Opstartcontrole
@@ -501,7 +501,7 @@ QComboBox::down-arrow {{
         try:
             _inet_req = _urlreq.Request(
                 _MAP_CHECK_URL, method="HEAD",
-                headers={"User-Agent": "HAMIOS/5.1"})
+                headers={"User-Agent": "HAMIOS/5.2"})
             with _urlreq.urlopen(_inet_req, timeout=6) as _r:
                 _ok_internet = _r.status < 400
                 _inet_detail = f"HTTP {_r.status}"

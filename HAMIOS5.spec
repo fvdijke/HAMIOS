@@ -1,5 +1,5 @@
 # -*- mode: python ; coding: utf-8 -*-
-# PyInstaller spec for HAMIOS v5.1 (PySide6)
+# PyInstaller spec for HAMIOS v5.2 (PySide6)
 
 import os
 

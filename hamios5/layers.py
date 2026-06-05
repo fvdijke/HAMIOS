@@ -569,6 +569,7 @@ class SatelliteLayer(QGraphicsItem):
         self._fp_sel:    set[str] = set()
         self._back_h: int = 1
         self._fwd_h:  int = 12
+        self._path_width: float = 1.2
         self._qth_lat: float = 52.0
         self._qth_lon: float = 5.0
         self._overlay_font_size: int = 8
@@ -631,6 +632,10 @@ class SatelliteLayer(QGraphicsItem):
         self._back_h = max(0, back_h)
         self._fwd_h  = max(0, fwd_h)
         threading.Thread(target=self._calc_paths, daemon=True).start()
+
+    def set_path_width(self, width: float):
+        self._path_width = max(0.3, float(width))
+        self.update()
 
     def _calc_positions(self):
         if not self._calc_lock.acquire(blocking=False):
@@ -699,8 +704,9 @@ class SatelliteLayer(QGraphicsItem):
             # Orbitpaden
             if name in paths:
                 past, fwd = paths[name]
-                _draw_path(painter, past, QPen(color.darker(160), 0.8, Qt.DashLine))
-                _draw_path(painter, fwd,  QPen(color, 1.2))
+                pw = self._path_width
+                _draw_path(painter, past, QPen(color.darker(160), pw * 0.67, Qt.DashLine))
+                _draw_path(painter, fwd,  QPen(color, pw))
 
             # Satelliet-icoon en label
             if name in pos:

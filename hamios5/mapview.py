@@ -534,7 +534,7 @@ class _HiresDownloadThread(QThread):
         self._dest          = dest
         self._also_save_std = also_save_std
 
-    _UA = "HAMIOS/5.0 (HF Propagation Monitor; contact PA3FVD)"
+    _UA = "HAMIOS/5.2 (HF Propagation Monitor)"
 
     def run(self):
         tmp = self._dest + ".tmp"
@@ -1130,6 +1130,9 @@ class MapView(QGraphicsView):
 
     def set_satellite_hours(self, back_h: int, fwd_h: int):
         self._sat_layer.set_path_hours(back_h, fwd_h)
+
+    def set_satellite_path_width(self, width: float):
+        self._sat_layer.set_path_width(width)
 
     def update_tle(self, tle: dict):
         """Laad TLE data: {name: (line1, line2)}."""

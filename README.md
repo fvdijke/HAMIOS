@@ -6,7 +6,7 @@
 
 **Real-time HF propagation and DX monitor for amateur radio operators — Windows 10/11**
 
-> v5.0 · May 2026 · PA3FVD / Frank van Dijke · *Developed with Claude AI (Anthropic)*
+> v5.2 · June 2026 · Frank van Dijke · *Developed with Claude AI (Anthropic)*
 
 [![Website](https://img.shields.io/badge/website-hamios.space-orange)](https://hamios.space)
 [![Release](https://img.shields.io/github/v/release/fvdijke/HAMIOS?label=latest)](https://github.com/fvdijke/HAMIOS/releases/latest)
@@ -192,11 +192,30 @@ All connections use standard HTTPS/WebSocket. No personal data is transmitted.
 
 ---
 
+## 📋 Changelog
+
+### v5.2 — June 2026
+- **EIBI**: list now sorted by kHz (numeric) by default; station name moved to second column
+- **Satellite tracking**: configurable orbit path line width (Settings → Map)
+- **Settings / Map tab**: all controls now apply live (no restart needed); labels fully translated EN/NL
+
+### v5.1 — May 2026
+- Header clock timezone derived automatically from QTH coordinates (via `timezonefinder`)
+- Graceful fallback to OS system timezone if `timezonefinder` is not installed
+- Splash screen checks: folder access (create/write/read/delete) + internet connectivity
+
+### v5.0 — May 2026
+- Complete rewrite to PySide6 / Qt6
+- Hardware-accelerated world map — no PIL/Pillow dependency
+- Ready-to-use EXE — no Python installation required
+
+---
+
 ## 🤝 Contributing
 
 Issues and pull requests are welcome. See [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ---
 
-*© 2026 Frank van Dijke (PA3FVD) · Open-source amateur radio software*
+*© 2026 Frank van Dijke · Open-source amateur radio software*
 *Developed with [Claude AI](https://claude.ai) (Anthropic) · PySide6 · Python 3.10+*

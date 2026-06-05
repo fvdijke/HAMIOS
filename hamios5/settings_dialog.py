@@ -281,7 +281,7 @@ class SettingsDialog(QDialog):
         _section(v, tr("sec.qth"))
 
         self._call_edit = QLineEdit()
-        self._call_edit.setPlaceholderText("PD0ABC")
+        self._call_edit.setPlaceholderText("AB1CD")
         row(tr("set.station.call_lbl"), self._call_edit)
 
         self._loc_edit = QLineEdit()
@@ -388,7 +388,7 @@ class SettingsDialog(QDialog):
         self._grat_step_cb = QComboBox()
         for lbl, val in [("10°", 10), ("20°", 20), ("30°", 30)]:
             self._grat_step_cb.addItem(lbl, val)
-        row("Meridian-stap:", self._grat_step_cb)
+        row(tr("set.map.grat_step"), self._grat_step_cb)
 
         _section(v, tr("sec.overlay_fonts2"))
 
@@ -396,31 +396,39 @@ class SettingsDialog(QDialog):
         self._font_spin.setRange(6, 72)
         self._font_spin.setSuffix(" pt")
         self._font_spin.setFixedWidth(80)
-        row("Graticule:", self._font_spin)
+        row(tr("set.map.font_grat"), self._font_spin)
 
         self._maid_font_spin = QSpinBox()
         self._maid_font_spin.setRange(6, 72)
         self._maid_font_spin.setSuffix(" pt")
         self._maid_font_spin.setFixedWidth(80)
-        row("Maidenhead labels:", self._maid_font_spin)
+        row(tr("set.map.font_maid"), self._maid_font_spin)
 
         self._sat_font_spin = QSpinBox()
         self._sat_font_spin.setRange(6, 72)
         self._sat_font_spin.setSuffix(" pt")
         self._sat_font_spin.setFixedWidth(80)
-        row("Satelliet-labels:", self._sat_font_spin)
+        row(tr("set.map.font_sat"), self._sat_font_spin)
+
+        self._sat_path_width_spin = QDoubleSpinBox()
+        self._sat_path_width_spin.setRange(0.3, 6.0)
+        self._sat_path_width_spin.setSingleStep(0.1)
+        self._sat_path_width_spin.setDecimals(1)
+        self._sat_path_width_spin.setSuffix(" px")
+        self._sat_path_width_spin.setFixedWidth(80)
+        row(tr("set.map.path_width"), self._sat_path_width_spin)
 
         self._dx_map_font_spin = QSpinBox()
         self._dx_map_font_spin.setRange(6, 72)
         self._dx_map_font_spin.setSuffix(" pt")
         self._dx_map_font_spin.setFixedWidth(80)
-        row("DX spots (kaart):", self._dx_map_font_spin)
+        row(tr("set.map.font_dx_map"), self._dx_map_font_spin)
 
         self._dx_font_spin = QSpinBox()
         self._dx_font_spin.setRange(6, 72)
         self._dx_font_spin.setSuffix(" pt")
         self._dx_font_spin.setFixedWidth(80)
-        row("DX spots (tabel):", self._dx_font_spin)
+        row(tr("set.map.font_dx_tbl"), self._dx_font_spin)
 
         _section(v, tr("sec.icon_sizes2"))
 
@@ -428,13 +436,13 @@ class SettingsDialog(QDialog):
         self._sun_size_spin.setRange(8, 64)
         self._sun_size_spin.setSuffix(" px")
         self._sun_size_spin.setFixedWidth(80)
-        row("Zon:", self._sun_size_spin)
+        row(tr("set.map.sun_size"), self._sun_size_spin)
 
         self._moon_size_spin = QSpinBox()
         self._moon_size_spin.setRange(8, 64)
         self._moon_size_spin.setSuffix(" px")
         self._moon_size_spin.setFixedWidth(80)
-        row("Maan:", self._moon_size_spin)
+        row(tr("set.map.moon_size"), self._moon_size_spin)
 
         v.addStretch()
         return w
@@ -1152,6 +1160,7 @@ class SettingsDialog(QDialog):
         self._font_spin.setValue(c.overlay_font_size)
         self._maid_font_spin.setValue(getattr(c, "maidenhead_font_size", 8))
         self._sat_font_spin.setValue(getattr(c, "sat_font_size", 8))
+        self._sat_path_width_spin.setValue(getattr(c, "sat_path_width", 1.2))
         self._dx_map_font_spin.setValue(getattr(c, "dx_map_font_size", 7))
         self._dx_font_spin.setValue(getattr(c, "dx_font_size", 8))
         self._sun_size_spin.setValue(getattr(c, "sun_icon_size", 24))
@@ -1233,6 +1242,7 @@ class SettingsDialog(QDialog):
             overlay_font_size     = self._font_spin.value(),
             maidenhead_font_size  = self._maid_font_spin.value(),
             sat_font_size     = self._sat_font_spin.value(),
+            sat_path_width    = self._sat_path_width_spin.value(),
             dx_map_font_size  = self._dx_map_font_spin.value(),
             dx_font_size      = self._dx_font_spin.value(),
             sun_icon_size     = self._sun_size_spin.value(),
@@ -1343,6 +1353,7 @@ class SettingsDialog(QDialog):
                      self._lightn_radius_spin, self._lightn_rate_spin,
                      self._lightn_beep_r_spin, self._lightn_anim_scale_spin,
                      self._font_spin, self._maid_font_spin, self._sat_font_spin,
+                     self._sat_path_width_spin,
                      self._dx_map_font_spin, self._dx_font_spin,
                      self._sun_size_spin, self._moon_size_spin,
                      self._cat_civ]:

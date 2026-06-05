@@ -45,7 +45,7 @@ _S: dict[str, dict[str, str]] = {
 
 # ── App / algemeen ────────────────────────────────────────────────────────────
 "app.name":           "HF Propagation & Atmosphere Monitor",
-"app.version":        "v5.1",
+"app.version":        "v5.2",
 "app.close":          "Afsluiten",
 "app.ok":             "OK",
 "app.cancel":         "Annuleren",
@@ -251,6 +251,7 @@ _S: dict[str, dict[str, str]] = {
 "set.map.font_grat":      "Graticule:",
 "set.map.font_maid":      "Maidenhead labels:",
 "set.map.font_sat":       "Satelliet-labels:",
+"set.map.path_width":     "Satelliet pad dikte:",
 "set.map.font_dx_map":    "DX spots (kaart):",
 "set.map.font_dx_tbl":    "DX spots (tabel):",
 "set.map.icons":          "Icoontje groottes",
@@ -660,7 +661,7 @@ _S: dict[str, dict[str, str]] = {
 
 # ── App / general ─────────────────────────────────────────────────────────────
 "app.name":           "HF Propagation & Atmosphere Monitor",
-"app.version":        "v5.1",
+"app.version":        "v5.2",
 "app.close":          "Exit",
 "app.ok":             "OK",
 "app.cancel":         "Cancel",
@@ -866,6 +867,7 @@ _S: dict[str, dict[str, str]] = {
 "set.map.font_grat":      "Graticule:",
 "set.map.font_maid":      "Maidenhead labels:",
 "set.map.font_sat":       "Satellite labels:",
+"set.map.path_width":     "Satellite path width:",
 "set.map.font_dx_map":    "DX spots (map):",
 "set.map.font_dx_tbl":    "DX spots (table):",
 "set.map.icons":          "Icon sizes",
