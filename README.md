@@ -59,6 +59,7 @@ Toggleable via the **🗺 Overlays** button in the header:
 - Graticule (configurable 10° / 20° / 30° step)
 - Live DX spots with callsign labels and animated connection lines (click for info)
 - **PSKReporter** — real-time FT8/FT4 propagation paths coloured by band (click for info)
+- **DXCC callsign country codes (extended)** — prefix + country name labels at ~150 DXCC entity positions; click any label for a popup listing all prefixes for that country (configurable font size)
 - Satellite positions, orbit paths, footprints
 - Lightning strikes with animated ripple rings
 - Alert radius circles (warning + beep threshold)

@@ -418,6 +418,12 @@ class SettingsDialog(QDialog):
         self._sat_path_width_spin.setFixedWidth(80)
         row(tr("set.map.path_width"), self._sat_path_width_spin)
 
+        self._callsign_font_spin = QSpinBox()
+        self._callsign_font_spin.setRange(5, 72)
+        self._callsign_font_spin.setSuffix(" pt")
+        self._callsign_font_spin.setFixedWidth(80)
+        row(tr("set.map.font_callsign"), self._callsign_font_spin)
+
         self._dx_map_font_spin = QSpinBox()
         self._dx_map_font_spin.setRange(6, 72)
         self._dx_map_font_spin.setSuffix(" pt")
@@ -1161,6 +1167,7 @@ class SettingsDialog(QDialog):
         self._maid_font_spin.setValue(getattr(c, "maidenhead_font_size", 8))
         self._sat_font_spin.setValue(getattr(c, "sat_font_size", 8))
         self._sat_path_width_spin.setValue(getattr(c, "sat_path_width", 1.2))
+        self._callsign_font_spin.setValue(getattr(c, "callsign_overlay_font_size", 7))
         self._dx_map_font_spin.setValue(getattr(c, "dx_map_font_size", 7))
         self._dx_font_spin.setValue(getattr(c, "dx_font_size", 8))
         self._sun_size_spin.setValue(getattr(c, "sun_icon_size", 24))
@@ -1243,6 +1250,7 @@ class SettingsDialog(QDialog):
             maidenhead_font_size  = self._maid_font_spin.value(),
             sat_font_size     = self._sat_font_spin.value(),
             sat_path_width    = self._sat_path_width_spin.value(),
+            callsign_overlay_font_size = self._callsign_font_spin.value(),
             dx_map_font_size  = self._dx_map_font_spin.value(),
             dx_font_size      = self._dx_font_spin.value(),
             sun_icon_size     = self._sun_size_spin.value(),
@@ -1354,6 +1362,7 @@ class SettingsDialog(QDialog):
                      self._lightn_beep_r_spin, self._lightn_anim_scale_spin,
                      self._font_spin, self._maid_font_spin, self._sat_font_spin,
                      self._sat_path_width_spin,
+                     self._callsign_font_spin,
                      self._dx_map_font_spin, self._dx_font_spin,
                      self._sun_size_spin, self._moon_size_spin,
                      self._cat_civ]:

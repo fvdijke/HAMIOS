@@ -434,6 +434,246 @@ class QTHMarkerItem(QGraphicsItem):
         painter.drawLine(0, -10, 0, 10)
 
 
+# ── DXCC Callsign Country Code Overlay ────────────────────────────────────────
+
+# Canonical DXCC entities: (prefix, country_name, lat, lon)
+_DXCC_CANONICAL: list[tuple[str, str, float, float]] = [
+    # North America
+    ("W",    "USA",           38.0, -97.0),
+    ("VE",   "Canada",        56.0, -96.0),
+    ("KH6",  "Hawaii",        20.5,-157.0),
+    ("KL",   "Alaska",        64.0,-152.0),
+    ("XE",   "Mexico",        23.0,-102.0),
+    ("TG",   "Guatemala",     15.5, -90.3),
+    ("TI",   "Costa Rica",     9.9, -84.1),
+    ("HP",   "Panama",         8.9, -79.5),
+    ("HH",   "Haiti",         19.0, -72.3),
+    ("HI",   "Dom.Rep.",      19.0, -70.7),
+    ("CO",   "Cuba",          22.0, -80.0),
+    ("V3",   "Belize",        17.2, -88.8),
+    ("YN",   "Nicaragua",     12.9, -85.6),
+    ("HR",   "Honduras",      15.0, -86.5),
+    # South America
+    ("PY",   "Brazil",       -15.0, -50.0),
+    ("LU",   "Argentina",    -34.0, -64.0),
+    ("CE",   "Chile",        -30.0, -71.0),
+    ("OA",   "Peru",         -10.0, -75.0),
+    ("HC",   "Ecuador",       -1.8, -78.0),
+    ("YV",   "Venezuela",      8.0, -66.0),
+    ("CX",   "Uruguay",      -32.8, -56.0),
+    ("ZP",   "Paraguay",     -23.0, -58.0),
+    ("CP",   "Bolivia",      -16.0, -64.0),
+    ("HK",   "Colombia",       4.0, -74.0),
+    ("FY",   "Fr.Guiana",      4.0, -53.0),
+    # Europe
+    ("G",    "UK",            52.0,  -2.0),
+    ("GI",   "N.Ireland",     54.5,  -6.5),
+    ("EI",   "Ireland",       53.0,  -8.0),
+    ("F",    "France",        46.0,   2.0),
+    ("TK",   "Corsica",       42.0,   9.0),
+    ("DL",   "Germany",       52.0,  10.0),
+    ("PA",   "Netherlands",   52.3,   5.3),
+    ("ON",   "Belgium",       50.5,   4.5),
+    ("LX",   "Luxembourg",    49.8,   6.1),
+    ("HB",   "Switzerland",   47.0,   8.0),
+    ("OE",   "Austria",       47.5,  14.5),
+    ("I",    "Italy",         42.0,  12.0),
+    ("IT9",  "Sicily",        37.5,  14.0),
+    ("IS",   "Sardinia",      40.0,   9.0),
+    ("EA",   "Spain",         40.0,  -4.0),
+    ("EA6",  "Balearics",     39.6,   3.0),
+    ("EA8",  "Canaries",      28.3, -14.0),
+    ("CT",   "Portugal",      39.5,  -8.0),
+    ("SM",   "Sweden",        62.0,  17.0),
+    ("LA",   "Norway",        62.0,  10.0),
+    ("OZ",   "Denmark",       56.0,  10.0),
+    ("OH",   "Finland",       64.0,  26.0),
+    ("TF",   "Iceland",       65.0, -19.0),
+    ("OY",   "Faeroes",       62.0,  -7.0),
+    ("OX",   "Greenland",     72.0, -25.0),
+    ("SP",   "Poland",        52.0,  21.0),
+    ("OK",   "Czechia",       50.0,  15.0),
+    ("OM",   "Slovakia",      48.7,  19.0),
+    ("HA",   "Hungary",       47.0,  19.0),
+    ("YO",   "Romania",       46.0,  25.0),
+    ("LZ",   "Bulgaria",      43.0,  25.0),
+    ("SV",   "Greece",        38.0,  23.0),
+    ("5B",   "Cyprus",        35.0,  33.0),
+    ("9H",   "Malta",         35.9,  14.5),
+    ("YU",   "Serbia",        44.0,  21.0),
+    ("9A",   "Croatia",       45.0,  16.0),
+    ("S5",   "Slovenia",      46.0,  15.0),
+    ("T9",   "Bosnia",        44.0,  17.5),
+    ("4O",   "Montenegro",    42.8,  19.5),
+    ("Z3",   "N.Macedonia",   41.6,  21.7),
+    ("LY",   "Lithuania",     56.0,  24.0),
+    ("YL",   "Latvia",        57.0,  25.0),
+    ("ES",   "Estonia",       59.0,  25.0),
+    ("C3",   "Andorra",       42.6,   1.5),
+    # Eastern Europe / CIS
+    ("UA",   "Russia (Eu)",   55.0,  40.0),
+    ("UA9",  "Russia (As)",   60.0,  90.0),
+    ("UA0",  "Russia (FE)",   60.0, 130.0),
+    ("UR",   "Ukraine",       49.0,  32.0),
+    ("EW",   "Belarus",       53.5,  28.0),
+    ("EK",   "Armenia",       40.0,  45.0),
+    ("4J",   "Azerbaijan",    40.4,  49.8),
+    ("EX",   "Kyrgyzstan",    41.0,  75.0),
+    ("EY",   "Tajikistan",    38.5,  71.0),
+    ("EZ",   "Turkmenistan",  38.0,  58.0),
+    ("UK",   "Uzbekistan",    41.0,  64.0),
+    ("UN",   "Kazakhstan",    50.0,  70.0),
+    ("TA",   "Turkey",        39.0,  35.0),
+    ("4L",   "Georgia",       42.0,  43.5),
+    # Middle East
+    ("4X",   "Israel",        31.5,  34.8),
+    ("OD",   "Lebanon",       33.8,  35.5),
+    ("YK",   "Syria",         34.8,  38.5),
+    ("A4",   "Oman",          23.0,  57.0),
+    ("A6",   "UAE",           24.5,  54.5),
+    ("A7",   "Qatar",         25.3,  51.5),
+    ("A9",   "Bahrain",       26.0,  50.5),
+    ("HZ",   "Saudi Arabia",  25.0,  45.0),
+    ("JY",   "Jordan",        31.0,  36.0),
+    ("EP",   "Iran",          32.0,  53.0),
+    ("YA",   "Afghanistan",   34.5,  69.2),
+    ("AP",   "Pakistan",      30.0,  70.0),
+    # Asia
+    ("JA",   "Japan",         36.0, 138.0),
+    ("HL",   "S.Korea",       37.0, 127.0),
+    ("BY",   "China",         35.0, 104.0),
+    ("VR",   "Hong Kong",     22.3, 114.2),
+    ("BV",   "Taiwan",        23.5, 121.0),
+    ("XU",   "Cambodia",      12.5, 105.0),
+    ("XV",   "Vietnam",       16.0, 106.0),
+    ("XW",   "Laos",          18.0, 103.0),
+    ("HS",   "Thailand",      13.0, 101.0),
+    ("DU",   "Philippines",   13.0, 122.0),
+    ("YB",   "Indonesia",     -5.0, 120.0),
+    ("9V",   "Singapore",      1.3, 103.8),
+    ("VU",   "India",         20.0,  77.0),
+    ("9N",   "Nepal",         28.0,  84.0),
+    ("S2",   "Bangladesh",    24.0,  90.0),
+    ("4S",   "Sri Lanka",      7.9,  80.7),
+    ("9M2",  "Malaysia",       4.0, 110.0),
+    ("JT",   "Mongolia",      47.0, 105.0),
+    # Oceania
+    ("VK",   "Australia",    -25.0, 135.0),
+    ("ZL",   "New Zealand",  -40.0, 175.0),
+    ("FK",   "New Caled.",   -21.0, 165.0),
+    ("FO",   "Fr.Polynesia", -18.0,-149.0),
+    ("KH2",  "Guam",          13.5, 144.8),
+    ("V7",   "Marshall Is.",   7.1, 171.4),
+    ("T2",   "Tuvalu",        -8.0, 178.0),
+    ("H44",  "Solomon Is.",   -9.0, 160.0),
+    ("YJ",   "Vanuatu",      -17.7, 168.3),
+    ("A3",   "Tonga",        -20.0,-175.0),
+    # Africa
+    ("ZS",   "S.Africa",     -30.0,  25.0),
+    ("V5",   "Namibia",      -22.0,  17.0),
+    ("A2",   "Botswana",     -22.0,  24.0),
+    ("Z2",   "Zimbabwe",     -20.0,  30.0),
+    ("9J",   "Zambia",       -15.0,  30.0),
+    ("7P",   "Lesotho",      -29.5,  28.2),
+    ("5H",   "Tanzania",      -6.0,  35.0),
+    ("5Z",   "Kenya",          1.0,  38.0),
+    ("5X",   "Uganda",         1.3,  32.0),
+    ("ET",   "Ethiopia",       9.0,  38.7),
+    ("6O",   "Somalia",       10.0,  49.0),
+    ("SU",   "Egypt",         26.0,  30.0),
+    ("CN",   "Morocco",       32.0,  -6.0),
+    ("7X",   "Algeria",       28.0,   2.0),
+    ("TS",   "Tunisia",       34.0,   9.0),
+    ("5A",   "Libya",         27.0,  17.0),
+    ("ST",   "Sudan",         15.6,  32.5),
+    ("EL",   "Liberia",        6.3, -10.8),
+    ("TU",   "Ivory Coast",    7.5,  -5.5),
+    ("TY",   "Benin",          9.3,   2.3),
+    ("TZ",   "Mali",          17.3,  -4.0),
+    ("TJ",   "Cameroon",       4.0,  12.4),
+    ("TR",   "Gabon",         -1.0,  11.8),
+    ("TN",   "Congo",         -4.3,  15.3),
+    ("D2",   "Angola",        -12.0,  18.0),
+    ("C9",   "Mozambique",   -18.0,  35.0),
+    ("5R",   "Madagascar",   -20.0,  47.0),
+    ("9L",   "Sierra Leone",   8.5, -13.3),
+    ("9G",   "Ghana",          7.9,  -1.1),
+    ("6W",   "Senegal",       14.7, -17.4),
+    ("D4",   "Cape Verde",    16.0, -24.0),
+    ("7Q",   "Malawi",        -13.0,  34.0),
+    ("C5",   "Gambia",        13.5, -15.5),
+    ("3C",   "Eq.Guinea",      1.7,   9.0),
+]
+
+
+class DXCCOverlayItem(QGraphicsItem):
+    """DXCC callsign prefix + country name labels op de kaart. z=7.5"""
+
+    _AMBER     = QColor(200, 168, 75, 230)
+    _COUNTRY   = QColor(220, 220, 220, 180)
+    _SHADOW    = QColor(0, 0, 0, 160)
+    _DOT       = QColor(200, 168, 75, 160)
+
+    def __init__(self):
+        super().__init__()
+        self.setZValue(7.5)
+        self._font_size = 7
+        self.setVisible(False)
+
+    def set_font_size(self, size: int):
+        self._font_size = max(5, size)
+        self.update()
+
+    def find_entry_near(self, x: float, y: float,
+                        radius: float) -> tuple | None:
+        """Geeft de dichtstbijzijnde canonical entry terug als die binnen radius valt."""
+        best_dist = radius
+        best      = None
+        for entry in _DXCC_CANONICAL:
+            pt = latlon_to_scene(entry[2], entry[3])
+            d  = math.hypot(x - pt.x(), y - pt.y())
+            if d < best_dist:
+                best_dist = d
+                best      = entry
+        return best
+
+    def boundingRect(self) -> QRectF:
+        return QRectF(0, 0, MAP_W, MAP_H)
+
+    def paint(self, painter: QPainter, option, widget=None):
+        painter.setRenderHint(QPainter.Antialiasing)
+
+        f_prefix  = QFont("Segoe UI", self._font_size)
+        f_prefix.setBold(True)
+        f_country = QFont("Segoe UI", max(4, self._font_size - 1))
+
+        for prefix, country, lat, lon in _DXCC_CANONICAL:
+            pt = latlon_to_scene(lat, lon)
+
+            # dot
+            painter.setPen(Qt.NoPen)
+            painter.setBrush(QBrush(self._DOT))
+            painter.drawEllipse(pt, 2.5, 2.5)
+            painter.setBrush(Qt.NoBrush)
+
+            # prefix label with shadow
+            painter.setFont(f_prefix)
+            ox, oy = pt.x() + 5, pt.y() + 1
+            painter.setPen(self._SHADOW)
+            painter.drawText(QPointF(ox + 1, oy + 1), prefix)
+            painter.setPen(self._AMBER)
+            painter.drawText(QPointF(ox, oy), prefix)
+
+            # country name with shadow
+            painter.setFont(f_country)
+            fm = painter.fontMetrics()
+            cy = oy + fm.ascent() + fm.descent()
+            painter.setPen(self._SHADOW)
+            painter.drawText(QPointF(ox + 1, cy + 1), country)
+            painter.setPen(self._COUNTRY)
+            painter.drawText(QPointF(ox, cy), country)
+
+
 # ── Achtergrond render thread (bewaard als referentie, niet meer gebruikt) ─────
 
 class NightRenderWorker(QObject):
@@ -658,6 +898,9 @@ class MapView(QGraphicsView):
         self._psk.setVisible(False)   # standaard uit; toggelbaar via overlay-menu
         self._scene.addItem(self._psk)
 
+        self._callsign_overlay = DXCCOverlayItem()
+        self._scene.addItem(self._callsign_overlay)
+
         # TLE laden vanuit cache bij opstart
         QTimer.singleShot(500, self._load_tle_cache)
 
@@ -845,6 +1088,18 @@ class MapView(QGraphicsView):
                 zoom = self.transform().m11()
                 radius_scene = max(12.0, 18.0 / zoom)
 
+                # ── Callsign country-code klik ───────────────────────────────
+                if self._callsign_overlay.isVisible():
+                    entry = self._callsign_overlay.find_entry_near(
+                        scene_pt.x(), scene_pt.y(), radius_scene * 3)
+                    if entry:
+                        self._show_callsign_popup(entry, event.position().toPoint())
+                        self._pan_start = None
+                        self._pan_moved = False
+                        self.setCursor(Qt.ArrowCursor)
+                        super().mouseReleaseEvent(event)
+                        return
+
                 # ── PSKReporter klik ──────────────────────────────────────────
                 if self._psk.isVisible():
                     report = self._psk.find_report_near(
@@ -881,6 +1136,111 @@ class MapView(QGraphicsView):
             self._pan_moved = False
             self.setCursor(Qt.ArrowCursor)
         super().mouseReleaseEvent(event)
+
+    def _show_callsign_popup(self, entry: tuple, viewport_pos):
+        """Popup met alle DXCC prefixen voor het geklikte land."""
+        from PySide6.QtWidgets import QLabel, QVBoxLayout, QFrame
+        from PySide6.QtCore import QTimer
+
+        if self._spot_popup is not None:
+            try:
+                self._spot_popup.hide()
+                self._spot_popup.deleteLater()
+            except RuntimeError:
+                pass
+            self._spot_popup = None
+
+        prefix, country, lat, lon = entry
+
+        # Verzamel alle prefixen uit _DXCC die dezelfde coördinaten hebben
+        all_pfx = sorted(
+            p for p, (la, lo) in _layers._DXCC.items()
+            if la == lat and lo == lon
+        )
+        # Fallback: als coördinaten net niet overeenkomen, toon alleen de canonical
+        if not all_pfx:
+            all_pfx = [prefix]
+
+        popup = QFrame(self.viewport())
+        popup.setObjectName("callpopup")
+        popup.setStyleSheet(
+            "QFrame#callpopup { background:#1A1D22; border:1px solid #C8A84B;"
+            " border-radius:5px; }"
+            "QFrame#callpopup * { border:none; background:transparent; }"
+        )
+        vlay = QVBoxLayout(popup)
+        vlay.setContentsMargins(10, 8, 10, 8)
+        vlay.setSpacing(4)
+
+        # Koptekst: canoniek prefix + landnaam
+        hdr = QLabel(
+            f"<b style='color:#C8A84B;font-size:11pt;'>{prefix}</b>"
+            f"  <span style='color:#C8D0DC;font-size:9pt;'>{country}</span>"
+        )
+        hdr.setTextFormat(Qt.RichText)
+        vlay.addWidget(hdr)
+
+        # Coördinaten
+        coord_lbl = QLabel(
+            f"<span style='color:#505870;font-size:7pt;'>"
+            f"{abs(lat):.1f}°{'N' if lat >= 0 else 'S'}  "
+            f"{abs(lon):.1f}°{'E' if lon >= 0 else 'W'}</span>"
+        )
+        coord_lbl.setTextFormat(Qt.RichText)
+        vlay.addWidget(coord_lbl)
+
+        # Scheidingslijn
+        sep = QFrame()
+        sep.setFixedHeight(1)
+        sep.setStyleSheet("background:#2A3040;")
+        vlay.addWidget(sep)
+
+        # Alle prefixen — canonical vetgedrukt in amber, rest lichtgrijs
+        COLS = 8
+        rows = [all_pfx[i:i+COLS] for i in range(0, len(all_pfx), COLS)]
+        for row_pfx in rows:
+            parts = []
+            for p in row_pfx:
+                if p == prefix:
+                    parts.append(f"<b style='color:#C8A84B;'>{p}</b>")
+                else:
+                    parts.append(f"<span style='color:#90A0B8;'>{p}</span>")
+            row_lbl = QLabel("  ".join(parts))
+            row_lbl.setTextFormat(Qt.RichText)
+            row_lbl.setStyleSheet("font-size:8pt; font-family:'Consolas','Courier New',monospace;")
+            vlay.addWidget(row_lbl)
+
+        # Totaal als meer dan 1 prefix
+        if len(all_pfx) > 1:
+            count_lbl = QLabel(
+                f"<span style='color:#405060;font-size:7pt;'>"
+                f"{len(all_pfx)} prefixen</span>"
+            )
+            count_lbl.setTextFormat(Qt.RichText)
+            vlay.addWidget(count_lbl)
+
+        popup.adjustSize()
+        vp = self.viewport()
+        px = min(viewport_pos.x() + 14, vp.width()  - popup.width()  - 4)
+        py = min(viewport_pos.y() + 14, vp.height() - popup.height() - 4)
+        popup.move(max(4, px), max(4, py))
+        popup.show()
+        popup.raise_()
+        self._spot_popup = popup
+
+        def _close():
+            if self._spot_popup is popup:
+                self._spot_popup = None
+            try:
+                popup.hide()
+                popup.deleteLater()
+            except RuntimeError:
+                pass
+
+        t = QTimer(self)
+        t.setSingleShot(True)
+        t.timeout.connect(_close)
+        t.start(6000)
 
     def _show_dx_spot_tooltip(self, spot: dict, viewport_pos):
         """Toon een floating info-kaart nabij het klikpunt (auto-sluit na 4s)."""
@@ -1092,6 +1452,12 @@ class MapView(QGraphicsView):
 
     def set_moon_visible(self, on: bool):
         self._moon_marker.setVisible(on)
+
+    def set_callsign_overlay_visible(self, on: bool):
+        self._callsign_overlay.setVisible(on)
+
+    def set_callsign_overlay_font_size(self, size: int):
+        self._callsign_overlay.set_font_size(size)
 
     def set_k_index(self, k: float):
         self._aurora.set_k_index(k)

@@ -499,6 +499,8 @@ class HAMIOSMainWindow(QMainWindow):
         self._map_view.set_moon_visible(cfg.show_moon)
         self._map_view.set_locator_visible(getattr(cfg, "show_locator", False))
         self._map_view._psk.setVisible(getattr(cfg, "show_psk", False))
+        self._map_view.set_callsign_overlay_visible(getattr(cfg, "show_callsign_overlay", False))
+        self._map_view.set_callsign_overlay_font_size(getattr(cfg, "callsign_overlay_font_size", 7))
         self._map_view.set_overlay_font_size(cfg.overlay_font_size)
         self._map_view.set_maidenhead_font_size(getattr(cfg, "maidenhead_font_size", 8))
         self._map_view.set_grat_step(getattr(cfg, "grat_step", 30))
@@ -635,6 +637,8 @@ class HAMIOSMainWindow(QMainWindow):
         self._map_view.set_graticule_visible(True)
         self._map_view.set_locator_visible(getattr(c, "show_locator", False))
         self._map_view._psk.setVisible(getattr(c, "show_psk", False))
+        self._map_view.set_callsign_overlay_visible(getattr(c, "show_callsign_overlay", False))
+        self._map_view.set_callsign_overlay_font_size(getattr(c, "callsign_overlay_font_size", 7))
 
     # ── Retranslate ───────────────────────────────────────────────────────────
     def _sync_dx_map_filter(self):
@@ -718,6 +722,8 @@ class HAMIOSMainWindow(QMainWindow):
             (tr("ov.satellites"),"sat_visible",   lambda v: self._map_view.set_satellite_visible(v)),
             (tr("ov.locator"),   "show_locator",  lambda v: self._map_view.set_locator_visible(v)),
             (tr("ov.psk"),       "show_psk",      lambda v: self._map_view._psk.setVisible(v)),
+            (tr("ov.callsign"),  "show_callsign_overlay",
+             lambda v: self._map_view.set_callsign_overlay_visible(v)),
         ]
         for label, attr, fn in overlays:
             act = menu.addAction(label)

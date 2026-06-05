@@ -89,6 +89,7 @@ _S: dict[str, dict[str, str]] = {
 "ov.satellites":      "Satellieten",
 "ov.locator":         "Maidenhead locatorraster",
 "ov.psk":             "PSKReporter (digitale paden)",
+"ov.callsign":        "Callsign landcodes (uitgebreid)",
 
 # ── Panel titles ──────────────────────────────────────────────────────────────
 "panel.map":          "🌍  Kaart",
@@ -252,6 +253,7 @@ _S: dict[str, dict[str, str]] = {
 "set.map.font_maid":      "Maidenhead labels:",
 "set.map.font_sat":       "Satelliet-labels:",
 "set.map.path_width":     "Satelliet pad dikte:",
+"set.map.font_callsign":  "Callsign landcodes:",
 "set.map.font_dx_map":    "DX spots (kaart):",
 "set.map.font_dx_tbl":    "DX spots (tabel):",
 "set.map.icons":          "Icoontje groottes",
@@ -705,6 +707,7 @@ _S: dict[str, dict[str, str]] = {
 "ov.satellites":      "Satellites",
 "ov.locator":         "Maidenhead grid",
 "ov.psk":             "PSKReporter (digital paths)",
+"ov.callsign":        "Callsign country codes (extended)",
 
 # ── Panel titles ──────────────────────────────────────────────────────────────
 "panel.map":          "🌍  Map",
@@ -868,6 +871,7 @@ _S: dict[str, dict[str, str]] = {
 "set.map.font_maid":      "Maidenhead labels:",
 "set.map.font_sat":       "Satellite labels:",
 "set.map.path_width":     "Satellite path width:",
+"set.map.font_callsign":  "Callsign country codes:",
 "set.map.font_dx_map":    "DX spots (map):",
 "set.map.font_dx_tbl":    "DX spots (table):",
 "set.map.icons":          "Icon sizes",
