@@ -774,7 +774,7 @@ class _HiresDownloadThread(QThread):
         self._dest          = dest
         self._also_save_std = also_save_std
 
-    _UA = "HAMIOS/5.2 (HF Propagation Monitor)"
+    _UA = "HAMIOS/5.3 (HF Propagation Monitor)"
 
     def run(self):
         tmp = self._dest + ".tmp"

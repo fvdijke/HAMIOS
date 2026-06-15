@@ -230,7 +230,6 @@ class SettingsDialog(QDialog):
         outer.addWidget(self._tabs, 1)
 
         self._tabs.addTab(self._tab_station(),   tr("set.tab.station.lbl"))
-        self._tabs.addTab(self._tab_panels(),    tr("set.tab.panels.lbl"))
         self._tabs.addTab(self._tab_map(),       tr("set.tab.map.lbl"))
         self._tabs.addTab(self._tab_lightning(), tr("set.tab.lightn.lbl"))
         self._tabs.addTab(self._tab_alerts(),    tr("set.tab.alerts.lbl"))
@@ -317,39 +316,6 @@ class SettingsDialog(QDialog):
         self._day_auto_cb.setToolTip(tr("tip.day_auto"))
         v.addWidget(self._day_auto_cb)
 
-        v.addStretch()
-        return w
-
-    # ── Tab: Panelen ──────────────────────────────────────────────────────────
-    def _tab_panels(self) -> QWidget:
-        w = QWidget()
-        v = QVBoxLayout(w)
-        v.setContentsMargins(12, 8, 12, 8)
-        v.setSpacing(3)
-
-        _section(v, tr("set.tab.panels.lbl"))
-
-        _PANEL_KEYS = [
-            "worldmap", "solar", "band_rel", "band_cond", "storm_fc",
-            "band_sched", "band_hist", "solar_hist", "kp_48h", "bz_24h",
-            "xray_24h", "lightning", "alerts", "dx_spots", "prop_adv",
-        ]
-
-        from PySide6.QtWidgets import QGridLayout
-        grid = QGridLayout()
-        grid.setSpacing(2)
-        self._panel_cbs: dict[str, QCheckBox] = {}
-        for i, pid in enumerate(_PANEL_KEYS):
-            panel = self._panels.get(pid)
-            cb = QCheckBox(tr(f"panels.{pid}"))
-            cb.setChecked(panel.is_panel_visible() if panel else False)
-            if panel:
-                cb.toggled.connect(
-                    lambda on, p=panel: p.show_panel() if on else p.hide_panel())
-            grid.addWidget(cb, i // 2, i % 2)
-            self._panel_cbs[pid] = cb
-
-        v.addLayout(grid)
         v.addStretch()
         return w
 
@@ -1027,7 +993,7 @@ class SettingsDialog(QDialog):
 
                 for btn_txt, clr, action in [
                     (tr("btn.load"),   ACCENT,    lambda _=0, n=name: self._load_profile(n)),
-                    ("Overschrijven", TEXT_DIM,  lambda _=0, n=name: self._overwrite_profile(n)),
+                    ("Overschrijven", ACCENT,    lambda _=0, n=name: self._overwrite_profile(n)),
                     ("Verwijderen",   "#EF5350", lambda _=0, n=name: self._delete_profile(n)),
                 ]:
                     b = QPushButton(btn_txt)
@@ -1101,6 +1067,9 @@ class SettingsDialog(QDialog):
         _save_layouts(layouts)
         self._profile_name.clear()
         self._refresh_profiles()
+        self._status_lbl.setText(f"[OK]  Profiel '{name}' opgeslagen")
+        self._status_lbl.setStyleSheet("color: #4CAF50; font-size: 8pt;")
+        self._status_timer.start(2500)
 
     def _load_profile(self, name: str):
         layouts = _load_layouts()
@@ -1341,9 +1310,7 @@ class SettingsDialog(QDialog):
         self._cb_lightn_en.toggled.connect(
             lambda v: self._cb_lightn.setChecked(v)
             if self._cb_lightn.isChecked() != v else None)
-        for cb in self._panel_cbs.values():
-            # Panel-checkboxen al verbonden aan show/hide — geen extra apply nodig
-            pass
+        # Panel checkboxes moved to header panel chooser dialog
         for combo in [self._mode_cb, self._power_cb, self._ant_cb, self._snap_cb,
                       self._cat_baud, self._cat_bits, self._cat_parity,
                       self._cat_stop, self._cat_type]:

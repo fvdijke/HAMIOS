@@ -28,7 +28,7 @@ from .charts import NoaaDataManager, KpChart, BzChart, XrayChart, SolarParamsWid
 from .panels5 import (
     BandRelWidget, BandCondWidget, StormFcWidget, BandSchedWidget,
     BandHistChart, SolarHistChart, LightningPanel, AlertsWidget,
-    DXSpotsTable, PropAdvWidget,
+    DXSpotsTable, PropAdvWidget, MUFWidget, WSPRTableWidget,
 )
 from .config import AppConfig, load_config, save_config
 from .settings_dialog import SettingsDialog
@@ -92,11 +92,13 @@ _PANEL_DEFAULTS = {
     "storm_fc":   (0,    910,  200, 140, True),
     "band_sched": (440,  500,  370, 290, True),
     "band_hist":  (820,  500,  370, 290, True),
+    "muf_forecast": (1200, 500, 370, 290, True),
     "solar_hist": (820,  800,  370, 120, True),
     "kp_48h":     (440,  800,  370, 270, True),
     "bz_24h":     (820,  800,  370, 200, True),
     "xray_24h":   (820, 1010,  370, 200, True),
     "lightning":  (1200, 800,  370, 300, True),
+    "wspr_feed":  (440, 1100,  740, 300, True),
     "alerts":     (0,    500,  200, 280, True),
     "dx_spots":   (1200, 610,  370, 460, True),
     "prop_adv":   (0,    610,  430, 460, True),
@@ -110,11 +112,13 @@ _PANEL_TITLE_KEYS = {
     "storm_fc":   "panel.storm_fc",
     "band_sched": "panel.band_sched",
     "band_hist":  "panel.band_hist",
+    "muf_forecast": "panel.muf_forecast",
     "solar_hist": "panel.solar_hist",
     "kp_48h":     "panel.kp",
     "bz_24h":     "panel.bz",
     "xray_24h":   "panel.xray",
     "lightning":  "panel.lightning",
+    "wspr_feed":  "wspr.title",
     "alerts":     "panel.alerts",
     "dx_spots":   "panel.dx_spots",
     "prop_adv":   "panel.prop_adv",
@@ -281,10 +285,14 @@ class HAMIOSMainWindow(QMainWindow):
                 self._build_band_sched_panel(p)
             elif pid == "band_hist":
                 self._build_band_hist_panel(p)
+            elif pid == "muf_forecast":
+                self._build_muf_forecast_panel(p)
             elif pid == "solar_hist":
                 self._build_solar_hist_panel(p)
             elif pid == "lightning":
                 self._build_lightning_panel(p)
+            elif pid == "wspr_feed":
+                self._build_wspr_panel(p)
             elif pid == "alerts":
                 self._build_alerts_panel(p)
             elif pid == "dx_spots":
@@ -316,6 +324,7 @@ class HAMIOSMainWindow(QMainWindow):
         self._header.btn_eibi.clicked.connect(self._open_eibi_dialog)
         self._header.btn_ft8.clicked.connect(self._open_ft8_dialog)
         self._header.btn_overlay.clicked.connect(self._open_overlay_menu)
+        self._header.btn_panels.clicked.connect(self._open_panel_chooser)
         self._header.btn_help.clicked.connect(self._open_help)
         self._header.btn_settings.clicked.connect(self._open_settings)
 
@@ -389,7 +398,6 @@ class HAMIOSMainWindow(QMainWindow):
         layout = self._sprint5_layout(panel)
         w = BandSchedWidget(cfg=self._cfg)
         layout.addWidget(w)
-        layout.addStretch()
         self._data_mgr.solar_ready.connect(w.set_data)
         self._band_sched_widget = w
 
@@ -397,6 +405,12 @@ class HAMIOSMainWindow(QMainWindow):
         w = BandHistChart()
         self._sprint5_layout(panel).addWidget(w)
         self._data_mgr.solar_ready.connect(w.set_data)
+
+    def _build_muf_forecast_panel(self, panel):
+        w = MUFWidget(cfg=self._cfg)
+        self._sprint5_layout(panel).addWidget(w)
+        self._data_mgr.solar_ready.connect(w.set_data)
+        self._muf_widget = w
 
     def _build_solar_hist_panel(self, panel):
         w = SolarHistChart()
@@ -409,6 +423,18 @@ class HAMIOSMainWindow(QMainWindow):
         w.settings_changed.connect(self._on_panel_settings_changed)
         # QRN-meldingen doorsturen naar meldingen-paneel (wordt later gekoppeld)
         self._lightning_panel_widget = w
+
+    def _build_wspr_panel(self, panel):
+        from .wspr_feed import WSPRFeed
+        w = WSPRTableWidget()
+        self._sprint5_layout(panel).addWidget(w)
+        # Start WSPR feed
+        feed = WSPRFeed(self._cfg.qth_lat if self._cfg else 52.0,
+                       self._cfg.qth_lon if self._cfg else 5.0)
+        w.set_wspr_feed(feed)
+        feed.start()
+        self._wspr_feed = feed
+        self._wspr_table_widget = w
 
     def _build_alerts_panel(self, panel):
         layout = self._sprint5_layout(panel)
@@ -514,7 +540,7 @@ class HAMIOSMainWindow(QMainWindow):
         _panel_widgets = [
             "_prop_adv_widget", "_band_rel_widget", "_band_cond_widget",
             "_dx_spots_widget", "_lightning_panel_widget", "_band_sched_widget",
-            "_alerts_widget",
+            "_muf_widget", "_alerts_widget",
         ]
         for attr in _panel_widgets:
             w = getattr(self, attr, None)
@@ -688,23 +714,37 @@ class HAMIOSMainWindow(QMainWindow):
         self._show_dialog("ft8", Ft8Dialog(self))
 
     def _open_overlay_menu(self):
-        """Popup-menu voor alle kaartoverlays."""
-        from PySide6.QtWidgets import QMenu, QWidgetAction, QCheckBox
-        from PySide6.QtCore import QPoint
-        menu = QMenu(self)
-        menu.setStyleSheet(
-            f"QMenu {{ background: #2A2D32; border: 1px solid #404850; }}"
-            f"QMenu::item {{ padding: 4px 20px; color: #C8C8D0; }}"
-            f"QMenu::item:selected {{ background: #32373F; }}")
+        """Modeless overlay selection panel (multiple toggles, stays open)."""
+        from PySide6.QtWidgets import (QDialog, QVBoxLayout, QHBoxLayout,
+                                       QCheckBox, QPushButton, QLabel)
+        from PySide6.QtCore import Qt, QPoint
 
-        def _toggle_cb(attr, map_fn):
-            cb = QCheckBox()
-            return cb, lambda v: (
-                setattr(self._cfg, attr, v),
-                map_fn(v),
-                __import__('hamios5.config', fromlist=['save_config'])
-                    .__dict__['save_config'] if False else None)
+        # Check if dialog already open
+        if hasattr(self, "_overlay_dialog") and self._overlay_dialog.isVisible():
+            self._overlay_dialog.raise_()
+            self._overlay_dialog.activateWindow()
+            return
 
+        dialog = QDialog(self, Qt.FramelessWindowHint | Qt.WindowStaysOnTopHint)
+        dialog.setStyleSheet(
+            f"QDialog {{ background: #1A1D22; border: 1px solid #404850; border-radius: 5px; }}"
+            f"QCheckBox {{ color: #C8C8D0; }}"
+            f"QLabel {{ color: #C8D0DC; }}"
+            f"QPushButton {{ background: #C8A84B; color: #1A1D22; font-weight: bold; "
+            f"border: none; border-radius: 3px; padding: 4px 12px; }}"
+            f"QPushButton:hover {{ background: #E0C060; }}"
+        )
+
+        vlay = QVBoxLayout(dialog)
+        vlay.setContentsMargins(12, 12, 12, 12)
+        vlay.setSpacing(8)
+
+        # Title
+        title = QLabel(tr("hdr.overlays"))
+        title.setStyleSheet("color: #C8A84B; font-weight: bold;")
+        vlay.addWidget(title)
+
+        # Overlay checkboxes
         overlays = [
             (tr("ov.night"),     "show_night",    lambda v: self._map_view._night.setVisible(v)),
             (tr("ov.grayline"),  "show_grayline", lambda v: self._map_view.set_grayline_visible(v)),
@@ -725,17 +765,106 @@ class HAMIOSMainWindow(QMainWindow):
             (tr("ov.callsign"),  "show_callsign_overlay",
              lambda v: self._map_view.set_callsign_overlay_visible(v)),
         ]
+
         for label, attr, fn in overlays:
-            act = menu.addAction(label)
-            act.setCheckable(True)
-            act.setChecked(bool(getattr(self._cfg, attr, False)))
-            act.toggled.connect(
+            cb = QCheckBox(label)
+            cb.setChecked(bool(getattr(self._cfg, attr, False)))
+            cb.toggled.connect(
                 lambda v, a=attr, f=fn: (setattr(self._cfg, a, v), f(v),
                                          save_config(self._cfg)))
+            vlay.addWidget(cb)
 
+        vlay.addSpacing(6)
+
+        # OK button
+        hlay = QHBoxLayout()
+        hlay.addStretch()
+        ok_btn = QPushButton("OK")
+        ok_btn.setFixedWidth(80)
+        ok_btn.clicked.connect(dialog.accept)
+        hlay.addWidget(ok_btn)
+        vlay.addLayout(hlay)
+
+        dialog.adjustSize()
+
+        # Position near button (top-right)
         btn = self._header.btn_overlay
-        pos = btn.mapToGlobal(QPoint(0, btn.height()))
-        menu.exec(pos)
+        pos = btn.mapToGlobal(QPoint(btn.width() - dialog.width(), btn.height() + 4))
+        dialog.move(pos)
+
+        self._overlay_dialog = dialog
+        dialog.setAttribute(Qt.WA_DeleteOnClose, False)
+        dialog.show()
+
+    def _open_panel_chooser(self):
+        """Modeless panel visibility selector."""
+        from PySide6.QtWidgets import (QDialog, QVBoxLayout, QHBoxLayout,
+                                       QCheckBox, QPushButton, QLabel)
+        from PySide6.QtCore import Qt, QPoint
+
+        # Check if dialog already open
+        if hasattr(self, "_panel_dialog") and self._panel_dialog.isVisible():
+            self._panel_dialog.raise_()
+            self._panel_dialog.activateWindow()
+            return
+
+        dialog = QDialog(self, Qt.FramelessWindowHint | Qt.WindowStaysOnTopHint)
+        dialog.setStyleSheet(
+            f"QDialog {{ background: #1A1D22; border: 1px solid #404850; border-radius: 5px; }}"
+            f"QCheckBox {{ color: #C8C8D0; }}"
+            f"QLabel {{ color: #C8D0DC; }}"
+            f"QPushButton {{ background: #C8A84B; color: #1A1D22; font-weight: bold; "
+            f"border: none; border-radius: 3px; padding: 4px 12px; }}"
+            f"QPushButton:hover {{ background: #E0C060; }}"
+        )
+
+        vlay = QVBoxLayout(dialog)
+        vlay.setContentsMargins(12, 12, 12, 12)
+        vlay.setSpacing(8)
+
+        # Title
+        title = QLabel("Panelen")
+        title.setStyleSheet("color: #C8A84B; font-weight: bold;")
+        vlay.addWidget(title)
+
+        # Panel visibility checkboxes
+        _PANEL_KEYS = [
+            "worldmap", "solar", "band_rel", "band_cond", "storm_fc",
+            "band_sched", "band_hist", "muf_forecast", "solar_hist", "kp_48h", "bz_24h",
+            "xray_24h", "lightning", "alerts", "dx_spots", "wspr_feed", "prop_adv",
+        ]
+
+        for pid in _PANEL_KEYS:
+            panel = self._panels.get(pid)
+            cb = QCheckBox(tr(f"panels.{pid}"))
+            cb.setChecked(panel.is_panel_visible() if panel else False)
+            if panel:
+                cb.toggled.connect(
+                    lambda v, p=panel: (p.show_panel() if v else p.hide_panel(),
+                                       save_config(self._cfg)))
+            vlay.addWidget(cb)
+
+        vlay.addSpacing(6)
+
+        # OK button
+        hlay = QHBoxLayout()
+        hlay.addStretch()
+        ok_btn = QPushButton("OK")
+        ok_btn.setFixedWidth(80)
+        ok_btn.clicked.connect(dialog.accept)
+        hlay.addWidget(ok_btn)
+        vlay.addLayout(hlay)
+
+        dialog.adjustSize()
+
+        # Position near button
+        btn = self._header.btn_panels
+        pos = btn.mapToGlobal(QPoint(btn.width() - dialog.width(), btn.height() + 4))
+        dialog.move(pos)
+
+        self._panel_dialog = dialog
+        dialog.setAttribute(Qt.WA_DeleteOnClose, False)
+        dialog.show()
 
     # ── CAT ───────────────────────────────────────────────────────────────────
     def _open_cat_dialog(self):
@@ -922,9 +1051,11 @@ class HAMIOSMainWindow(QMainWindow):
         """Sla config op en herbereken afhankelijke panels."""
         from .config import save_config
         save_config(self._cfg)
-        # BandSchedWidget herberekenen als mode/power/antenne wijzigt
+        # BandSchedWidget & MUFWidget herberekenen als mode/power/antenne wijzigt
         if hasattr(self, "_band_sched_widget"):
             self._band_sched_widget.set_cfg(self._cfg)
+        if hasattr(self, "_muf_widget"):
+            self._muf_widget.set_cfg(self._cfg)
 
     def _reset_layout(self):
         """Zet panels terug: eerst opgeslagen standaard, dan fabriekswaarden."""
@@ -1033,6 +1164,10 @@ class HAMIOSMainWindow(QMainWindow):
         threading.Thread(target=_fetch, daemon=True).start()
 
     # ── Publieke interface ────────────────────────────────────────────────────
+    def download_missing_maps(self) -> list:
+        """Start downloads voor ontbrekende kaartbestanden."""
+        return self._map_view.download_missing_maps()
+
     def set_qth(self, lat: float, lon: float):
         """Stel QTH-positie in op de kaart, satellietlaag en header-klok."""
         if hasattr(self, "_map_view"):
@@ -1057,6 +1192,8 @@ class HAMIOSMainWindow(QMainWindow):
         self._data_mgr.stop()
         if hasattr(self, "_map_view"):
             self._map_view._lightning._worker.stop()
+        if hasattr(self, "_wspr_feed"):
+            self._wspr_feed.stop()
         if hasattr(self, "_cat"):
             self._cat.disconnect()
         super().closeEvent(event)
