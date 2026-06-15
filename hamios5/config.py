@@ -27,8 +27,10 @@ class AppConfig:
     show_moon:      bool  = True
     show_lightning: bool  = True
     show_dx_spots:  bool  = True
-    show_locator:   bool  = False
-    show_psk:       bool  = False    # PSKReporter digitale propagatiepaden
+    show_locator:          bool  = False
+    show_psk:              bool  = False    # PSKReporter digitale propagatiepaden
+    show_callsign_overlay:        bool  = False    # DXCC callsign prefix + country overlay
+    callsign_overlay_font_size:   int   = 7        # lettergrootte DXCC overlay (pt)
     map_overlay:    bool  = True    # header-knop staat
 
     # ── Bliksem ───────────────────────────────────────────────────────────────

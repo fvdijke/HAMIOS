@@ -6,7 +6,7 @@
 
 **Real-time HF propagation and DX monitor for amateur radio operators — Windows 10/11**
 
-> v5.2 · June 2026 · Frank van Dijke · *Developed with Claude AI (Anthropic)*
+> v5.3 · June 2026 · Frank van Dijke · *Developed with Claude AI (Anthropic)*
 
 [![Website](https://img.shields.io/badge/website-hamios.space-orange)](https://hamios.space)
 [![Release](https://img.shields.io/github/v/release/fvdijke/HAMIOS?label=latest)](https://github.com/fvdijke/HAMIOS/releases/latest)
@@ -33,9 +33,11 @@ HF Propagation & Atmosphere Monitor gives amateur radio operators real-time insi
 | 📻 **Band Conditions** | Day/night conditions per band, 24h opening schedule heatmap |
 | 🌩 **Storm Forecast** | NOAA 3-day geomagnetic storm probability (G1–G4+) with HAM radio impact tooltips |
 | 📈 **Band / Solar History** | 90-day CSV archive, interactive 24h/7d/30d/1y range selector, K-index overlay |
+| 📈 **MUF/LUF Forecast** | **NEW**: 24-hour Maximum/Minimum Usable Frequency with band-zone visualization, gridlines, real-time indicator |
+| 🛰 **WSPR Live Feed** | **NEW**: Real-time WSPR QSO table with sortable columns (call, grid, distance, time, SNR) |
 | 📡 **Live DX Spots** | Real-time DX cluster from DXWatch.com (100 spots), band/continent filter, heatmap, click for info |
 | 📡 **PSKReporter** | Real-time FT8/FT4 propagation paths from PSKReporter.info — thousands of paths with SNR |
-| 💡 **Propagation Advice** | AI-style analysis cards per band |
+| 💡 **Propagation Advice** | AI-style analysis cards per band with real-time solar data analysis |
 | 🌍 **World Map** | 4096×2048 map with overlays — world map auto-downloaded at first start |
 | 🌐 **Bilingual** | Full English / Dutch interface — switch instantly via Settings → About |
 | 🛰 **Satellite Tracking** | TLE from CelesTrak, real-time position, orbit paths, footprint, QTH zone ping |
@@ -45,6 +47,8 @@ HF Propagation & Atmosphere Monitor gives amateur radio operators real-time insi
 | 📡 **FT8 / Digital** | Reference table for FT8/FT4/WSPR/JS8Call and more |
 | 🕵 **SpyStations** | Numbers stations database with CAT tuning |
 | 📟 **CAT Interface** | Yaesu, Kenwood/Elecraft, Icom CI-V — live frequency display in header |
+| 💾 **Profile Management** | **NEW**: Save complete workspaces (all settings + layout + window geometry) as named profiles or default backup |
+| 🪟 **Panel Visibility** | **NEW**: Quick header button to show/hide panels without reopening settings |
 
 ---
 
@@ -59,6 +63,7 @@ Toggleable via the **🗺 Overlays** button in the header:
 - Graticule (configurable 10° / 20° / 30° step)
 - Live DX spots with callsign labels and animated connection lines (click for info)
 - **PSKReporter** — real-time FT8/FT4 propagation paths coloured by band (click for info)
+- **DXCC callsign country codes (extended)** — prefix + country name labels at ~150 DXCC entity positions; click any label for a popup listing all prefixes for that country (configurable font size)
 - Satellite positions, orbit paths, footprints
 - Lightning strikes with animated ripple rings
 - Alert radius circles (warning + beep threshold)
@@ -193,6 +198,15 @@ All connections use standard HTTPS/WebSocket. No personal data is transmitted.
 ---
 
 ## 📋 Changelog
+
+### v5.3 — June 2026
+- **Profile Management System**: Save/load complete workspaces (config + panel layout + window geometry) as named profiles or default backup
+- **MUF/LUF Forecast Panel**: 24-hour Maximum/Minimum Usable Frequency visualization with gridlines, band-zone colors, and real-time indicator
+- **WSPR Live Feed**: Real-time WSPR QSO table with sortable columns (callsign, grid, frequency, SNR, distance, path, UTC time)
+- **Panel Visibility Button**: Quick 🪟 header button to toggle panel visibility without opening settings
+- **Online Resource Monitoring**: 9-category connectivity check on splash screen (NOAA, CelesTrak, WSPRnet, DXWatch, PSK Reporter, Blitzortung, EIBI, Wikimedia, HamQSL)
+- **Improved Headers**: Better contrast and organization across all panels
+- **Graph Improvements**: MUF/LUF forecast now with band-zone background coloring, gridlines, and clean minimal design
 
 ### v5.2 — June 2026
 - **EIBI**: list now sorted by kHz (numeric) by default; station name moved to second column

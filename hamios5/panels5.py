@@ -19,7 +19,7 @@ import time as _time
 
 from PySide6.QtCore import Qt, QTimer, QPointF, QRectF, Signal
 from PySide6.QtGui import (
-    QPainter, QColor, QPen, QBrush, QFont
+    QPainter, QColor, QPen, QBrush, QFont, QPainterPath
 )
 from PySide6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QGridLayout,
@@ -131,7 +131,7 @@ def _show_band_freq_menu(band: str, widget, callback) -> None:
     callback(hz: int, mode: str) wordt aangeroepen bij selectie.
     """
     from PySide6.QtWidgets import QMenu
-    from PySide6.QtCore import QCursor
+    from PySide6.QtGui import QCursor
     options = _BAND_FREQ_OPTIONS.get(band, [])
     if not options:
         return
@@ -2388,3 +2388,327 @@ class PropAdvWidget(QWidget):
             overall_clr))
 
         return tips
+
+
+# ── MUF/LUF Forecast Widget ────────────────────────────────────────────────
+
+class MUFWidget(QWidget):
+    """24-hour MUF (Maximum Usable Frequency) forecast heatmap."""
+
+    def __init__(self, cfg=None, parent=None):
+        super().__init__(parent)
+        self._cfg = cfg
+        self._solar: dict = {}
+        self._muf_data: dict = {}  # {hour: {'foF2': MHz, 'muf': MHz, 'luf': MHz, 'quality': str}}
+        self.setAttribute(Qt.WA_OpaquePaintEvent)
+        self.setMinimumHeight(140)
+        self.setMouseTracking(True)
+        self.setCursor(Qt.PointingHandCursor)
+
+    def set_cfg(self, cfg):
+        self._cfg = cfg
+        self._recalc()
+        self.update()
+
+    def set_data(self, solar: dict):
+        """Update with new solar data and recalculate MUF."""
+        self._solar = solar
+        self._recalc()
+        self.update()
+
+    def _recalc(self):
+        """Recalculate MUF forecast from solar data."""
+        from .muf_model import MUFModel
+
+        try:
+            sfi = float(str(self._solar.get("sfi", "90")).replace("—", "90") or "90")
+            ssn = float(str(self._solar.get("ssn", "50")).replace("—", "50") or "50")
+            k = float(str(self._solar.get("k_index", "2")).replace("—", "2") or "2")
+        except (ValueError, TypeError):
+            sfi, ssn, k = 90.0, 50.0, 2.0
+
+        qth_lat, qth_lon = 52.0, 5.0
+        if self._cfg:
+            qth_lat, qth_lon = self._cfg.qth_lat, self._cfg.qth_lon
+
+        model = MUFModel(qth_lat, qth_lon)
+        self._muf_data = model.forecast_day(sfi, ssn, k, distance_km=5000)
+
+    def paintEvent(self, event):
+        p = QPainter(self)
+        W, H = self.width(), self.height()
+        p.fillRect(0, 0, W, H, QColor(BG_PANEL))
+
+        if not self._muf_data:
+            p.setPen(QColor(TEXT_DIM))
+            p.setFont(QFont("Segoe UI", 9))
+            p.drawText(0, 0, W, H, Qt.AlignCenter, tr("app.loading"))
+            return
+
+        # Layout: left margin for Y-axis labels, bottom margin for X-axis
+        N_H = 24
+        PL, PR, PT, PB = 70, 8, 30, 35  # More space for labels
+        cell_w = max(1, (W - PL - PR) // N_H)
+        CELL_H = H - PT - PB
+
+        # Get MUF/LUF range
+        muf_values = [self._muf_data[h]["muf"] for h in range(24) if h in self._muf_data]
+        luf_values = [self._muf_data[h]["luf"] for h in range(24) if h in self._muf_data]
+
+        muf_min, muf_max = 5.0, 30.0
+        if muf_values:
+            muf_min = min(muf_min, min(muf_values) - 2)
+            muf_max = max(muf_max, max(muf_values) + 2)
+        if luf_values:
+            muf_min = min(muf_min, min(luf_values) - 2)
+
+        muf_min = max(0, int(muf_min / 5) * 5)  # Round to 5 MHz
+        muf_max = int((muf_max + 4) / 5) * 5
+        muf_range = max(1.0, muf_max - muf_min)
+
+        # ── Background gridlines & band-zones ──
+        p.setPen(QPen(QColor(TEXT_DIM), 1, Qt.DotLine))
+
+        # Vertical hour gridlines (every 3 hours)
+        for h in range(0, N_H, 3):
+            x = PL + h * cell_w
+            p.drawLine(int(x), PT, int(x), PT + CELL_H)
+
+        # Horizontal MHz gridlines
+        for mhz in range(int(muf_min), int(muf_max) + 1, 5):
+            norm = (mhz - muf_min) / muf_range
+            y = PT + CELL_H * (1.0 - norm)
+            p.drawLine(PL, int(y), PL + N_H * cell_w, int(y))
+
+        # ── Band-zone backgrounds (colored regions for common HF bands) ──
+        bands = [
+            (80, "#C62828", "80m"),   # Rood
+            (40, "#F57C00", "40m"),   # Oranje
+            (20, "#6A1B9A", "20m"),   # Paars
+            (15, "#0288D1", "15m"),   # Blauw
+            (10, "#00796B", "10m"),   # Cyaan
+        ]
+
+        for freq_mhz, color, _ in bands:
+            if muf_min < freq_mhz < muf_max:
+                norm = (freq_mhz - muf_min) / muf_range
+                y = PT + CELL_H * (1.0 - norm)
+                p.fillRect(PL, int(y) - 1, N_H * cell_w, 2, QColor(color + "30"))  # Halftransparant
+
+        # ── Hour labels (every 3 hours) ──
+        p.setFont(QFont("Segoe UI", 8))
+        p.setPen(QPen(QColor(TEXT_H1)))
+        for h in range(0, N_H, 3):
+            lx = PL + h * cell_w + cell_w // 2
+            p.drawText(int(lx) - 12, PT - 20, 24, 16, Qt.AlignCenter, f"{h:02d}Z")
+
+        # ── Draw LUF curve (onderste grens, grijs) ──
+        luf_points = []
+        for h in range(N_H):
+            if h in self._muf_data:
+                luf = self._muf_data[h]["luf"]
+                norm_luf = (luf - muf_min) / muf_range
+                y = PT + CELL_H * (1.0 - norm_luf)
+                x = PL + h * cell_w + cell_w // 2
+                luf_points.append(QPointF(x, y))
+
+        if luf_points and len(luf_points) > 1:
+            p.setPen(QPen(QColor("#808080"), 2, Qt.SolidLine, Qt.RoundCap, Qt.RoundJoin))
+            path = QPainterPath(luf_points[0])
+            for pt in luf_points[1:]:
+                path.lineTo(pt)
+            p.drawPath(path)
+
+        # ── Draw MUF curve (bovenste grens, accent) ──
+        muf_points = []
+        for h in range(N_H):
+            if h in self._muf_data:
+                muf = self._muf_data[h]["muf"]
+                norm_muf = (muf - muf_min) / muf_range
+                y = PT + CELL_H * (1.0 - norm_muf)
+                x = PL + h * cell_w + cell_w // 2
+                muf_points.append(QPointF(x, y))
+
+        if muf_points and len(muf_points) > 1:
+            p.setPen(QPen(QColor(ACCENT), 3, Qt.SolidLine, Qt.RoundCap, Qt.RoundJoin))
+            path = QPainterPath(muf_points[0])
+            for pt in muf_points[1:]:
+                path.lineTo(pt)
+            p.drawPath(path)
+
+            # Fill between MUF and LUF
+            if luf_points and len(luf_points) == len(muf_points):
+                fill_points = muf_points + list(reversed(luf_points))
+                fill_path = QPainterPath(fill_points[0])
+                for pt in fill_points[1:]:
+                    fill_path.lineTo(pt)
+                fill_path.closeSubpath()
+                p.fillPath(fill_path, QBrush(QColor(200, 168, 75, 40)))
+
+        # ── Current hour indicator (nu) ──
+        now_h = _dt.datetime.now().hour
+        if now_h in self._muf_data and muf_points:
+            muf = self._muf_data[now_h]["muf"]
+            norm_muf = (muf - muf_min) / muf_range
+            y = PT + CELL_H * (1.0 - norm_muf)
+            x = PL + now_h * cell_w + cell_w // 2
+            p.setPen(QPen(QColor("#FFFF00"), 2))
+            p.setBrush(QBrush(QColor("#FFFF0080")))
+            p.drawEllipse(QPointF(x, y), 5, 5)
+
+        # ── Y-axis MHz labels ──
+        p.setFont(QFont("Segoe UI", 9))
+        p.setPen(QPen(QColor(TEXT_H1)))
+        for mhz in range(int(muf_min), int(muf_max) + 1, 5):
+            norm = (mhz - muf_min) / muf_range if muf_range > 0 else 0.5
+            y = PT + CELL_H * (1.0 - norm)
+            p.drawText(2, int(y) - 6, PL - 6, 12, Qt.AlignRight | Qt.AlignVCenter, f"{mhz} MHz")
+
+
+    def mouseMoveEvent(self, event):
+        """Show MUF tooltip on hover."""
+        W, H = self.width(), self.height()
+        N_H = 24
+        PL = 70  # Must match paintEvent layout
+        cell_w = max(1, (W - PL - 8) // N_H)
+
+        x = event.position().x()
+        if x >= PL:
+            h = int((x - PL) // cell_w)
+            if 0 <= h < N_H and h in self._muf_data:
+                data = self._muf_data[h]
+                quality = data["quality"]
+                quality_key = f"muf.quality.{quality}"
+                tip = (f"{h:02d}:00 UTC\n"
+                       f"foF2: {data['foF2']:.1f} MHz\n"
+                       f"MUF: {data['muf']:.1f} MHz\n"
+                       f"LUF: {data['luf']:.1f} MHz\n"
+                       f"{tr('muf.quality')}: {tr(quality_key)}")
+                from PySide6.QtWidgets import QToolTip
+                QToolTip.showText(event.globalPosition().toPoint(), tip, self)
+                return
+
+        from PySide6.QtWidgets import QToolTip
+        QToolTip.hideText()
+
+
+# ── WSPR Live Table Widget ────────────────────────────────────────────────
+
+class WSPRTableWidget(QWidget):
+    """Live WSPR QSO records table with real-time updates."""
+
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self._wspr_feed = None
+        self._records = []
+
+        vlay = QVBoxLayout(self)
+        vlay.setContentsMargins(4, 4, 4, 4)
+        vlay.setSpacing(2)
+
+        # Status label
+        self._status_lbl = QLabel(tr("app.loading"))
+        self._status_lbl.setStyleSheet(f"color: {TEXT_DIM}; font-size: 8pt;")
+        vlay.addWidget(self._status_lbl)
+
+        # Table with sortable columns
+        self._table = QTableWidget()
+        self._table.setColumnCount(8)
+        self._table.setHorizontalHeaderLabels([
+            tr("wspr.call"),
+            tr("wspr.tx_grid"),
+            tr("wspr.freq"),
+            tr("wspr.snr"),
+            tr("wspr.distance"),
+            tr("wspr.path"),
+            tr("wspr.time_utc"),
+        ])
+        # Enable sorting by clicking column headers
+        self._table.setSortingEnabled(True)
+        self._table.sortItems(6, Qt.DescendingOrder)  # Sort by UTC time (descending)
+        self._table.setStyleSheet(
+            f"QTableWidget {{ background: {BG_PANEL}; color: {TEXT_BODY}; }}"
+            f"QHeaderView::section {{ background: {BG_SURFACE}; color: {TEXT_H1}; "
+            f"padding: 4px; font-size: 8pt; }}"
+        )
+        self._table.setSelectionBehavior(QAbstractItemView.SelectRows)
+        self._table.setSelectionMode(QAbstractItemView.SingleSelection)
+        self._table.setColumnWidth(0, 80)
+        self._table.setColumnWidth(1, 70)
+        self._table.setColumnWidth(2, 70)
+        self._table.setColumnWidth(3, 50)
+        self._table.setColumnWidth(4, 70)
+        self._table.setColumnWidth(5, 60)
+        self._table.setColumnWidth(6, 80)
+        self._table.verticalHeader().setVisible(False)
+        vlay.addWidget(self._table)
+
+    def set_wspr_feed(self, feed):
+        """Connect to WSPR feed for live updates."""
+        self._wspr_feed = feed
+        if feed:
+            feed.data_updated.connect(self._on_wspr_data)
+
+    def _on_wspr_data(self, records):
+        """Update table with new WSPR data."""
+        self._records = records
+        self._update_table()
+
+    def _update_table(self):
+        """Populate table with WSPR records."""
+        self._table.setRowCount(0)
+
+        if not self._records:
+            self._status_lbl.setText(tr("wspr.disabled"))
+            return
+
+        self._status_lbl.setText(
+            f"{len(self._records)} {tr('wspr.records')} "
+            f"({tr('wspr.last_update')}: {_dt.datetime.now().strftime('%H:%M')})"
+        )
+
+        for row, record in enumerate(self._records[:100]):  # Limit to 100 rows
+            self._table.insertRow(row)
+
+            # Call sign
+            call_item = QTableWidgetItem(record.get("call_sign", "?"))
+            call_item.setForeground(QColor(ACCENT))
+            self._table.setItem(row, 0, call_item)
+
+            # TX Grid
+            grid_item = QTableWidgetItem(record.get("tx_grid", "?"))
+            self._table.setItem(row, 1, grid_item)
+
+            # Frequency
+            freq = record.get("frequency", 0)
+            freq_item = QTableWidgetItem(f"{freq:.4f}" if freq else "?")
+            self._table.setItem(row, 2, freq_item)
+
+            # SNR
+            snr = record.get("snr", 0)
+            snr_item = QTableWidgetItem(f"{snr:+d}" if snr else "?")
+            snr_color = QColor("#4CAF50") if snr >= -10 else QColor("#FFA726") if snr >= -20 else QColor("#EF5350")
+            snr_item.setForeground(snr_color)
+            self._table.setItem(row, 3, snr_item)
+
+            # Distance
+            dist_item = QTableWidgetItem(f"{record.get('distance', 0)} km")
+            self._table.setItem(row, 4, dist_item)
+
+            # Azimuth
+            az_item = QTableWidgetItem(f"{record.get('azimuth', 0)}°")
+            self._table.setItem(row, 5, az_item)
+
+            # Time
+            time_str = record.get("time", "")
+            if time_str:
+                try:
+                    ts = _dt.datetime.fromisoformat(time_str.replace("Z", "+00:00"))
+                    time_str = ts.strftime("%H:%M:%S")
+                except (ValueError, AttributeError):
+                    pass
+            time_item = QTableWidgetItem(time_str)
+            time_item.setForeground(QColor(TEXT_DIM))
+            self._table.setItem(row, 6, time_item)
+
+        self._table.resizeRowsToContents()

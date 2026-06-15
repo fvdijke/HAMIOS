@@ -64,6 +64,8 @@ class HeaderBar(QWidget):
         self._btn_ft8     = self._btn(tr("hdr.ft8"),         amber=True)
         self._btn_overlay = self._btn(tr("hdr.overlays"),    amber=True)
         self._btn_overlay.setToolTip(tr("hdr.overlays.tip"))
+        self._btn_panels = self._btn(tr("hdr.panels"),       amber=True)
+        self._btn_panels.setToolTip(tr("hdr.panels"))
         self._btn_exit     = self._btn(tr("app.close"), bg="#5A1010", hover="#8B1A1A")
         self._btn_settings = self._btn(tr("hdr.settings"), amber=True)
 
@@ -88,7 +90,7 @@ class HeaderBar(QWidget):
         self._local_tz = _tz_from_latlon(52.0, 5.0)   # default NL; update via set_qth()
 
         for b in [self._btn_sat, self._btn_spy, self._btn_eibi,
-                  self._btn_ft8, self._btn_overlay]:
+                  self._btn_ft8, self._btn_overlay, self._btn_panels]:
             layout.addWidget(b)
 
         # Radio frequentie display
@@ -262,6 +264,8 @@ class HeaderBar(QWidget):
         self._btn_ft8.setText(tr("hdr.ft8"))
         self._btn_overlay.setText(tr("hdr.overlays"))
         self._btn_overlay.setToolTip(tr("hdr.overlays.tip"))
+        self._btn_panels.setText(tr("hdr.panels"))
+        self._btn_panels.setToolTip(tr("hdr.panels"))
         self._btn_exit.setText(tr("app.close"))
         self._btn_settings.setText(tr("hdr.settings"))
         self._btn_help.setText(tr("hdr.help"))
@@ -289,6 +293,8 @@ class HeaderBar(QWidget):
     def btn_ft8(self):        return self._btn_ft8
     @property
     def btn_overlay(self):    return self._btn_overlay
+    @property
+    def btn_panels(self):     return self._btn_panels
     @property
     def btn_help(self):       return self._btn_help
     @property

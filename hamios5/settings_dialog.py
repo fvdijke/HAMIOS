@@ -5,9 +5,12 @@ import math
 import os
 import subprocess
 import sys
+from dataclasses import asdict
 
 # Pad naar het layouts-bestand
 from ._appdir import APP_DIR as _HERE
+from .profiel_manager import ProfileManager
+
 # Legacy layouts-bestand (nog steeds gelezen voor achterwaartse compatibiliteit)
 _LAYOUTS_FILE = os.path.join(_HERE, "hamios_layouts.json")
 _CONFIG_FILE  = os.path.join(_HERE, "hamios_config.json")
@@ -230,7 +233,6 @@ class SettingsDialog(QDialog):
         outer.addWidget(self._tabs, 1)
 
         self._tabs.addTab(self._tab_station(),   tr("set.tab.station.lbl"))
-        self._tabs.addTab(self._tab_panels(),    tr("set.tab.panels.lbl"))
         self._tabs.addTab(self._tab_map(),       tr("set.tab.map.lbl"))
         self._tabs.addTab(self._tab_lightning(), tr("set.tab.lightn.lbl"))
         self._tabs.addTab(self._tab_alerts(),    tr("set.tab.alerts.lbl"))
@@ -320,39 +322,6 @@ class SettingsDialog(QDialog):
         v.addStretch()
         return w
 
-    # ── Tab: Panelen ──────────────────────────────────────────────────────────
-    def _tab_panels(self) -> QWidget:
-        w = QWidget()
-        v = QVBoxLayout(w)
-        v.setContentsMargins(12, 8, 12, 8)
-        v.setSpacing(3)
-
-        _section(v, tr("set.tab.panels.lbl"))
-
-        _PANEL_KEYS = [
-            "worldmap", "solar", "band_rel", "band_cond", "storm_fc",
-            "band_sched", "band_hist", "solar_hist", "kp_48h", "bz_24h",
-            "xray_24h", "lightning", "alerts", "dx_spots", "prop_adv",
-        ]
-
-        from PySide6.QtWidgets import QGridLayout
-        grid = QGridLayout()
-        grid.setSpacing(2)
-        self._panel_cbs: dict[str, QCheckBox] = {}
-        for i, pid in enumerate(_PANEL_KEYS):
-            panel = self._panels.get(pid)
-            cb = QCheckBox(tr(f"panels.{pid}"))
-            cb.setChecked(panel.is_panel_visible() if panel else False)
-            if panel:
-                cb.toggled.connect(
-                    lambda on, p=panel: p.show_panel() if on else p.hide_panel())
-            grid.addWidget(cb, i // 2, i % 2)
-            self._panel_cbs[pid] = cb
-
-        v.addLayout(grid)
-        v.addStretch()
-        return w
-
     # ── Tab: Kaart ────────────────────────────────────────────────────────────
     def _tab_map(self) -> QWidget:
         w = QWidget()
@@ -417,6 +386,12 @@ class SettingsDialog(QDialog):
         self._sat_path_width_spin.setSuffix(" px")
         self._sat_path_width_spin.setFixedWidth(80)
         row(tr("set.map.path_width"), self._sat_path_width_spin)
+
+        self._callsign_font_spin = QSpinBox()
+        self._callsign_font_spin.setRange(5, 72)
+        self._callsign_font_spin.setSuffix(" pt")
+        self._callsign_font_spin.setFixedWidth(80)
+        row(tr("set.map.font_callsign"), self._callsign_font_spin)
 
         self._dx_map_font_spin = QSpinBox()
         self._dx_map_font_spin.setRange(6, 72)
@@ -986,7 +961,7 @@ class SettingsDialog(QDialog):
         self.setMinimumWidth(needed)
 
     def _refresh_profiles(self):
-        """Vervang de profielenlijst door een nieuw opgebouwde widget."""
+        """Vervang de profielenlijst door een nieuw opgebouwde widget (ProfielManager)."""
         f8  = QFont("Segoe UI", 8)
         f8b = QFont("Segoe UI", 8); f8b.setBold(True)
 
@@ -997,8 +972,7 @@ class SettingsDialog(QDialog):
         vbox.setContentsMargins(4, 4, 4, 4)
         vbox.setSpacing(4)
 
-        layouts = _load_layouts()
-        profiles = sorted(k for k in layouts if not k.startswith("__"))
+        profiles = ProfileManager.list_named_profiles()
 
         if not profiles:
             lbl = QLabel(tr("no_profiles"))
@@ -1021,7 +995,7 @@ class SettingsDialog(QDialog):
 
                 for btn_txt, clr, action in [
                     (tr("btn.load"),   ACCENT,    lambda _=0, n=name: self._load_profile(n)),
-                    ("Overschrijven", TEXT_DIM,  lambda _=0, n=name: self._overwrite_profile(n)),
+                    ("Overschrijven", ACCENT,    lambda _=0, n=name: self._overwrite_profile(n)),
                     ("Verwijderen",   "#EF5350", lambda _=0, n=name: self._delete_profile(n)),
                 ]:
                     b = QPushButton(btn_txt)
@@ -1038,9 +1012,13 @@ class SettingsDialog(QDialog):
         vbox.addStretch()
         self._profiles_scroll.setWidget(container)
 
-    # ── Layout-acties ─────────────────────────────────────────────────────
-    def _current_layout_dict(self) -> dict:
-        """Lees huidige panel-geometrie + zichtbaarheid."""
+    # ── Profiel-acties (config + layout) ──────────────────────────────────
+    def _get_current_config_dict(self) -> dict:
+        """Converteer huidge AppConfig naar dict."""
+        return asdict(self._cfg)
+
+    def _get_current_layout_dict(self) -> dict:
+        """Lees huidge panel-geometrie + zichtbaarheid."""
         layout = {}
         for pid, p in self._panels.items():
             g = p.geometry()
@@ -1052,6 +1030,11 @@ class SettingsDialog(QDialog):
                 self._mainwin.width(), self._mainwin.height()
             ]
         return layout
+
+    # ── Layout-acties ─────────────────────────────────────────────────────
+    def _current_layout_dict(self) -> dict:
+        """Lees huidge panel-geometrie + zichtbaarheid (legacy compat)."""
+        return self._get_current_layout_dict()
 
     def _apply_layout_dict(self, layout: dict):
         """Pas een opgeslagen layout toe op panelen én venster."""
@@ -1070,37 +1053,63 @@ class SettingsDialog(QDialog):
                     p.hide_panel()
 
     def _save_as_default(self):
-        if self._mainwin:
-            self._mainwin.save_layout()    # slaat via mainwindow op
-        # Ook altijd via de dialoog opslaan (bevat __window__ sleutel)
-        layouts = _load_layouts()
-        layouts["__default__"] = self._current_layout_dict()
-        _save_layouts(layouts)
+        """Sla huidge instellingen + layout op als default-profiel."""
+        config_dict = self._get_current_config_dict()
+        layout_dict = self._get_current_layout_dict()
+        ProfileManager.set_default_profile(config_dict, layout_dict)
         self._status_lbl.setText(tr("set.saved_default"))
         self._status_lbl.setStyleSheet("color: #4CAF50; font-size: 8pt;")
         self._status_timer.start(2500)
 
     def _reset_to_default(self):
-        if self._mainwin and hasattr(self._mainwin, '_reset_layout'):
-            self._mainwin._reset_layout()
+        """Laad default-profiel (config + layout)."""
+        result = ProfileManager.reset_to_default()
+        if result:
+            config_dict, layout_dict = result
+            # Laad config
+            self._apply_config_dict(config_dict)
+            # Laad layout
+            self._apply_layout_dict(layout_dict)
+            self._status_lbl.setText("✓  Standaard-instellingen hersteld")
+            self._status_lbl.setStyleSheet("color: #4CAF50; font-size: 8pt;")
+            self._status_timer.start(2500)
+        else:
+            self._status_lbl.setText("✗  Geen standaard-profiel gevonden")
+            self._status_lbl.setStyleSheet("color: #EF5350; font-size: 8pt;")
+            self._status_timer.start(3000)
 
     def _save_new_profile(self):
+        """Sla huidge instellingen + layout op als nieuw profiel."""
         name = self._profile_name.text().strip()
         if not name:
             return
         if name.startswith("__"):
             name = name.lstrip("_")
-        layouts = _load_layouts()
-        layouts[name] = self._current_layout_dict()
-        _save_layouts(layouts)
-        self._profile_name.clear()
-        self._refresh_profiles()
+
+        config_dict = self._get_current_config_dict()
+        layout_dict = self._get_current_layout_dict()
+
+        if ProfileManager.save_profile(name, config_dict, layout_dict):
+            self._profile_name.clear()
+            self._refresh_profiles()
+            self._status_lbl.setText(f"[OK]  Profiel '{name}' opgeslagen")
+            self._status_lbl.setStyleSheet("color: #4CAF50; font-size: 8pt;")
+            self._status_timer.start(2500)
+        else:
+            self._status_lbl.setText(f"✗  Profiel '{name}' kon niet opgeslagen worden")
+            self._status_lbl.setStyleSheet("color: #EF5350; font-size: 8pt;")
+            self._status_timer.start(3000)
 
     def _load_profile(self, name: str):
-        layouts = _load_layouts()
-        if name in layouts:
-            self._apply_layout_dict(layouts[name])
+        """Laad profiel (config + layout)."""
+        profile = ProfileManager.get_profile(name)
+        if profile:
+            # Laad config
+            self._apply_config_dict(profile.config)
+            # Laad layout
+            self._apply_layout_dict(profile.layout)
             self._status_lbl.setText(f"✓  Profiel '{name}' geladen")
+            self._status_lbl.setStyleSheet("color: #4CAF50; font-size: 8pt;")
             self._status_timer.start(2500)
         else:
             self._status_lbl.setText(f"✗  Profiel '{name}' niet gevonden")
@@ -1108,23 +1117,123 @@ class SettingsDialog(QDialog):
             self._status_timer.start(3000)
 
     def _overwrite_profile(self, name: str):
-        layouts = _load_layouts()
-        layouts[name] = self._current_layout_dict()
-        _save_layouts(layouts)
-        self._status_lbl.setText(f"✓  Profiel '{name}' overschreven")
-        self._status_lbl.setStyleSheet("color: #4CAF50; font-size: 8pt;")
-        self._status_timer.start(2500)
+        """Overschrijf bestaand profiel met huidge instellingen."""
+        config_dict = self._get_current_config_dict()
+        layout_dict = self._get_current_layout_dict()
+
+        if ProfileManager.update_profile(name, config_dict, layout_dict):
+            self._status_lbl.setText(f"✓  Profiel '{name}' overschreven")
+            self._status_lbl.setStyleSheet("color: #4CAF50; font-size: 8pt;")
+            self._status_timer.start(2500)
+        else:
+            self._status_lbl.setText(f"✗  Profiel '{name}' kon niet overschreven worden")
+            self._status_lbl.setStyleSheet("color: #EF5350; font-size: 8pt;")
+            self._status_timer.start(3000)
 
     def _delete_profile(self, name: str):
+        """Verwijder profiel."""
         from PySide6.QtWidgets import QMessageBox
         if QMessageBox.question(
                 self, "Profiel verwijderen",
                 f"Profiel '{name}' verwijderen?",
                 QMessageBox.Yes | QMessageBox.No) == QMessageBox.Yes:
-            layouts = _load_layouts()
-            layouts.pop(name, None)
-            _save_layouts(layouts)
-            self._refresh_profiles()
+            if ProfileManager.delete_profile(name):
+                self._refresh_profiles()
+            else:
+                self._status_lbl.setText(f"✗  Profiel '{name}' kon niet verwijderd worden")
+                self._status_lbl.setStyleSheet("color: #EF5350; font-size: 8pt;")
+                self._status_timer.start(3000)
+
+    def _apply_config_dict(self, config_dict: dict):
+        """Pas config-dict toe op alle UI-controls (vanuit profiel)."""
+        self._loading = True
+        c = config_dict  # config als dict met str-keys
+
+        def get_val(key, default=None):
+            """Haal waarde uit dict met fallback."""
+            return c.get(key, default)
+
+        # Station
+        self._call_edit.setText(get_val("callsign", ""))
+        self._loc_edit.setText(get_val("qth_locator", "JO22"))
+        self._lat_spin.blockSignals(True)
+        self._lon_spin.blockSignals(True)
+        self._lat_spin.setValue(float(get_val("qth_lat", 52.0)))
+        self._lon_spin.setValue(float(get_val("qth_lon", 5.0)))
+        self._lat_spin.blockSignals(False)
+        self._lon_spin.blockSignals(False)
+        _set_combo(self._mode_cb,  get_val("mode", "SSB"),    _MODES[0])
+        _set_combo(self._power_cb, get_val("power", "100W"),   _POWERS[4])
+        _set_combo(self._ant_cb,   get_val("antenna", "Dipole ~2dBi"), _ANTENNAS[0])
+        self._day_auto_cb.setChecked(get_val("band_day_auto", True))
+
+        # Kaart
+        self._cb_night.setChecked(get_val("show_night", True))
+        self._cb_grayline.setChecked(get_val("show_grayline", True))
+        self._cb_aurora.setChecked(get_val("show_aurora", True))
+        self._cb_sun.setChecked(get_val("show_sun", True))
+        self._cb_moon.setChecked(get_val("show_moon", True))
+        self._cb_lightn.setChecked(get_val("show_lightning", True))
+        self._cb_lightn_en.setChecked(get_val("show_lightning", True))
+        self._cb_dxspots.setChecked(get_val("show_dx_spots", True))
+        self._cb_locator.setChecked(get_val("show_locator", False))
+        _set_combo_data(self._snap_cb, get_val("snap_grid", 10), _GRIDS[2])
+        _set_combo_data(self._grat_step_cb, get_val("grat_step", 30), 30)
+        self._font_spin.setValue(int(get_val("overlay_font_size", 8)))
+        self._maid_font_spin.setValue(int(get_val("maidenhead_font_size", 8)))
+        self._sat_font_spin.setValue(int(get_val("sat_font_size", 8)))
+        self._sat_path_width_spin.setValue(float(get_val("sat_path_width", 1.2)))
+        self._callsign_font_spin.setValue(int(get_val("callsign_overlay_font_size", 7)))
+        self._dx_map_font_spin.setValue(int(get_val("dx_map_font_size", 7)))
+        self._dx_font_spin.setValue(int(get_val("dx_font_size", 8)))
+        self._sun_size_spin.setValue(int(get_val("sun_icon_size", 24)))
+        self._moon_size_spin.setValue(int(get_val("moon_icon_size", 20)))
+
+        # Bliksem
+        self._fade_spin.setValue(int(get_val("lightning_fade", 600)))
+        self._cb_lightn_en.setChecked(get_val("show_lightning", True))
+        self._lightn_radius_spin.setValue(int(get_val("lightning_radius", 500)))
+        self._lightn_rate_spin.setValue(int(get_val("lightning_rate", 500)))
+        self._lightn_beep_cb.setChecked(get_val("lightning_beep", False))
+        self._lightn_beep_r_spin.setValue(int(get_val("lightning_beep_r", 0)))
+        self._lightn_anim_scale_spin.setValue(float(get_val("lightning_anim_scale", 2.0)))
+
+        # Meldingen
+        self._k_en.setChecked(get_val("k_alert_en", True))
+        self._k_spin.setValue(int(get_val("k_alert", 4)))
+        self._xflare_en.setChecked(get_val("xflare_alert_en", True))
+        self._band_en.setChecked(get_val("band_alert_en", True))
+        self._band_spin.setValue(int(get_val("band_alert", 40)))
+        self._alert_max_spin.setValue(int(get_val("alert_max", 50)))
+        self._sat_ping_cb.setChecked(get_val("sat_zone_ping", True))
+
+        # Splash & taal
+        self._splash_about.setChecked(get_val("show_splash", True))
+        lang = get_val("language", "nl")
+        (self._lang_en if lang == "en" else self._lang_nl).setChecked(True)
+
+        # CAT
+        self._cat_en.setChecked(get_val("cat_enabled", False))
+        _set_cat_port(self._cat_port, get_val("cat_port", ""))
+        _set_combo_data(self._cat_baud,   get_val("cat_baud", 4800), 4800)
+        _set_combo_data(self._cat_bits,   get_val("cat_databits", 8), 8)
+        _set_combo_data(self._cat_parity, get_val("cat_parity", "Geen"), "Geen")
+        _set_combo(self._cat_stop,   get_val("cat_stopbits", "1"), "1")
+        self._cat_rtscts.setChecked(get_val("cat_rtscts", False))
+        self._cat_dtr.setChecked(get_val("cat_dtr", False))
+        self._cat_rts.setChecked(get_val("cat_rts", False))
+        saved_type = get_val("cat_radio_type", "")
+        if saved_type == "Yaesu":
+            saved_type = CatInterface.RADIO_TYPES[0]
+        _set_combo(self._cat_type, saved_type, CatInterface.RADIO_TYPES[0])
+        self._cat_civ.setValue(int(get_val("cat_civ_addr", 0x58)))
+
+        self._loading = False
+        # Verbind alle controls na laden
+        self._connect_live_controls()
+
+        # Ook AppConfig object updaten
+        self._save_cfg()
 
     # ── Config laden/opslaan ──────────────────────────────────────────────────
     def _load_cfg(self):
@@ -1161,6 +1270,7 @@ class SettingsDialog(QDialog):
         self._maid_font_spin.setValue(getattr(c, "maidenhead_font_size", 8))
         self._sat_font_spin.setValue(getattr(c, "sat_font_size", 8))
         self._sat_path_width_spin.setValue(getattr(c, "sat_path_width", 1.2))
+        self._callsign_font_spin.setValue(getattr(c, "callsign_overlay_font_size", 7))
         self._dx_map_font_spin.setValue(getattr(c, "dx_map_font_size", 7))
         self._dx_font_spin.setValue(getattr(c, "dx_font_size", 8))
         self._sun_size_spin.setValue(getattr(c, "sun_icon_size", 24))
@@ -1243,6 +1353,7 @@ class SettingsDialog(QDialog):
             maidenhead_font_size  = self._maid_font_spin.value(),
             sat_font_size     = self._sat_font_spin.value(),
             sat_path_width    = self._sat_path_width_spin.value(),
+            callsign_overlay_font_size = self._callsign_font_spin.value(),
             dx_map_font_size  = self._dx_map_font_spin.value(),
             dx_font_size      = self._dx_font_spin.value(),
             sun_icon_size     = self._sun_size_spin.value(),
@@ -1333,9 +1444,7 @@ class SettingsDialog(QDialog):
         self._cb_lightn_en.toggled.connect(
             lambda v: self._cb_lightn.setChecked(v)
             if self._cb_lightn.isChecked() != v else None)
-        for cb in self._panel_cbs.values():
-            # Panel-checkboxen al verbonden aan show/hide — geen extra apply nodig
-            pass
+        # Panel checkboxes moved to header panel chooser dialog
         for combo in [self._mode_cb, self._power_cb, self._ant_cb, self._snap_cb,
                       self._cat_baud, self._cat_bits, self._cat_parity,
                       self._cat_stop, self._cat_type]:
@@ -1354,6 +1463,7 @@ class SettingsDialog(QDialog):
                      self._lightn_beep_r_spin, self._lightn_anim_scale_spin,
                      self._font_spin, self._maid_font_spin, self._sat_font_spin,
                      self._sat_path_width_spin,
+                     self._callsign_font_spin,
                      self._dx_map_font_spin, self._dx_font_spin,
                      self._sun_size_spin, self._moon_size_spin,
                      self._cat_civ]:

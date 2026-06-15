@@ -1,5 +1,5 @@
 """
-HAMIOS v5.2 — PySide6 versie
+HAMIOS v5.3 — PySide6 versie
 Developed with Claude AI
 
 """
@@ -8,6 +8,7 @@ import sys
 import os
 import signal
 import traceback
+import importlib
 
 # Ctrl+C in terminal: negeer — gebruik de Afsluiten-knop
 signal.signal(signal.SIGINT, signal.SIG_IGN)
@@ -17,7 +18,7 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from PySide6.QtWidgets import (QApplication, QMessageBox, QDialog,
                                QVBoxLayout, QHBoxLayout, QGridLayout,
                                QPushButton, QLabel, QFrame, QWidget)
-from PySide6.QtCore import Qt, QRectF, QPointF
+from PySide6.QtCore import Qt, QRectF, QPointF, QThread, Signal
 from PySide6.QtGui import QPixmap, QPainter, QColor, QFont, QPen, QPainterPath, QBrush
 
 from hamios5.mainwindow import HAMIOSMainWindow
@@ -122,7 +123,7 @@ def _make_header_pixmap() -> QPixmap:
 
     p.setFont(QFont("Segoe UI", 10))
     p.setPen(QColor(200, 168, 75, 130))
-    p.drawText(TX + 124, 8, 50, 44, Qt.AlignLeft | Qt.AlignVCenter, "v5.2")
+    p.drawText(TX + 124, 8, 50, 44, Qt.AlignLeft | Qt.AlignVCenter, "v5.3")
 
     p.setFont(QFont("Segoe UI", 8))
     p.setPen(LIGHT)
@@ -170,7 +171,25 @@ def _make_checks():
         ("tzfinder",   "timezonefinder",     _tr("splash.detail.tzfinder")),
         ("app",        _tr("splash.app_name"), _tr("splash.detail.app")),
     ]
-    return fs_checks, file_checks, dep_checks
+    online_checks = [
+        # Solar & Ionosphere
+        ("web_noaa_swpc",     "NOAA SWPC",          "Solar/Geomag Data"),
+        ("web_hamqsl",        "HamQSL",             "Solar Index"),
+        # Satellites
+        ("web_celestrak",     "CelesTrak",          "TLE Data"),
+        # Weak Signal
+        ("web_wsprnet",       "WSPRnet",            "WSPR QSOs"),
+        # Spotting
+        ("web_dxwatch",       "DXWatch",            "DX Spots"),
+        ("web_pskreporter",   "PSK Reporter",       "Digital Mode"),
+        # Lightning
+        ("web_blitzortung",   "Blitzortung",        "Lightning"),
+        # Broadcasts
+        ("web_eibi",          "EiBi Space",         "SW Schedule"),
+        # Maps
+        ("web_wikimedia",     "Wikimedia",          "Map Data"),
+    ]
+    return fs_checks, file_checks, dep_checks, online_checks
 
 # state → (kleur, symbool)
 _STATE = {
@@ -180,6 +199,67 @@ _STATE = {
     "warn":    ("#FFA726", "○"),
     "error":   ("#EF5350", "✗"),
 }
+
+
+# ── Internet check thread ─────────────────────────────────────────────────────
+
+class _InetCheckThread(QThread):
+    """Voert internetbereikbaarheidscheck uit in een aparte thread."""
+    result = Signal(bool, str)   # (bereikbaar, detail)
+
+    _URL = ("https://upload.wikimedia.org/wikipedia/commons/thumb/8/8f/"
+            "Whole_world_-_land_and_oceans_12000.jpg/"
+            "1920px-Whole_world_-_land_and_oceans_12000.jpg")
+
+    def run(self):
+        import urllib.request as _urlreq
+        try:
+            req = _urlreq.Request(self._URL, method="HEAD",
+                                  headers={"User-Agent": "HAMIOS/5.3"})
+            with _urlreq.urlopen(req, timeout=6) as r:
+                self.result.emit(r.status < 400, f"HTTP {r.status}")
+        except Exception as e:
+            self.result.emit(False, str(e)[:30])
+
+
+# ── Online resource check thread ──────────────────────────────────────────────
+
+class _OnlineResourceCheckThread(QThread):
+    """Check all online resources: Solar, Satellites, Spotting, Lightning, Maps."""
+    result_updated = Signal(str, bool, str)  # (resource_key, success, detail)
+
+    _RESOURCES = {
+        # Solar & Ionosphere (NOAA SWPC)
+        "web_noaa_swpc": ("https://services.swpc.noaa.gov/products/summary/solar-wind-speed.json", {"User-Agent": "HAMIOS/5.3"}),
+        "web_hamqsl": ("https://www.hamqsl.com/solarxml.php", {"User-Agent": "HAMIOS/5.3"}),
+        # Satellites (CelesTrak)
+        "web_celestrak": ("https://celestrak.org/NORAD/elements/gp.php?GROUP=amateur&FORMAT=tle", {"User-Agent": "HAMIOS/5.3"}),
+        # Weak Signal (WSPRnet) - test robots.txt for connectivity, API uses fallback mock data
+        "web_wsprnet": ("https://wsprnet.org/robots.txt", {"User-Agent": "HAMIOS/5.3"}),
+        # Spotting (DXWatch, PSK Reporter)
+        "web_dxwatch": ("https://dxwatch.com/dxsd1/s.php?s=0&r=100&cdxc=0", {"User-Agent": "HAMIOS/5.3"}),
+        "web_pskreporter": ("https://pskreporter.info/cgi-bin/pskquery5.pl?encap=0&callback=_", {"User-Agent": "HAMIOS/5.3"}),
+        # Lightning (Blitzortung) - WebSocket, test HTTP fallback
+        "web_blitzortung": ("https://www.blitzortung.org/", {"User-Agent": "HAMIOS/5.3"}),
+        # Broadcasts (EiBi Space) - dynamic URL, test base
+        "web_eibi": ("http://www.eibispace.de/", {"User-Agent": "HAMIOS/5.3"}),
+        # Maps (Wikimedia) - direct file URL
+        "web_wikimedia": ("https://upload.wikimedia.org/wikipedia/commons/thumb/8/8f/Whole_world_-_land_and_oceans_12000.jpg/1920px-Whole_world_-_land_and_oceans_12000.jpg", {"User-Agent": "HAMIOS/5.3"}),
+    }
+
+    def run(self):
+        import urllib.request as _urlreq
+        for key, (url, headers) in self._RESOURCES.items():
+            try:
+                # Use GET request with proper headers
+                req = _urlreq.Request(url, method="GET", headers=headers)
+                with _urlreq.urlopen(req, timeout=4) as r:
+                    ok = r.status < 400
+                    detail = f"HTTP {r.status}"
+                    self.result_updated.emit(key, ok, detail)
+            except Exception as e:
+                detail = str(e)[:20]
+                self.result_updated.emit(key, False, detail)
 
 
 # ── SplashDialog ──────────────────────────────────────────────────────────────
@@ -204,27 +284,29 @@ class SplashDialog(QDialog):
 
         # Bouw check-lijsten in de actieve taal
         from hamios5.i18n import tr as _tr
-        fs_checks, file_checks, dep_checks = _make_checks()
-        all_checks = fs_checks + file_checks + dep_checks
+        fs_checks, file_checks, dep_checks, online_checks = _make_checks()
+        all_checks = fs_checks + file_checks + dep_checks + online_checks
 
         root = QVBoxLayout(self)
         root.setContentsMargins(0, 0, 0, 0)
         root.setSpacing(0)
 
-        self._rows: dict[str, tuple[QLabel, QLabel]] = {}
+        self._rows: dict[str, tuple[QLabel, QLabel, str]] = {}
 
         # ── Header ────────────────────────────────────────────────────────────
         hdr_lbl = QLabel()
         hdr_lbl.setPixmap(_make_header_pixmap())
         root.addWidget(hdr_lbl)
 
-        # ── Amber lijn → Maprechten → Dim lijn → Bestanden → Amber lijn → Deps
+        # ── Amber lijn → Maprechten → Dim lijn → Bestanden → Amber lijn → Deps → Amber lijn → Resources
         root.addWidget(self._amber_line())
         root.addWidget(self._section(_tr("splash.section.fs"),    fs_checks))
         root.addWidget(self._amber_line())
         root.addWidget(self._section(_tr("splash.section.files"), file_checks))
         root.addWidget(self._amber_line())
         root.addWidget(self._section(_tr("splash.section.deps"),  dep_checks))
+        root.addWidget(self._amber_line())
+        root.addWidget(self._section("ONLINE RESOURCES", online_checks))
 
         # Initieel alle rijen op pending
         for key, _, detail in all_checks:
@@ -258,13 +340,6 @@ class SplashDialog(QDialog):
         f = QFrame()
         f.setFixedHeight(1)
         f.setStyleSheet("background:#C8A84B;")
-        return f
-
-    @staticmethod
-    def _dim_line() -> QFrame:
-        f = QFrame()
-        f.setFixedHeight(1)
-        f.setStyleSheet("background:#2A3040;")
         return f
 
     def _section(self, title: str, checks: list) -> QWidget:
@@ -335,22 +410,24 @@ class SplashDialog(QDialog):
 
     def connect_tle_download(self, key: str, thread):
         """Verbind TleFetchThread signals voor voortgang en voltooiing."""
+        from hamios5.i18n import tr as _tr
         thread.progress.connect(
             lambda grp, k=key: self._apply(k, "loading", grp))
         thread.done.connect(
             lambda cache, k=key: self._apply(
                 k,
                 "ok" if cache else "warn",
-                (f"{sum(len(v) for v in cache.values())} sats") if cache else "mislukt"))
+                (f"{sum(len(v) for v in cache.values())} sats") if cache else _tr("splash.failed")))
 
     def connect_download(self, key: str, thread):
         """Verbind download-thread signals voor voortgang en voltooiing."""
+        from hamios5.i18n import tr as _tr
         thread.progress.connect(
             lambda recv, tot, k=key: self._on_progress(k, recv, tot))
         thread.done.connect(
-            lambda k=key: self._apply(k, "ok", "klaar"))
+            lambda k=key: self._apply(k, "ok", _tr("splash.done")))
         thread.failed.connect(
-            lambda k=key: self._apply(k, "error", "mislukt"))
+            lambda k=key: self._apply(k, "error", _tr("splash.failed")))
 
     def _on_progress(self, key: str, received: int, total: int):
         if total > 0:
@@ -395,7 +472,7 @@ def main():
 
     app = QApplication(sys.argv)
     app.setApplicationName("HAMIOS")
-    app.setApplicationVersion("5.2")
+    app.setApplicationVersion("5.3")
     app.setOrganizationName("")
 
     # Opstartcontrole
@@ -428,6 +505,10 @@ QComboBox::down-arrow {{
     _boot_cfg = _load_cfg()
 
     if _boot_cfg.show_splash:
+        # Taal instellen vóór UI-opbouw
+        from hamios5.i18n import set_language as _set_lang, tr as _tr
+        _set_lang(getattr(_boot_cfg, "language", "nl"))
+
         splash = SplashDialog()
         splash.show()
         app.processEvents()
@@ -448,17 +529,14 @@ QComboBox::down-arrow {{
             "tle":       "hamios_tle.json",
             "spy":       "hamios_spy_stations.json",
         }
-        # Taal instellen vóór UI-teksten
-        from hamios5.i18n import set_language as _set_lang, tr as _tr
-        _set_lang(getattr(_boot_cfg, "language", "nl"))
 
-        _ok_str      = "ok"
-        _miss_str    = _tr("app.error").lower() + "!"  if _boot_cfg.language == "en" else "ontbreekt!"
-        _dl_str      = "downloading…"                  if _boot_cfg.language == "en" else "wordt gedownload…"
-        _nf_str      = "not found"                     if _boot_cfg.language == "en" else "niet gevonden"
-        _load_str    = "loading…"                      if _boot_cfg.language == "en" else "laden…"
-        _map_str     = "Loading map and layers…"       if _boot_cfg.language == "en" else "Kaart en lagen laden…"
-        _err_str     = "error!"                        if _boot_cfg.language == "en" else "fout!"
+        _ok_str   = _tr("splash.ok")
+        _miss_str = _tr("splash.missing")
+        _dl_str   = _tr("splash.downloading")
+        _nf_str   = _tr("splash.not_found")
+        _load_str = _tr("splash.loading_dots")
+        _map_str  = _tr("splash.map_loading")
+        _err_str  = _tr("splash.error")
 
         # ── Maprechten test ───────────────────────────────────────────────────
         import sys as _sys
@@ -467,7 +545,8 @@ QComboBox::down-arrow {{
         _test_path = os.path.join(_APP_DIR, "_hamios_fs_test_.tmp")
         _ok_create = _ok_write = _ok_read = _ok_delete = False
         try:
-            open(_test_path, 'w').close()
+            with open(_test_path, 'w'):
+                pass
             _ok_create = True
             with open(_test_path, 'w') as _f:
                 _f.write("hamios")
@@ -490,26 +569,14 @@ QComboBox::down-arrow {{
         splash.set_check("fs_read",   "ok" if _ok_read   else "error", _ok_str if _ok_read   else _err_str)
         splash.set_check("fs_delete", "ok" if _ok_delete else "error", _ok_str if _ok_delete else _err_str)
 
-        # ── Internetcheck — worldmap URL bereikbaar? ───────────────────────────
-        import urllib.request as _urlreq
-        _MAP_CHECK_URL = ("https://upload.wikimedia.org/wikipedia/commons/thumb/8/8f/"
-                          "Whole_world_-_land_and_oceans_12000.jpg/"
-                          "1920px-Whole_world_-_land_and_oceans_12000.jpg")
+        # ── Internetcheck — async, blokkeert de UI niet ───────────────────────
         splash.set_check("fs_internet", "loading", "…")
-        _ok_internet = False
-        _inet_detail = _nf_str
-        try:
-            _inet_req = _urlreq.Request(
-                _MAP_CHECK_URL, method="HEAD",
-                headers={"User-Agent": "HAMIOS/5.2"})
-            with _urlreq.urlopen(_inet_req, timeout=6) as _r:
-                _ok_internet = _r.status < 400
-                _inet_detail = f"HTTP {_r.status}"
-        except Exception as _e:
-            _inet_detail = str(_e)[:30]
-        splash.set_check("fs_internet",
-                         "ok" if _ok_internet else "warn",
-                         _ok_str if _ok_internet else _inet_detail)
+        _inet_thread = _InetCheckThread()
+        _inet_thread.result.connect(
+            lambda ok, detail: splash.set_check(
+                "fs_internet", "ok" if ok else "warn",
+                _ok_str if ok else detail))
+        _inet_thread.start()
 
         for key, fname in _file_keys.items():
             info = _fmap.get(fname)
@@ -520,7 +587,7 @@ QComboBox::down-arrow {{
             elif fname in _req:
                 splash.set_check(key, "error", _miss_str)
             elif fname in _manual:
-                splash.set_check(key, "loading", _dl_str)
+                splash.set_check(key, "warn", _tr("splash.manual"))
             else:
                 splash.set_check(key, "warn", _dl_str)
 
@@ -535,7 +602,7 @@ QComboBox::down-arrow {{
         # ── Afhankelijkheden ──────────────────────────────────────────────────
         def _dep(mod):
             try:
-                m = __import__(mod)
+                m = importlib.import_module(mod)
                 v = getattr(m, "__version__", "")
                 return True, (f"v{v}" if v else _ok_str)
             except ImportError:
@@ -557,18 +624,18 @@ QComboBox::down-arrow {{
 
         try:
             window = HAMIOSMainWindow()
-            splash.set_check("app", "ok", "klaar")
+            splash.set_check("app", "ok", _tr("splash.done"))
             splash.set_status("")
         except Exception:
             msg = traceback.format_exc()
             print(msg, file=sys.stderr)
-            splash.set_check("app", "error", "fout!")
+            splash.set_check("app", "error", _err_str)
             splash.close()
             _show_error("HAMIOS — Startfout", msg)
             sys.exit(1)
 
         # ── Kaartdownloads starten NÁ signal-verbinding (geeft percentage) ────
-        dl_threads = window._map_view.download_missing_maps()
+        dl_threads = window.download_missing_maps()
         started = set()
         for key, thread in dl_threads:
             splash.connect_download(key, thread)
@@ -582,6 +649,13 @@ QComboBox::down-arrow {{
             _tle_thread = _TleFetchThread()
             splash.connect_tle_download("tle", _tle_thread)
             _tle_thread.start()
+
+        # ── Online resources controleren ──────────────────────────────────────
+        _online_thread = _OnlineResourceCheckThread()
+        _online_thread.result_updated.connect(
+            lambda key, ok, detail: splash.set_check(
+                key, "ok" if ok else "warn", detail))
+        _online_thread.start()
 
         splash.enable_button()
         splash.exec()

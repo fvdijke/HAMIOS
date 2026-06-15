@@ -45,7 +45,7 @@ _S: dict[str, dict[str, str]] = {
 
 # ── App / algemeen ────────────────────────────────────────────────────────────
 "app.name":           "HF Propagation & Atmosphere Monitor",
-"app.version":        "v5.2",
+"app.version":        "v5.3",
 "app.close":          "Afsluiten",
 "app.ok":             "OK",
 "app.cancel":         "Annuleren",
@@ -66,6 +66,7 @@ _S: dict[str, dict[str, str]] = {
 "hdr.ft8":            "📡  FT8/Dig",
 "hdr.overlays":       "🗺  Overlays",
 "hdr.overlays.tip":   "Kaartoverlays aan/uitzetten",
+"hdr.panels":         "🪟  Panelen",
 "hdr.settings":       "⚙  Instellingen",
 "hdr.help":           "Help",
 "hdr.minimize":       "─",
@@ -89,6 +90,7 @@ _S: dict[str, dict[str, str]] = {
 "ov.satellites":      "Satellieten",
 "ov.locator":         "Maidenhead locatorraster",
 "ov.psk":             "PSKReporter (digitale paden)",
+"ov.callsign":        "Callsign landcodes (uitgebreid)",
 
 # ── Panel titles ──────────────────────────────────────────────────────────────
 "panel.map":          "🌍  Kaart",
@@ -98,6 +100,7 @@ _S: dict[str, dict[str, str]] = {
 "panel.storm_fc":     "🌩  Stormprognose",
 "panel.band_sched":   "🗓  Bandopenings-schema",
 "panel.band_hist":    "📈  Band Verloop",
+"panel.muf_forecast": "📶  MUF/LUF-prognose",
 "panel.solar_hist":   "☀  Solar Verloop",
 "panel.kp":           "🧲  Kp 48u",
 "panel.bz":           "⚡  Bz 24u",
@@ -252,6 +255,7 @@ _S: dict[str, dict[str, str]] = {
 "set.map.font_maid":      "Maidenhead labels:",
 "set.map.font_sat":       "Satelliet-labels:",
 "set.map.path_width":     "Satelliet pad dikte:",
+"set.map.font_callsign":  "Callsign landcodes:",
 "set.map.font_dx_map":    "DX spots (kaart):",
 "set.map.font_dx_tbl":    "DX spots (tabel):",
 "set.map.icons":          "Icoontje groottes",
@@ -409,6 +413,16 @@ _S: dict[str, dict[str, str]] = {
 "splash.detail.tzfinder": "lokale tijdzone",
 "splash.detail.app":      "modules laden",
 "splash.app_name":        "Applicatie",
+"splash.ok":              "ok",
+"splash.missing":         "ontbreekt!",
+"splash.downloading":     "wordt gedownload…",
+"splash.not_found":       "niet gevonden",
+"splash.loading_dots":    "laden…",
+"splash.map_loading":     "Kaart en lagen laden…",
+"splash.error":           "fout!",
+"splash.done":            "klaar",
+"splash.failed":          "mislukt",
+"splash.manual":          "handmatig",
 
 # ── Alert messages ───────────────────────────────────────────────────────────
 "alert.k_status":       "K-index: {k}  ·  X-straling: {xray}",
@@ -584,6 +598,8 @@ _S: dict[str, dict[str, str]] = {
 "panels.lightning":  "⚡  Onweer",
 "panels.alerts":     "🔔  Meldingen",
 "panels.dx_spots":   "📡  Live DX Spots",
+"panels.muf_forecast":"📊  MUF/LUF Prognose",
+"panels.wspr_feed":  "🛰  WSPR Live Feed",
 "panels.prop_adv":   "💡  Propagatie Advies",
 
 # ── Settings tooltips ────────────────────────────────────────────────────────
@@ -654,6 +670,49 @@ _S: dict[str, dict[str, str]] = {
 "prop.adv.best":      "Beste banden: {bands}",
 "prop.adv.no_data":   "Geen solar-data beschikbaar.",
 
+# ── MUF/LUF-prognose ─────────────────────────────────────────────────────
+"muf.title":          "📶  MUF/LUF-prognose",
+"muf.foF2":           "foF2 (kritieke frequentie)",
+"muf.muf":            "MUF (maximale bruikbare frequentie)",
+"muf.luf":            "LUF (minimale bruikbare frequentie)",
+"muf.hour":           "Uur (UTC)",
+"muf.band_open":      "Band open",
+"muf.band_closed":    "Band gesloten",
+"muf.quality":        "Kwaliteit",
+"muf.quality.good":   "Goed",
+"muf.quality.fair":   "Matig",
+"muf.quality.poor":   "Slecht",
+"muf.distance":       "Afstand",
+"muf.note":           "MUF-prognose gebaseerd op zonne-activiteit en geomagnetische condities.",
+
+# ── Sporadic-E-prognose ──────────────────────────────────────────────────
+"es.title":           "🎯  Sporadic-E (Es)-prognose",
+"es.alert":           "Es-melding",
+"es.season":          "Seizoen",
+"es.active":          "Actief",
+"es.inactive":        "Inactief",
+"es.probability":     "Waarschijnlijkheid",
+"es.peak_hours":      "Piekuren (lokaal)",
+"es.threshold":       "Es-meldingsdrempel",
+"es.bands":           "Beïnvloede banden (6m, 4m, 2m)",
+"es.note":            "Sporadic-E opent onverwachte openingen op VHF. Piek in zomer (mei–aug) en winter (dec–feb).",
+
+# ── WSPR-live-feed ───────────────────────────────────────────────────────
+"wspr.title":         "📡  WSPR Live Propagatie",
+"wspr.call":          "Roepletters",
+"wspr.tx_grid":       "TX-locator",
+"wspr.rx_grid":       "RX-locator",
+"wspr.freq":          "Frequentie",
+"wspr.snr":           "SNR (dB)",
+"wspr.drift":         "Drift",
+"wspr.time_utc":      "Tijd (UTC)",
+"wspr.distance":      "Afstand (km)",
+"wspr.path":          "Peilrichting",
+"wspr.records":       "QSO-records",
+"wspr.last_update":   "Laatst bijgewerkt",
+"wspr.disabled":      "WSPR-feed uitgeschakeld (inschakelen in instellingen)",
+"wspr.note":          "Real-time zwaksignaal QSO-data van wsprnet.org. Updates elke 30 seconden.",
+
 },  # end "nl"
 
 # ══════════════════════════════════════════════════════════════════════════════
@@ -661,7 +720,7 @@ _S: dict[str, dict[str, str]] = {
 
 # ── App / general ─────────────────────────────────────────────────────────────
 "app.name":           "HF Propagation & Atmosphere Monitor",
-"app.version":        "v5.2",
+"app.version":        "v5.3",
 "app.close":          "Exit",
 "app.ok":             "OK",
 "app.cancel":         "Cancel",
@@ -682,6 +741,7 @@ _S: dict[str, dict[str, str]] = {
 "hdr.ft8":            "📡  FT8/Dig",
 "hdr.overlays":       "🗺  Overlays",
 "hdr.overlays.tip":   "Toggle map overlays",
+"hdr.panels":         "🪟  Panels",
 "hdr.settings":       "⚙  Settings",
 "hdr.help":           "Help",
 "hdr.minimize":       "─",
@@ -705,6 +765,7 @@ _S: dict[str, dict[str, str]] = {
 "ov.satellites":      "Satellites",
 "ov.locator":         "Maidenhead grid",
 "ov.psk":             "PSKReporter (digital paths)",
+"ov.callsign":        "Callsign country codes (extended)",
 
 # ── Panel titles ──────────────────────────────────────────────────────────────
 "panel.map":          "🌍  Map",
@@ -714,6 +775,7 @@ _S: dict[str, dict[str, str]] = {
 "panel.storm_fc":     "🌩  Storm Forecast",
 "panel.band_sched":   "🗓  Band Opening Schedule",
 "panel.band_hist":    "📈  Band History",
+"panel.muf_forecast": "📶  MUF/LUF Forecast",
 "panel.solar_hist":   "☀  Solar History",
 "panel.kp":           "🧲  Kp 48h",
 "panel.bz":           "⚡  Bz 24h",
@@ -868,6 +930,7 @@ _S: dict[str, dict[str, str]] = {
 "set.map.font_maid":      "Maidenhead labels:",
 "set.map.font_sat":       "Satellite labels:",
 "set.map.path_width":     "Satellite path width:",
+"set.map.font_callsign":  "Callsign country codes:",
 "set.map.font_dx_map":    "DX spots (map):",
 "set.map.font_dx_tbl":    "DX spots (table):",
 "set.map.icons":          "Icon sizes",
@@ -1026,6 +1089,16 @@ _S: dict[str, dict[str, str]] = {
 "splash.detail.tzfinder": "local timezone",
 "splash.detail.app":      "loading modules",
 "splash.app_name":        "Application",
+"splash.ok":              "ok",
+"splash.missing":         "missing!",
+"splash.downloading":     "downloading…",
+"splash.not_found":       "not found",
+"splash.loading_dots":    "loading…",
+"splash.map_loading":     "Loading map and layers…",
+"splash.error":           "error!",
+"splash.done":            "done",
+"splash.failed":          "failed",
+"splash.manual":          "manual",
 
 # ── Remaining UI strings ─────────────────────────────────────────────────────
 "cat.terminal_cb":      "Show serial terminal",
@@ -1194,6 +1267,8 @@ _S: dict[str, dict[str, str]] = {
 "panels.lightning":  "⚡  Lightning",
 "panels.alerts":     "🔔  Alerts",
 "panels.dx_spots":   "📡  Live DX Spots",
+"panels.muf_forecast":"📊  MUF/LUF Forecast",
+"panels.wspr_feed":  "🛰  WSPR Live Feed",
 "panels.prop_adv":   "💡  Propagation Advice",
 
 # ── Settings tooltips ────────────────────────────────────────────────────────
@@ -1263,6 +1338,49 @@ _S: dict[str, dict[str, str]] = {
 "prop.adv.overall":   "Overall conditions: {overall}",
 "prop.adv.best":      "Best bands: {bands}",
 "prop.adv.no_data":   "No solar data available.",
+
+# ── MUF/LUF Forecast ─────────────────────────────────────────────────────
+"muf.title":          "📶  MUF/LUF Forecast",
+"muf.foF2":           "foF2 (Critical Frequency)",
+"muf.muf":            "MUF (Maximum Usable Frequency)",
+"muf.luf":            "LUF (Lowest Usable Frequency)",
+"muf.hour":           "Hour (UTC)",
+"muf.band_open":      "Band Open",
+"muf.band_closed":    "Band Closed",
+"muf.quality":        "Quality",
+"muf.quality.good":   "Good",
+"muf.quality.fair":   "Fair",
+"muf.quality.poor":   "Poor",
+"muf.distance":       "Distance",
+"muf.note":           "MUF forecast based on solar activity and geomagnetic conditions.",
+
+# ── Sporadic-E Forecast ──────────────────────────────────────────────────
+"es.title":           "🎯  Sporadic-E (Es) Forecast",
+"es.alert":           "Es Alert",
+"es.season":          "Season",
+"es.active":          "Active",
+"es.inactive":        "Inactive",
+"es.probability":     "Probability",
+"es.peak_hours":      "Peak Hours (Local)",
+"es.threshold":       "Es Alert Threshold",
+"es.bands":           "Affected Bands (6m, 4m, 2m)",
+"es.note":            "Sporadic-E opens unexpected openings on VHF. Peak in summer (May–Aug) and winter (Dec–Feb).",
+
+# ── WSPR Live Feed ───────────────────────────────────────────────────────
+"wspr.title":         "📡  WSPR Live Propagation",
+"wspr.call":          "Callsign",
+"wspr.tx_grid":       "TX Grid",
+"wspr.rx_grid":       "RX Grid",
+"wspr.freq":          "Frequency",
+"wspr.snr":           "SNR (dB)",
+"wspr.drift":         "Drift",
+"wspr.time_utc":      "Time (UTC)",
+"wspr.distance":      "Distance (km)",
+"wspr.path":          "Path Azimuth",
+"wspr.records":       "QSO Records",
+"wspr.last_update":   "Last Updated",
+"wspr.disabled":      "WSPR feed disabled (enable in settings)",
+"wspr.note":          "Real-time weak-signal QSO data from wsprnet.org. Updates every 30 seconds.",
 
 },  # end "en"
 
