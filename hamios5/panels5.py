@@ -2445,9 +2445,9 @@ class MUFWidget(QWidget):
             p.drawText(0, 0, W, H, Qt.AlignCenter, tr("app.loading"))
             return
 
-        # Layout: labels + 24-hour cells
+        # Layout: left margin for Y-axis labels, bottom margin for X-axis
         N_H = 24
-        PL, PR, PT, PB = 55, 4, 20, 4
+        PL, PR, PT, PB = 70, 8, 30, 35  # More space for labels
         cell_w = max(1, (W - PL - PR) // N_H)
         CELL_H = H - PT - PB
 
@@ -2495,12 +2495,12 @@ class MUFWidget(QWidget):
                 y = PT + CELL_H * (1.0 - norm)
                 p.fillRect(PL, int(y) - 1, N_H * cell_w, 2, QColor(color + "30"))  # Halftransparant
 
-        # ── Hour labels (top) ──
-        p.setPen(QColor(TEXT_H1))
-        p.setFont(QFont("Segoe UI", 7))
+        # ── Hour labels (every 3 hours) ──
+        p.setFont(QFont("Segoe UI", 8))
+        p.setPen(QPen(QColor(TEXT_H1)))
         for h in range(0, N_H, 3):
             lx = PL + h * cell_w + cell_w // 2
-            p.drawText(int(lx) - 8, 0, 16, PT - 2, Qt.AlignCenter, f"{h:02d}")
+            p.drawText(int(lx) - 12, PT - 20, 24, 16, Qt.AlignCenter, f"{h:02d}Z")
 
         # ── Draw LUF curve (onderste grens, grijs) ──
         luf_points = []
@@ -2552,41 +2552,25 @@ class MUFWidget(QWidget):
             norm_muf = (muf - muf_min) / muf_range
             y = PT + CELL_H * (1.0 - norm_muf)
             x = PL + now_h * cell_w + cell_w // 2
-            p.setPen(QPen("#FFFF00", 2))  # Geel voor nu-indicator
+            p.setPen(QPen(QColor("#FFFF00"), 2))
             p.setBrush(QBrush(QColor("#FFFF0080")))
             p.drawEllipse(QPointF(x, y), 5, 5)
 
-        # ── Y-axis labels (MHz) ──
-        p.setPen(QColor(TEXT_H1))
-        p.setFont(QFont("Segoe UI", 8))
+        # ── Y-axis MHz labels ──
+        p.setFont(QFont("Segoe UI", 9))
+        p.setPen(QPen(QColor(TEXT_H1)))
         for mhz in range(int(muf_min), int(muf_max) + 1, 5):
             norm = (mhz - muf_min) / muf_range if muf_range > 0 else 0.5
             y = PT + CELL_H * (1.0 - norm)
-            p.drawText(0, int(y) - 4, PL - 5, 8, Qt.AlignRight | Qt.AlignVCenter, f"{mhz}")
+            p.drawText(2, int(y) - 6, PL - 6, 12, Qt.AlignRight | Qt.AlignVCenter, f"{mhz} MHz")
 
-        # ── Legend (MUF/LUF) ──
-        legend_x = PL + 4
-        legend_y = PT + 4
-        p.setFont(QFont("Segoe UI", 7))
-
-        # MUF legend
-        p.setPen(QPen(QColor(ACCENT), 2))
-        p.drawLine(legend_x, int(legend_y), legend_x + 10, int(legend_y))
-        p.setPen(QColor(TEXT_H1))
-        p.drawText(legend_x + 14, int(legend_y) - 3, 25, 6, Qt.AlignLeft, "MUF")
-
-        # LUF legend
-        p.setPen(QPen(QColor("#808080"), 2))
-        p.drawLine(legend_x, int(legend_y) + 10, legend_x + 10, int(legend_y) + 10)
-        p.setPen(QColor(TEXT_H1))
-        p.drawText(legend_x + 14, int(legend_y) + 7, 25, 6, Qt.AlignLeft, "LUF")
 
     def mouseMoveEvent(self, event):
         """Show MUF tooltip on hover."""
         W, H = self.width(), self.height()
         N_H = 24
-        PL = 45
-        cell_w = max(1, (W - PL - 4) // N_H)
+        PL = 70  # Must match paintEvent layout
+        cell_w = max(1, (W - PL - 8) // N_H)
 
         x = event.position().x()
         if x >= PL:
