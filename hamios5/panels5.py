@@ -28,6 +28,18 @@ from PySide6.QtWidgets import (
     QCheckBox, QComboBox, QPushButton, QStackedWidget
 )
 
+
+class NumericTableItem(QTableWidgetItem):
+    """Table item that sorts numerically instead of alphabetically."""
+    def __init__(self, text: str, numeric_value=0):
+        super().__init__(text)
+        self._numeric_value = numeric_value
+
+    def __lt__(self, other):
+        if isinstance(other, NumericTableItem):
+            return self._numeric_value < other._numeric_value
+        return super().__lt__(other)
+
 from .theme import (
     ACCENT, BG_PANEL, BG_SURFACE, BG_ROOT,
     TEXT_H1, TEXT_BODY, TEXT_DIM, BORDER
@@ -2681,40 +2693,37 @@ class WSPRTableWidget(QWidget):
 
             # Frequency
             freq = record.get("frequency", 0)
-            freq_item = QTableWidgetItem(f"{freq:.4f}" if freq else "?")
-            freq_item.setData(Qt.UserRole, float(freq) if freq else 0)
+            freq_item = NumericTableItem(f"{freq:.4f}" if freq else "?", float(freq) if freq else 0)
             self._table.setItem(row, 2, freq_item)
 
             # SNR
             snr = record.get("snr", 0)
-            snr_item = QTableWidgetItem(f"{snr:+d}" if snr else "?")
-            snr_item.setData(Qt.UserRole, int(snr) if snr else 0)
+            snr_item = NumericTableItem(f"{snr:+d}" if snr else "?", int(snr) if snr else 0)
             snr_color = QColor("#4CAF50") if snr >= -10 else QColor("#FFA726") if snr >= -20 else QColor("#EF5350")
             snr_item.setForeground(snr_color)
             self._table.setItem(row, 3, snr_item)
 
             # Distance
             distance = record.get("distance", 0)
-            dist_item = QTableWidgetItem(f"{distance} km")
-            dist_item.setData(Qt.UserRole, int(distance) if distance else 0)
+            dist_item = NumericTableItem(f"{distance} km", int(distance) if distance else 0)
             self._table.setItem(row, 4, dist_item)
 
             # Azimuth
             azimuth = record.get("azimuth", 0)
-            az_item = QTableWidgetItem(f"{azimuth}°")
-            az_item.setData(Qt.UserRole, int(azimuth) if azimuth else 0)
+            az_item = NumericTableItem(f"{azimuth}°", int(azimuth) if azimuth else 0)
             self._table.setItem(row, 5, az_item)
 
             # Time
             time_str = record.get("time", "")
+            time_sort_val = record.get("time", "")
             if time_str:
                 try:
                     ts = _dt.datetime.fromisoformat(time_str.replace("Z", "+00:00"))
                     time_str = ts.strftime("%H:%M:%S")
+                    time_sort_val = ts.timestamp()
                 except (ValueError, AttributeError):
-                    pass
-            time_item = QTableWidgetItem(time_str)
-            time_item.setData(Qt.UserRole, record.get("time", ""))
+                    time_sort_val = 0
+            time_item = NumericTableItem(time_str, float(time_sort_val) if isinstance(time_sort_val, (int, float)) else 0)
             time_item.setForeground(QColor(TEXT_DIM))
             self._table.setItem(row, 6, time_item)
 
