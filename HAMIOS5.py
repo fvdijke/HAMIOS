@@ -123,7 +123,7 @@ def _make_header_pixmap() -> QPixmap:
 
     p.setFont(QFont("Segoe UI", 10))
     p.setPen(QColor(200, 168, 75, 130))
-    p.drawText(TX + 124, 8, 50, 44, Qt.AlignLeft | Qt.AlignVCenter, "v5.2")
+    p.drawText(TX + 124, 8, 50, 44, Qt.AlignLeft | Qt.AlignVCenter, "v5.3")
 
     p.setFont(QFont("Segoe UI", 8))
     p.setPen(LIGHT)
@@ -215,7 +215,7 @@ class _InetCheckThread(QThread):
         import urllib.request as _urlreq
         try:
             req = _urlreq.Request(self._URL, method="HEAD",
-                                  headers={"User-Agent": "HAMIOS/5.2"})
+                                  headers={"User-Agent": "HAMIOS/5.3"})
             with _urlreq.urlopen(req, timeout=6) as r:
                 self.result.emit(r.status < 400, f"HTTP {r.status}")
         except Exception as e:
