@@ -2447,69 +2447,139 @@ class MUFWidget(QWidget):
 
         # Layout: labels + 24-hour cells
         N_H = 24
-        PL, PR, PT, PB = 45, 4, 18, 4
+        PL, PR, PT, PB = 55, 4, 20, 4
         cell_w = max(1, (W - PL - PR) // N_H)
         CELL_H = H - PT - PB
 
-        # Hour labels
-        p.setPen(QColor(TEXT_DIM))
+        # Get MUF/LUF range
+        muf_values = [self._muf_data[h]["muf"] for h in range(24) if h in self._muf_data]
+        luf_values = [self._muf_data[h]["luf"] for h in range(24) if h in self._muf_data]
+
+        muf_min, muf_max = 5.0, 30.0
+        if muf_values:
+            muf_min = min(muf_min, min(muf_values) - 2)
+            muf_max = max(muf_max, max(muf_values) + 2)
+        if luf_values:
+            muf_min = min(muf_min, min(luf_values) - 2)
+
+        muf_min = max(0, int(muf_min / 5) * 5)  # Round to 5 MHz
+        muf_max = int((muf_max + 4) / 5) * 5
+        muf_range = max(1.0, muf_max - muf_min)
+
+        # ── Background gridlines & band-zones ──
+        p.setPen(QPen(QColor(TEXT_DIM), 1, Qt.DotLine))
+
+        # Vertical hour gridlines (every 3 hours)
+        for h in range(0, N_H, 3):
+            x = PL + h * cell_w
+            p.drawLine(int(x), PT, int(x), PT + CELL_H)
+
+        # Horizontal MHz gridlines
+        for mhz in range(int(muf_min), int(muf_max) + 1, 5):
+            norm = (mhz - muf_min) / muf_range
+            y = PT + CELL_H * (1.0 - norm)
+            p.drawLine(PL, int(y), PL + N_H * cell_w, int(y))
+
+        # ── Band-zone backgrounds (colored regions for common HF bands) ──
+        bands = [
+            (80, "#C62828", "80m"),   # Rood
+            (40, "#F57C00", "40m"),   # Oranje
+            (20, "#6A1B9A", "20m"),   # Paars
+            (15, "#0288D1", "15m"),   # Blauw
+            (10, "#00796B", "10m"),   # Cyaan
+        ]
+
+        for freq_mhz, color, _ in bands:
+            if muf_min < freq_mhz < muf_max:
+                norm = (freq_mhz - muf_min) / muf_range
+                y = PT + CELL_H * (1.0 - norm)
+                p.fillRect(PL, int(y) - 1, N_H * cell_w, 2, QColor(color + "30"))  # Halftransparant
+
+        # ── Hour labels (top) ──
+        p.setPen(QColor(TEXT_H1))
         p.setFont(QFont("Segoe UI", 7))
         for h in range(0, N_H, 3):
             lx = PL + h * cell_w + cell_w // 2
-            p.drawText(lx - 8, 0, 16, PT - 2, Qt.AlignCenter, f"{h:02d}")
+            p.drawText(int(lx) - 8, 0, 16, PT - 2, Qt.AlignCenter, f"{h:02d}")
 
-        # MUF bar (MHz on y-axis)
-        # Find min/max MUF for scaling
-        muf_values = [self._muf_data[h]["muf"] for h in range(24) if h in self._muf_data]
-        muf_min, muf_max = 5.0, 30.0
-        if muf_values:
-            muf_min = min(muf_values)
-            muf_max = max(muf_values)
-        muf_range = max(1.0, muf_max - muf_min)
+        # ── Draw LUF curve (onderste grens, grijs) ──
+        luf_points = []
+        for h in range(N_H):
+            if h in self._muf_data:
+                luf = self._muf_data[h]["luf"]
+                norm_luf = (luf - muf_min) / muf_range
+                y = PT + CELL_H * (1.0 - norm_luf)
+                x = PL + h * cell_w + cell_w // 2
+                luf_points.append(QPointF(x, y))
 
-        # Draw MUF curve
-        points = []
+        if luf_points and len(luf_points) > 1:
+            p.setPen(QPen(QColor("#808080"), 2, Qt.SolidLine, Qt.RoundCap, Qt.RoundJoin))
+            path = QPainterPath(luf_points[0])
+            for pt in luf_points[1:]:
+                path.lineTo(pt)
+            p.drawPath(path)
+
+        # ── Draw MUF curve (bovenste grens, accent) ──
+        muf_points = []
         for h in range(N_H):
             if h in self._muf_data:
                 muf = self._muf_data[h]["muf"]
                 norm_muf = (muf - muf_min) / muf_range
                 y = PT + CELL_H * (1.0 - norm_muf)
                 x = PL + h * cell_w + cell_w // 2
-                points.append(QPointF(x, y))
+                muf_points.append(QPointF(x, y))
 
-        if points:
-            p.setPen(QPen(QColor(ACCENT), 2, Qt.SolidLine, Qt.RoundCap, Qt.RoundJoin))
-            path = QPainterPath(points[0])
-            for pt in points[1:]:
+        if muf_points and len(muf_points) > 1:
+            p.setPen(QPen(QColor(ACCENT), 3, Qt.SolidLine, Qt.RoundCap, Qt.RoundJoin))
+            path = QPainterPath(muf_points[0])
+            for pt in muf_points[1:]:
                 path.lineTo(pt)
             p.drawPath(path)
 
-            # Fill under curve
-            fill_points = [QPointF(PL, PT + CELL_H)] + points + [QPointF(PL + N_H * cell_w - 1, PT + CELL_H)]
-            fill_path = QPainterPath(fill_points[0])
-            for pt in fill_points[1:]:
-                fill_path.lineTo(pt)
-            fill_path.closeSubpath()
-            p.fillPath(fill_path, QBrush(QColor(200, 168, 75, 60)))
+            # Fill between MUF and LUF
+            if luf_points and len(luf_points) == len(muf_points):
+                fill_points = muf_points + list(reversed(luf_points))
+                fill_path = QPainterPath(fill_points[0])
+                for pt in fill_points[1:]:
+                    fill_path.lineTo(pt)
+                fill_path.closeSubpath()
+                p.fillPath(fill_path, QBrush(QColor(200, 168, 75, 40)))
 
-            # Current hour indicator
-            now_h = _dt.datetime.now().hour
-            if now_h in self._muf_data:
-                muf = self._muf_data[now_h]["muf"]
-                norm_muf = (muf - muf_min) / muf_range
-                y = PT + CELL_H * (1.0 - norm_muf)
-                x = PL + now_h * cell_w + cell_w // 2
-                p.setPen(QPen(QColor(ACCENT), 2))
-                p.setBrush(QBrush(QColor(ACCENT)))
-                p.drawEllipse(QPointF(x, y), 4, 4)
+        # ── Current hour indicator (nu) ──
+        now_h = _dt.datetime.now().hour
+        if now_h in self._muf_data and muf_points:
+            muf = self._muf_data[now_h]["muf"]
+            norm_muf = (muf - muf_min) / muf_range
+            y = PT + CELL_H * (1.0 - norm_muf)
+            x = PL + now_h * cell_w + cell_w // 2
+            p.setPen(QPen("#FFFF00", 2))  # Geel voor nu-indicator
+            p.setBrush(QBrush(QColor("#FFFF0080")))
+            p.drawEllipse(QPointF(x, y), 5, 5)
 
-        # Y-axis labels (MHz)
-        p.setPen(QColor(TEXT_DIM))
-        p.setFont(QFont("Segoe UI", 7))
-        for mhz in range(int(muf_min), int(muf_max) + 5, 5):
+        # ── Y-axis labels (MHz) ──
+        p.setPen(QColor(TEXT_H1))
+        p.setFont(QFont("Segoe UI", 8))
+        for mhz in range(int(muf_min), int(muf_max) + 1, 5):
             norm = (mhz - muf_min) / muf_range if muf_range > 0 else 0.5
             y = PT + CELL_H * (1.0 - norm)
-            p.drawText(0, y - 3, PL - 3, 6, Qt.AlignRight | Qt.AlignVCenter, f"{mhz}")
+            p.drawText(0, int(y) - 4, PL - 5, 8, Qt.AlignRight | Qt.AlignVCenter, f"{mhz}")
+
+        # ── Legend (MUF/LUF) ──
+        legend_x = PL + 4
+        legend_y = PT + 4
+        p.setFont(QFont("Segoe UI", 7))
+
+        # MUF legend
+        p.setPen(QPen(QColor(ACCENT), 2))
+        p.drawLine(legend_x, int(legend_y), legend_x + 10, int(legend_y))
+        p.setPen(QColor(TEXT_H1))
+        p.drawText(legend_x + 14, int(legend_y) - 3, 25, 6, Qt.AlignLeft, "MUF")
+
+        # LUF legend
+        p.setPen(QPen(QColor("#808080"), 2))
+        p.drawLine(legend_x, int(legend_y) + 10, legend_x + 10, int(legend_y) + 10)
+        p.setPen(QColor(TEXT_H1))
+        p.drawText(legend_x + 14, int(legend_y) + 7, 25, 6, Qt.AlignLeft, "LUF")
 
     def mouseMoveEvent(self, event):
         """Show MUF tooltip on hover."""

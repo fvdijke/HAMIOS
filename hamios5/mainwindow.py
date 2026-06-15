@@ -31,6 +31,7 @@ from .panels5 import (
     DXSpotsTable, PropAdvWidget, MUFWidget, WSPRTableWidget,
 )
 from .config import AppConfig, load_config, save_config
+from .profiel_manager import ProfileManager
 from .settings_dialog import SettingsDialog
 from .sat_dialog import SatelliteDialog
 from . import history as _history
@@ -575,14 +576,21 @@ class HAMIOSMainWindow(QMainWindow):
 
     # ── Layout opslaan/laden ──────────────────────────────────────────────────
     def _load_layout(self):
-        """Laad panel-layout uit config of gebruik defaults."""
+        """Laad panel-layout uit default-profiel (ProfielManager) of legacy."""
         saved = {}
-        try:
-            data = _read_layouts()
-            if "__default__" in data:
-                saved = data["__default__"]
-        except Exception:
-            pass
+
+        # Probeer eerst nieuwe ProfielManager
+        default_profile = ProfileManager.get_default_profile()
+        if default_profile and default_profile.layout:
+            saved = default_profile.layout
+        else:
+            # Fallback: legacy systeem (hamios_config.json)
+            try:
+                data = _read_layouts()
+                if "__default__" in data:
+                    saved = data["__default__"]
+            except Exception:
+                pass
 
         # Venstergrootte herstellen
         if "__window__" in saved and len(saved["__window__"]) >= 4:
@@ -612,6 +620,12 @@ class HAMIOSMainWindow(QMainWindow):
         layout["__window__"] = [
             self.x(), self.y(), self.width(), self.height()
         ]
+        # Sla op via ProfielManager (config + layout)
+        from dataclasses import asdict
+        config_dict = asdict(self._cfg)
+        ProfileManager.set_default_profile(config_dict, layout)
+
+        # Fallback: legacy systeem ook updaten
         try:
             data = _read_layouts()
             data["__default__"] = layout
