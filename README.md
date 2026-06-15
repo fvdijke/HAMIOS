@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="HAMIOS_LOGO.png" alt="HAMIOS Logo" width="200"/>
+  <img width="3155" height="1683" alt="2026-06-15 13_51_27-HF Propagation   Atmosphere Monitor" src="https://github.com/user-attachments/assets/04fc0a87-3e2d-4600-bc87-eadce8139d6c" />
 </p>
 
 # HF Propagation & Atmosphere Monitor
