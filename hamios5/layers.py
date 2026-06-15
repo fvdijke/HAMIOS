@@ -308,6 +308,7 @@ class LightningLayer(QGraphicsItem):
         self._lock = threading.Lock()
         self.fade_seconds = 600
         self._anim_scale = 2.0    # schaal voor ring en stip (default 2.0 voor MAP_W=4096)
+        self._font_size = 7       # lettergrootte labels (pt)
         self._cfg = None   # AppConfig — voor piepje-instellingen
 
         self._worker = LightningWorker()
@@ -359,6 +360,10 @@ class LightningLayer(QGraphicsItem):
     def set_anim_scale(self, scale: float):
         """Schaal voor ring-diameter en stip-grootte (1.0 = origineel, 2.0 = dubbel)."""
         self._anim_scale = max(0.5, min(8.0, float(scale)))
+
+    def set_font_size(self, size: int):
+        """Stel lettergrootte in voor labels op kaart."""
+        self._font_size = max(5, min(72, int(size)))
 
     def _on_strike(self, lat: float, lon: float):
         pt  = _xy(lat, lon)
@@ -489,6 +494,7 @@ class LightningRadiusLayer(QGraphicsItem):
         self._radius_km = 0
         self._r, self._g, self._b = color_rgb
         self._label     = label
+        self._font_size = 7
         self.setVisible(False)
 
     def set_qth(self, lat: float, lon: float):
@@ -499,6 +505,11 @@ class LightningRadiusLayer(QGraphicsItem):
     def set_radius_km(self, km: int):
         self._radius_km = km
         self.setVisible(km > 0)
+        self.update()
+
+    def set_font_size(self, size: int):
+        """Stel lettergrootte in voor label."""
+        self._font_size = max(5, min(72, int(size)))
         self.update()
 
     def boundingRect(self) -> QRectF:
@@ -538,7 +549,7 @@ class LightningRadiusLayer(QGraphicsItem):
         cx     = (self._qth_lon + 180) / 360 * MAP_W
         cy_top = (90 - top_lat) / 180 * MAP_H - 7
         painter.setPen(QColor(r, g, b, 210))
-        painter.setFont(QFont("Segoe UI", 7))
+        painter.setFont(QFont("Segoe UI", self._font_size))
         lbl = f"{self._radius_km} km {self._label}".strip()
         painter.drawText(QPointF(cx + 4, cy_top), lbl)
 

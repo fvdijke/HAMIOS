@@ -2682,21 +2682,27 @@ class WSPRTableWidget(QWidget):
             # Frequency
             freq = record.get("frequency", 0)
             freq_item = QTableWidgetItem(f"{freq:.4f}" if freq else "?")
+            freq_item.setData(Qt.UserRole, float(freq) if freq else 0)
             self._table.setItem(row, 2, freq_item)
 
             # SNR
             snr = record.get("snr", 0)
             snr_item = QTableWidgetItem(f"{snr:+d}" if snr else "?")
+            snr_item.setData(Qt.UserRole, int(snr) if snr else 0)
             snr_color = QColor("#4CAF50") if snr >= -10 else QColor("#FFA726") if snr >= -20 else QColor("#EF5350")
             snr_item.setForeground(snr_color)
             self._table.setItem(row, 3, snr_item)
 
             # Distance
-            dist_item = QTableWidgetItem(f"{record.get('distance', 0)} km")
+            distance = record.get("distance", 0)
+            dist_item = QTableWidgetItem(f"{distance} km")
+            dist_item.setData(Qt.UserRole, int(distance) if distance else 0)
             self._table.setItem(row, 4, dist_item)
 
             # Azimuth
-            az_item = QTableWidgetItem(f"{record.get('azimuth', 0)}°")
+            azimuth = record.get("azimuth", 0)
+            az_item = QTableWidgetItem(f"{azimuth}°")
+            az_item.setData(Qt.UserRole, int(azimuth) if azimuth else 0)
             self._table.setItem(row, 5, az_item)
 
             # Time
@@ -2708,6 +2714,7 @@ class WSPRTableWidget(QWidget):
                 except (ValueError, AttributeError):
                     pass
             time_item = QTableWidgetItem(time_str)
+            time_item.setData(Qt.UserRole, record.get("time", ""))
             time_item.setForeground(QColor(TEXT_DIM))
             self._table.setItem(row, 6, time_item)
 

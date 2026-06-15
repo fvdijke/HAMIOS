@@ -34,12 +34,14 @@ class AppConfig:
     map_overlay:    bool  = True    # header-knop staat
 
     # ── Bliksem ───────────────────────────────────────────────────────────────
-    lightning_fade:       int   = 600   # seconden
-    lightning_radius:     int   = 500   # km — drempel voor header-melding (0 = uit)
-    lightning_rate:       int   = 500   # ms — animatie-update interval
-    lightning_beep:       bool  = False # piepje bij elke inslag
-    lightning_beep_r:     int   = 0     # piepje alleen binnen radius km (0 = altijd)
-    lightning_anim_scale: float = 2.0   # schaal animatie (2.0 = standaard voor 4096px kaart)
+    lightning_fade:           int   = 600   # seconden
+    lightning_radius:         int   = 500   # km — drempel voor header-melding (0 = uit)
+    lightning_rate:           int   = 500   # ms — animatie-update interval
+    lightning_beep:           bool  = False # piepje bij elke inslag
+    lightning_beep_r:         int   = 0     # piepje alleen binnen radius km (0 = altijd)
+    lightning_anim_scale:     float = 2.0   # schaal animatie (2.0 = standaard voor 4096px kaart)
+    lightning_font_size:      int   = 7     # lettergrootte labels op kaart (pt)
+    lightning_overlay_visible: bool = True  # overlay zichtbaarheid (onafhankelijk van show_lightning)
 
     # ── Refresh-interval ─────────────────────────────────────────────────────
     refresh_interval:  int   = 5      # minuten (0 = uit)

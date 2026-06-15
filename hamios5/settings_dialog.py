@@ -67,7 +67,7 @@ from PySide6.QtWidgets import (
 )
 
 from .theme import ACCENT, BG_PANEL, BG_SURFACE, BG_ROOT, TEXT_H1, TEXT_DIM, BORDER, make_checkmark_path
-from .config import AppConfig
+from .config import AppConfig, save_config
 from .cat_interface import CatInterface, serial_available, get_instance
 from .i18n import tr
 
@@ -488,6 +488,16 @@ class SettingsDialog(QDialog):
         h_scale.addWidget(self._lightn_anim_scale_spin)
         h_scale.addStretch()
         v.addLayout(h_scale)
+
+        h_font = QHBoxLayout()
+        h_font.addWidget(QLabel(tr("set.map.font_lightning")))
+        self._lightn_font_spin = QSpinBox()
+        self._lightn_font_spin.setRange(5, 72)
+        self._lightn_font_spin.setSuffix(" pt")
+        self._lightn_font_spin.setFixedWidth(80)
+        h_font.addWidget(self._lightn_font_spin)
+        h_font.addStretch()
+        v.addLayout(h_font)
 
         _section(v, tr("set.lightn.perf"))
         h3 = QHBoxLayout()
@@ -994,7 +1004,7 @@ class SettingsDialog(QDialog):
                 row_layout.addWidget(lbl, 1)
 
                 for btn_txt, clr, action in [
-                    (tr("btn.load"),   ACCENT,    lambda _=0, n=name: self._load_profile(n)),
+                    (tr("btn.load"),   "#66BB6A", lambda _=0, n=name: self._load_profile(n)),
                     ("Overschrijven", ACCENT,    lambda _=0, n=name: self._overwrite_profile(n)),
                     ("Verwijderen",   "#EF5350", lambda _=0, n=name: self._delete_profile(n)),
                 ]:
@@ -1197,6 +1207,7 @@ class SettingsDialog(QDialog):
         self._lightn_beep_cb.setChecked(get_val("lightning_beep", False))
         self._lightn_beep_r_spin.setValue(int(get_val("lightning_beep_r", 0)))
         self._lightn_anim_scale_spin.setValue(float(get_val("lightning_anim_scale", 2.0)))
+        self._lightn_font_spin.setValue(int(get_val("lightning_font_size", 7)))
 
         # Meldingen
         self._k_en.setChecked(get_val("k_alert_en", True))
@@ -1232,7 +1243,8 @@ class SettingsDialog(QDialog):
         # Verbind alle controls na laden
         self._connect_live_controls()
 
-        # Ook AppConfig object updaten
+        # Update AppConfig object van UI-values en sla op
+        self._cfg = self._collect_cfg()
         self._save_cfg()
 
     # ── Config laden/opslaan ──────────────────────────────────────────────────
@@ -1284,6 +1296,7 @@ class SettingsDialog(QDialog):
         self._lightn_beep_cb.setChecked(getattr(c, "lightning_beep", False))
         self._lightn_beep_r_spin.setValue(getattr(c, "lightning_beep_r", 0))
         self._lightn_anim_scale_spin.setValue(getattr(c, "lightning_anim_scale", 2.0))
+        self._lightn_font_spin.setValue(getattr(c, "lightning_font_size", 7))
 
         # Meldingen
         self._k_en.setChecked(c.k_alert_en)
@@ -1341,12 +1354,13 @@ class SettingsDialog(QDialog):
             show_lightning    = self._cb_lightn.isChecked(),
             show_dx_spots     = self._cb_dxspots.isChecked(),
             show_locator      = self._cb_locator.isChecked(),
-            lightning_fade    = self._fade_spin.value(),
-            lightning_radius  = self._lightn_radius_spin.value(),
+            lightning_fade      = self._fade_spin.value(),
+            lightning_radius    = self._lightn_radius_spin.value(),
             lightning_rate      = self._lightn_rate_spin.value(),
             lightning_beep      = self._lightn_beep_cb.isChecked(),
             lightning_beep_r    = self._lightn_beep_r_spin.value(),
             lightning_anim_scale= self._lightn_anim_scale_spin.value(),
+            lightning_font_size = self._lightn_font_spin.value(),
             snap_grid         = self._snap_cb.currentData(),
             grat_step         = self._grat_step_cb.currentData(),
             overlay_font_size     = self._font_spin.value(),
@@ -1382,6 +1396,10 @@ class SettingsDialog(QDialog):
         # Velden die via panel-signals bewaard worden (niet hier overschrijven):
         # dx_own_continent, dx_heatmap, band_mode, band_power, band_day_auto,
         # sat_fp, sat_back_h, sat_fwd_h, sat_selected, sat_path, sat_visible
+
+    def _save_cfg(self):
+        """Sla huidige config op naar bestand."""
+        save_config(self._cfg)
 
     # ── Acties ────────────────────────────────────────────────────────────────
     def _locator_to_latlon(self):

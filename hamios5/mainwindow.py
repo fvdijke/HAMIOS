@@ -507,7 +507,9 @@ class HAMIOSMainWindow(QMainWindow):
         # Kaart en lagen
         self.set_qth(cfg.qth_lat, cfg.qth_lon)
         self._map_view.set_lightning_fade(cfg.lightning_fade)
-        self._map_view.set_lightning_enabled(cfg.show_lightning)   # volledige aan/uit
+        self._map_view.set_lightning_enabled(cfg.show_lightning)   # volledige aan/uit (verbinding)
+        self._map_view.set_lightning_visible(getattr(cfg, "lightning_overlay_visible", True))  # overlay zichtbaarheid
+        self._map_view.set_lightning_font_size(getattr(cfg, "lightning_font_size", 7))
         _lon = cfg.show_lightning
         self._map_view.set_lightning_radius(
             int(getattr(cfg, "lightning_radius", 0)) if _lon else 0)
@@ -649,7 +651,9 @@ class HAMIOSMainWindow(QMainWindow):
         if hasattr(self, "_dx_spots_widget"):
             self._dx_spots_widget.set_font_size(c.dx_font_size)
         self._map_view.set_lightning_fade(c.lightning_fade)
-        self._map_view.set_lightning_enabled(c.show_lightning)   # volledige aan/uit
+        self._map_view.set_lightning_enabled(c.show_lightning)   # volledige aan/uit (verbinding)
+        self._map_view.set_lightning_visible(getattr(c, "lightning_overlay_visible", True))  # overlay zichtbaarheid
+        self._map_view.set_lightning_font_size(getattr(c, "lightning_font_size", 7))
         _lon = c.show_lightning
         self._map_view.set_lightning_radius(
             int(getattr(c, "lightning_radius", 0)) if _lon else 0)
@@ -765,7 +769,7 @@ class HAMIOSMainWindow(QMainWindow):
             (tr("ov.aurora"),    "show_aurora",   lambda v: self._map_view.set_aurora_visible(v)),
             (tr("ov.sun"),       "show_sun",      lambda v: self._map_view.set_sun_visible(v)),
             (tr("ov.moon"),      "show_moon",     lambda v: self._map_view.set_moon_visible(v)),
-            (tr("ov.lightning"), "show_lightning", lambda v: (
+            (tr("ov.lightning"), "lightning_overlay_visible", lambda v: (
                 self._map_view.set_lightning_visible(v),
                 self._map_view.set_lightning_radius(
                     int(getattr(self._cfg, "lightning_radius", 0)) if v else 0),

@@ -1435,6 +1435,11 @@ class MapView(QGraphicsView):
     def set_lightning_fade(self, seconds: int):
         self._lightning.set_fade_seconds(seconds)
 
+    def set_lightning_font_size(self, size: int):
+        self._lightning.set_font_size(size)
+        self._lightning_radius.set_font_size(size)
+        self._lightning_beep_radius.set_font_size(size)
+
     def set_grayline_visible(self, on: bool):
         self._grayline.setVisible(on)
 
