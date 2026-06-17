@@ -133,12 +133,27 @@ QTabBar::tab {{
 QTabBar::tab:selected {{ background: {BG_SURFACE}; color: {ACCENT};
     border-bottom: 2px solid {ACCENT}; }}
 
-QLineEdit, QSpinBox, QDoubleSpinBox, QComboBox {{
+QLineEdit, QComboBox {{
     background: {BG_ROOT}; color: {TEXT_H1};
     border: 1px solid {BORDER}; padding: 3px 6px; border-radius: 2px;
 }}
-QLineEdit:focus, QSpinBox:focus, QDoubleSpinBox:focus, QComboBox:focus {{
+QLineEdit:focus, QComboBox:focus {{
     border: 1px solid {ACCENT};
+}}
+QSpinBox, QDoubleSpinBox {{
+    background: {BG_ROOT}; color: {TEXT_H1};
+    border: 1px solid {BORDER}; padding: 3px 6px; border-radius: 2px;
+}}
+QSpinBox:focus, QDoubleSpinBox:focus {{
+    border: 1px solid {ACCENT};
+}}
+QSpinBox::up-button, QDoubleSpinBox::up-button {{
+    background: {BG_SURFACE};
+    width: 16px;
+}}
+QSpinBox::down-button, QDoubleSpinBox::down-button {{
+    background: {BG_SURFACE};
+    width: 16px;
 }}
 
 QLabel {{ color: {TEXT_DIM}; background: transparent; }}

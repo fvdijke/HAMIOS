@@ -666,6 +666,7 @@ QComboBox::down-arrow {{
 
         # ── Stop all background threads immediately (don't wait) ──────────────────
         try:
+            _inet_thread.quit()
             _online_thread.quit()
             if _tle_thread is not None:
                 _tle_thread.quit()
@@ -674,6 +675,7 @@ QComboBox::down-arrow {{
                     thread.quit()
 
             # Wait with timeout (max 2 seconds per thread)
+            _inet_thread.wait(2000)
             _online_thread.wait(2000)
             if _tle_thread is not None:
                 _tle_thread.wait(2000)
