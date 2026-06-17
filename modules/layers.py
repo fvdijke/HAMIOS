@@ -58,16 +58,8 @@ from ._appdir import APP_DIR as _HERE
 _TLE_CACHE = os.path.join(_HERE, "config", "hamios_tle.json")
 
 TLE_GROUPS = {
-    "Amateur": {
-        "primary": "https://celestrak.org/NORAD/elements/gp.php?GROUP=amateur&FORMAT=tle",
-        "fallback": "https://www.amsat.org/tle/dailytle.txt",
-        "tertiary": "http://tle.pe0sat.nl/kepler/non-amateur.txt",
-    },
-    "ISS": {
-        "primary": "https://celestrak.org/NORAD/elements/gp.php?CATNR=25544&FORMAT=tle",
-        "fallback": "https://www.amsat.org/tle/dailytle.txt",
-        "tertiary": "http://tle.pe0sat.nl/kepler/non-amateur.txt",
-    },
+    "Amateur": "https://celestrak.org/NORAD/elements/gp.php?GROUP=amateur&FORMAT=tle",
+    "ISS":     "https://celestrak.org/NORAD/elements/gp.php?CATNR=25544&FORMAT=tle",
     "Weather": "https://celestrak.org/NORAD/elements/gp.php?GROUP=weather&FORMAT=tle",
     "CubeSat": "https://celestrak.org/NORAD/elements/gp.php?GROUP=cubesat&FORMAT=tle",
 }
@@ -110,45 +102,14 @@ def save_tle_cache(data: dict):
         pass
 
 
-def fetch_tle_group(url_or_config) -> list[tuple[str, str, str]]:
-    """Fetch TLE group trying primary, fallback, then tertiary URLs with 1s delays."""
-    # Handle both string URLs (legacy) and dict with primary/fallback/tertiary
-    is_iss_group = False
-    if isinstance(url_or_config, dict):
-        urls = [
-            url_or_config.get("primary"),
-            url_or_config.get("fallback"),
-            url_or_config.get("tertiary"),
-        ]
-        # Check if this is ISS group based on primary URL
-        is_iss_group = "CATNR=25544" in str(urls[0])
-    else:
-        urls = [url_or_config]
-
-    for idx, url in enumerate(urls):
-        if not url:
-            continue
-
-        # Wait 1 second before trying fallback/tertiary (not before primary)
-        if idx > 0:
-            time.sleep(1)
-
-        try:
-            req = urllib.request.Request(url, headers={"User-Agent": "HAMIOS/5.4"})
-            with urllib.request.urlopen(req, timeout=15) as r:
-                text = r.read().decode("utf-8", errors="replace")
-                sats = parse_tle_text(text)
-                if sats:
-                    # If this is ISS group and we got results from fallback/tertiary,
-                    # filter to only ISS (NORAD catalog number 25544)
-                    if is_iss_group and url != url_or_config.get("primary"):
-                        sats = [s for s in sats if "ISS" in s[0]]
-                    if sats:
-                        return sats
-        except Exception:
-            continue
-
-    return []
+def fetch_tle_group(url: str) -> list[tuple[str, str, str]]:
+    """Fetch TLE group from URL."""
+    try:
+        req = urllib.request.Request(url, headers={"User-Agent": "HAMIOS/5.4"})
+        with urllib.request.urlopen(req, timeout=15) as r:
+            return parse_tle_text(r.read().decode("utf-8", errors="replace"))
+    except Exception:
+        return []
 
 
 class TleFetchThread(QThread):

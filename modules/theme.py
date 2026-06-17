@@ -245,14 +245,15 @@ QCheckBox {{
 QCheckBox::indicator {{
     width: 14px;
     height: 14px;
-    background-color: #000000;
-    border: 1px solid #808080;
-    margin-left: 2px;
+    background: #1a1a1a;
+    border: 1px solid #666666;
 }}
 QCheckBox::indicator:hover {{
-    border: 1px solid #A0A0A0;
+    border: 1px solid #888888;
 }}
 QCheckBox::indicator:checked {{
+    background: #C8A84B;
+    border: 1px solid #A88A3A;
     image: url("CHECKMARK_PLACEHOLDER");
 }}
 """

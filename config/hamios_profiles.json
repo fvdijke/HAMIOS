@@ -8,7 +8,7 @@
       "mode": "FT8",
       "power": "100W",
       "antenna": "Ground loop",
-      "show_night": false,
+      "show_night": true,
       "show_grayline": false,
       "show_aurora": false,
       "show_sun": false,
@@ -46,22 +46,22 @@
       "sat_visible": true,
       "sat_selected": [
         "ISS",
+        "METEOR-M2 3",
         "METEOR-M2 2",
         "ISS (ZARYA)",
-        "METEOR-M2 3",
         "METEOR-M2 4"
       ],
       "sat_path": [
-        "METEOR-M2 2",
         "ISS",
-        "ISS (ZARYA)",
         "METEOR-M2 3",
+        "METEOR-M2 2",
+        "ISS (ZARYA)",
         "METEOR-M2 4"
       ],
       "sat_fp": [
         "ISS",
-        "ISS (ZARYA)",
-        "METEOR-M2 2"
+        "METEOR-M2 2",
+        "ISS (ZARYA)"
       ],
       "sat_back_h": 1,
       "sat_fwd_h": 1,
@@ -290,7 +290,7 @@
         1363
       ]
     },
-    "timestamp": "2026-06-17T11:07:51.254630"
+    "timestamp": "2026-06-17T11:16:32.666019"
   },
   "Frank": {
     "config": {
