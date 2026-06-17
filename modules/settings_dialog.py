@@ -513,21 +513,6 @@ class SettingsDialog(QDialog):
 
         _section(v, tr("set.lightn.sound_sec"))
 
-        self._lightn_beep_cb = QCheckBox(tr("set.lightn.beep"))
-        self._lightn_beep_cb.setToolTip(tr("tip.lightn.beep"))
-        v.addWidget(self._lightn_beep_cb)
-
-        h_beep = QHBoxLayout()
-        h_beep.addWidget(QLabel(tr("set.lightn.beep_r")))
-        self._lightn_beep_r_spin = QSpinBox()
-        self._lightn_beep_r_spin.setRange(0, 5000)
-        self._lightn_beep_r_spin.setSingleStep(50)
-        self._lightn_beep_r_spin.setFixedWidth(80)
-        self._lightn_beep_r_spin.setToolTip(tr("tip.lightn.beep_r"))
-        h_beep.addWidget(self._lightn_beep_r_spin)
-        h_beep.addStretch()
-        v.addLayout(h_beep)
-
         # Warning zone sound pitch
         h_pitch_normal = QHBoxLayout()
         h_pitch_normal.addWidget(QLabel("Pitch (Hz):"))
@@ -1286,7 +1271,6 @@ class SettingsDialog(QDialog):
         self._lightn_radius_spin.setValue(int(get_val("lightning_radius", 500)))
         self._lightn_rate_spin.setValue(int(get_val("lightning_rate", 500)))
         self._lightn_beep_cb.setChecked(get_val("lightning_beep", False))
-        self._lightn_beep_r_spin.setValue(int(get_val("lightning_beep_r", 0)))
         self._lightn_warn_radius_spin.setValue(int(get_val("lightning_warn_radius", 0)))
         self._lightn_beep_pitch_spin.setValue(int(get_val("lightning_beep_pitch", 2800)))
         self._lightn_beep_duration_spin.setValue(int(get_val("lightning_beep_duration", 5)))
@@ -1421,7 +1405,6 @@ class SettingsDialog(QDialog):
         self._lightn_radius_spin.setValue(getattr(c, "lightning_radius", 500))
         self._lightn_rate_spin.setValue(getattr(c, "lightning_rate", 500))
         self._lightn_beep_cb.setChecked(getattr(c, "lightning_beep", False))
-        self._lightn_beep_r_spin.setValue(getattr(c, "lightning_beep_r", 0))
         self._lightn_warn_radius_spin.setValue(getattr(c, "lightning_warn_radius", 0))
         self._lightn_beep_pitch_spin.setValue(getattr(c, "lightning_beep_pitch", 2800))
         self._lightn_beep_duration_spin.setValue(getattr(c, "lightning_beep_duration", 5))
@@ -1625,7 +1608,7 @@ class SettingsDialog(QDialog):
         for spin in [self._lat_spin, self._lon_spin, self._k_spin,
                      self._band_spin, self._alert_max_spin, self._fade_spin,
                      self._lightn_radius_spin, self._lightn_rate_spin,
-                     self._lightn_beep_r_spin, self._lightn_anim_scale_spin,
+                     self._lightn_anim_scale_spin,
                      self._font_spin, self._maid_font_spin, self._sat_font_spin,
                      self._sat_path_width_spin,
                      self._callsign_font_spin,
