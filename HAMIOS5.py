@@ -637,14 +637,17 @@ QComboBox::down-arrow {{
 
         # ── Kaartdownloads starten NÁ signal-verbinding (geeft percentage) ────
         _dl_threads = []
-        dl_threads = window.download_missing_maps()
-        started = set()
-        for key, thread in dl_threads:
-            splash.connect_download(key, thread)
-            if id(thread) not in started:
-                _dl_threads.append(thread)  # Keep reference for cleanup
-                thread.start()          # start elke thread slechts één keer
-                started.add(id(thread))
+        try:
+            dl_threads = window.download_missing_maps()
+            started = set()
+            for key, thread in dl_threads:
+                splash.connect_download(key, thread)
+                if id(thread) not in started:
+                    _dl_threads.append(thread)  # Keep reference for cleanup
+                    thread.start()          # start elke thread slechts één keer
+                    started.add(id(thread))
+        except Exception as e:
+            print(f"DEBUG: Error starting download threads: {e}", file=sys.stderr)
 
         # ── TLE downloaden als cache ontbreekt ────────────────────────────────
         _tle_thread = None
@@ -667,21 +670,26 @@ QComboBox::down-arrow {{
 
         # ── Stop all background threads immediately (don't wait) ──────────────────
         print("DEBUG: Stopping all threads...", file=sys.stderr)
-        _online_thread.quit()
-        if _tle_thread is not None:
-            _tle_thread.quit()
-        for thread in _dl_threads:
-            thread.quit()
+        try:
+            _online_thread.quit()
+            if _tle_thread is not None:
+                _tle_thread.quit()
+            for thread in _dl_threads:
+                if thread and thread.isRunning():
+                    thread.quit()
 
-        # Wait with timeout (max 2 seconds per thread)
-        print("DEBUG: Waiting for threads to finish...", file=sys.stderr)
-        _online_thread.wait(2000)
-        if _tle_thread is not None:
-            _tle_thread.wait(2000)
-        for thread in _dl_threads:
-            thread.wait(2000)
+            # Wait with timeout (max 2 seconds per thread)
+            print("DEBUG: Waiting for threads to finish...", file=sys.stderr)
+            _online_thread.wait(2000)
+            if _tle_thread is not None:
+                _tle_thread.wait(2000)
+            for thread in _dl_threads:
+                if thread and thread.isRunning():
+                    thread.wait(2000)
 
-        print("DEBUG: Threads stopped", file=sys.stderr)
+            print("DEBUG: Threads stopped", file=sys.stderr)
+        except Exception as e:
+            print(f"DEBUG: Error during thread cleanup: {e}", file=sys.stderr)
 
     # ── Maak mainwindow aan (altijd, niet alleen als geen splash) ────────────────
     try:
