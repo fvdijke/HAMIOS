@@ -22,6 +22,7 @@ from PySide6.QtCore import Qt, QRectF, QPointF, QThread, Signal
 from PySide6.QtGui import QPixmap, QPainter, QColor, QFont, QPen, QPainterPath, QBrush
 
 from hamios5.mainwindow import HAMIOSMainWindow
+from hamios5.resources_config import DEFAULT_RESOURCES
 
 
 # ── Antenne-logo ──────────────────────────────────────────────────────────────
@@ -228,24 +229,13 @@ class _OnlineResourceCheckThread(QThread):
     """Check all online resources: Solar, Satellites, Spotting, Lightning, Maps."""
     result_updated = Signal(str, bool, str)  # (resource_key, success, detail)
 
-    _RESOURCES = {
-        # Solar & Ionosphere (NOAA SWPC)
-        "web_noaa_swpc": ("https://services.swpc.noaa.gov/products/summary/solar-wind-speed.json", {"User-Agent": "HAMIOS/5.4"}),
-        "web_hamqsl": ("https://www.hamqsl.com/solarxml.php", {"User-Agent": "HAMIOS/5.4"}),
-        # Satellites (CelesTrak)
-        "web_celestrak": ("https://celestrak.org/NORAD/elements/gp.php?GROUP=amateur&FORMAT=tle", {"User-Agent": "HAMIOS/5.4"}),
-        # Weak Signal (WSPRnet) - API endpoint for actual WSPR QSO data
-        "web_wsprnet": ("https://wsprnet.org/drupal/wsprnet/api/v2/spots", {"User-Agent": "HAMIOS/5.4"}),
-        # Spotting (DXWatch, PSK Reporter)
-        "web_dxwatch": ("https://dxwatch.com/dxsd1/s.php?s=0&r=100&cdxc=0", {"User-Agent": "HAMIOS/5.4"}),
-        "web_pskreporter": ("https://pskreporter.info/cgi-bin/pskquery5.pl?encap=0&callback=_", {"User-Agent": "HAMIOS/5.4"}),
-        # Lightning (Blitzortung) - WebSocket, test HTTP fallback
-        "web_blitzortung": ("https://www.blitzortung.org/", {"User-Agent": "HAMIOS/5.4"}),
-        # Broadcasts (EiBi Space) - dynamic URL, test base
-        "web_eibi": ("http://www.eibispace.de/", {"User-Agent": "HAMIOS/5.4"}),
-        # Maps (Wikimedia) - direct file URL
-        "web_wikimedia": ("https://upload.wikimedia.org/wikipedia/commons/thumb/8/8f/Whole_world_-_land_and_oceans_12000.jpg/1920px-Whole_world_-_land_and_oceans_12000.jpg", {"User-Agent": "HAMIOS/5.4"}),
-    }
+    def __init__(self):
+        super().__init__()
+        # Build resource dict from DEFAULT_RESOURCES for testing
+        self._RESOURCES = {
+            key: (res["url"], {"User-Agent": "HAMIOS/5.4"})
+            for key, res in DEFAULT_RESOURCES.items()
+        }
 
     def run(self):
         import urllib.request as _urlreq

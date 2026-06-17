@@ -11,16 +11,17 @@ from ._appdir import APP_DIR as _HERE
 _RESOURCES_FILE = os.path.join(_HERE, "hamios_resources.json")
 
 # Default resources matching splash screen checks
+# Uses "web_" prefix keys to match HAMIOS5.py splash screen resource keys
 DEFAULT_RESOURCES = {
     # Solar & Ionosphere
-    "noaa_swpc": {
+    "web_noaa_swpc": {
         "name": "NOAA SWPC",
         "category": "Solar & Ionosphere",
         "url": "https://services.swpc.noaa.gov/products/summary/solar-wind-speed.json",
         "description": "Solar wind speed, magnetic field, Kp index",
         "method": "GET",
     },
-    "hamqsl": {
+    "web_hamqsl": {
         "name": "HamQSL",
         "category": "Solar & Ionosphere",
         "url": "https://www.hamqsl.com/solarxml.php",
@@ -28,7 +29,7 @@ DEFAULT_RESOURCES = {
         "method": "GET",
     },
     # Satellites
-    "celestrak": {
+    "web_celestrak": {
         "name": "CelesTrak",
         "category": "Satellites",
         "url": "https://celestrak.org/NORAD/elements/gp.php?GROUP=amateur&FORMAT=tle",
@@ -36,7 +37,7 @@ DEFAULT_RESOURCES = {
         "method": "GET",
     },
     # Weak Signal Propagation
-    "wsprnet": {
+    "web_wsprnet": {
         "name": "WSPRnet",
         "category": "Weak Signal Propagation",
         "url": "https://wsprnet.org/drupal/wsprnet/api/v2/spots",
@@ -44,14 +45,14 @@ DEFAULT_RESOURCES = {
         "method": "GET",
     },
     # DX Spotting
-    "dxwatch": {
+    "web_dxwatch": {
         "name": "DXWatch",
         "category": "DX Spotting",
         "url": "https://dxwatch.com/dxsd1/s.php?s=0&r=100&cdxc=0",
         "description": "Real-time DX cluster spots",
         "method": "GET",
     },
-    "pskreporter": {
+    "web_pskreporter": {
         "name": "PSK Reporter",
         "category": "DX Spotting",
         "url": "https://pskreporter.info/cgi-bin/pskquery5.pl?encap=0&callback=_",
@@ -59,7 +60,7 @@ DEFAULT_RESOURCES = {
         "method": "GET",
     },
     # Lightning
-    "blitzortung": {
+    "web_blitzortung": {
         "name": "Blitzortung",
         "category": "Lightning",
         "url": "https://www.blitzortung.org/",
@@ -67,7 +68,7 @@ DEFAULT_RESOURCES = {
         "method": "HEAD",
     },
     # Broadcast Schedules
-    "eibispace": {
+    "web_eibi": {
         "name": "EIBI Space",
         "category": "Broadcast Schedules",
         "url": "http://www.eibispace.de/",
@@ -75,7 +76,7 @@ DEFAULT_RESOURCES = {
         "method": "HEAD",
     },
     # Map Data
-    "wikimedia": {
+    "web_wikimedia": {
         "name": "Wikimedia",
         "category": "Map Data",
         "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/8/8f/Whole_world_-_land_and_oceans_12000.jpg/1920px-Whole_world_-_land_and_oceans_12000.jpg",
