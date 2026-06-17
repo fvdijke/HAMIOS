@@ -132,13 +132,47 @@ QTabBar::tab {{
 }}
 QTabBar::tab:selected {{ background: {BG_SURFACE}; color: {ACCENT};
     border-bottom: 2px solid {ACCENT}; }}
-QLineEdit, QSpinBox, QDoubleSpinBox, QComboBox {{
+
+/* ─ Input fields ─────────────────────────────────────────────────────── */
+QLineEdit, QComboBox {{
     background: {BG_ROOT}; color: {TEXT_H1};
     border: 1px solid {BORDER}; padding: 3px 6px; border-radius: 2px;
 }}
-QLineEdit:focus, QSpinBox:focus, QDoubleSpinBox:focus, QComboBox:focus {{
+QLineEdit:focus, QComboBox:focus {{
     border: 1px solid {ACCENT};
 }}
+
+/* ─ Spinbox ──────────────────────────────────────────────────────────── */
+QSpinBox, QDoubleSpinBox {{
+    background: {BG_ROOT}; color: {TEXT_H1};
+    border: 1px solid {BORDER}; padding: 2px 2px 2px 6px; border-radius: 2px;
+    margin-right: 2px;
+}}
+QSpinBox:focus, QDoubleSpinBox:focus {{
+    border: 1px solid {ACCENT};
+}}
+QSpinBox::up-button, QDoubleSpinBox::up-button {{
+    subcontrol-origin: border;
+    subcontrol-position: top right;
+    width: 18px;
+    border-left: 1px solid {BORDER};
+    background: {BG_SURFACE};
+}}
+QSpinBox::up-button:hover, QDoubleSpinBox::up-button:hover {{
+    background: {ACCENT};
+}}
+QSpinBox::down-button, QDoubleSpinBox::down-button {{
+    subcontrol-origin: border;
+    subcontrol-position: bottom right;
+    width: 18px;
+    border-left: 1px solid {BORDER};
+    border-top: 1px solid {BORDER};
+    background: {BG_SURFACE};
+}}
+QSpinBox::down-button:hover, QDoubleSpinBox::down-button:hover {{
+    background: {ACCENT};
+}}
+
 QLabel {{ color: {TEXT_DIM}; background: transparent; }}
 QPushButton {{
     background: {BG_SURFACE}; color: {TEXT_H1};
@@ -1411,7 +1445,7 @@ class SettingsDialog(QDialog):
             show_aurora       = self._cb_aurora.isChecked(),
             show_sun          = self._cb_sun.isChecked(),
             show_moon         = self._cb_moon.isChecked(),
-            show_lightning    = self._cb_lightn.isChecked(),
+            show_lightning    = self._cb_lightn_en.isChecked(),
             show_dx_spots     = self._cb_dxspots.isChecked(),
             show_locator      = self._cb_locator.isChecked(),
             lightning_fade      = self._fade_spin.value(),
