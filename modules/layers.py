@@ -366,16 +366,16 @@ class LightningLayer(QGraphicsItem):
         if cfg and getattr(cfg, "lightning_beep", False):
             beep_r = int(getattr(cfg, "lightning_beep_r", 0))
             # Get configurable sound parameters
-            normal_pitch = int(getattr(cfg, "lightning_beep_pitch", 2800))
-            normal_duration = int(getattr(cfg, "lightning_beep_duration", 5))
+            warning_pitch = int(getattr(cfg, "lightning_beep_pitch", 2800))
+            warning_duration = int(getattr(cfg, "lightning_beep_duration", 5))
             alert_pitch = int(getattr(cfg, "lightning_alert_pitch", 5000))
             alert_duration = int(getattr(cfg, "lightning_alert_duration", 10))
-            # Default: normal sound (outside alert zone)
+            # Default: Warning Zone sound (outside alert zone)
             # Use default parameters to capture values at creation time (not by reference)
-            sound_func = lambda p=normal_pitch, d=normal_duration: play_beep(p, d)
+            sound_func = lambda p=warning_pitch, d=warning_duration: play_beep(p, d)
 
             if beep_r > 0:
-                # Controleer afstand tot QTH
+                # Alert radius is set - check if lightning is within alert zone
                 try:
                     import math
                     R = 6371.0
@@ -392,10 +392,9 @@ class LightningLayer(QGraphicsItem):
                             # Use default parameters to capture values at creation time
                             sound_func = lambda p=alert_pitch, d=alert_duration: play_beep(p, d)
                         else:
-                            return
-                    else:
-                        # Lightning outside alert zone: no sound
-                        return
+                            # Alert zone but sound disabled, use warning zone sound
+                            sound_func = lambda p=warning_pitch, d=warning_duration: play_beep(p, d)
+                    # Lightning outside alert zone: use warning zone sound (sound_func already set)
                 except Exception:
                     return
 
