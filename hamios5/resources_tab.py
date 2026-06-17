@@ -64,6 +64,15 @@ class ResourceManagerTab(QWidget):
 
     def _build_ui(self):
         """Bouw de resource manager UI."""
+        # Remove existing layout if any
+        old_layout = self.layout()
+        if old_layout:
+            while old_layout.count():
+                item = old_layout.takeAt(0)
+                if item.widget():
+                    item.widget().deleteLater()
+            self.setLayout(None)
+
         vlay = QVBoxLayout(self)
         vlay.setContentsMargins(12, 8, 12, 8)
         vlay.setSpacing(8)
