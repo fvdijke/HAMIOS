@@ -16,7 +16,7 @@ from .geometry import save_geom, restore_geom
 from .i18n import tr
 
 from ._appdir import APP_DIR as _HERE
-_SPY_FILE = os.path.join(_HERE, "hamios_spy_stations.json")
+_SPY_FILE = os.path.join(_HERE, "config", "hamios_spy_stations.json")
 
 _DEFAULTS = [
     # ── Actieve Russische stations ──────────────────────────────────────────

@@ -6,10 +6,10 @@ import os as _os
 import tempfile as _tmp
 
 # Tijdelijke pijl-images worden bij app-start aangemaakt
-_ARROW_UP_PATH   = _os.path.join(_tmp.gettempdir(), "hamios_arrow_up.png")
-_ARROW_DOWN_PATH = _os.path.join(_tmp.gettempdir(), "hamios_arrow_dn.png")
+_ARROW_UP_PATH   = _os.path.join(_tmp.gettempdir(), "config/hamios_arrow_up.png")
+_ARROW_DOWN_PATH = _os.path.join(_tmp.gettempdir(), "config/hamios_arrow_dn.png")
 
-_CHECKMARK_PATH = _os.path.join(_tmp.gettempdir(), "hamios_checkmark.png")
+_CHECKMARK_PATH = _os.path.join(_tmp.gettempdir(), "config/hamios_checkmark.png")
 
 
 def make_checkmark_path() -> str:

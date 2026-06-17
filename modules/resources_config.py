@@ -9,8 +9,8 @@ import os
 import datetime
 from ._appdir import APP_DIR as _HERE
 
-_RESOURCES_FILE = os.path.join(_HERE, "hamios_resources.json")
-_DEFAULTS_FILE = os.path.join(_HERE, "hamios_resources_defaults.json")
+_RESOURCES_FILE = os.path.join(_HERE, "config", "hamios_resources.json")
+_DEFAULTS_FILE = os.path.join(_HERE, "config", "hamios_resources_defaults.json")
 
 
 def get_eibi_url() -> str:

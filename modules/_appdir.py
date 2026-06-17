@@ -9,7 +9,7 @@ ROOT: HAMIOS5 project directory (waar HAMIOS5.py staat)
 
 Gebruik in alle hamios5-modules:
     from ._appdir import APP_DIR
-    _CONFIG_FILE = os.path.join(APP_DIR, "hamios_config.json")
+    _CONFIG_FILE = os.path.join(APP_DIR, "config", "hamios_config.json")
 """
 
 import os

@@ -43,8 +43,8 @@ from . import cat_interface as _cat_mod
 
 # Pad naar layouts-bestand (gedeeld met v4)
 from ._appdir import APP_DIR as _HERE
-_LAYOUTS_FILE = os.path.join(_HERE, "hamios_layouts.json")  # legacy + panels
-_CONFIG_FILE  = os.path.join(_HERE, "hamios_config.json")
+_LAYOUTS_FILE = os.path.join(_HERE, "config", "hamios_layouts.json")  # legacy + panels
+_CONFIG_FILE  = os.path.join(_HERE, "config", "hamios_config.json")
 
 
 def _read_layouts() -> dict:

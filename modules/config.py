@@ -5,7 +5,7 @@ import os
 from .dataclasses import dataclass, field, asdict
 
 from ._appdir import APP_DIR as _HERE
-_CONFIG_FILE = os.path.join(_HERE, "hamios_config.json")
+_CONFIG_FILE = os.path.join(_HERE, "config", "hamios_config.json")
 
 
 @dataclass

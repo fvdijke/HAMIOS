@@ -12,8 +12,8 @@ from ._appdir import APP_DIR as _HERE
 from .profiel_manager import ProfileManager
 
 # Legacy layouts-bestand (nog steeds gelezen voor achterwaartse compatibiliteit)
-_LAYOUTS_FILE = os.path.join(_HERE, "hamios_layouts.json")
-_CONFIG_FILE  = os.path.join(_HERE, "hamios_config.json")
+_LAYOUTS_FILE = os.path.join(_HERE, "config", "hamios_layouts.json")
+_CONFIG_FILE  = os.path.join(_HERE, "config", "hamios_config.json")
 
 
 def _load_layouts() -> dict:

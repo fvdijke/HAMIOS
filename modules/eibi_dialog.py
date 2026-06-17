@@ -30,8 +30,8 @@ from .i18n import tr
 from .resources_config import get_eibi_url
 
 from ._appdir import APP_DIR as _HERE
-_CACHE_FILE = os.path.join(_HERE, "hamios_eibi.csv")
-_META_FILE  = os.path.join(_HERE, "hamios_eibi_meta.json")
+_CACHE_FILE = os.path.join(_HERE, "config", "hamios_eibi.csv")
+_META_FILE  = os.path.join(_HERE, "config", "hamios_eibi_meta.json")
 
 
 def _load_cache() -> list[dict]:

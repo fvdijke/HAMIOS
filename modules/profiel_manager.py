@@ -14,7 +14,7 @@ from .typing import Dict, Tuple, Optional
 from ._appdir import APP_DIR as _HERE
 
 
-_PROFILES_FILE = os.path.join(_HERE, "hamios_profiles.json")
+_PROFILES_FILE = os.path.join(_HERE, "config", "hamios_profiles.json")
 
 
 @dataclass

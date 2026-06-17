@@ -55,7 +55,7 @@ class _SatSignaller(QObject):
     zone_changed = Signal(str, bool)   # (naam, in_zone)
 
 from ._appdir import APP_DIR as _HERE
-_TLE_CACHE = os.path.join(_HERE, "hamios_tle.json")
+_TLE_CACHE = os.path.join(_HERE, "config", "hamios_tle.json")
 
 TLE_GROUPS = {
     "Amateur": "https://celestrak.org/NORAD/elements/gp.php?GROUP=amateur&FORMAT=tle",

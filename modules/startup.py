@@ -19,13 +19,13 @@ from ._appdir import APP_DIR
 # ── Bestandsdefinities ────────────────────────────────────────────────────────
 
 _WORLDMAP  = os.path.join(APP_DIR, "worldmap_eq.jpg")
-_CONFIG    = os.path.join(APP_DIR, "hamios_config.json")
-_LAYOUTS   = os.path.join(APP_DIR, "hamios_layouts.json")
-_SPY       = os.path.join(APP_DIR, "hamios_spy_stations.json")
+_CONFIG    = os.path.join(APP_DIR, "config", "hamios_config.json")
+_LAYOUTS   = os.path.join(APP_DIR, "config", "hamios_layouts.json")
+_SPY       = os.path.join(APP_DIR, "config", "hamios_spy_stations.json")
 _HISTORY   = os.path.join(APP_DIR, "HAMIOS_history.csv")
-_TLE       = os.path.join(APP_DIR, "hamios_tle.json")
-_EIBI_CSV  = os.path.join(APP_DIR, "hamios_eibi.csv")
-_EIBI_META = os.path.join(APP_DIR, "hamios_eibi_meta.json")
+_TLE       = os.path.join(APP_DIR, "config", "hamios_tle.json")
+_EIBI_CSV  = os.path.join(APP_DIR, "config", "hamios_eibi.csv")
+_EIBI_META = os.path.join(APP_DIR, "config", "hamios_eibi_meta.json")
 
 
 # ── Standaard SpyStations: importeer de volledige lijst uit spy_dialog ────────
@@ -105,13 +105,13 @@ def file_status() -> list[dict]:
     """
     files = [
         (_WORLDMAP,  "worldmap_eq.jpg",       "Vereist"),
-        (_CONFIG,    "hamios_config.json",     "Configuratie"),
-        (_LAYOUTS,   "hamios_layouts.json",    "Paneel layouts (legacy)"),
-        (_SPY,       "hamios_spy_stations.json","SpyStations"),
+        (_CONFIG,    "config/hamios_config.json",     "Configuratie"),
+        (_LAYOUTS,   "config/hamios_layouts.json",    "Paneel layouts (legacy)"),
+        (_SPY,       "config/hamios_spy_stations.json","SpyStations"),
         (_HISTORY,   "HAMIOS_history.csv",     "Band history"),
-        (_TLE,       "hamios_tle.json",        "Satelliet TLE"),
-        (_EIBI_CSV,  "hamios_eibi.csv",        "EIBI cache"),
-        (_EIBI_META, "hamios_eibi_meta.json",  "EIBI metadata"),
+        (_TLE,       "config/hamios_tle.json",        "Satelliet TLE"),
+        (_EIBI_CSV,  "config/hamios_eibi.csv",        "EIBI cache"),
+        (_EIBI_META, "config/hamios_eibi_meta.json",  "EIBI metadata"),
     ]
     result = []
     for path, name, label in files:

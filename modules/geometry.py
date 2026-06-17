@@ -20,8 +20,8 @@ import os
 
 from ._appdir import APP_DIR as _HERE
 
-_CONFIG_FILE  = os.path.join(_HERE, "hamios_config.json")
-_LAYOUTS_FILE = os.path.join(_HERE, "hamios_layouts.json")   # legacy / panel layouts
+_CONFIG_FILE  = os.path.join(_HERE, "config", "hamios_config.json")
+_LAYOUTS_FILE = os.path.join(_HERE, "config", "hamios_layouts.json")   # legacy / panel layouts
 
 
 # ── Interne helpers ───────────────────────────────────────────────────────────
