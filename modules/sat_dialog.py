@@ -178,9 +178,11 @@ class SatelliteDialog(QDialog):
         self._tree.setUniformRowHeights(True)
         self._tree.setRootIsDecorated(True)
         self._tree.itemChanged.connect(self._on_item_changed)
-        # Remove blue scrollbar styling
+        # Remove blue scrollbar and hover highlight styling
         self._tree.setStyleSheet(
             "QTreeWidget { border: none; }"
+            "QTreeWidget::item:hover { background-color: transparent; }"
+            "QTreeWidget::item:selected { background-color: transparent; }"
             "QScrollBar:vertical { width: 0px; }"
         )
         v.addWidget(self._tree, 1)
