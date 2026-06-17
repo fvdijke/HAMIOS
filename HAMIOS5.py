@@ -493,21 +493,11 @@ def main():
         _show_error("HAMIOS — Onverwachte fout", msg)
     sys.excepthook = _excepthook
 
-    from modules.theme import generate_spinbox_arrows, QSS as _QSS
-    # Note: Checkmarks now use inline SVG in stylesheet, no file generation needed
-    _up, _dn = generate_spinbox_arrows()
-    _arrow_qss = f"""
-QSpinBox::up-arrow, QDoubleSpinBox::up-arrow {{
-    image: url("{_up}"); width: 10px; height: 6px;
-}}
-QSpinBox::down-arrow, QDoubleSpinBox::down-arrow,
-QComboBox::down-arrow {{
-    image: url("{_dn}"); width: 10px; height: 6px;
-}}
-"""
+    from modules.theme import QSS as _QSS
+    # Use simple QSS without custom arrow images
+    _dn = ""  # Placeholder for combo box arrow (not used)
     app.setStyleSheet(
         _QSS.replace("COMBO_ARROW_PLACEHOLDER", _dn)
-        + _arrow_qss
     )
 
     from modules.config import load_config as _load_cfg
