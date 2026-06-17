@@ -120,6 +120,10 @@ class TleFetchThread(QThread):
     def run(self):
         cache = {}
         for group, url in TLE_GROUPS.items():
+            # Check for interruption request
+            if self.isInterruptionRequested():
+                return
+
             self.progress.emit(group)
             sats = fetch_tle_group(url)
             if sats:

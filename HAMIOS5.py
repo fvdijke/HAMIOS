@@ -240,6 +240,10 @@ class _OnlineResourceCheckThread(QThread):
     def run(self):
         import urllib.request as _urlreq
         for key, (url, headers) in self._RESOURCES.items():
+            # Check for interruption request
+            if self.isInterruptionRequested():
+                return
+
             try:
                 # Use GET request with proper headers
                 req = _urlreq.Request(url, method="GET", headers=headers)
@@ -641,6 +645,7 @@ QComboBox::down-arrow {{
                 started.add(id(thread))
 
         # ── TLE downloaden als cache ontbreekt ────────────────────────────────
+        _tle_thread = None
         if not os.path.exists(os.path.join(_APP_DIR, "hamios_tle.json")):
             from modules.layers import TleFetchThread as _TleFetchThread  # noqa: PLC0415
             _tle_thread = _TleFetchThread()
@@ -657,6 +662,13 @@ QComboBox::down-arrow {{
         splash.enable_button()
         splash.exec()
         splash.close()
+
+        # ── Zorg dat threads proper afgesloten worden ────────────────────────────
+        _online_thread.quit()
+        _online_thread.wait()
+        if _tle_thread is not None:
+            _tle_thread.quit()
+            _tle_thread.wait()
 
     else:
         try:
