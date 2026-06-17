@@ -69,12 +69,12 @@ class ResourceManagerTab(QWidget):
         if old_layout is not None:
             # Delete all widgets in the layout
             while old_layout.count():
-                widget = old_layout.itemAt(0).widget()
+                item = old_layout.takeAt(0)
+                widget = item.widget()
                 if widget:
-                    widget.setParent(None)
-            # Delete the layout itself
-            old_layout.deleteLater()
+                    widget.deleteLater()
 
+        # Create new layout (will replace old one)
         vlay = QVBoxLayout(self)
         vlay.setContentsMargins(12, 8, 12, 8)
         vlay.setSpacing(8)
