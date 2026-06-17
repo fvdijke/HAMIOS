@@ -642,9 +642,8 @@ QComboBox::down-arrow {{
             # Don't start download threads - they cause thread cleanup issues
             # Main window will handle map downloads when needed
             window.download_missing_maps()
-            print("DEBUG: Map downloads deferred to main window", file=sys.stderr)
-        except Exception as e:
-            print(f"DEBUG: Map download check error: {e}", file=sys.stderr)
+        except Exception:
+            pass
 
         # ── TLE downloaden als cache ontbreekt ────────────────────────────────
         _tle_thread = None
@@ -666,7 +665,6 @@ QComboBox::down-arrow {{
         splash.close()
 
         # ── Stop all background threads immediately (don't wait) ──────────────────
-        print("DEBUG: Stopping all threads...", file=sys.stderr)
         try:
             _online_thread.quit()
             if _tle_thread is not None:
@@ -676,32 +674,25 @@ QComboBox::down-arrow {{
                     thread.quit()
 
             # Wait with timeout (max 2 seconds per thread)
-            print("DEBUG: Waiting for threads to finish...", file=sys.stderr)
             _online_thread.wait(2000)
             if _tle_thread is not None:
                 _tle_thread.wait(2000)
             for thread in _dl_threads:
                 if thread and thread.isRunning():
                     thread.wait(2000)
-
-            print("DEBUG: Threads stopped", file=sys.stderr)
-        except Exception as e:
-            print(f"DEBUG: Error during thread cleanup: {e}", file=sys.stderr)
+        except Exception:
+            pass
 
     # ── Maak mainwindow aan (altijd, niet alleen als geen splash) ────────────────
     try:
-        print("DEBUG: Creating HAMIOSMainWindow...", file=sys.stderr)
         window = HAMIOSMainWindow()
-        print("DEBUG: HAMIOSMainWindow created successfully", file=sys.stderr)
     except Exception:
         msg = traceback.format_exc()
-        print(f"ERROR: Failed to create window: {msg}", file=sys.stderr)
+        print(msg, file=sys.stderr)
         _show_error("HAMIOS — Startfout", msg)
         sys.exit(1)
 
-    print("DEBUG: Showing window...", file=sys.stderr)
     window.show()
-    print("DEBUG: Starting event loop...", file=sys.stderr)
     sys.exit(app.exec())
 
 
