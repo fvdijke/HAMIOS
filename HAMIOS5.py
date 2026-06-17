@@ -21,8 +21,8 @@ from PySide6.QtWidgets import (QApplication, QMessageBox, QDialog,
 from PySide6.QtCore import Qt, QRectF, QPointF, QThread, Signal
 from PySide6.QtGui import QPixmap, QPainter, QColor, QFont, QPen, QPainterPath, QBrush
 
-from mainwindow import HAMIOSMainWindow
-from resources_config import DEFAULT_RESOURCES, ResourceConfig
+from modules.mainwindow import HAMIOSMainWindow
+from modules.resources_config import DEFAULT_RESOURCES, ResourceConfig
 
 
 # ── Antenne-logo ──────────────────────────────────────────────────────────────
@@ -149,7 +149,7 @@ def _make_header_pixmap() -> QPixmap:
 # Worden aangemaakt in _make_checks() zodat tr() de juiste taal gebruikt.
 
 def _make_checks():
-    from i18n import tr as _tr
+    from modules.i18n import tr as _tr
     fs_checks = [
         ("fs_create",   _tr("splash.fs.create_lbl"),   _tr("splash.detail.fs_create")),
         ("fs_write",    _tr("splash.fs.write_lbl"),    _tr("splash.detail.fs_write")),
@@ -273,7 +273,7 @@ class SplashDialog(QDialog):
         self.setFixedWidth(_SW)
 
         # Bouw check-lijsten in de actieve taal
-        from i18n import tr as _tr
+        from modules.i18n import tr as _tr
         fs_checks, file_checks, dep_checks, online_checks = _make_checks()
         all_checks = fs_checks + file_checks + dep_checks + online_checks
 
@@ -400,7 +400,7 @@ class SplashDialog(QDialog):
 
     def connect_tle_download(self, key: str, thread):
         """Verbind TleFetchThread signals voor voortgang en voltooiing."""
-        from i18n import tr as _tr
+        from modules.i18n import tr as _tr
         thread.progress.connect(
             lambda grp, k=key: self._apply(k, "loading", grp))
         thread.done.connect(
@@ -411,7 +411,7 @@ class SplashDialog(QDialog):
 
     def connect_download(self, key: str, thread):
         """Verbind download-thread signals voor voortgang en voltooiing."""
-        from i18n import tr as _tr
+        from modules.i18n import tr as _tr
         thread.progress.connect(
             lambda recv, tot, k=key: self._on_progress(k, recv, tot))
         thread.done.connect(
@@ -433,7 +433,7 @@ class SplashDialog(QDialog):
         QApplication.processEvents()
 
     def enable_button(self):
-        from i18n import tr as _tr
+        from modules.i18n import tr as _tr
         self._btn.setEnabled(True)
         self._btn.setText(_tr("btn.continue"))
         self._btn.setStyleSheet(self._BTN_ACTIVE)
@@ -499,7 +499,7 @@ QComboBox::down-arrow {{
 
     if _boot_cfg.show_splash:
         # Taal instellen vóór UI-opbouw
-        from i18n import set_language as _set_lang, tr as _tr
+        from modules.i18n import set_language as _set_lang, tr as _tr
         _set_lang(getattr(_boot_cfg, "language", "nl"))
 
         splash = SplashDialog()

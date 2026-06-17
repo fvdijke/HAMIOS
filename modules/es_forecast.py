@@ -12,7 +12,7 @@ Usage:
 
 import datetime as dt
 import math
-from typing import Dict, Tuple
+from .typing import Dict, Tuple
 
 
 class ESForecast:

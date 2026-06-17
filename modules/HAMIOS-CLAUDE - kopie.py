@@ -36,7 +36,7 @@ Change Log (2.3)
 
 
 import configparser
-from theme_manager import ThemeManager, THEMES
+from .theme_manager import ThemeManager, THEMES
 import csv
 
 import json
@@ -49,7 +49,7 @@ try:
     _TRAY_OK = True
 except ImportError:
     _TRAY_OK = False
-from tkinter import font as tkfont
+from .tkinter import font as tkfont
 import threading
 import queue as _queue
 import datetime

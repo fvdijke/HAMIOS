@@ -2,7 +2,7 @@
 
 import json
 import os
-from dataclasses import dataclass, field, asdict
+from .dataclasses import dataclass, field, asdict
 
 from ._appdir import APP_DIR as _HERE
 _CONFIG_FILE = os.path.join(_HERE, "hamios_config.json")

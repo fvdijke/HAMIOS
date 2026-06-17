@@ -5,7 +5,7 @@ import math
 import os
 import subprocess
 import sys
-from dataclasses import asdict
+from .dataclasses import asdict
 
 # Pad naar het layouts-bestand
 from ._appdir import APP_DIR as _HERE

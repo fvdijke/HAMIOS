@@ -10,7 +10,7 @@ Usage:
 
 import math
 import datetime as dt
-from typing import Dict, Tuple
+from .typing import Dict, Tuple
 
 
 class MUFModel:
