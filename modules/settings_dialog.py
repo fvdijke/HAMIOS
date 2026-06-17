@@ -462,7 +462,7 @@ class SettingsDialog(QDialog):
         h.addStretch()
         v.addLayout(h)
 
-        _section(v, "Alert")
+        _section(v, "Alert Zone")
         h2 = QHBoxLayout()
         h2.addWidget(QLabel(tr("set.lightn.alert")))
         self._lightn_radius_spin = QSpinBox()
@@ -475,12 +475,12 @@ class SettingsDialog(QDialog):
         v.addLayout(h2)
 
         # Alert sound enable
-        self._lightn_alert_sound_cb = QCheckBox("Enable alert sound")
+        self._lightn_alert_sound_cb = QCheckBox("Enable alert zone sound")
         v.addWidget(self._lightn_alert_sound_cb)
 
-        # Alert sound pitch
+        # Alert zone sound pitch
         h_pitch = QHBoxLayout()
-        h_pitch.addWidget(QLabel("Sound pitch (Hz):"))
+        h_pitch.addWidget(QLabel("Pitch (Hz):"))
         self._lightn_pitch_spin = QSpinBox()
         self._lightn_pitch_spin.setRange(1000, 8000)
         self._lightn_pitch_spin.setSingleStep(100)
@@ -489,9 +489,9 @@ class SettingsDialog(QDialog):
         h_pitch.addStretch()
         v.addLayout(h_pitch)
 
-        # Alert sound duration
+        # Alert zone sound duration
         h_duration = QHBoxLayout()
-        h_duration.addWidget(QLabel("Sound duration (ms):"))
+        h_duration.addWidget(QLabel("Duration (ms):"))
         self._lightn_duration_spin = QSpinBox()
         self._lightn_duration_spin.setRange(1, 100)
         self._lightn_duration_spin.setSingleStep(1)
@@ -517,9 +517,9 @@ class SettingsDialog(QDialog):
         h_beep.addStretch()
         v.addLayout(h_beep)
 
-        # Normal sound pitch (outside alert zone)
+        # Warning zone sound pitch
         h_pitch_normal = QHBoxLayout()
-        h_pitch_normal.addWidget(QLabel("Sound pitch (Hz):"))
+        h_pitch_normal.addWidget(QLabel("Pitch (Hz):"))
         self._lightn_beep_pitch_spin = QSpinBox()
         self._lightn_beep_pitch_spin.setRange(1000, 8000)
         self._lightn_beep_pitch_spin.setSingleStep(100)
@@ -528,9 +528,9 @@ class SettingsDialog(QDialog):
         h_pitch_normal.addStretch()
         v.addLayout(h_pitch_normal)
 
-        # Normal sound duration
+        # Warning zone sound duration
         h_duration_normal = QHBoxLayout()
-        h_duration_normal.addWidget(QLabel("Sound duration (ms):"))
+        h_duration_normal.addWidget(QLabel("Duration (ms):"))
         self._lightn_beep_duration_spin = QSpinBox()
         self._lightn_beep_duration_spin.setRange(1, 100)
         self._lightn_beep_duration_spin.setSingleStep(1)
