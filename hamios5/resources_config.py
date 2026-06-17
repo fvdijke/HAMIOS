@@ -10,6 +10,7 @@ import datetime
 from ._appdir import APP_DIR as _HERE
 
 _RESOURCES_FILE = os.path.join(_HERE, "hamios_resources.json")
+_DEFAULTS_FILE = os.path.join(_HERE, "hamios_resources_defaults.json")
 
 
 def get_eibi_url() -> str:
@@ -97,6 +98,15 @@ DEFAULT_RESOURCES = {
 
 class ResourceConfig:
     """Manage custom resource URLs."""
+
+    @staticmethod
+    def save_defaults():
+        """Save current DEFAULT_RESOURCES to defaults file."""
+        try:
+            with open(_DEFAULTS_FILE, "w", encoding="utf-8") as f:
+                json.dump(DEFAULT_RESOURCES, f, ensure_ascii=False, indent=2)
+        except Exception as e:
+            print(f"Failed to save defaults: {e}")
 
     @staticmethod
     def load_resources() -> dict:

@@ -22,7 +22,7 @@ from PySide6.QtCore import Qt, QRectF, QPointF, QThread, Signal
 from PySide6.QtGui import QPixmap, QPainter, QColor, QFont, QPen, QPainterPath, QBrush
 
 from hamios5.mainwindow import HAMIOSMainWindow
-from hamios5.resources_config import DEFAULT_RESOURCES
+from hamios5.resources_config import DEFAULT_RESOURCES, ResourceConfig
 
 
 # ── Antenne-logo ──────────────────────────────────────────────────────────────
@@ -459,6 +459,9 @@ def _show_error(title: str, text: str):
 def main():
     QApplication.setHighDpiScaleFactorRoundingPolicy(
         Qt.HighDpiScaleFactorRoundingPolicy.PassThrough)
+
+    # Save default resource URLs on startup
+    ResourceConfig.save_defaults()
 
     app = QApplication(sys.argv)
     app.setApplicationName("HAMIOS")
