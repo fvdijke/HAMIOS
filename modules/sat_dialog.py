@@ -305,9 +305,14 @@ class SatelliteDialog(QDialog):
                 item.setFont(0, f8)
                 item.setData(0, Qt.UserRole, name)
 
-                # Only Path and Footprint are selectable; Position is display-only
+                cs_pos = Qt.Checked if name in self._selected else Qt.Unchecked
+                item.setCheckState(_COL_POS, cs_pos)
+
                 cs_path = Qt.Checked if name in self._path else Qt.Unchecked
                 item.setCheckState(_COL_PATH, cs_path)
+
+                if cs_pos == Qt.Unchecked:
+                    item.setForeground(0, QColor(TEXT_DIM))
 
                 cs_fp = Qt.Checked if name in self._fp else Qt.Unchecked
                 item.setCheckState(_COL_FP, cs_fp)
@@ -331,7 +336,21 @@ class SatelliteDialog(QDialog):
             return
         self._tree.blockSignals(True)
 
-        if col == _COL_PATH:
+        if col == _COL_POS:
+            on = item.checkState(_COL_POS) == Qt.Checked
+            if on:
+                self._selected.add(name)
+                item.setForeground(0, QColor(TEXT_BODY))
+            else:
+                self._selected.discard(name)
+                self._path.discard(name)
+                self._fp.discard(name)
+                # Pad en footprint automatisch uitvinken
+                item.setCheckState(_COL_PATH, Qt.Unchecked)
+                item.setCheckState(_COL_FP,   Qt.Unchecked)
+                item.setForeground(0, QColor(TEXT_DIM))
+
+        elif col == _COL_PATH:
             if item.checkState(_COL_PATH) == Qt.Checked:
                 if name not in self._selected:
                     item.setCheckState(_COL_PATH, Qt.Unchecked)
