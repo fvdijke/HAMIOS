@@ -54,7 +54,7 @@ DEFAULT_RESOURCES = {
     "pskreporter": {
         "name": "PSK Reporter",
         "category": "DX Spotting",
-        "url": "https://pskreporter.info/cgi-bin/pskquery5.pl",
+        "url": "https://pskreporter.info/cgi-bin/pskquery5.pl?encap=0&callback=_",
         "description": "Digital mode propagation reports",
         "method": "GET",
     },
@@ -62,7 +62,7 @@ DEFAULT_RESOURCES = {
     "blitzortung": {
         "name": "Blitzortung",
         "category": "Lightning",
-        "url": "https://ws1.blitzortung.org/",
+        "url": "https://www.blitzortung.org/",
         "description": "Real-time worldwide lightning detection",
         "method": "HEAD",
     },
@@ -78,9 +78,9 @@ DEFAULT_RESOURCES = {
     "wikimedia": {
         "name": "Wikimedia",
         "category": "Map Data",
-        "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/8/8f/",
+        "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/8/8f/Whole_world_-_land_and_oceans_12000.jpg/1920px-Whole_world_-_land_and_oceans_12000.jpg",
         "description": "NASA Blue Marble world map",
-        "method": "HEAD",
+        "method": "GET",
     },
 }
 

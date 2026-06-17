@@ -328,5 +328,16 @@ class ResourceManagerTab(QWidget):
         if reply == QMessageBox.Yes:
             ResourceConfig.reset_to_defaults()
             self._resources = ResourceConfig.load_resources()
-            # Rebuild UI (which handles layout cleanup)
-            self._build_ui()
+            # Update all URL inputs with reset values
+            for key, resource in self._resources.items():
+                url_edit = getattr(self, f"url_edit_{key}", None)
+                if url_edit:
+                    url_edit.blockSignals(True)
+                    url_edit.setText(resource.get("url", ""))
+                    url_edit.blockSignals(False)
+            # Show confirmation
+            QMessageBox.information(
+                self,
+                tr("set.resources.reset"),
+                "Resources reset to defaults."
+            )
