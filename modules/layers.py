@@ -365,10 +365,13 @@ class LightningLayer(QGraphicsItem):
         cfg = self._cfg
         if cfg and getattr(cfg, "lightning_beep", False):
             beep_r = int(getattr(cfg, "lightning_beep_r", 0))
-            # Get configurable alert sound parameters
+            # Get configurable sound parameters
+            normal_pitch = int(getattr(cfg, "lightning_beep_pitch", 2800))
+            normal_duration = int(getattr(cfg, "lightning_beep_duration", 5))
             alert_pitch = int(getattr(cfg, "lightning_alert_pitch", 5000))
             alert_duration = int(getattr(cfg, "lightning_alert_duration", 10))
-            sound_func = play_tick  # Default: normal tick
+            # Default: normal sound (outside alert zone)
+            sound_func = lambda: play_beep(normal_pitch, normal_duration)
 
             if beep_r > 0:
                 # Controleer afstand tot QTH
@@ -383,7 +386,7 @@ class LightningLayer(QGraphicsItem):
                     a = math.sin(dlat/2)**2 + math.cos(qlat)*math.cos(slat)*math.sin(dlon/2)**2
                     km = 2 * R * math.asin(min(1.0, math.sqrt(a)))
                     if km <= beep_r:
-                        # Lightning in alert zone: use configurable alert pitch
+                        # Lightning in alert zone: use alert pitch
                         sound_func = lambda: play_beep(alert_pitch, alert_duration)
                     else:
                         # Lightning outside alert zone: no sound
