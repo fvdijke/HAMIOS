@@ -49,14 +49,7 @@ from . import history as _hist_csv
 from .i18n import tr, language_changed
 
 
-def _play_sat_ping():
-    """Ping-geluid: satelliet is de QTH-zone binnengekomen."""
-    try:
-        import winsound
-        winsound.Beep(880,  80)   # lage toon
-        winsound.Beep(1320, 120)  # hoge toon — stijgende "ding"
-    except Exception:
-        pass
+from .sound import play_sat_ping
 
 # ── Propagatie-model ──────────────────────────────────────────────────────────
 

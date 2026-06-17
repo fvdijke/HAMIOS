@@ -24,31 +24,7 @@ from PySide6.QtWidgets import QGraphicsItem
 MAP_W, MAP_H = 4096, 2048
 
 
-def _play_tick():
-    """Geigerteller-tick: één korte puls."""
-    try:
-        import winsound
-        winsound.Beep(2800, 5)
-    except Exception:
-        pass
-
-
-def _play_sat_enter():
-    """Één hoge ping: satelliet komt QTH-zone binnen."""
-    try:
-        import winsound
-        winsound.Beep(1400, 180)
-    except Exception:
-        pass
-
-
-def _play_sat_exit():
-    """Één lage ping: satelliet verlaat QTH-zone."""
-    try:
-        import winsound
-        winsound.Beep(600, 180)
-    except Exception:
-        pass
+from .sound import play_tick, play_sat_enter, play_sat_exit
 
 
 class _SatSignaller(QObject):
