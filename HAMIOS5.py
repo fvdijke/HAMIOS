@@ -672,14 +672,18 @@ QComboBox::down-arrow {{
 
     # ── Maak mainwindow aan (altijd, niet alleen als geen splash) ────────────────
     try:
+        print("DEBUG: Creating HAMIOSMainWindow...", file=sys.stderr)
         window = HAMIOSMainWindow()
+        print("DEBUG: HAMIOSMainWindow created successfully", file=sys.stderr)
     except Exception:
         msg = traceback.format_exc()
-        print(msg, file=sys.stderr)
+        print(f"ERROR: Failed to create window: {msg}", file=sys.stderr)
         _show_error("HAMIOS — Startfout", msg)
         sys.exit(1)
 
+    print("DEBUG: Showing window...", file=sys.stderr)
     window.show()
+    print("DEBUG: Starting event loop...", file=sys.stderr)
     sys.exit(app.exec())
 
 
