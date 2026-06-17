@@ -12,6 +12,35 @@ _ARROW_DOWN_PATH = _os.path.join(_tmp.gettempdir(), "config/hamios_arrow_dn.png"
 _CHECKMARK_PATH = _os.path.join(_tmp.gettempdir(), "config/hamios_checkmark.png")
 
 
+class CheckBox:
+    """QCheckBox with text-based checkmarks (like splash screen)."""
+    @staticmethod
+    def format_text(label: str, checked: bool) -> str:
+        """Format checkbox text with checkmark symbol."""
+        symbol = "✓ " if checked else "○ "
+        return symbol + label
+
+
+def create_checkbox(text: str) -> object:
+    """Create a QCheckBox with text-based checkmark indicator.
+
+    Usage: checkbox = create_checkbox("My Option")
+    The checkbox will show "○ My Option" when unchecked and "✓ My Option" when checked.
+    """
+    from PySide6.QtWidgets import QCheckBox
+
+    class TextCheckBox(QCheckBox):
+        def __init__(self, label: str):
+            super().__init__(CheckBox.format_text(label, False))
+            self._label = label
+            self.toggled.connect(self._update_text)
+
+        def _update_text(self, checked: bool):
+            super().setText(CheckBox.format_text(self._label, checked))
+
+    return TextCheckBox(text)
+
+
 def make_checkmark_path() -> str:
     """Generate amber checkmark indicator (14x14). Returns file path."""
     from PySide6.QtGui import QPixmap, QPainter, QPen, QColor, QFont
@@ -236,21 +265,12 @@ QLineEdit {{
 QLineEdit:focus {{ border: 1px solid {ACCENT}; }}
 QCheckBox {{
     color: {TEXT_H1};
-    spacing: 6px;
+    spacing: 4px;
 }}
 QCheckBox::indicator {{
-    width: 14px;
-    height: 14px;
-    background: #1a1a1a;
-    border: 1px solid #666666;
-    border-radius: 1px;
-}}
-QCheckBox::indicator:hover {{
-    border: 1px solid #888888;
-}}
-QCheckBox::indicator:checked {{
-    background: #1a1a1a;
-    border: 1px solid #666666;
-    image: url(data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTQiIGhlaWdodD0iMTQiIHZpZXdCb3g9IjAgMCAxNCAxNCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cGF0aCBkPSJNMiA3bDMgM2w3LTciIHN0cm9rZT0iI0M4QTg0QiIgc3Ryb2tlLXdpZHRoPSIyIiBmaWxsPSJub25lIiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiLz48L3N2Zz4=);
+    width: 0px;
+    height: 0px;
+    margin: 0px;
+    padding: 0px;
 }}
 """
