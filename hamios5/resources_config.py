@@ -70,7 +70,7 @@ DEFAULT_RESOURCES = {
     "eibispace": {
         "name": "EIBI Space",
         "category": "Broadcast Schedules",
-        "url": "http://www.eibispace.de/dx/",
+        "url": "http://www.eibispace.de/",
         "description": "Shortwave broadcast schedules",
         "method": "HEAD",
     },
