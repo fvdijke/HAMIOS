@@ -2634,7 +2634,7 @@ class WSPRTableWidget(QWidget):
         self._table.setStyleSheet(
             f"QTableWidget {{ background: {BG_PANEL}; color: {TEXT_BODY}; }}"
             f"QHeaderView::section {{ background: {BG_SURFACE}; color: {TEXT_H1}; "
-            f"padding: 4px; font-size: 8pt; }}"
+            f"padding: 4px; font-size: 8pt; text-align: left; }}"
         )
         self._table.setSelectionBehavior(QAbstractItemView.SelectRows)
         self._table.setSelectionMode(QAbstractItemView.SingleSelection)
@@ -2738,7 +2738,7 @@ class WSPRTableWidget(QWidget):
         self._table.setStyleSheet(
             f"QTableWidget {{ background: {BG_PANEL}; color: {TEXT_BODY}; font-size: {pt}pt; }}"
             f"QHeaderView::section {{ background: {BG_SURFACE}; color: {TEXT_H1}; "
-            f"padding: 4px; font-size: {pt}pt; }}"
+            f"padding: 4px; font-size: {pt}pt; text-align: left; }}"
         )
 
         # Adjust column widths based on font size
