@@ -19,26 +19,41 @@ class ResourceTestThread(QThread):
     """Background thread voor resource URL testen."""
     test_result = Signal(str, bool, str)  # (resource_key, success, detail)
 
-    def __init__(self, key: str, url: str, method: str = "GET"):
+    def __init__(self, key: str, url: str, method: str = "GET", fallback_url: str = None):
         super().__init__()
         self.key = key
         self.url = url
         self.method = method
+        self.fallback_url = fallback_url
         self._timeout = 4
 
     def run(self):
         """Test resource connectivity using configured method."""
+        # Try primary URL
+        if self._test_url(self.url, self.method):
+            return
+
+        # If primary fails and fallback exists, try fallback
+        if self.fallback_url:
+            if self._test_url(self.fallback_url, "HEAD"):
+                return
+
+        # Both failed
+        self.test_result.emit(self.key, False, "All endpoints unavailable")
+
+    def _test_url(self, url: str, method: str) -> bool:
+        """Test a single URL. Returns True if successful, False otherwise."""
         try:
             headers = {"User-Agent": "HAMIOS/5.4 (Resource Monitor)"}
-            req = urlreq.Request(self.url, headers=headers)
+            req = urlreq.Request(url, headers=headers)
 
             # Use configured method (HEAD or GET)
-            if self.method.upper() == "HEAD":
+            if method.upper() == "HEAD":
                 req.get_method = lambda: "HEAD"
                 try:
                     with urlreq.urlopen(req, timeout=self._timeout) as response:
                         self.test_result.emit(self.key, response.status < 400, f"HTTP {response.status}")
-                        return
+                        return True
                 except (urlerror.HTTPError, urlerror.URLError):
                     pass
 
@@ -46,11 +61,10 @@ class ResourceTestThread(QThread):
             req.get_method = lambda: "GET"
             with urlreq.urlopen(req, timeout=self._timeout) as response:
                 self.test_result.emit(self.key, response.status < 400, f"HTTP {response.status}")
+                return True
 
-        except urlerror.URLError as e:
-            self.test_result.emit(self.key, False, f"Connection: {str(e)[:20]}")
-        except Exception as e:
-            self.test_result.emit(self.key, False, f"Error: {str(e)[:20]}")
+        except (urlerror.URLError, Exception):
+            return False
 
 
 class ResourceManagerTab(QWidget):
@@ -244,7 +258,11 @@ class ResourceManagerTab(QWidget):
                 self._test_threads[key].quit()
                 self._test_threads[key].wait()
 
-        thread = ResourceTestThread(key, url, method)
+        # Get fallback URL if available
+        resource = self._resources.get(key, {})
+        fallback_url = resource.get("fallback_url", None)
+
+        thread = ResourceTestThread(key, url, method, fallback_url)
         thread.test_result.connect(self._on_test_result)
         self._test_threads[key] = thread
         thread.start()

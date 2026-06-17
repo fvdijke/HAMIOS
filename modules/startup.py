@@ -22,7 +22,7 @@ _WORLDMAP  = os.path.join(APP_DIR, "worldmap_eq.jpg")
 _CONFIG    = os.path.join(APP_DIR, "config", "hamios_config.json")
 _LAYOUTS   = os.path.join(APP_DIR, "config", "hamios_layouts.json")
 _SPY       = os.path.join(APP_DIR, "config", "hamios_spy_stations.json")
-_HISTORY   = os.path.join(APP_DIR, "HAMIOS_history.csv")
+_HISTORY   = os.path.join(APP_DIR, "config", "HAMIOS_history.csv")
 _TLE       = os.path.join(APP_DIR, "config", "hamios_tle.json")
 _EIBI_CSV  = os.path.join(APP_DIR, "config", "hamios_eibi.csv")
 _EIBI_META = os.path.join(APP_DIR, "config", "hamios_eibi_meta.json")
@@ -108,7 +108,7 @@ def file_status() -> list[dict]:
         (_CONFIG,    "config/hamios_config.json",     "Configuratie"),
         (_LAYOUTS,   "config/hamios_layouts.json",    "Paneel layouts (legacy)"),
         (_SPY,       "config/hamios_spy_stations.json","SpyStations"),
-        (_HISTORY,   "HAMIOS_history.csv",     "Band history"),
+        (_HISTORY,   "config/HAMIOS_history.csv",     "Band history"),
         (_TLE,       "config/hamios_tle.json",        "Satelliet TLE"),
         (_EIBI_CSV,  "config/hamios_eibi.csv",        "EIBI cache"),
         (_EIBI_META, "config/hamios_eibi_meta.json",  "EIBI metadata"),

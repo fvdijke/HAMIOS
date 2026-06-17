@@ -13,13 +13,13 @@ _CHECKMARK_PATH = _os.path.join(_tmp.gettempdir(), "config/hamios_checkmark.png"
 
 
 def make_checkmark_path() -> str:
-    """Genereer amber vinkje-PNG (eenmalig per app-start). Geeft pad terug."""
+    """Genereer zwart vierkantje met amber vinkje-PNG (eenmalig per app-start). Geeft pad terug."""
     from PySide6.QtGui import QPixmap, QPainter, QPen, QColor
     from PySide6.QtCore import Qt, QPointF
     pix = QPixmap(14, 14)
-    pix.fill(QColor(ACCENT))
+    pix.fill(QColor("#000000"))
     p = QPainter(pix)
-    pen = QPen(QColor(BG_ROOT), 2.2)
+    pen = QPen(QColor(ACCENT), 2.2)
     pen.setCapStyle(Qt.RoundCap)
     pen.setJoinStyle(Qt.RoundJoin)
     p.setRenderHint(QPainter.Antialiasing)

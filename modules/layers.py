@@ -104,7 +104,7 @@ def save_tle_cache(data: dict):
 
 def fetch_tle_group(url: str) -> list[tuple[str, str, str]]:
     try:
-        req = urllib.request.Request(url, headers={"User-Agent": "HAMIOS/5.1"})
+        req = urllib.request.Request(url, headers={"User-Agent": "HAMIOS/5.4"})
         with urllib.request.urlopen(req, timeout=15) as r:
             return parse_tle_text(r.read().decode("utf-8", errors="replace"))
     except Exception:
@@ -123,7 +123,14 @@ class TleFetchThread(QThread):
             sats = fetch_tle_group(url)
             if sats:
                 cache[group] = [[n, l1, l2] for n, l1, l2 in sats]
-        save_tle_cache(cache)
+
+        # If any data was fetched, save it
+        if cache:
+            save_tle_cache(cache)
+        else:
+            # If all fetches failed, load cached data
+            cache = load_tle_cache()
+
         self.done.emit(cache)
 
 

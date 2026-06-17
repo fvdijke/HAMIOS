@@ -13,7 +13,7 @@
       "show_aurora": false,
       "show_sun": false,
       "show_moon": false,
-      "show_lightning": true,
+      "show_lightning": false,
       "show_dx_spots": false,
       "show_locator": false,
       "show_psk": false,
@@ -45,16 +45,16 @@
       "band_day_auto": true,
       "sat_visible": false,
       "sat_selected": [
-        "METEOR-M2 4",
         "METEOR-M2 2",
-        "METEOR-M2 3",
-        "ISS (ZARYA)"
+        "ISS (ZARYA)",
+        "METEOR-M2 4",
+        "METEOR-M2 3"
       ],
       "sat_path": [
-        "METEOR-M2 4",
         "METEOR-M2 2",
-        "METEOR-M2 3",
-        "ISS (ZARYA)"
+        "ISS (ZARYA)",
+        "METEOR-M2 4",
+        "METEOR-M2 3"
       ],
       "sat_fp": [
         "METEOR-M2 2",
@@ -63,7 +63,7 @@
       "sat_back_h": 1,
       "sat_fwd_h": 1,
       "sat_path_width": 2.0,
-      "sat_filter_sel": true,
+      "sat_filter_sel": false,
       "sat_zone_ping": false,
       "k_alert": 4,
       "k_alert_en": false,
@@ -287,7 +287,7 @@
         1363
       ]
     },
-    "timestamp": "2026-06-17T09:24:28.833302"
+    "timestamp": "2026-06-17T10:50:41.222844"
   },
   "Frank": {
     "config": {

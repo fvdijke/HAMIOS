@@ -1,0 +1,66 @@
+{
+  "web_noaa_swpc": {
+    "name": "NOAA SWPC",
+    "category": "Solar & Ionosphere",
+    "url": "https://services.swpc.noaa.gov/products/summary/solar-wind-speed.json",
+    "description": "Solar wind speed, magnetic field, Kp index",
+    "method": "GET"
+  },
+  "web_hamqsl": {
+    "name": "HamQSL",
+    "category": "Solar & Ionosphere",
+    "url": "https://www.hamqsl.com/solarxml.php",
+    "description": "Solar flux index and parameters",
+    "method": "GET"
+  },
+  "web_celestrak": {
+    "name": "CelesTrak",
+    "category": "Satellites",
+    "url": "https://celestrak.org/",
+    "description": "TLE data for amateur, ISS, weather satellites",
+    "method": "HEAD",
+    "fallback_url": "https://www.heavens-above.com/"
+  },
+  "web_wsprnet": {
+    "name": "WSPRnet",
+    "category": "Weak Signal Propagation",
+    "url": "https://www.wsprnet.org/drupal/wsprnet/activity",
+    "description": "WSPR QSO spotting network activity page",
+    "method": "GET"
+  },
+  "web_dxwatch": {
+    "name": "DXWatch",
+    "category": "DX Spotting",
+    "url": "https://dxwatch.com/dxsd1/s.php?s=0&r=100&cdxc=0",
+    "description": "Real-time DX cluster spots",
+    "method": "GET"
+  },
+  "web_pskreporter": {
+    "name": "PSK Reporter",
+    "category": "DX Spotting",
+    "url": "https://pskreporter.info/cgi-bin/pskquery5.pl?encap=0&callback=_",
+    "description": "Digital mode propagation reports",
+    "method": "GET"
+  },
+  "web_blitzortung": {
+    "name": "Blitzortung",
+    "category": "Lightning",
+    "url": "https://www.blitzortung.org/",
+    "description": "Real-time worldwide lightning detection",
+    "method": "HEAD"
+  },
+  "web_eibi": {
+    "name": "EIBI Space",
+    "category": "Broadcast Schedules",
+    "url": "http://www.eibispace.de/dx/sked-a26.csv",
+    "description": "Shortwave broadcast schedules (seasonal schedule)",
+    "method": "GET"
+  },
+  "web_wikimedia": {
+    "name": "Wikimedia",
+    "category": "Map Data",
+    "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/8/8f/Whole_world_-_land_and_oceans_12000.jpg/1920px-Whole_world_-_land_and_oceans_12000.jpg",
+    "description": "NASA Blue Marble world map",
+    "method": "GET"
+  }
+}

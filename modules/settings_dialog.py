@@ -132,10 +132,10 @@ QLineEdit:focus, QSpinBox:focus, QDoubleSpinBox:focus, QComboBox:focus {{
 QCheckBox {{ color: {TEXT_H1}; spacing: 6px; }}
 QCheckBox::indicator {{
     width: 14px; height: 14px;
-    background: {BG_ROOT}; border: 1px solid {BORDER}; border-radius: 2px;
+    background: #000000; border: 1px solid #808080; border-radius: 0px;
 }}
 QCheckBox::indicator:checked {{
-    background: {ACCENT}; border-color: {ACCENT};
+    background: #000000; border: 1px solid #808080;
     image: url(CHECKMARK_PLACEHOLDER);
 }}
 QLabel {{ color: {TEXT_DIM}; background: transparent; }}

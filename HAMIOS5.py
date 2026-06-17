@@ -124,7 +124,7 @@ def _make_header_pixmap() -> QPixmap:
 
     p.setFont(QFont("Segoe UI", 10))
     p.setPen(QColor(200, 168, 75, 130))
-    p.drawText(TX + 124, 8, 50, 44, Qt.AlignLeft | Qt.AlignVCenter, "v5.3")
+    p.drawText(TX + 124, 8, 50, 44, Qt.AlignLeft | Qt.AlignVCenter, "v5.4")
 
     p.setFont(QFont("Segoe UI", 8))
     p.setPen(LIGHT)
@@ -158,12 +158,12 @@ def _make_checks():
         ("fs_internet", _tr("splash.fs.internet_lbl"), _tr("splash.detail.fs_internet")),
     ]
     file_checks = [
-        ("worldmap",  "worldmap_eq.jpg",         _tr("splash.detail.map")),
-        ("hires",     "worldmap_eq_hires.jpg",   _tr("splash.detail.hires")),
-        ("config",    "hamios_config.json",       _tr("splash.detail.config")),
-        ("history",   "HAMIOS_history.csv",       _tr("splash.detail.hist")),
-        ("tle",       "hamios_tle.json",          _tr("splash.detail.tle")),
-        ("spy",       "hamios_spy_stations.json", _tr("splash.detail.spy")),
+        ("worldmap",  "worldmap_eq.jpg",               _tr("splash.detail.map")),
+        ("hires",     "worldmap_eq_hires.jpg",         _tr("splash.detail.hires")),
+        ("config",    "config/hamios_config.json",     _tr("splash.detail.config")),
+        ("history",   "config/HAMIOS_history.csv",     _tr("splash.detail.hist")),
+        ("tle",       "config/hamios_tle.json",        _tr("splash.detail.tle")),
+        ("spy",       "config/hamios_spy_stations.json", _tr("splash.detail.spy")),
     ]
     dep_checks = [
         ("pyside6",    "PySide6",            _tr("splash.detail.fw")),
@@ -469,7 +469,7 @@ def main():
     app.setOrganizationName("")
 
     # Opstartcontrole
-    from startup import check_files
+    from modules.startup import check_files
     _, _err = check_files()
     if _err:
         _show_error("HAMIOS — Opstartfout", "\n\n".join(_err))
@@ -481,7 +481,7 @@ def main():
         _show_error("HAMIOS — Onverwachte fout", msg)
     sys.excepthook = _excepthook
 
-    from theme import generate_spinbox_arrows, QSS as _QSS
+    from modules.theme import generate_spinbox_arrows, QSS as _QSS
     _up, _dn = generate_spinbox_arrows()
     _arrow_qss = f"""
 QSpinBox::up-arrow, QDoubleSpinBox::up-arrow {{
@@ -494,7 +494,7 @@ QComboBox::down-arrow {{
 """
     app.setStyleSheet(_QSS.replace("COMBO_ARROW_PLACEHOLDER", _dn) + _arrow_qss)
 
-    from config import load_config as _load_cfg
+    from modules.config import load_config as _load_cfg
     _boot_cfg = _load_cfg()
 
     if _boot_cfg.show_splash:
@@ -507,14 +507,14 @@ QComboBox::down-arrow {{
         app.processEvents()
 
         # ── Bestand-checks ────────────────────────────────────────────────────
-        from startup import file_status as _file_status
+        from modules.startup import file_status as _file_status
         _fmap = {f["name"]: f for f in _file_status()}
         # worldmap_eq.jpg is niet meer verplicht — wordt automatisch gedownload
         _req    = {"hamios_config.json"}
         # TLE wordt niet automatisch gedownload — via satelliet-dialog
         _manual = {"hamios_tle.json"}
 
-        from mapview import _HIRES_FILE
+        from modules.mapview import _HIRES_FILE
         _file_keys = {
             "worldmap":  "worldmap_eq.jpg",
             "config":    "hamios_config.json",
@@ -638,7 +638,7 @@ QComboBox::down-arrow {{
 
         # ── TLE downloaden als cache ontbreekt ────────────────────────────────
         if not os.path.exists(os.path.join(_APP_DIR, "hamios_tle.json")):
-            from layers import TleFetchThread as _TleFetchThread  # noqa: PLC0415
+            from modules.layers import TleFetchThread as _TleFetchThread  # noqa: PLC0415
             _tle_thread = _TleFetchThread()
             splash.connect_tle_download("tle", _tle_thread)
             _tle_thread.start()

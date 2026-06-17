@@ -42,9 +42,10 @@ DEFAULT_RESOURCES = {
     "web_celestrak": {
         "name": "CelesTrak",
         "category": "Satellites",
-        "url": "https://celestrak.org/NORAD/elements/gp.php?GROUP=amateur&FORMAT=tle",
+        "url": "https://celestrak.org/",
         "description": "TLE data for amateur, ISS, weather satellites",
-        "method": "GET",
+        "method": "HEAD",
+        "fallback_url": "https://www.heavens-above.com/",
     },
     # Weak Signal Propagation
     "web_wsprnet": {
