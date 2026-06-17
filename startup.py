@@ -6,7 +6,7 @@ Ontbrekende data-bestanden worden aangemaakt met standaardwaarden.
 Ontbrekende assets (worldmap) worden gemeld als fatale fout.
 
 Gebruik vanuit HAMIOS5.py:
-    from hamios5.startup import check_files
+    from .startup import check_files
     warnings, errors = check_files()
 """
 

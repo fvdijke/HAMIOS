@@ -1,0 +1,868 @@
+{
+  "__default__": {
+    "config": {
+      "callsign": "PA#FVD",
+      "qth_lat": 51.5833,
+      "qth_lon": 4.25,
+      "qth_locator": "JO21DN",
+      "mode": "FT8",
+      "power": "100W",
+      "antenna": "Ground loop",
+      "show_night": false,
+      "show_grayline": false,
+      "show_aurora": false,
+      "show_sun": false,
+      "show_moon": false,
+      "show_lightning": true,
+      "show_dx_spots": false,
+      "show_locator": false,
+      "show_psk": false,
+      "show_callsign_overlay": false,
+      "callsign_overlay_font_size": 16,
+      "map_overlay": true,
+      "lightning_fade": 300,
+      "lightning_radius": 500,
+      "lightning_rate": 100,
+      "lightning_beep": true,
+      "lightning_beep_r": 1100,
+      "lightning_anim_scale": 1.5,
+      "lightning_font_size": 24,
+      "lightning_overlay_visible": true,
+      "refresh_interval": 10,
+      "snap_grid": 10,
+      "overlay_font_size": 20,
+      "sat_font_size": 17,
+      "dx_map_font_size": 18,
+      "dx_font_size": 8,
+      "language": "en",
+      "grat_step": 30,
+      "maidenhead_font_size": 16,
+      "sun_icon_size": 64,
+      "moon_icon_size": 64,
+      "show_splash": true,
+      "dx_own_continent": true,
+      "dx_heatmap": false,
+      "band_day_auto": true,
+      "sat_visible": false,
+      "sat_selected": [
+        "METEOR-M2 4",
+        "METEOR-M2 2",
+        "METEOR-M2 3",
+        "ISS (ZARYA)"
+      ],
+      "sat_path": [
+        "METEOR-M2 4",
+        "METEOR-M2 2",
+        "METEOR-M2 3",
+        "ISS (ZARYA)"
+      ],
+      "sat_fp": [
+        "METEOR-M2 2",
+        "ISS (ZARYA)"
+      ],
+      "sat_back_h": 1,
+      "sat_fwd_h": 1,
+      "sat_path_width": 2.0,
+      "sat_filter_sel": true,
+      "sat_zone_ping": false,
+      "k_alert": 4,
+      "k_alert_en": false,
+      "xflare_alert_en": true,
+      "band_alert": 39,
+      "band_alert_en": true,
+      "alert_max": 20,
+      "layouts": {
+        "__default__": {
+          "test": [
+            1,
+            2,
+            3,
+            4,
+            true
+          ],
+          "__window__": [
+            0,
+            0,
+            1920,
+            1080
+          ]
+        },
+        "test_profile_xyz": {
+          "worldmap": [
+            100,
+            100,
+            800,
+            600,
+            true
+          ],
+          "solar": [
+            910,
+            100,
+            600,
+            600,
+            false
+          ],
+          "__window__": [
+            0,
+            0,
+            1920,
+            1080
+          ]
+        }
+      },
+      "dialog_geometries": {
+        "SatelliteDialog": [
+          1938,
+          154,
+          676,
+          1038
+        ],
+        "SpyStationsDialog": [
+          1017,
+          333,
+          758,
+          925
+        ],
+        "EibiDialog": [
+          1002,
+          148,
+          940,
+          1240
+        ],
+        "Ft8Dialog": [
+          1278,
+          234,
+          700,
+          1144
+        ],
+        "HelpDialog": [
+          1046,
+          449,
+          920,
+          640
+        ],
+        "CatMonitorWindow": [
+          1266,
+          675,
+          540,
+          372
+        ]
+      },
+      "cat_enabled": true,
+      "cat_port": "COM1",
+      "cat_baud": 38400,
+      "cat_databits": 8,
+      "cat_parity": "Geen",
+      "cat_stopbits": "2",
+      "cat_rtscts": false,
+      "cat_dtr": false,
+      "cat_rts": false,
+      "cat_radio_type": "Yaesu (FT-950/2000/DX/3000/5000)",
+      "cat_civ_addr": 88
+    },
+    "layout": {
+      "worldmap": [
+        380,
+        0,
+        1520,
+        790,
+        true
+      ],
+      "solar": [
+        1280,
+        910,
+        360,
+        190,
+        true
+      ],
+      "band_rel": [
+        0,
+        0,
+        380,
+        370,
+        true
+      ],
+      "band_cond": [
+        0,
+        610,
+        380,
+        230,
+        true
+      ],
+      "storm_fc": [
+        0,
+        840,
+        380,
+        220,
+        true
+      ],
+      "band_sched": [
+        0,
+        370,
+        380,
+        240,
+        true
+      ],
+      "band_hist": [
+        0,
+        1060,
+        380,
+        240,
+        true
+      ],
+      "muf_forecast": [
+        1640,
+        790,
+        370,
+        310,
+        true
+      ],
+      "solar_hist": [
+        1280,
+        1100,
+        360,
+        200,
+        true
+      ],
+      "kp_48h": [
+        380,
+        1060,
+        440,
+        240,
+        true
+      ],
+      "bz_24h": [
+        820,
+        1060,
+        460,
+        240,
+        true
+      ],
+      "xray_24h": [
+        1640,
+        1100,
+        370,
+        200,
+        true
+      ],
+      "lightning": [
+        1280,
+        790,
+        360,
+        120,
+        true
+      ],
+      "wspr_feed": [
+        2010,
+        790,
+        510,
+        510,
+        true
+      ],
+      "alerts": [
+        1900,
+        400,
+        620,
+        390,
+        true
+      ],
+      "dx_spots": [
+        1900,
+        0,
+        620,
+        400,
+        true
+      ],
+      "prop_adv": [
+        380,
+        790,
+        900,
+        270,
+        true
+      ],
+      "__window__": [
+        209,
+        0,
+        2530,
+        1363
+      ]
+    },
+    "timestamp": "2026-06-17T09:24:28.833302"
+  },
+  "Frank": {
+    "config": {
+      "callsign": "PA#FVD",
+      "qth_lat": 51.5833,
+      "qth_lon": 4.25,
+      "qth_locator": "JO21DN",
+      "mode": "FT8",
+      "power": "100W",
+      "antenna": "Ground loop",
+      "show_night": false,
+      "show_grayline": false,
+      "show_aurora": false,
+      "show_sun": false,
+      "show_moon": false,
+      "show_lightning": false,
+      "show_dx_spots": false,
+      "show_locator": false,
+      "show_psk": false,
+      "show_callsign_overlay": false,
+      "callsign_overlay_font_size": 16,
+      "map_overlay": true,
+      "lightning_fade": 300,
+      "lightning_radius": 500,
+      "lightning_rate": 100,
+      "lightning_beep": true,
+      "lightning_beep_r": 1100,
+      "lightning_anim_scale": 1.5,
+      "refresh_interval": 10,
+      "snap_grid": 10,
+      "overlay_font_size": 20,
+      "sat_font_size": 17,
+      "dx_map_font_size": 18,
+      "dx_font_size": 8,
+      "language": "en",
+      "grat_step": 30,
+      "maidenhead_font_size": 16,
+      "sun_icon_size": 64,
+      "moon_icon_size": 64,
+      "show_splash": true,
+      "dx_own_continent": true,
+      "dx_heatmap": false,
+      "band_day_auto": true,
+      "sat_visible": false,
+      "sat_selected": [
+        "METEOR-M2 4",
+        "METEOR-M2 2",
+        "METEOR-M2 3",
+        "ISS (ZARYA)"
+      ],
+      "sat_path": [
+        "METEOR-M2 4",
+        "METEOR-M2 2",
+        "METEOR-M2 3",
+        "ISS (ZARYA)"
+      ],
+      "sat_fp": [
+        "METEOR-M2 2",
+        "ISS (ZARYA)"
+      ],
+      "sat_back_h": 1,
+      "sat_fwd_h": 1,
+      "sat_path_width": 2.0,
+      "sat_filter_sel": true,
+      "sat_zone_ping": false,
+      "k_alert": 4,
+      "k_alert_en": false,
+      "xflare_alert_en": true,
+      "band_alert": 39,
+      "band_alert_en": true,
+      "alert_max": 20,
+      "layouts": {
+        "__default__": {
+          "test": [
+            1,
+            2,
+            3,
+            4,
+            true
+          ],
+          "__window__": [
+            0,
+            0,
+            1920,
+            1080
+          ]
+        },
+        "test_profile_xyz": {
+          "worldmap": [
+            100,
+            100,
+            800,
+            600,
+            true
+          ],
+          "solar": [
+            910,
+            100,
+            600,
+            600,
+            false
+          ],
+          "__window__": [
+            0,
+            0,
+            1920,
+            1080
+          ]
+        }
+      },
+      "dialog_geometries": {
+        "SatelliteDialog": [
+          1938,
+          154,
+          676,
+          1038
+        ],
+        "SpyStationsDialog": [
+          1017,
+          333,
+          758,
+          925
+        ],
+        "EibiDialog": [
+          467,
+          126,
+          940,
+          1240
+        ],
+        "Ft8Dialog": [
+          1278,
+          234,
+          700,
+          1144
+        ],
+        "HelpDialog": [
+          1046,
+          449,
+          920,
+          640
+        ],
+        "CatMonitorWindow": [
+          1266,
+          675,
+          540,
+          372
+        ]
+      },
+      "cat_enabled": true,
+      "cat_port": "COM1",
+      "cat_baud": 38400,
+      "cat_databits": 8,
+      "cat_parity": "Geen",
+      "cat_stopbits": "2",
+      "cat_rtscts": false,
+      "cat_dtr": false,
+      "cat_rts": false,
+      "cat_radio_type": "Yaesu (FT-950/2000/DX/3000/5000)",
+      "cat_civ_addr": 88
+    },
+    "layout": {
+      "worldmap": [
+        380,
+        0,
+        1520,
+        790,
+        true
+      ],
+      "solar": [
+        1280,
+        910,
+        360,
+        190,
+        true
+      ],
+      "band_rel": [
+        0,
+        0,
+        380,
+        370,
+        true
+      ],
+      "band_cond": [
+        0,
+        610,
+        380,
+        230,
+        true
+      ],
+      "storm_fc": [
+        0,
+        840,
+        380,
+        220,
+        true
+      ],
+      "band_sched": [
+        0,
+        370,
+        380,
+        240,
+        true
+      ],
+      "band_hist": [
+        0,
+        1060,
+        380,
+        240,
+        true
+      ],
+      "muf_forecast": [
+        1640,
+        790,
+        370,
+        310,
+        true
+      ],
+      "solar_hist": [
+        1280,
+        1100,
+        360,
+        200,
+        true
+      ],
+      "kp_48h": [
+        380,
+        1060,
+        440,
+        240,
+        true
+      ],
+      "bz_24h": [
+        820,
+        1060,
+        460,
+        240,
+        true
+      ],
+      "xray_24h": [
+        1640,
+        1100,
+        370,
+        200,
+        true
+      ],
+      "lightning": [
+        1280,
+        790,
+        360,
+        120,
+        true
+      ],
+      "wspr_feed": [
+        2010,
+        790,
+        510,
+        510,
+        true
+      ],
+      "alerts": [
+        1900,
+        400,
+        620,
+        390,
+        true
+      ],
+      "dx_spots": [
+        1900,
+        0,
+        620,
+        400,
+        true
+      ],
+      "prop_adv": [
+        380,
+        790,
+        900,
+        270,
+        true
+      ],
+      "__window__": [
+        209,
+        150,
+        2530,
+        1363
+      ]
+    },
+    "timestamp": "2026-06-15T14:17:44.126197"
+  },
+  "Small": {
+    "config": {
+      "callsign": "PA#FVD",
+      "qth_lat": 51.5833,
+      "qth_lon": 4.25,
+      "qth_locator": "JO21DN",
+      "mode": "FT8",
+      "power": "100W",
+      "antenna": "Ground loop",
+      "show_night": true,
+      "show_grayline": true,
+      "show_aurora": false,
+      "show_sun": true,
+      "show_moon": true,
+      "show_lightning": false,
+      "show_dx_spots": false,
+      "show_locator": false,
+      "show_psk": false,
+      "show_callsign_overlay": false,
+      "callsign_overlay_font_size": 16,
+      "map_overlay": true,
+      "lightning_fade": 300,
+      "lightning_radius": 500,
+      "lightning_rate": 100,
+      "lightning_beep": true,
+      "lightning_beep_r": 1100,
+      "lightning_anim_scale": 1.5,
+      "refresh_interval": 10,
+      "snap_grid": 10,
+      "overlay_font_size": 20,
+      "sat_font_size": 17,
+      "dx_map_font_size": 18,
+      "dx_font_size": 8,
+      "language": "en",
+      "grat_step": 30,
+      "maidenhead_font_size": 16,
+      "sun_icon_size": 64,
+      "moon_icon_size": 64,
+      "show_splash": true,
+      "dx_own_continent": true,
+      "dx_heatmap": false,
+      "band_day_auto": true,
+      "sat_visible": false,
+      "sat_selected": [
+        "METEOR-M2 4",
+        "METEOR-M2 2",
+        "METEOR-M2 3",
+        "ISS (ZARYA)"
+      ],
+      "sat_path": [
+        "METEOR-M2 4",
+        "METEOR-M2 2",
+        "METEOR-M2 3",
+        "ISS (ZARYA)"
+      ],
+      "sat_fp": [
+        "METEOR-M2 2",
+        "ISS (ZARYA)"
+      ],
+      "sat_back_h": 1,
+      "sat_fwd_h": 1,
+      "sat_path_width": 2.0,
+      "sat_filter_sel": true,
+      "sat_zone_ping": false,
+      "k_alert": 4,
+      "k_alert_en": false,
+      "xflare_alert_en": true,
+      "band_alert": 39,
+      "band_alert_en": true,
+      "alert_max": 20,
+      "layouts": {
+        "__default__": {
+          "test": [
+            1,
+            2,
+            3,
+            4,
+            true
+          ],
+          "__window__": [
+            0,
+            0,
+            1920,
+            1080
+          ]
+        },
+        "test_profile_xyz": {
+          "worldmap": [
+            100,
+            100,
+            800,
+            600,
+            true
+          ],
+          "solar": [
+            910,
+            100,
+            600,
+            600,
+            false
+          ],
+          "__window__": [
+            0,
+            0,
+            1920,
+            1080
+          ]
+        }
+      },
+      "dialog_geometries": {
+        "SatelliteDialog": [
+          1938,
+          154,
+          676,
+          1038
+        ],
+        "SpyStationsDialog": [
+          1017,
+          333,
+          758,
+          925
+        ],
+        "EibiDialog": [
+          467,
+          126,
+          940,
+          1240
+        ],
+        "Ft8Dialog": [
+          1278,
+          234,
+          700,
+          1144
+        ],
+        "HelpDialog": [
+          1046,
+          449,
+          920,
+          640
+        ],
+        "CatMonitorWindow": [
+          1266,
+          675,
+          540,
+          372
+        ]
+      },
+      "cat_enabled": true,
+      "cat_port": "COM1",
+      "cat_baud": 38400,
+      "cat_databits": 8,
+      "cat_parity": "Geen",
+      "cat_stopbits": "2",
+      "cat_rtscts": false,
+      "cat_dtr": false,
+      "cat_rts": false,
+      "cat_radio_type": "Yaesu (FT-950/2000/DX/3000/5000)",
+      "cat_civ_addr": 88
+    },
+    "layout": {
+      "worldmap": [
+        380,
+        0,
+        780,
+        420,
+        true
+      ],
+      "solar": [
+        1160,
+        420,
+        440,
+        180,
+        true
+      ],
+      "band_rel": [
+        0,
+        0,
+        380,
+        370,
+        true
+      ],
+      "band_cond": [
+        0,
+        610,
+        380,
+        230,
+        false
+      ],
+      "storm_fc": [
+        0,
+        840,
+        380,
+        220,
+        false
+      ],
+      "band_sched": [
+        0,
+        370,
+        380,
+        330,
+        true
+      ],
+      "band_hist": [
+        0,
+        1060,
+        380,
+        240,
+        false
+      ],
+      "muf_forecast": [
+        1640,
+        790,
+        370,
+        310,
+        false
+      ],
+      "solar_hist": [
+        1280,
+        1100,
+        360,
+        200,
+        false
+      ],
+      "kp_48h": [
+        380,
+        1060,
+        440,
+        240,
+        false
+      ],
+      "bz_24h": [
+        820,
+        1060,
+        460,
+        240,
+        false
+      ],
+      "xray_24h": [
+        1640,
+        1100,
+        370,
+        200,
+        false
+      ],
+      "lightning": [
+        1160,
+        600,
+        440,
+        100,
+        true
+      ],
+      "wspr_feed": [
+        2010,
+        790,
+        510,
+        510,
+        false
+      ],
+      "alerts": [
+        1160,
+        0,
+        440,
+        420,
+        true
+      ],
+      "dx_spots": [
+        1900,
+        0,
+        620,
+        400,
+        false
+      ],
+      "prop_adv": [
+        380,
+        420,
+        780,
+        280,
+        true
+      ],
+      "__window__": [
+        648,
+        360,
+        1606,
+        754
+      ]
+    },
+    "timestamp": "2026-06-15T14:20:45.446119"
+  }
+}

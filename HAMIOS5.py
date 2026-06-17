@@ -21,8 +21,8 @@ from PySide6.QtWidgets import (QApplication, QMessageBox, QDialog,
 from PySide6.QtCore import Qt, QRectF, QPointF, QThread, Signal
 from PySide6.QtGui import QPixmap, QPainter, QColor, QFont, QPen, QPainterPath, QBrush
 
-from hamios5.mainwindow import HAMIOSMainWindow
-from hamios5.resources_config import DEFAULT_RESOURCES, ResourceConfig
+from mainwindow import HAMIOSMainWindow
+from resources_config import DEFAULT_RESOURCES, ResourceConfig
 
 
 # ── Antenne-logo ──────────────────────────────────────────────────────────────
@@ -149,7 +149,7 @@ def _make_header_pixmap() -> QPixmap:
 # Worden aangemaakt in _make_checks() zodat tr() de juiste taal gebruikt.
 
 def _make_checks():
-    from hamios5.i18n import tr as _tr
+    from i18n import tr as _tr
     fs_checks = [
         ("fs_create",   _tr("splash.fs.create_lbl"),   _tr("splash.detail.fs_create")),
         ("fs_write",    _tr("splash.fs.write_lbl"),    _tr("splash.detail.fs_write")),
@@ -273,7 +273,7 @@ class SplashDialog(QDialog):
         self.setFixedWidth(_SW)
 
         # Bouw check-lijsten in de actieve taal
-        from hamios5.i18n import tr as _tr
+        from i18n import tr as _tr
         fs_checks, file_checks, dep_checks, online_checks = _make_checks()
         all_checks = fs_checks + file_checks + dep_checks + online_checks
 
@@ -400,7 +400,7 @@ class SplashDialog(QDialog):
 
     def connect_tle_download(self, key: str, thread):
         """Verbind TleFetchThread signals voor voortgang en voltooiing."""
-        from hamios5.i18n import tr as _tr
+        from i18n import tr as _tr
         thread.progress.connect(
             lambda grp, k=key: self._apply(k, "loading", grp))
         thread.done.connect(
@@ -411,7 +411,7 @@ class SplashDialog(QDialog):
 
     def connect_download(self, key: str, thread):
         """Verbind download-thread signals voor voortgang en voltooiing."""
-        from hamios5.i18n import tr as _tr
+        from i18n import tr as _tr
         thread.progress.connect(
             lambda recv, tot, k=key: self._on_progress(k, recv, tot))
         thread.done.connect(
@@ -433,7 +433,7 @@ class SplashDialog(QDialog):
         QApplication.processEvents()
 
     def enable_button(self):
-        from hamios5.i18n import tr as _tr
+        from i18n import tr as _tr
         self._btn.setEnabled(True)
         self._btn.setText(_tr("btn.continue"))
         self._btn.setStyleSheet(self._BTN_ACTIVE)
@@ -469,7 +469,7 @@ def main():
     app.setOrganizationName("")
 
     # Opstartcontrole
-    from hamios5.startup import check_files
+    from startup import check_files
     _, _err = check_files()
     if _err:
         _show_error("HAMIOS — Opstartfout", "\n\n".join(_err))
@@ -481,7 +481,7 @@ def main():
         _show_error("HAMIOS — Onverwachte fout", msg)
     sys.excepthook = _excepthook
 
-    from hamios5.theme import generate_spinbox_arrows, QSS as _QSS
+    from theme import generate_spinbox_arrows, QSS as _QSS
     _up, _dn = generate_spinbox_arrows()
     _arrow_qss = f"""
 QSpinBox::up-arrow, QDoubleSpinBox::up-arrow {{
@@ -494,12 +494,12 @@ QComboBox::down-arrow {{
 """
     app.setStyleSheet(_QSS.replace("COMBO_ARROW_PLACEHOLDER", _dn) + _arrow_qss)
 
-    from hamios5.config import load_config as _load_cfg
+    from config import load_config as _load_cfg
     _boot_cfg = _load_cfg()
 
     if _boot_cfg.show_splash:
         # Taal instellen vóór UI-opbouw
-        from hamios5.i18n import set_language as _set_lang, tr as _tr
+        from i18n import set_language as _set_lang, tr as _tr
         _set_lang(getattr(_boot_cfg, "language", "nl"))
 
         splash = SplashDialog()
@@ -507,14 +507,14 @@ QComboBox::down-arrow {{
         app.processEvents()
 
         # ── Bestand-checks ────────────────────────────────────────────────────
-        from hamios5.startup import file_status as _file_status
+        from startup import file_status as _file_status
         _fmap = {f["name"]: f for f in _file_status()}
         # worldmap_eq.jpg is niet meer verplicht — wordt automatisch gedownload
         _req    = {"hamios_config.json"}
         # TLE wordt niet automatisch gedownload — via satelliet-dialog
         _manual = {"hamios_tle.json"}
 
-        from hamios5.mapview import _HIRES_FILE
+        from mapview import _HIRES_FILE
         _file_keys = {
             "worldmap":  "worldmap_eq.jpg",
             "config":    "hamios_config.json",
@@ -638,7 +638,7 @@ QComboBox::down-arrow {{
 
         # ── TLE downloaden als cache ontbreekt ────────────────────────────────
         if not os.path.exists(os.path.join(_APP_DIR, "hamios_tle.json")):
-            from hamios5.layers import TleFetchThread as _TleFetchThread  # noqa: PLC0415
+            from layers import TleFetchThread as _TleFetchThread  # noqa: PLC0415
             _tle_thread = _TleFetchThread()
             splash.connect_tle_download("tle", _tle_thread)
             _tle_thread.start()
