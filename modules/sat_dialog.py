@@ -41,13 +41,12 @@ QHeaderView::section {{
 QRadioButton {{ color: {TEXT_BODY}; spacing: 4px; font-size: 8pt; }}
 QRadioButton::indicator {{ width: 12px; height: 12px; }}
 QTreeWidget::indicator {{
-    width: 14px; height: 14px;
+    width: 14px;
+    height: 14px;
     background: #1a1a1a;
     border: 1px solid #666666;
 }}
 QTreeWidget::indicator:checked {{
-    background: #1a1a1a;
-    border: 1px solid #666666;
     image: url(SAT_CHECKMARK);
 }}
 QTreeWidget::indicator:hover {{

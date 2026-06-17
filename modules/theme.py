@@ -13,27 +13,23 @@ _CHECKMARK_PATH = _os.path.join(_tmp.gettempdir(), "config/hamios_checkmark.png"
 
 
 def make_checkmark_path() -> str:
-    """Generate black square with amber checkmark (14x14). Returns file path."""
-    from PySide6.QtGui import QPixmap, QPainter, QPen, QColor, QBrush
-    from PySide6.QtCore import Qt, QPointF, QRect
+    """Generate amber checkmark indicator (14x14). Returns file path."""
+    from PySide6.QtGui import QPixmap, QPainter, QPen, QColor, QFont
+    from PySide6.QtCore import Qt
 
-    # Create 14x14 pixmap with black background
+    # Create 14x14 transparent pixmap
     pix = QPixmap(14, 14)
-    pix.fill(QColor("#000000"))
+    pix.fill(Qt.transparent)
 
-    # Draw checkmark
+    # Draw checkmark using text - simpler and more reliable
     p = QPainter(pix)
     p.setRenderHint(QPainter.Antialiasing)
 
-    # Thick amber pen for better visibility
-    pen = QPen(QColor(ACCENT), 2.5)
-    pen.setCapStyle(Qt.RoundCap)
-    pen.setJoinStyle(Qt.RoundJoin)
-    p.setPen(pen)
-
-    # Draw checkmark path (scaled for visibility in small box)
-    p.drawLine(QPointF(2.5, 7.5), QPointF(5.5, 10.5))
-    p.drawLine(QPointF(5.5, 10.5), QPointF(11.5, 3))
+    # Draw amber checkmark character
+    font = QFont("Arial", 11, QFont.Bold)
+    p.setFont(font)
+    p.setPen(QColor(ACCENT))  # Amber color
+    p.drawText(pix.rect(), Qt.AlignCenter, "✓")
 
     p.end()
     pix.save(_CHECKMARK_PATH, "PNG")
@@ -252,8 +248,6 @@ QCheckBox::indicator:hover {{
     border: 1px solid #888888;
 }}
 QCheckBox::indicator:checked {{
-    background: #1a1a1a;
-    border: 1px solid #666666;
     image: url("CHECKMARK_PLACEHOLDER");
 }}
 """
