@@ -670,14 +670,14 @@ QComboBox::down-arrow {{
             _tle_thread.quit()
             _tle_thread.wait()
 
-    else:
-        try:
-            window = HAMIOSMainWindow()
-        except Exception:
-            msg = traceback.format_exc()
-            print(msg, file=sys.stderr)
-            _show_error("HAMIOS — Startfout", msg)
-            sys.exit(1)
+    # ── Maak mainwindow aan (altijd, niet alleen als geen splash) ────────────────
+    try:
+        window = HAMIOSMainWindow()
+    except Exception:
+        msg = traceback.format_exc()
+        print(msg, file=sys.stderr)
+        _show_error("HAMIOS — Startfout", msg)
+        sys.exit(1)
 
     window.show()
     sys.exit(app.exec())
