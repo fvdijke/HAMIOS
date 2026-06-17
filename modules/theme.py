@@ -199,7 +199,15 @@ QLabel#time_utc {{
     color: {TEXT_DIM};
     font-size: 10pt;
 }}
-/* QSpinBox/QDoubleSpinBox: Use platform default styling - handled in settings_dialog.py */
+/* Global simple spinbox styling for all dialogs and panels */
+QSpinBox, QDoubleSpinBox {{
+    background: {BG_ROOT};
+    color: {TEXT_H1};
+    border: 1px solid {BORDER};
+}}
+QSpinBox:focus, QDoubleSpinBox:focus {{
+    border: 1px solid {ACCENT};
+}}
 QComboBox {{
     background: {BG_ROOT};
     color: {TEXT_H1};
