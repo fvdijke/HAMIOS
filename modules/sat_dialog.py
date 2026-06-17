@@ -46,8 +46,8 @@ QTreeWidget::indicator {{
     border: 1px solid #666666;
 }}
 QTreeWidget::indicator:checked {{
-    background: {ACCENT};
-    border: 1px solid #A88A3A;
+    background: #1a1a1a;
+    border: 1px solid #666666;
     image: url(SAT_CHECKMARK);
 }}
 QTreeWidget::indicator:hover {{

@@ -11,9 +11,9 @@
       "show_night": true,
       "show_grayline": false,
       "show_aurora": false,
-      "show_sun": false,
-      "show_moon": false,
-      "show_lightning": false,
+      "show_sun": true,
+      "show_moon": true,
+      "show_lightning": true,
       "show_dx_spots": false,
       "show_locator": false,
       "show_psk": false,
@@ -23,11 +23,11 @@
       "lightning_fade": 300,
       "lightning_radius": 500,
       "lightning_rate": 100,
-      "lightning_beep": true,
+      "lightning_beep": false,
       "lightning_beep_r": 1100,
       "lightning_anim_scale": 1.5,
       "lightning_font_size": 24,
-      "lightning_overlay_visible": false,
+      "lightning_overlay_visible": true,
       "refresh_interval": 10,
       "snap_grid": 10,
       "overlay_font_size": 20,
@@ -40,28 +40,23 @@
       "sun_icon_size": 64,
       "moon_icon_size": 64,
       "show_splash": true,
-      "dx_own_continent": true,
+      "dx_own_continent": false,
       "dx_heatmap": false,
       "band_day_auto": true,
       "sat_visible": true,
       "sat_selected": [
-        "ISS",
         "METEOR-M2 3",
-        "METEOR-M2 2",
-        "ISS (ZARYA)",
-        "METEOR-M2 4"
+        "ISS",
+        "METEOR-M2 4",
+        "METEOR-M2 2"
       ],
       "sat_path": [
-        "ISS",
         "METEOR-M2 3",
-        "METEOR-M2 2",
-        "ISS (ZARYA)",
-        "METEOR-M2 4"
+        "METEOR-M2 4",
+        "METEOR-M2 2"
       ],
       "sat_fp": [
-        "ISS",
-        "METEOR-M2 2",
-        "ISS (ZARYA)"
+        "METEOR-M2 2"
       ],
       "sat_back_h": 1,
       "sat_fwd_h": 1,
@@ -290,7 +285,7 @@
         1363
       ]
     },
-    "timestamp": "2026-06-17T11:16:32.666019"
+    "timestamp": "2026-06-17T11:24:25.604162"
   },
   "Frank": {
     "config": {

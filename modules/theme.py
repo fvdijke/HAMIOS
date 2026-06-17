@@ -252,8 +252,8 @@ QCheckBox::indicator:hover {{
     border: 1px solid #888888;
 }}
 QCheckBox::indicator:checked {{
-    background: #C8A84B;
-    border: 1px solid #A88A3A;
+    background: #1a1a1a;
+    border: 1px solid #666666;
     image: url("CHECKMARK_PLACEHOLDER");
 }}
 """
