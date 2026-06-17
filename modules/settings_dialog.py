@@ -474,6 +474,17 @@ class SettingsDialog(QDialog):
         h2.addStretch()
         v.addLayout(h2)
 
+        _section(v, "Warning Zone")
+        h_warn = QHBoxLayout()
+        h_warn.addWidget(QLabel("Warning radius (km, 0=off):"))
+        self._lightn_warn_radius_spin = QSpinBox()
+        self._lightn_warn_radius_spin.setRange(0, 5000)
+        self._lightn_warn_radius_spin.setSingleStep(50)
+        self._lightn_warn_radius_spin.setFixedWidth(80)
+        h_warn.addWidget(self._lightn_warn_radius_spin)
+        h_warn.addStretch()
+        v.addLayout(h_warn)
+
         # Alert sound enable
         self._lightn_alert_sound_cb = QCheckBox("Enable alert zone sound")
         v.addWidget(self._lightn_alert_sound_cb)
@@ -1276,6 +1287,7 @@ class SettingsDialog(QDialog):
         self._lightn_rate_spin.setValue(int(get_val("lightning_rate", 500)))
         self._lightn_beep_cb.setChecked(get_val("lightning_beep", False))
         self._lightn_beep_r_spin.setValue(int(get_val("lightning_beep_r", 0)))
+        self._lightn_warn_radius_spin.setValue(int(get_val("lightning_warn_radius", 0)))
         self._lightn_beep_pitch_spin.setValue(int(get_val("lightning_beep_pitch", 2800)))
         self._lightn_beep_duration_spin.setValue(int(get_val("lightning_beep_duration", 5)))
         self._lightn_alert_sound_cb.setChecked(get_val("lightning_alert_sound_enabled", True))
@@ -1410,6 +1422,7 @@ class SettingsDialog(QDialog):
         self._lightn_rate_spin.setValue(getattr(c, "lightning_rate", 500))
         self._lightn_beep_cb.setChecked(getattr(c, "lightning_beep", False))
         self._lightn_beep_r_spin.setValue(getattr(c, "lightning_beep_r", 0))
+        self._lightn_warn_radius_spin.setValue(getattr(c, "lightning_warn_radius", 0))
         self._lightn_beep_pitch_spin.setValue(getattr(c, "lightning_beep_pitch", 2800))
         self._lightn_beep_duration_spin.setValue(getattr(c, "lightning_beep_duration", 5))
         self._lightn_alert_sound_cb.setChecked(getattr(c, "lightning_alert_sound_enabled", True))
@@ -1479,6 +1492,7 @@ class SettingsDialog(QDialog):
             lightning_rate      = self._lightn_rate_spin.value(),
             lightning_beep      = self._lightn_beep_cb.isChecked(),
             lightning_beep_r    = self._lightn_beep_r_spin.value(),
+            lightning_warn_radius = self._lightn_warn_radius_spin.value(),
             lightning_beep_pitch = self._lightn_beep_pitch_spin.value(),
             lightning_beep_duration = self._lightn_beep_duration_spin.value(),
             lightning_alert_sound_enabled = self._lightn_alert_sound_cb.isChecked(),

@@ -364,41 +364,51 @@ class LightningLayer(QGraphicsItem):
         # Piepje afspelen indien ingesteld
         cfg = self._cfg
         if cfg and getattr(cfg, "lightning_beep", False):
-            beep_r = int(getattr(cfg, "lightning_beep_r", 0))
+            alert_radius = int(getattr(cfg, "lightning_beep_r", 0))
+            warn_radius = int(getattr(cfg, "lightning_warn_radius", 0))
+
             # Get configurable sound parameters
             warning_pitch = int(getattr(cfg, "lightning_beep_pitch", 2800))
             warning_duration = int(getattr(cfg, "lightning_beep_duration", 5))
             alert_pitch = int(getattr(cfg, "lightning_alert_pitch", 5000))
             alert_duration = int(getattr(cfg, "lightning_alert_duration", 10))
-            # Default: Warning Zone sound (outside alert zone)
-            # Use default parameters to capture values at creation time (not by reference)
-            sound_func = lambda p=warning_pitch, d=warning_duration: play_beep(p, d)
 
-            if beep_r > 0:
-                # Alert radius is set - check if lightning is within alert zone
-                try:
-                    import math
-                    R = 6371.0
-                    qlat = math.radians(cfg.qth_lat)
-                    qlon = math.radians(cfg.qth_lon)
-                    slat = math.radians(lat)
-                    slon = math.radians(lon)
-                    dlat = slat - qlat; dlon = slon - qlon
-                    a = math.sin(dlat/2)**2 + math.cos(qlat)*math.cos(slat)*math.sin(dlon/2)**2
-                    km = 2 * R * math.asin(min(1.0, math.sqrt(a)))
-                    if km <= beep_r:
-                        # Lightning in alert zone: use alert pitch if enabled
-                        if getattr(cfg, "lightning_alert_sound_enabled", True):
-                            # Use default parameters to capture values at creation time
-                            sound_func = lambda p=alert_pitch, d=alert_duration: play_beep(p, d)
-                        else:
-                            # Alert zone but sound disabled, use warning zone sound
-                            sound_func = lambda p=warning_pitch, d=warning_duration: play_beep(p, d)
-                    # Lightning outside alert zone: use warning zone sound (sound_func already set)
-                except Exception:
-                    return
+            # Check if there's any active radius
+            if alert_radius == 0 and warn_radius == 0:
+                # No radius defined - no sound
+                return
 
-            threading.Thread(target=sound_func, daemon=True).start()
+            # Calculate distance to QTH
+            try:
+                import math
+                R = 6371.0
+                qlat = math.radians(cfg.qth_lat)
+                qlon = math.radians(cfg.qth_lon)
+                slat = math.radians(lat)
+                slon = math.radians(lon)
+                dlat = slat - qlat; dlon = slon - qlon
+                a = math.sin(dlat/2)**2 + math.cos(qlat)*math.cos(slat)*math.sin(dlon/2)**2
+                km = 2 * R * math.asin(min(1.0, math.sqrt(a)))
+
+                # Determine which sound to play based on radius zones
+                sound_func = None
+
+                # Check Alert Zone (inner, smaller radius)
+                if alert_radius > 0 and km <= alert_radius:
+                    # Lightning in alert zone: use alert pitch if enabled
+                    if getattr(cfg, "lightning_alert_sound_enabled", True):
+                        sound_func = lambda p=alert_pitch, d=alert_duration: play_beep(p, d)
+                # Check Warning Zone (outer, larger radius)
+                elif warn_radius > 0 and km <= warn_radius:
+                    # Lightning in warning zone (but outside alert zone)
+                    sound_func = lambda p=warning_pitch, d=warning_duration: play_beep(p, d)
+                # Outside all zones - no sound
+
+                if sound_func:
+                    threading.Thread(target=sound_func, daemon=True).start()
+
+            except Exception:
+                return
 
     def _anim_tick(self):
         """20 fps tick — alleen actief redraw als er verse ringen zijn."""

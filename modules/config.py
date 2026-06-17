@@ -38,9 +38,10 @@ class AppConfig:
     lightning_radius:         int   = 500   # km — drempel voor header-melding (0 = uit)
     lightning_rate:           int   = 500   # ms — animatie-update interval
     lightning_beep:           bool  = False # piepje bij elke inslag
-    lightning_beep_r:         int   = 0     # piepje alleen binnen radius km (0 = altijd)
-    lightning_beep_pitch:     int   = 2800  # normal sound pitch in Hz (outside alert zone)
-    lightning_beep_duration:  int   = 5     # normal sound duration in ms (outside alert zone)
+    lightning_beep_r:         int   = 0     # alert zone radius km (0 = uit)
+    lightning_warn_radius:    int   = 0     # warning zone radius km (outer, 0 = uit)
+    lightning_beep_pitch:     int   = 2800  # warning zone sound pitch in Hz
+    lightning_beep_duration:  int   = 5     # warning zone sound duration in ms
     lightning_alert_sound_enabled: bool = True  # enable/disable alert zone sound
     lightning_alert_pitch:    int   = 5000  # alert zone sound pitch in Hz
     lightning_alert_duration: int   = 10    # alert zone sound duration in ms
