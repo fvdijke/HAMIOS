@@ -58,8 +58,14 @@ from ._appdir import APP_DIR as _HERE
 _TLE_CACHE = os.path.join(_HERE, "config", "hamios_tle.json")
 
 TLE_GROUPS = {
-    "Amateur": "https://celestrak.org/NORAD/elements/gp.php?GROUP=amateur&FORMAT=tle",
-    "ISS":     "https://celestrak.org/NORAD/elements/gp.php?CATNR=25544&FORMAT=tle",
+    "Amateur": {
+        "primary": "https://celestrak.org/NORAD/elements/gp.php?GROUP=amateur&FORMAT=tle",
+        "fallback": "https://www.amsat.org/tle/dailytle.txt",
+    },
+    "ISS": {
+        "primary": "https://celestrak.org/NORAD/elements/gp.php?CATNR=25544&FORMAT=tle",
+        "fallback": "https://www.amsat.org/tle/dailytle.txt",
+    },
     "Weather": "https://celestrak.org/NORAD/elements/gp.php?GROUP=weather&FORMAT=tle",
     "CubeSat": "https://celestrak.org/NORAD/elements/gp.php?GROUP=cubesat&FORMAT=tle",
 }
@@ -102,13 +108,36 @@ def save_tle_cache(data: dict):
         pass
 
 
-def fetch_tle_group(url: str) -> list[tuple[str, str, str]]:
-    try:
-        req = urllib.request.Request(url, headers={"User-Agent": "HAMIOS/5.4"})
-        with urllib.request.urlopen(req, timeout=15) as r:
-            return parse_tle_text(r.read().decode("utf-8", errors="replace"))
-    except Exception:
-        return []
+def fetch_tle_group(url_or_config) -> list[tuple[str, str, str]]:
+    """Fetch TLE group from primary URL, fallback to backup if available."""
+    # Handle both string URLs (legacy) and dict with primary/fallback
+    is_iss_group = False
+    if isinstance(url_or_config, dict):
+        urls = [url_or_config.get("primary"), url_or_config.get("fallback")]
+        # Check if this is ISS group based on primary URL
+        is_iss_group = "CATNR=25544" in str(urls[0])
+    else:
+        urls = [url_or_config]
+
+    for url in urls:
+        if not url:
+            continue
+        try:
+            req = urllib.request.Request(url, headers={"User-Agent": "HAMIOS/5.4"})
+            with urllib.request.urlopen(req, timeout=15) as r:
+                text = r.read().decode("utf-8", errors="replace")
+                sats = parse_tle_text(text)
+                if sats:
+                    # If this is ISS group and we got results from AMSAT fallback,
+                    # filter to only ISS (NORAD catalog number 25544)
+                    if is_iss_group and url == url_or_config.get("fallback"):
+                        sats = [s for s in sats if "ISS" in s[0]]
+                    if sats:
+                        return sats
+        except Exception:
+            continue
+
+    return []
 
 
 class TleFetchThread(QThread):
