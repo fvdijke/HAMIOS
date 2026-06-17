@@ -743,7 +743,13 @@ class HAMIOSMainWindow(QMainWindow):
             self._overlay_dialog.activateWindow()
             return
 
-        dialog = QDialog(self, Qt.FramelessWindowHint | Qt.WindowStaysOnTopHint)
+        # Create custom dialog that closes on focus loss
+        class AutoCloseDialog(QDialog):
+            def focusOutEvent(self, event):
+                super().focusOutEvent(event)
+                self.close()
+
+        dialog = AutoCloseDialog(self, Qt.FramelessWindowHint | Qt.WindowStaysOnTopHint)
         dialog.setStyleSheet(
             f"QDialog {{ background: #1A1D22; border: 1px solid #404850; border-radius: 5px; }}"
             f"QCheckBox {{ color: #C8C8D0; }}"
@@ -826,7 +832,13 @@ class HAMIOSMainWindow(QMainWindow):
             self._panel_dialog.activateWindow()
             return
 
-        dialog = QDialog(self, Qt.FramelessWindowHint | Qt.WindowStaysOnTopHint)
+        # Create custom dialog that closes on focus loss
+        class AutoCloseDialog(QDialog):
+            def focusOutEvent(self, event):
+                super().focusOutEvent(event)
+                self.close()
+
+        dialog = AutoCloseDialog(self, Qt.FramelessWindowHint | Qt.WindowStaysOnTopHint)
         dialog.setStyleSheet(
             f"QDialog {{ background: #1A1D22; border: 1px solid #404850; border-radius: 5px; }}"
             f"QCheckBox {{ color: #C8C8D0; }}"
