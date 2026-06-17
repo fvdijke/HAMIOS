@@ -1270,23 +1270,19 @@ class SettingsDialog(QDialog):
         self._lightn_status.setStyleSheet("color: #C8A84B;")
 
         # Start connection test in background
-        from PySide6.QtCore import QThread
         import threading
+        import urllib.request
 
         def test_connection():
             try:
-                # Test WebSocket connection to Blitzortung
-                import asyncio
-                import websockets
-
-                async def ws_test():
-                    async with websockets.connect("wss://ws.blitzortung.org/") as ws:
-                        await asyncio.sleep(0.5)
-                        return True
-
-                # Run async test
-                asyncio.run(ws_test())
-                return True
+                # Test connectivity to Blitzortung website
+                req = urllib.request.Request(
+                    "https://www.blitzortung.org/",
+                    method="HEAD",
+                    headers={"User-Agent": "HAMIOS/5.4"}
+                )
+                with urllib.request.urlopen(req, timeout=5) as r:
+                    return r.status < 400
             except Exception:
                 return False
 
