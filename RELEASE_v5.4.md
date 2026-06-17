@@ -1,28 +1,25 @@
-# HAMIOS v5.4 — Resources Manager & Lightning Improvements
+# HAMIOS v5.4 — Lightning Zones, WSPR Panel, & Resources Manager
 
-**Release Date:** June 15, 2026  
+**Release Date:** June 17, 2026  
 **Build:** PyInstaller 6.x | Python 3.10  
-**Size:** ~101 MB
+**Size:** ~105 MB
 
 ---
 
 ## 🎯 Major Features
 
 ### 1. **Resources Manager Tab** 🌐
-Centralized management of all online resources used by HAMIOS.
+Simple, clean resource management interface.
 - **9 resource categories**: Solar & Ionosphere, Satellites, WSPR, DX Spotting, Lightning, Broadcast Schedules, Map Data
 - **Per-resource controls**:
   - Editable URL field
-  - **Test button** → immediate connectivity check with HTTP status
-  - **Investigate button** → guidelines for finding mirror servers & backup APIs
-- **Auto-save** on URL changes (no restart needed)
+  - Resource name + description
+- **Save button** to persist changes
 - **Reset to defaults** button for quick recovery
-- **Bilingual interface** (English/Dutch)
 
 **Use Cases:**
 - Service failover (main API down → use mirror server)
 - Privacy (use alternative endpoints)
-- Debugging (replace slow services with test servers)
 - Maintenance (quickly update changed API endpoints)
 
 ### 2. **Lightning Panel Improvements** ⚡
