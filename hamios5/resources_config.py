@@ -49,8 +49,8 @@ DEFAULT_RESOURCES = {
     "web_wsprnet": {
         "name": "WSPRnet",
         "category": "Weak Signal Propagation",
-        "url": "https://wsprnet.org/drupal/wsprnet/api/v2/spots",
-        "description": "WSPR QSO spotting network API",
+        "url": "https://www.wsprnet.org/drupal/wsprnet/activity",
+        "description": "WSPR QSO spotting network activity page",
         "method": "GET",
     },
     # DX Spotting

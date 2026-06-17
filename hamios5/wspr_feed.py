@@ -87,6 +87,9 @@ class WSPRFeed(QThread):
         Returns: List of QSO dicts with keys:
             - call_sign, grid, band, frequency, snr, drift, power, reporter, rg_grid,
             - distance, azimuth, time (ISO format)
+
+        Note: If API is offline, _fetch_wspr_data() raises exception and fallback
+        to mock data is triggered automatically.
         """
         try:
             import urllib.request as urlreq
@@ -94,6 +97,7 @@ class WSPRFeed(QThread):
 
             # wsprnet.org API endpoint (public, no auth required)
             # Returns JSON with recent QSO records
+            # Note: This API may be offline; if so, exception is caught and mock data is used
             url = "https://wsprnet.org/drupal/wsprnet/api/v2/spots"
             headers = {
                 "User-Agent": "HAMIOS/5.3 (WSPR Monitor)",
