@@ -1479,7 +1479,7 @@ class SettingsDialog(QDialog):
             lightning_radius    = self._lightn_radius_spin.value(),
             lightning_rate      = self._lightn_rate_spin.value(),
             lightning_beep      = self._lightn_beep_cb.isChecked(),
-            lightning_beep_r    = self._lightn_beep_r_spin.value(),
+            lightning_beep_r    = self._lightn_radius_spin.value(),
             lightning_warn_radius = self._lightn_warn_radius_spin.value(),
             lightning_beep_pitch = self._lightn_beep_pitch_spin.value(),
             lightning_beep_duration = self._lightn_beep_duration_spin.value(),
