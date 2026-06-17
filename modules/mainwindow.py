@@ -512,9 +512,9 @@ class HAMIOSMainWindow(QMainWindow):
         self._map_view.set_lightning_font_size(getattr(cfg, "lightning_font_size", 7))
         _lon = cfg.show_lightning
         self._map_view.set_lightning_radius(
-            int(getattr(cfg, "lightning_radius", 0)) if _lon else 0)
-        self._map_view.set_lightning_beep_radius(
             int(getattr(cfg, "lightning_beep_r", 0)) if _lon else 0)
+        self._map_view.set_lightning_beep_radius(
+            int(getattr(cfg, "lightning_warn_radius", 0)) if _lon else 0)
         self._map_view._lightning.set_cfg(cfg)
         self._map_view._lightning.set_anim_scale(
             getattr(cfg, "lightning_anim_scale", 2.0))
@@ -656,9 +656,9 @@ class HAMIOSMainWindow(QMainWindow):
         self._map_view.set_lightning_font_size(getattr(c, "lightning_font_size", 7))
         _lon = c.show_lightning
         self._map_view.set_lightning_radius(
-            int(getattr(c, "lightning_radius", 0)) if _lon else 0)
-        self._map_view.set_lightning_beep_radius(
             int(getattr(c, "lightning_beep_r", 0)) if _lon else 0)
+        self._map_view.set_lightning_beep_radius(
+            int(getattr(c, "lightning_warn_radius", 0)) if _lon else 0)
         self._map_view._lightning.set_cfg(c)
         self._map_view._lightning.set_anim_scale(
             getattr(c, "lightning_anim_scale", 2.0))
@@ -778,9 +778,9 @@ class HAMIOSMainWindow(QMainWindow):
             (tr("ov.lightning"), "lightning_overlay_visible", lambda v: (
                 self._map_view.set_lightning_visible(v),
                 self._map_view.set_lightning_radius(
-                    int(getattr(self._cfg, "lightning_radius", 0)) if v else 0),
-                self._map_view.set_lightning_beep_radius(
                     int(getattr(self._cfg, "lightning_beep_r", 0)) if v else 0),
+                self._map_view.set_lightning_beep_radius(
+                    int(getattr(self._cfg, "lightning_warn_radius", 0)) if v else 0),
             )),
             (tr("ov.dx_spots"),  "show_dx_spots", lambda v: self._map_view.set_dx_spots_visible(v)),
             (tr("ov.satellites"),"sat_visible",   lambda v: self._map_view.set_satellite_visible(v)),
