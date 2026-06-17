@@ -662,26 +662,26 @@ QComboBox::down-arrow {{
         _online_thread.start()
 
         splash.enable_button()
-
-        # ── Helper function: cleanup all threads ────────────────────────────────
-        def cleanup_all_threads():
-            """Stop all background threads immediately."""
-            _online_thread.quit()
-            _online_thread.wait()
-            if _tle_thread is not None:
-                _tle_thread.quit()
-                _tle_thread.wait()
-            for thread in _dl_threads:
-                if thread.isRunning():
-                    thread.quit()
-                    thread.wait()
-
-        # ── Connect cleanup to splash close event ────────────────────────────────
-        splash.finished.connect(cleanup_all_threads)
-
         splash.exec()
         splash.close()
-        cleanup_all_threads()  # Ensure cleanup even if splash exits unexpectedly
+
+        # ── Stop all background threads immediately (don't wait) ──────────────────
+        print("DEBUG: Stopping all threads...", file=sys.stderr)
+        _online_thread.quit()
+        if _tle_thread is not None:
+            _tle_thread.quit()
+        for thread in _dl_threads:
+            thread.quit()
+
+        # Wait with timeout (max 2 seconds per thread)
+        print("DEBUG: Waiting for threads to finish...", file=sys.stderr)
+        _online_thread.wait(2000)
+        if _tle_thread is not None:
+            _tle_thread.wait(2000)
+        for thread in _dl_threads:
+            thread.wait(2000)
+
+        print("DEBUG: Threads stopped", file=sys.stderr)
 
     # ── Maak mainwindow aan (altijd, niet alleen als geen splash) ────────────────
     try:

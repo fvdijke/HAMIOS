@@ -23,7 +23,7 @@
       "lightning_fade": 300,
       "lightning_radius": 500,
       "lightning_rate": 100,
-      "lightning_beep": false,
+      "lightning_beep": true,
       "lightning_beep_r": 1100,
       "lightning_anim_scale": 1.5,
       "lightning_font_size": 24,
@@ -285,7 +285,7 @@
         1363
       ]
     },
-    "timestamp": "2026-06-17T11:55:40.514255"
+    "timestamp": "2026-06-17T12:00:40.333495"
   },
   "Frank": {
     "config": {
