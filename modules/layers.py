@@ -61,12 +61,12 @@ TLE_GROUPS = {
     "Amateur": {
         "primary": "https://celestrak.org/NORAD/elements/gp.php?GROUP=amateur&FORMAT=tle",
         "fallback": "https://www.amsat.org/tle/dailytle.txt",
-        "tertiary": "https://www.pe0sat.vgnet.nl/satellite/tle/",
+        "tertiary": "http://tle.pe0sat.nl/kepler/non-amateur.txt",
     },
     "ISS": {
         "primary": "https://celestrak.org/NORAD/elements/gp.php?CATNR=25544&FORMAT=tle",
         "fallback": "https://www.amsat.org/tle/dailytle.txt",
-        "tertiary": "https://www.pe0sat.vgnet.nl/satellite/tle/",
+        "tertiary": "http://tle.pe0sat.nl/kepler/non-amateur.txt",
     },
     "Weather": "https://celestrak.org/NORAD/elements/gp.php?GROUP=weather&FORMAT=tle",
     "CubeSat": "https://celestrak.org/NORAD/elements/gp.php?GROUP=cubesat&FORMAT=tle",
