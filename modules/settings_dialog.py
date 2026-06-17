@@ -474,17 +474,6 @@ class SettingsDialog(QDialog):
         h2.addStretch()
         v.addLayout(h2)
 
-        _section(v, "Warning Zone")
-        h_warn = QHBoxLayout()
-        h_warn.addWidget(QLabel("Warning radius (km, 0=off):"))
-        self._lightn_warn_radius_spin = QSpinBox()
-        self._lightn_warn_radius_spin.setRange(0, 5000)
-        self._lightn_warn_radius_spin.setSingleStep(50)
-        self._lightn_warn_radius_spin.setFixedWidth(80)
-        h_warn.addWidget(self._lightn_warn_radius_spin)
-        h_warn.addStretch()
-        v.addLayout(h_warn)
-
         # Alert sound enable
         self._lightn_alert_sound_cb = QCheckBox("Enable alert zone sound")
         v.addWidget(self._lightn_alert_sound_cb)
@@ -511,12 +500,23 @@ class SettingsDialog(QDialog):
         h_duration.addStretch()
         v.addLayout(h_duration)
 
-        _section(v, tr("set.lightn.sound_sec"))
+        _section(v, "Warning Zone")
 
         # Enable lightning beep
         self._lightn_beep_cb = QCheckBox(tr("set.lightn.beep"))
         self._lightn_beep_cb.setToolTip(tr("tip.lightn.beep"))
         v.addWidget(self._lightn_beep_cb)
+
+        # Warning zone radius
+        h_warn = QHBoxLayout()
+        h_warn.addWidget(QLabel("Warning radius (km, 0=off):"))
+        self._lightn_warn_radius_spin = QSpinBox()
+        self._lightn_warn_radius_spin.setRange(0, 5000)
+        self._lightn_warn_radius_spin.setSingleStep(50)
+        self._lightn_warn_radius_spin.setFixedWidth(80)
+        h_warn.addWidget(self._lightn_warn_radius_spin)
+        h_warn.addStretch()
+        v.addLayout(h_warn)
 
         # Warning zone sound pitch
         h_pitch_normal = QHBoxLayout()
