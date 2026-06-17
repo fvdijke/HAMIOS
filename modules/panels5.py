@@ -2743,6 +2743,9 @@ class WSPRTableWidget(QWidget):
             f"padding: 4px; font-size: {pt}pt; }}"
         )
 
+        # Ensure header alignment is preserved (left-aligned)
+        self._table.horizontalHeader().setDefaultAlignment(Qt.AlignLeft | Qt.AlignVCenter)
+
         # Adjust column widths based on font size
         # Baseline widths at 9pt: call (40), grid (40), freq (60), snr (45), distance (65), azimuth (50), time (70)
         col_widths = [40, 40, 60, 45, 65, 50, 70]
