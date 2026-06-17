@@ -495,7 +495,7 @@ QComboBox::down-arrow {{
 """
     app.setStyleSheet(
         _QSS.replace("COMBO_ARROW_PLACEHOLDER", _dn)
-            .replace("CHECKMARK_PLACEHOLDER", _check)
+            .replace("CHECKMARK_PLACEHOLDER", f'"{_check}"')
         + _arrow_qss
     )
 
@@ -515,17 +515,17 @@ QComboBox::down-arrow {{
         from modules.startup import file_status as _file_status
         _fmap = {f["name"]: f for f in _file_status()}
         # worldmap_eq.jpg is niet meer verplicht — wordt automatisch gedownload
-        _req    = {"hamios_config.json"}
+        _req    = {"config/hamios_config.json"}
         # TLE wordt niet automatisch gedownload — via satelliet-dialog
-        _manual = {"hamios_tle.json"}
+        _manual = {"config/hamios_tle.json"}
 
         from modules.mapview import _HIRES_FILE
         _file_keys = {
             "worldmap":  "worldmap_eq.jpg",
-            "config":    "hamios_config.json",
-            "history":   "HAMIOS_history.csv",
-            "tle":       "hamios_tle.json",
-            "spy":       "hamios_spy_stations.json",
+            "config":    "config/hamios_config.json",
+            "history":   "config/HAMIOS_history.csv",
+            "tle":       "config/hamios_tle.json",
+            "spy":       "config/hamios_spy_stations.json",
         }
 
         _ok_str   = _tr("splash.ok")
