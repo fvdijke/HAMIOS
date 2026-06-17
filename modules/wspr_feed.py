@@ -14,8 +14,8 @@ Usage:
 import threading
 import time
 import json
-from .datetime import datetime, timedelta, timezone
-from .typing import List, Dict, Optional
+from datetime import datetime, timedelta, timezone
+from typing import List, Dict, Optional
 from PySide6.QtCore import QThread, Signal
 
 

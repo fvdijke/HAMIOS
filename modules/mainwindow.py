@@ -623,7 +623,7 @@ class HAMIOSMainWindow(QMainWindow):
             self.x(), self.y(), self.width(), self.height()
         ]
         # Sla op via ProfielManager (config + layout)
-        from .dataclasses import asdict
+        from dataclasses import asdict
         config_dict = asdict(self._cfg)
         ProfileManager.set_default_profile(config_dict, layout)
 

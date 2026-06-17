@@ -311,7 +311,7 @@ def _tz_from_latlon(lat: float, lon: float):
     Probeert timezonefinder; valt terug op de OS-systeemtijdzone.
     """
     try:
-        from .timezonefinder import TimezoneFinder
+        from timezonefinder import TimezoneFinder
         import zoneinfo
         tz_name = TimezoneFinder().timezone_at(lat=lat, lng=lon)
         if tz_name:

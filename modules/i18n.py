@@ -7,7 +7,7 @@ Usage:
     label = QLabel(tr("solar.sfi"))
 """
 
-from .__future__ import annotations
+from __future__ import annotations
 from PySide6.QtCore import QObject, Signal
 
 # ── Language signal emitter ───────────────────────────────────────────────────
