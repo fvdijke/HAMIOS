@@ -1561,6 +1561,14 @@ class SettingsDialog(QDialog):
         self._cfg = self._collect_cfg()
         self.applied.emit(self._cfg)
 
+    def _play_pitch_preview(self, pitch: int, duration: int) -> None:
+        """Play preview sound when pitch/duration spinboxes change."""
+        try:
+            import winsound
+            winsound.Beep(pitch, duration)
+        except Exception:
+            pass
+
     def _connect_live_controls(self):
         """Verbind alle controls voor live toepassing na _load_cfg."""
         # Checkboxen en combo's: direct
@@ -1605,6 +1613,34 @@ class SettingsDialog(QDialog):
                      self._cat_civ]:
             spin.valueChanged.connect(lambda: self._live(400))
         self._grat_step_cb.currentIndexChanged.connect(lambda: self._live(0))
+
+        # Dynamic preview for lightning sound pitch/duration
+        # Alert zone sounds
+        self._lightn_pitch_spin.valueChanged.connect(
+            lambda: self._play_pitch_preview(
+                self._lightn_pitch_spin.value(),
+                self._lightn_duration_spin.value()
+            )
+        )
+        self._lightn_duration_spin.valueChanged.connect(
+            lambda: self._play_pitch_preview(
+                self._lightn_pitch_spin.value(),
+                self._lightn_duration_spin.value()
+            )
+        )
+        # Normal zone sounds
+        self._lightn_beep_pitch_spin.valueChanged.connect(
+            lambda: self._play_pitch_preview(
+                self._lightn_beep_pitch_spin.value(),
+                self._lightn_beep_duration_spin.value()
+            )
+        )
+        self._lightn_beep_duration_spin.valueChanged.connect(
+            lambda: self._play_pitch_preview(
+                self._lightn_beep_pitch_spin.value(),
+                self._lightn_beep_duration_spin.value()
+            )
+        )
 
     def _open_cat_monitor_from_settings(self):
         """Open CAT monitor venster vanuit de instellingen."""
