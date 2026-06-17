@@ -27,7 +27,7 @@
       "lightning_beep_r": 1100,
       "lightning_anim_scale": 1.5,
       "lightning_font_size": 24,
-      "lightning_overlay_visible": true,
+      "lightning_overlay_visible": false,
       "refresh_interval": 10,
       "snap_grid": 10,
       "overlay_font_size": 20,
@@ -46,15 +46,15 @@
       "sat_visible": false,
       "sat_selected": [
         "METEOR-M2 2",
-        "ISS (ZARYA)",
+        "METEOR-M2 3",
         "METEOR-M2 4",
-        "METEOR-M2 3"
+        "ISS (ZARYA)"
       ],
       "sat_path": [
         "METEOR-M2 2",
-        "ISS (ZARYA)",
+        "METEOR-M2 3",
         "METEOR-M2 4",
-        "METEOR-M2 3"
+        "ISS (ZARYA)"
       ],
       "sat_fp": [
         "METEOR-M2 2",
@@ -287,7 +287,7 @@
         1363
       ]
     },
-    "timestamp": "2026-06-17T10:50:41.222844"
+    "timestamp": "2026-06-17T10:54:10.790932"
   },
   "Frank": {
     "config": {

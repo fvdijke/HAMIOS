@@ -481,8 +481,9 @@ def main():
         _show_error("HAMIOS — Onverwachte fout", msg)
     sys.excepthook = _excepthook
 
-    from modules.theme import generate_spinbox_arrows, QSS as _QSS
+    from modules.theme import generate_spinbox_arrows, make_checkmark_path, QSS as _QSS
     _up, _dn = generate_spinbox_arrows()
+    _check = make_checkmark_path()
     _arrow_qss = f"""
 QSpinBox::up-arrow, QDoubleSpinBox::up-arrow {{
     image: url("{_up}"); width: 10px; height: 6px;
@@ -492,7 +493,11 @@ QComboBox::down-arrow {{
     image: url("{_dn}"); width: 10px; height: 6px;
 }}
 """
-    app.setStyleSheet(_QSS.replace("COMBO_ARROW_PLACEHOLDER", _dn) + _arrow_qss)
+    app.setStyleSheet(
+        _QSS.replace("COMBO_ARROW_PLACEHOLDER", _dn)
+            .replace("CHECKMARK_PLACEHOLDER", _check)
+        + _arrow_qss
+    )
 
     from modules.config import load_config as _load_cfg
     _boot_cfg = _load_cfg()

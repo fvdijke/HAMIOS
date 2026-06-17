@@ -40,15 +40,6 @@ QHeaderView::section {{
 }}
 QRadioButton {{ color: {TEXT_BODY}; spacing: 4px; font-size: 8pt; }}
 QRadioButton::indicator {{ width: 12px; height: 12px; }}
-QCheckBox {{ color: {TEXT_BODY}; spacing: 4px; font-size: 8pt; }}
-QCheckBox::indicator {{
-    width: 14px; height: 14px;
-    background: #000000; border: 1px solid #808080; border-radius: 0px;
-}}
-QCheckBox::indicator:checked {{
-    background: #000000; border: 1px solid #808080;
-    image: url(SAT_CHECKMARK);
-}}
 QTreeWidget::indicator {{
     width: 14px; height: 14px;
     background: #000000; border: 1px solid #808080; border-radius: 0px;
