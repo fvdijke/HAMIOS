@@ -462,7 +462,7 @@ class SettingsDialog(QDialog):
         h.addStretch()
         v.addLayout(h)
 
-        _section(v, tr("set.lightn.sound_sec").split()[0] + " / Alert")
+        _section(v, "Alert")
         h2 = QHBoxLayout()
         h2.addWidget(QLabel(tr("set.lightn.alert")))
         self._lightn_radius_spin = QSpinBox()

@@ -42,4 +42,4 @@ def play_sat_ping() -> None:
 
 def play_lightning_alert() -> None:
     """Hoge pitch click voor lightning in alert zone."""
-    play_beep(4500, 8)
+    play_beep(5000, 10)
