@@ -513,6 +513,11 @@ class SettingsDialog(QDialog):
 
         _section(v, tr("set.lightn.sound_sec"))
 
+        # Enable lightning beep
+        self._lightn_beep_cb = QCheckBox(tr("set.lightn.beep"))
+        self._lightn_beep_cb.setToolTip(tr("tip.lightn.beep"))
+        v.addWidget(self._lightn_beep_cb)
+
         # Warning zone sound pitch
         h_pitch_normal = QHBoxLayout()
         h_pitch_normal.addWidget(QLabel("Pitch (Hz):"))
