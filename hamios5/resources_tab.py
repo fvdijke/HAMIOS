@@ -19,29 +19,31 @@ class ResourceTestThread(QThread):
     """Background thread voor resource URL testen."""
     test_result = Signal(str, bool, str)  # (resource_key, success, detail)
 
-    def __init__(self, key: str, url: str):
+    def __init__(self, key: str, url: str, method: str = "GET"):
         super().__init__()
         self.key = key
         self.url = url
+        self.method = method  # GET or HEAD from resource config
         self._timeout = 4
 
     def run(self):
-        """Test resource connectivity."""
+        """Test resource connectivity using configured method."""
         try:
-            headers = {"User-Agent": "HAMIOS/5.3 (Resource Monitor)"}
+            headers = {"User-Agent": "HAMIOS/5.4 (Resource Monitor)"}
             req = urlreq.Request(self.url, headers=headers)
 
-            # Probeer HEAD eerst
-            req.get_method = lambda: "HEAD"
-            try:
-                with urlreq.urlopen(req, timeout=self._timeout) as response:
-                    status = response.status
-                    self.test_result.emit(self.key, status < 400, f"HTTP {status}")
-                    return
-            except (urlerror.HTTPError, urlerror.URLError):
-                pass
+            # Use configured method (HEAD or GET)
+            if self.method.upper() == "HEAD":
+                req.get_method = lambda: "HEAD"
+                try:
+                    with urlreq.urlopen(req, timeout=self._timeout) as response:
+                        status = response.status
+                        self.test_result.emit(self.key, status < 400, f"HTTP {status}")
+                        return
+                except (urlerror.HTTPError, urlerror.URLError):
+                    pass
 
-            # Fallback naar GET
+            # Fallback to GET if HEAD fails or if configured method is GET
             req.get_method = lambda: "GET"
             with urlreq.urlopen(req, timeout=self._timeout) as response:
                 status = response.status
@@ -146,25 +148,31 @@ class ResourceManagerTab(QWidget):
         row_lay.setSpacing(4)
         row_lay.setContentsMargins(8, 4, 8, 4)
 
-        # Header: naam + beschrijving
+        # Header: naam + beschrijving (amber background with black text)
         header_lay = QHBoxLayout()
         header_lay.setSpacing(8)
+        header_lay.setContentsMargins(6, 3, 6, 3)
 
         name_lbl = QLabel(resource.get("name", key))
-        name_font = QFont("Segoe UI", 8)
+        name_font = QFont("Segoe UI", 9)
         name_font.setBold(True)
         name_lbl.setFont(name_font)
-        name_lbl.setStyleSheet(f"color: {TEXT_H1};")
+        name_lbl.setStyleSheet("color: #000000;")
         header_lay.addWidget(name_lbl)
 
         desc_lbl = QLabel(resource.get("description", ""))
         desc_font = QFont("Segoe UI", 8)
         desc_lbl.setFont(desc_font)
-        desc_lbl.setStyleSheet(f"color: {TEXT_DIM};")
+        desc_lbl.setStyleSheet("color: #1a1a1a;")
         header_lay.addWidget(desc_lbl)
 
         header_lay.addStretch()
-        row_lay.addLayout(header_lay)
+
+        # Wrap header in widget with amber background
+        header_widget = QWidget()
+        header_widget.setLayout(header_lay)
+        header_widget.setStyleSheet("background: #C8A84B; border-radius: 2px;")
+        row_lay.addWidget(header_widget)
 
         # URL input
         url_lay = QHBoxLayout()
@@ -222,7 +230,7 @@ class ResourceManagerTab(QWidget):
         parent_lay.addWidget(row_widget)
 
     def _test_resource(self, key: str, url: str):
-        """Test resource URL."""
+        """Test resource URL using configured method."""
         if not url.strip():
             status_lbl = getattr(self, f"status_lbl_{key}", None)
             if status_lbl:
@@ -236,8 +244,12 @@ class ResourceManagerTab(QWidget):
                 self._test_threads[key].quit()
                 self._test_threads[key].wait()
 
-        # Start test
-        thread = ResourceTestThread(key, url)
+        # Get configured method for this resource
+        resource = self._resources.get(key, {})
+        method = resource.get("method", "GET")
+
+        # Start test with configured method
+        thread = ResourceTestThread(key, url, method)
         thread.test_result.connect(self._on_test_result)
         self._test_threads[key] = thread
         thread.start()
