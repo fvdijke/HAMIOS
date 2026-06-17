@@ -234,8 +234,8 @@ class _OnlineResourceCheckThread(QThread):
         "web_hamqsl": ("https://www.hamqsl.com/solarxml.php", {"User-Agent": "HAMIOS/5.4"}),
         # Satellites (CelesTrak)
         "web_celestrak": ("https://celestrak.org/NORAD/elements/gp.php?GROUP=amateur&FORMAT=tle", {"User-Agent": "HAMIOS/5.4"}),
-        # Weak Signal (WSPRnet) - test robots.txt for connectivity, API uses fallback mock data
-        "web_wsprnet": ("https://wsprnet.org/robots.txt", {"User-Agent": "HAMIOS/5.4"}),
+        # Weak Signal (WSPRnet) - API endpoint for actual WSPR QSO data
+        "web_wsprnet": ("https://wsprnet.org/drupal/wsprnet/api/v2/spots", {"User-Agent": "HAMIOS/5.4"}),
         # Spotting (DXWatch, PSK Reporter)
         "web_dxwatch": ("https://dxwatch.com/dxsd1/s.php?s=0&r=100&cdxc=0", {"User-Agent": "HAMIOS/5.4"}),
         "web_pskreporter": ("https://pskreporter.info/cgi-bin/pskquery5.pl?encap=0&callback=_", {"User-Agent": "HAMIOS/5.4"}),
