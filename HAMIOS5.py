@@ -494,11 +494,8 @@ def main():
     sys.excepthook = _excepthook
 
     from modules.theme import QSS as _QSS
-    # Use simple QSS without custom arrow images
-    _dn = ""  # Placeholder for combo box arrow (not used)
-    app.setStyleSheet(
-        _QSS.replace("COMBO_ARROW_PLACEHOLDER", _dn)
-    )
+    # Use simple QSS with platform-default arrows
+    app.setStyleSheet(_QSS)
 
     from modules.config import load_config as _load_cfg
     _boot_cfg = _load_cfg()

@@ -232,10 +232,7 @@ QComboBox::drop-down {{
     border-top-right-radius: 2px;
     border-bottom-right-radius: 2px;
 }}
-QComboBox::down-arrow {{
-    image: url(COMBO_ARROW_PLACEHOLDER);
-    width: 10px; height: 6px;
-}}
+/* QComboBox::down-arrow: Use platform default */
 QLineEdit {{
     background: {BG_ROOT};
     color: {TEXT_H1};
