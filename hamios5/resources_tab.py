@@ -66,12 +66,14 @@ class ResourceManagerTab(QWidget):
         """Bouw de resource manager UI."""
         # Remove existing layout if any
         old_layout = self.layout()
-        if old_layout:
+        if old_layout is not None:
+            # Delete all widgets in the layout
             while old_layout.count():
-                item = old_layout.takeAt(0)
-                if item.widget():
-                    item.widget().deleteLater()
-            self.setLayout(None)
+                widget = old_layout.itemAt(0).widget()
+                if widget:
+                    widget.setParent(None)
+            # Delete the layout itself
+            old_layout.deleteLater()
 
         vlay = QVBoxLayout(self)
         vlay.setContentsMargins(12, 8, 12, 8)
@@ -326,12 +328,5 @@ class ResourceManagerTab(QWidget):
         if reply == QMessageBox.Yes:
             ResourceConfig.reset_to_defaults()
             self._resources = ResourceConfig.load_resources()
-            # Clear current layout
-            layout = self.layout()
-            if layout:
-                while layout.count():
-                    item = layout.takeAt(0)
-                    if item.widget():
-                        item.widget().deleteLater()
-            # Rebuild UI
+            # Rebuild UI (which handles layout cleanup)
             self._build_ui()
