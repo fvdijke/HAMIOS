@@ -67,10 +67,6 @@ QPushButton:hover  {{ background: #32373F; }}
 QPushButton#ok     {{ background: {ACCENT}; color: {BG_ROOT}; font-weight: bold; }}
 QPushButton#ok:hover {{ background: #E0C060; }}
 QPushButton#danger {{ background: #5A1010; }}
-QSpinBox {{
-    background: {BG_ROOT}; color: {TEXT_H1};
-    border: 1px solid {BORDER}; padding: 2px 4px; border-radius: 2px;
-}}
 QProgressBar {{
     background: {BG_ROOT}; border: 1px solid {BORDER};
     height: 6px; border-radius: 3px;

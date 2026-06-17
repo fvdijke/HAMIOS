@@ -199,42 +199,7 @@ QLabel#time_utc {{
     color: {TEXT_DIM};
     font-size: 10pt;
 }}
-QSpinBox, QDoubleSpinBox {{
-    background: {BG_ROOT};
-    color: {TEXT_H1};
-    border: 1px solid {BORDER};
-    border-radius: 2px;
-    padding: 2px 20px 2px 6px;
-    min-width: 52px;
-}}
-QSpinBox:focus, QDoubleSpinBox:focus {{
-    border: 1px solid {ACCENT};
-}}
-QSpinBox::up-button, QDoubleSpinBox::up-button {{
-    subcontrol-origin: border;
-    subcontrol-position: top right;
-    width: 20px;
-    background: {BG_SURFACE};
-    border-left: 1px solid {BORDER};
-    border-bottom: 1px solid {BORDER};
-    border-top-right-radius: 2px;
-}}
-QSpinBox::down-button, QDoubleSpinBox::down-button {{
-    subcontrol-origin: border;
-    subcontrol-position: bottom right;
-    width: 20px;
-    background: {BG_SURFACE};
-    border-left: 1px solid {BORDER};
-    border-bottom-right-radius: 2px;
-}}
-QSpinBox::up-button:hover, QDoubleSpinBox::up-button:hover,
-QSpinBox::down-button:hover, QDoubleSpinBox::down-button:hover {{
-    background: {BG_HOVER};
-}}
-QSpinBox::up-button:pressed, QDoubleSpinBox::up-button:pressed,
-QSpinBox::down-button:pressed, QDoubleSpinBox::down-button:pressed {{
-    background: {ACCENT}; border-color: {ACCENT};
-}}
+/* QSpinBox/QDoubleSpinBox: Use platform default styling - handled in settings_dialog.py */
 QComboBox {{
     background: {BG_ROOT};
     color: {TEXT_H1};
