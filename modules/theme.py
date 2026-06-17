@@ -211,10 +211,10 @@ QSpinBox:focus, QDoubleSpinBox:focus {{
     border: 1px solid {ACCENT};
 }}
 QSpinBox::up-button, QDoubleSpinBox::up-button {{
-    width: 18px;
+    width: 20px;
 }}
 QSpinBox::down-button, QDoubleSpinBox::down-button {{
-    width: 18px;
+    width: 20px;
 }}
 QComboBox {{
     background: {BG_ROOT};
