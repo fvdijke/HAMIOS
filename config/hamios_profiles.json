@@ -8,27 +8,34 @@
       "mode": "FT8",
       "power": "100W",
       "antenna": "Ground loop",
-      "show_night": true,
+      "show_night": false,
       "show_grayline": false,
       "show_aurora": false,
-      "show_sun": true,
-      "show_moon": true,
-      "show_lightning": true,
+      "show_sun": false,
+      "show_moon": false,
+      "show_lightning": false,
       "show_dx_spots": false,
       "show_locator": false,
       "show_psk": false,
       "show_callsign_overlay": false,
       "callsign_overlay_font_size": 16,
+      "wspr_font_size": 8,
       "map_overlay": true,
-      "lightning_fade": 300,
+      "lightning_fade": 30,
       "lightning_radius": 500,
       "lightning_rate": 100,
-      "lightning_beep": true,
-      "lightning_beep_r": 1100,
+      "lightning_beep": false,
+      "lightning_beep_r": 500,
+      "lightning_warn_radius": 2000,
+      "lightning_beep_pitch": 2500,
+      "lightning_beep_duration": 3,
+      "lightning_alert_sound_enabled": false,
+      "lightning_alert_pitch": 5000,
+      "lightning_alert_duration": 3,
       "lightning_anim_scale": 1.5,
-      "lightning_font_size": 24,
-      "lightning_overlay_visible": true,
-      "refresh_interval": 10,
+      "lightning_font_size": 28,
+      "lightning_overlay_visible": false,
+      "refresh_interval": 5,
       "snap_grid": 10,
       "overlay_font_size": 20,
       "sat_font_size": 17,
@@ -39,21 +46,21 @@
       "maidenhead_font_size": 16,
       "sun_icon_size": 64,
       "moon_icon_size": 64,
-      "show_splash": true,
-      "dx_own_continent": true,
+      "show_splash": false,
+      "dx_own_continent": false,
       "dx_heatmap": false,
       "band_day_auto": true,
-      "sat_visible": true,
+      "sat_visible": false,
       "sat_selected": [
+        "METEOR-M2 2",
         "METEOR-M2 4",
-        "ISS",
         "METEOR-M2 3",
-        "METEOR-M2 2"
+        "ISS"
       ],
       "sat_path": [
+        "METEOR-M2 2",
         "METEOR-M2 4",
-        "METEOR-M2 3",
-        "METEOR-M2 2"
+        "METEOR-M2 3"
       ],
       "sat_fp": [
         "METEOR-M2 2"
@@ -61,13 +68,13 @@
       "sat_back_h": 1,
       "sat_fwd_h": 1,
       "sat_path_width": 2.0,
-      "sat_filter_sel": false,
+      "sat_filter_sel": true,
       "sat_zone_ping": false,
       "k_alert": 4,
       "k_alert_en": false,
-      "xflare_alert_en": true,
+      "xflare_alert_en": false,
       "band_alert": 39,
-      "band_alert_en": true,
+      "band_alert_en": false,
       "alert_max": 20,
       "layouts": {
         "__default__": {
@@ -110,8 +117,8 @@
       },
       "dialog_geometries": {
         "SatelliteDialog": [
-          1938,
-          154,
+          1136,
+          197,
           676,
           1038
         ],
@@ -146,7 +153,7 @@
           372
         ]
       },
-      "cat_enabled": true,
+      "cat_enabled": false,
       "cat_port": "COM1",
       "cat_baud": 38400,
       "cat_databits": 8,
@@ -285,7 +292,7 @@
         1363
       ]
     },
-    "timestamp": "2026-06-17T12:00:40.333495"
+    "timestamp": "2026-06-17T15:52:34.690902"
   },
   "Frank": {
     "config": {
