@@ -364,6 +364,55 @@ in Instellingen → CAT ingesteld.</p>
 rechts van de CAT-knop in de header. De radio wordt elke 2 seconden gepeild.</p>
 """),
 
+    ("🌐 Resources", "Online resources beheren", """
+<h3>Online Resources Manager</h3>
+<p>Beheer alle URL's van online resources die door HAMIOS worden gebruikt voor
+real-time gegevens, satelliettracks, weerinformatie en meer.</p>
+
+<h4>Beschikbare Resources (9 categorieën)</h4>
+<ul>
+<li><b>Solar &amp; Ionosphere</b> — NOAA SWPC (wind, magnetisme, Kp index), HamQSL (SFI)</li>
+<li><b>Satellites</b> — CelesTrak (TLE data voor amateurs, ISS, cubesats)</li>
+<li><b>WSPR</b> — WSPRnet (lage-vermogen QSO netwerk)</li>
+<li><b>DX Spotting</b> — DXWatch (cluster spots), PSK Reporter (digitale modes)</li>
+<li><b>Lightning</b> — Blitzortung (real-time bliksemdetectie)</li>
+<li><b>Schedules</b> — EIBI Space (kortegolf uitzendschema's)</li>
+<li><b>Map Data</b> — Wikimedia (NASA Blue Marble kaarten)</li>
+</ul>
+
+<h4>Resources aanpassen</h4>
+<ol>
+<li>Open <b>⚙ Instellingen → Resources</b>.</li>
+<li>Per resource ziet u:
+  <ul>
+  <li>Huidge URL (bewerkbaar)</li>
+  <li><b>Test</b>-knop — controleer connectiviteit en HTTP-status</li>
+  <li><b>⚙</b>-knop — onderzoek alternatieve endpoints</li>
+  </ul>
+</li>
+<li>Wijzigingen worden automatisch opgeslagen.</li>
+</ol>
+
+<h4>URL's testen</h4>
+<p>Klik de <b>Test</b>-knop om directe connectiviteit te controleren.
+Status toont HTTP-code en timeout-informatie.</p>
+
+<h4>Onderzoek alternative endpoints</h4>
+<p>Klik <b>⚙</b> om richtlijnen te krijgen voor het vinden van alternatieve
+endpoints (bijv. spiegelservers, backup-API's).</p>
+
+<h4>Naar standaard herstellen</h4>
+<p>Klik <b>Naar standaard herstellen</b> om alle URL's naar HAMIOS defaults te resetten.</p>
+
+<h4>Waarom Resources Manager?</h4>
+<ul>
+<li><b>Failover</b> — als een service down is, kunt u een spiegelserver instellen</li>
+<li><b>Privacy</b> — andere API-endpoints gebruiken</li>
+<li><b>Debugging</b> — langzame services vervangen door snellere testservers</li>
+<li><b>Onderhoud</b> — API-endpoints die veranderen snel bijwerken</li>
+</ul>
+"""),
+
     # ── Meldingen ─────────────────────────────────────────────────────────────
     ("🔔 Meldingen", "Meldingen-paneel", """
 <h3>Meldingen-paneel</h3>
@@ -399,6 +448,7 @@ zijn <b>live</b> — u ziet het resultaat direct zonder opnieuw opstarten.</p>
 <li><b>⚡ Bliksem</b> — fade-duur, nabijheidsmelding, geluid, prestaties</li>
 <li><b>🔔 Meldingen</b> — K-drempel, X-flare, band-drempel, FIFO-limiet</li>
 <li><b>📟 CAT</b> — seriële poort, radiotype, presets, terminal</li>
+<li><b>🌐 Resources</b> — online resources URL's, test en onderzoek endpoints</li>
 <li><b>📐 Layout</b> — standaard layout opslaan/herstellen, profielen</li>
 <li><b>📦 Over</b> — versie-info, afhankelijkheden, bestandsstatus</li>
 </ul>
@@ -717,6 +767,54 @@ All serial parameters are configured exclusively in Settings → CAT.</p>
 <p>Once CAT is connected, the current VFO-A frequency appears in the header bar.
 The radio is polled every 2 seconds.</p>
 """),
+    ("🌐 Resources", "Manage online resources", """
+<h3>Online Resources Manager</h3>
+<p>Manage all URLs of online resources used by HAMIOS for real-time data,
+satellite tracking, weather information and more.</p>
+
+<h4>Available Resources (9 categories)</h4>
+<ul>
+<li><b>Solar &amp; Ionosphere</b> — NOAA SWPC (wind, magnetic field, Kp index), HamQSL (SFI)</li>
+<li><b>Satellites</b> — CelesTrak (TLE data for amateurs, ISS, cubesats)</li>
+<li><b>WSPR</b> — WSPRnet (Weak Signal Propagation Reporting network)</li>
+<li><b>DX Spotting</b> — DXWatch (cluster spots), PSK Reporter (digital modes)</li>
+<li><b>Lightning</b> — Blitzortung (real-time lightning detection worldwide)</li>
+<li><b>Schedules</b> — EIBI Space (shortwave broadcast schedules)</li>
+<li><b>Map Data</b> — Wikimedia (NASA Blue Marble maps)</li>
+</ul>
+
+<h4>Customize Resources</h4>
+<ol>
+<li>Open <b>⚙ Settings → Resources</b>.</li>
+<li>For each resource you'll see:
+  <ul>
+  <li>Current URL (editable)</li>
+  <li><b>Test</b> button — check connectivity and HTTP status</li>
+  <li><b>⚙</b> button — investigate alternative endpoints</li>
+  </ul>
+</li>
+<li>Changes are saved automatically.</li>
+</ol>
+
+<h4>Test URLs</h4>
+<p>Click the <b>Test</b> button to check direct connectivity.
+Status shows HTTP code and timeout information.</p>
+
+<h4>Investigate Alternative Endpoints</h4>
+<p>Click <b>⚙</b> to get guidelines for finding alternative endpoints
+(e.g., mirror servers, backup APIs).</p>
+
+<h4>Reset to Defaults</h4>
+<p>Click <b>Reset to defaults</b> to restore all URLs to HAMIOS defaults.</p>
+
+<h4>Why Resource Manager?</h4>
+<ul>
+<li><b>Failover</b> — if a service is down, configure a mirror server</li>
+<li><b>Privacy</b> — use alternative API endpoints</li>
+<li><b>Debugging</b> — replace slow services with faster test servers</li>
+<li><b>Maintenance</b> — quickly update API endpoints that change</li>
+</ul>
+"""),
     ("🔔 Alerts", "Alerts panel", """
 <h3>Alerts panel</h3>
 <p>Collects all alerts in one place:</p>
@@ -744,6 +842,7 @@ All changes are <b>live</b> — visible immediately without restarting.</p>
 <li><b>⚡ Lightning</b> — fade duration, proximity alert, sound, animation scale</li>
 <li><b>🔔 Alerts</b> — K-threshold, X-flare, band threshold, FIFO limit</li>
 <li><b>📟 CAT</b> — serial port, radio type, presets, terminal</li>
+<li><b>🌐 Resources</b> — online resource URLs, test and investigate endpoints</li>
 <li><b>📐 Layout</b> — save/restore default, profiles, snap grid</li>
 <li><b>📦 About</b> — version, dependencies, file status, language</li>
 </ul>

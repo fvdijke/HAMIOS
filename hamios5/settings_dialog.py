@@ -237,6 +237,7 @@ class SettingsDialog(QDialog):
         self._tabs.addTab(self._tab_lightning(), tr("set.tab.lightn.lbl"))
         self._tabs.addTab(self._tab_alerts(),    tr("set.tab.alerts.lbl"))
         self._tabs.addTab(self._tab_cat(),       tr("set.tab.cat.lbl"))
+        self._tabs.addTab(self._tab_resources(), tr("set.tab.resources.lbl"))
         self._tabs.addTab(self._tab_layout(),    tr("set.tab.layout.lbl"))
         self._tabs.addTab(self._tab_about(),     tr("set.tab.about.lbl"))
 
@@ -785,6 +786,11 @@ class SettingsDialog(QDialog):
             else:
                 self._cat_status_lbl.setText(f"{n} poort{'en' if n > 1 else ''} gevonden")
                 self._cat_status_lbl.setStyleSheet(f"color: {TEXT_DIM}; font-size: 8pt;")
+
+    # ── Tab: Resources ────────────────────────────────────────────────────────
+    def _tab_resources(self) -> QWidget:
+        from .resources_tab import ResourceManagerTab
+        return ResourceManagerTab(self)
 
     # ── Tab: Over ─────────────────────────────────────────────────────────────
     def _tab_about(self) -> QWidget:

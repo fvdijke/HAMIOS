@@ -1,5 +1,5 @@
 """
-HAMIOS v5.3 — PySide6 versie
+HAMIOS v5.4 — PySide6 versie
 Developed with Claude AI
 
 """
@@ -215,7 +215,7 @@ class _InetCheckThread(QThread):
         import urllib.request as _urlreq
         try:
             req = _urlreq.Request(self._URL, method="HEAD",
-                                  headers={"User-Agent": "HAMIOS/5.3"})
+                                  headers={"User-Agent": "HAMIOS/5.4"})
             with _urlreq.urlopen(req, timeout=6) as r:
                 self.result.emit(r.status < 400, f"HTTP {r.status}")
         except Exception as e:
@@ -230,21 +230,21 @@ class _OnlineResourceCheckThread(QThread):
 
     _RESOURCES = {
         # Solar & Ionosphere (NOAA SWPC)
-        "web_noaa_swpc": ("https://services.swpc.noaa.gov/products/summary/solar-wind-speed.json", {"User-Agent": "HAMIOS/5.3"}),
-        "web_hamqsl": ("https://www.hamqsl.com/solarxml.php", {"User-Agent": "HAMIOS/5.3"}),
+        "web_noaa_swpc": ("https://services.swpc.noaa.gov/products/summary/solar-wind-speed.json", {"User-Agent": "HAMIOS/5.4"}),
+        "web_hamqsl": ("https://www.hamqsl.com/solarxml.php", {"User-Agent": "HAMIOS/5.4"}),
         # Satellites (CelesTrak)
-        "web_celestrak": ("https://celestrak.org/NORAD/elements/gp.php?GROUP=amateur&FORMAT=tle", {"User-Agent": "HAMIOS/5.3"}),
+        "web_celestrak": ("https://celestrak.org/NORAD/elements/gp.php?GROUP=amateur&FORMAT=tle", {"User-Agent": "HAMIOS/5.4"}),
         # Weak Signal (WSPRnet) - test robots.txt for connectivity, API uses fallback mock data
-        "web_wsprnet": ("https://wsprnet.org/robots.txt", {"User-Agent": "HAMIOS/5.3"}),
+        "web_wsprnet": ("https://wsprnet.org/robots.txt", {"User-Agent": "HAMIOS/5.4"}),
         # Spotting (DXWatch, PSK Reporter)
-        "web_dxwatch": ("https://dxwatch.com/dxsd1/s.php?s=0&r=100&cdxc=0", {"User-Agent": "HAMIOS/5.3"}),
-        "web_pskreporter": ("https://pskreporter.info/cgi-bin/pskquery5.pl?encap=0&callback=_", {"User-Agent": "HAMIOS/5.3"}),
+        "web_dxwatch": ("https://dxwatch.com/dxsd1/s.php?s=0&r=100&cdxc=0", {"User-Agent": "HAMIOS/5.4"}),
+        "web_pskreporter": ("https://pskreporter.info/cgi-bin/pskquery5.pl?encap=0&callback=_", {"User-Agent": "HAMIOS/5.4"}),
         # Lightning (Blitzortung) - WebSocket, test HTTP fallback
-        "web_blitzortung": ("https://www.blitzortung.org/", {"User-Agent": "HAMIOS/5.3"}),
+        "web_blitzortung": ("https://www.blitzortung.org/", {"User-Agent": "HAMIOS/5.4"}),
         # Broadcasts (EiBi Space) - dynamic URL, test base
-        "web_eibi": ("http://www.eibispace.de/", {"User-Agent": "HAMIOS/5.3"}),
+        "web_eibi": ("http://www.eibispace.de/", {"User-Agent": "HAMIOS/5.4"}),
         # Maps (Wikimedia) - direct file URL
-        "web_wikimedia": ("https://upload.wikimedia.org/wikipedia/commons/thumb/8/8f/Whole_world_-_land_and_oceans_12000.jpg/1920px-Whole_world_-_land_and_oceans_12000.jpg", {"User-Agent": "HAMIOS/5.3"}),
+        "web_wikimedia": ("https://upload.wikimedia.org/wikipedia/commons/thumb/8/8f/Whole_world_-_land_and_oceans_12000.jpg/1920px-Whole_world_-_land_and_oceans_12000.jpg", {"User-Agent": "HAMIOS/5.4"}),
     }
 
     def run(self):
@@ -472,7 +472,7 @@ def main():
 
     app = QApplication(sys.argv)
     app.setApplicationName("HAMIOS")
-    app.setApplicationVersion("5.3")
+    app.setApplicationVersion("5.4")
     app.setOrganizationName("")
 
     # Opstartcontrole

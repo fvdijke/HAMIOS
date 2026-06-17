@@ -6,7 +6,7 @@
 
 **Real-time HF propagation and DX monitor for amateur radio operators — Windows 10/11**
 
-> v5.3 · June 2026 · Frank van Dijke · *Developed with Claude AI (Anthropic)*
+> v5.4 · June 2026 · Frank van Dijke · *Developed with Claude AI (Anthropic)*
 
 [![Website](https://img.shields.io/badge/website-hamios.space-orange)](https://hamios.space)
 [![Release](https://img.shields.io/github/v/release/fvdijke/HAMIOS?label=latest)](https://github.com/fvdijke/HAMIOS/releases/latest)
@@ -48,6 +48,7 @@ HF Propagation & Atmosphere Monitor gives amateur radio operators real-time insi
 | 🕵 **SpyStations** | Numbers stations database with CAT tuning |
 | 📟 **CAT Interface** | Yaesu, Kenwood/Elecraft, Icom CI-V — live frequency display in header |
 | 💾 **Profile Management** | **NEW**: Save complete workspaces (all settings + layout + window geometry) as named profiles or default backup |
+| 🌐 **Resources Manager** | **NEW**: Manage online resource URLs, test connectivity per endpoint, investigate alternatives (failover/mirror servers) |
 | 🪟 **Panel Visibility** | **NEW**: Quick header button to show/hide panels without reopening settings |
 
 ---
@@ -198,6 +199,20 @@ All connections use standard HTTPS/WebSocket. No personal data is transmitted.
 ---
 
 ## 📋 Changelog
+
+### v5.4 — June 2026
+- **Resources Manager Tab**: New Settings tab to manage all online resource URLs (9 categories: Solar, Satellites, WSPR, DX, Lightning, Schedules, Map)
+- **Resource Testing**: Per-URL connectivity test button showing HTTP status and timeout errors
+- **Resource Investigation**: Discover alternative endpoints (mirror servers, backup APIs) with built-in guidelines
+- **Automatic URL Saving**: Resource URL changes saved instantly without restart
+- **Reset to Defaults**: Quick button to restore all URLs to HAMIOS defaults
+- **Lightning Panel Improvements**: 
+  - Separate enable/disable (WebSocket connection) from overlay visibility (map display)
+  - Configurable font size for radius labels (5-72pt in Settings)
+  - Independent control of connection vs. visibility
+- **WSPR Sorting Fixes**: Numeric columns (frequency, SNR, distance, azimuth, time) now sort correctly with proper numeric comparison
+- **Profile Loading**: Fixed config update when loading profiles; proper _save_cfg() implementation
+- **Full Bilingual Documentation**: Help section covers all Resources Manager features in English & Dutch
 
 ### v5.3 — June 2026
 - **Profile Management System**: Save/load complete workspaces (config + panel layout + window geometry) as named profiles or default backup

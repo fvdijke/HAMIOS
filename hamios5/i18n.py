@@ -45,7 +45,7 @@ _S: dict[str, dict[str, str]] = {
 
 # ── App / algemeen ────────────────────────────────────────────────────────────
 "app.name":           "HF Propagation & Atmosphere Monitor",
-"app.version":        "v5.3",
+"app.version":        "v5.4",
 "app.close":          "Afsluiten",
 "app.ok":             "OK",
 "app.cancel":         "Annuleren",
@@ -574,6 +574,14 @@ _S: dict[str, dict[str, str]] = {
 "about.present":        "aanwezig",
 "about.missing":        "ontbreekt",
 
+# ── Resource Manager tab (Dutch) ──────────────────────────────────────────────
+"set.resources.title":     "Online Resources Beheer",
+"set.resources.info":      "Beheer de URL's van online resources die door HAMIOS worden gebruikt. Test connectiviteit of onderzoek alternatieve endpoints.",
+"set.resources.reset":     "Naar standaard herstellen",
+"set.resources.reset_confirm": "Alle resource URL's naar standaardwaarden herstellen?",
+"set.resources.investigate": "URL onderzoeken",
+"set.resources.investigate_help": "Instructies:\n1. Bezoek de website van de resource\n2. Zoek API-documentatie\n3. Controleer gegevensformaat en eindpunt\n4. Test de URL in dit dialoog",
+
 # ── Settings tab labels ──────────────────────────────────────────────────────
 "set.tab.station.lbl":  "📡  Station",
 "set.tab.panels.lbl":   "🪟  Panelen",
@@ -581,6 +589,7 @@ _S: dict[str, dict[str, str]] = {
 "set.tab.lightn.lbl":   "⚡  Bliksem",
 "set.tab.alerts.lbl":   "🔔  Meldingen",
 "set.tab.cat.lbl":      "📟  CAT",
+"set.tab.resources.lbl": "🌐  Resources",
 "set.tab.layout.lbl":   "📐  Layout",
 "set.tab.about.lbl":    "📦  Over",
 
@@ -721,7 +730,7 @@ _S: dict[str, dict[str, str]] = {
 
 # ── App / general ─────────────────────────────────────────────────────────────
 "app.name":           "HF Propagation & Atmosphere Monitor",
-"app.version":        "v5.3",
+"app.version":        "v5.4",
 "app.close":          "Exit",
 "app.ok":             "OK",
 "app.cancel":         "Cancel",
@@ -1251,8 +1260,17 @@ _S: dict[str, dict[str, str]] = {
 "set.tab.lightn.lbl":   "⚡  Lightning",
 "set.tab.alerts.lbl":   "🔔  Alerts",
 "set.tab.cat.lbl":      "📟  CAT",
+"set.tab.resources.lbl": "🌐  Resources",
 "set.tab.layout.lbl":   "📐  Layout",
 "set.tab.about.lbl":    "📦  About",
+
+# ── Resource Manager tab (English) ────────────────────────────────────────────
+"set.resources.title":     "Online Resources Manager",
+"set.resources.info":      "Manage the URLs of online resources used by HAMIOS. Test connectivity or investigate alternative endpoints.",
+"set.resources.reset":     "Reset to defaults",
+"set.resources.reset_confirm": "Reset all resource URLs to default values?",
+"set.resources.investigate": "Investigate URL",
+"set.resources.investigate_help": "Instructions:\n1. Visit the resource website\n2. Find API documentation\n3. Check data format and endpoint\n4. Test the URL in this dialog",
 
 # ── Settings Panels tab checkboxes ───────────────────────────────────────────
 "panels.worldmap":   "🌍  Map",

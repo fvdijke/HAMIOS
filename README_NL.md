@@ -6,7 +6,7 @@
 
 **Real-time HF-voortplanting en DX-monitor voor radioamateurs — Windows 10/11**
 
-> v5.3 · Juni 2026 · Frank van Dijke · *Ontwikkeld met Claude AI (Anthropic)*
+> v5.4 · Juni 2026 · Frank van Dijke · *Ontwikkeld met Claude AI (Anthropic)*
 
 [![Website](https://img.shields.io/badge/website-hamios.space-orange)](https://hamios.space)
 [![Release](https://img.shields.io/github/v/release/fvdijke/HAMIOS?label=latest)](https://github.com/fvdijke/HAMIOS/releases/latest)
@@ -200,7 +200,7 @@ Alle verbindingen gebruiken standaard HTTPS/WebSocket. Geen persoonlijke gegeven
 
 ## 📋 Changelog
 
-### v5.3 — Juni 2026
+### v5.4 — Juni 2026
 - **Profielbeheer**: Volledige werkruimten opslaan/laden (config + paneellay-out + venstergeometrie) als benoemde profielen of standaard backup
 - **MUF/LUF Prognose Panel**: 24-uur Maximaal/Minimaal Bruikbare Frequentievisualisatie met rasterlijnen, bandzonekleuren en real-time indicator
 - **WSPR Live Feed**: Real-time WSPR QSO-tabel met sorteerbare kolommen (roepnaam, grid, frequentie, SNR, afstand, pad, UTC-tijd)

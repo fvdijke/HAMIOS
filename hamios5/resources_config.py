@@ -1,0 +1,138 @@
+"""HAMIOS v5.3 - Online Resource Configuration
+
+Central definition of all monitored resources with customizable URLs.
+Used by splash screen, resource monitor, and settings resource tab.
+"""
+
+import json
+import os
+from ._appdir import APP_DIR as _HERE
+
+_RESOURCES_FILE = os.path.join(_HERE, "hamios_resources.json")
+
+# Default resources matching splash screen checks
+DEFAULT_RESOURCES = {
+    # Solar & Ionosphere
+    "noaa_swpc": {
+        "name": "NOAA SWPC",
+        "category": "Solar & Ionosphere",
+        "url": "https://services.swpc.noaa.gov/products/summary/solar-wind-speed.json",
+        "description": "Solar wind speed, magnetic field, Kp index",
+        "method": "GET",
+    },
+    "hamqsl": {
+        "name": "HamQSL",
+        "category": "Solar & Ionosphere",
+        "url": "https://www.hamqsl.com/solarxml.php",
+        "description": "Solar flux index and parameters",
+        "method": "GET",
+    },
+    # Satellites
+    "celestrak": {
+        "name": "CelesTrak",
+        "category": "Satellites",
+        "url": "https://celestrak.org/NORAD/elements/gp.php?GROUP=amateur&FORMAT=tle",
+        "description": "TLE data for amateur, ISS, weather satellites",
+        "method": "GET",
+    },
+    # Weak Signal Propagation
+    "wsprnet": {
+        "name": "WSPRnet",
+        "category": "Weak Signal Propagation",
+        "url": "https://wsprnet.org/robots.txt",
+        "description": "WSPR QSO spotting network",
+        "method": "HEAD",
+    },
+    # DX Spotting
+    "dxwatch": {
+        "name": "DXWatch",
+        "category": "DX Spotting",
+        "url": "https://dxwatch.com/dxsd1/s.php?s=0&r=100&cdxc=0",
+        "description": "Real-time DX cluster spots",
+        "method": "GET",
+    },
+    "pskreporter": {
+        "name": "PSK Reporter",
+        "category": "DX Spotting",
+        "url": "https://pskreporter.info/cgi-bin/pskquery5.pl",
+        "description": "Digital mode propagation reports",
+        "method": "GET",
+    },
+    # Lightning
+    "blitzortung": {
+        "name": "Blitzortung",
+        "category": "Lightning",
+        "url": "https://ws1.blitzortung.org/",
+        "description": "Real-time worldwide lightning detection",
+        "method": "HEAD",
+    },
+    # Broadcast Schedules
+    "eibispace": {
+        "name": "EIBI Space",
+        "category": "Broadcast Schedules",
+        "url": "http://www.eibispace.de/dx/",
+        "description": "Shortwave broadcast schedules",
+        "method": "HEAD",
+    },
+    # Map Data
+    "wikimedia": {
+        "name": "Wikimedia",
+        "category": "Map Data",
+        "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/8/8f/",
+        "description": "NASA Blue Marble world map",
+        "method": "HEAD",
+    },
+}
+
+
+class ResourceConfig:
+    """Manage custom resource URLs."""
+
+    @staticmethod
+    def load_resources() -> dict:
+        """Laad custom resource URLs of gebruik defaults."""
+        try:
+            if os.path.exists(_RESOURCES_FILE):
+                with open(_RESOURCES_FILE, "r", encoding="utf-8") as f:
+                    return json.load(f)
+        except Exception:
+            pass
+        return DEFAULT_RESOURCES.copy()
+
+    @staticmethod
+    def save_resources(resources: dict):
+        """Sla custom resource URLs op."""
+        try:
+            with open(_RESOURCES_FILE, "w", encoding="utf-8") as f:
+                json.dump(resources, f, ensure_ascii=False, indent=2)
+        except Exception as e:
+            print(f"Failed to save resources: {e}")
+
+    @staticmethod
+    def get_resource(key: str) -> dict:
+        """Haal specifieke resource op."""
+        resources = ResourceConfig.load_resources()
+        return resources.get(key, {})
+
+    @staticmethod
+    def update_resource(key: str, url: str) -> bool:
+        """Update resource URL."""
+        resources = ResourceConfig.load_resources()
+        if key not in resources:
+            return False
+        resources[key]["url"] = url
+        ResourceConfig.save_resources(resources)
+        return True
+
+    @staticmethod
+    def reset_to_defaults() -> bool:
+        """Reset alle resources naar defaults."""
+        ResourceConfig.save_resources(DEFAULT_RESOURCES.copy())
+        return True
+
+    @staticmethod
+    def get_categories() -> list:
+        """Geef lijst van unieke categorieën."""
+        resources = ResourceConfig.load_resources()
+        categories = sorted(set(r.get("category", "") for r in resources.values()))
+        return categories
