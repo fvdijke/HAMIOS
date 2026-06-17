@@ -474,6 +474,10 @@ class SettingsDialog(QDialog):
         h2.addStretch()
         v.addLayout(h2)
 
+        # Alert sound enable
+        self._lightn_alert_sound_cb = QCheckBox("Enable alert sound")
+        v.addWidget(self._lightn_alert_sound_cb)
+
         # Alert sound pitch
         h_pitch = QHBoxLayout()
         h_pitch.addWidget(QLabel("Sound pitch (Hz):"))
@@ -1274,6 +1278,7 @@ class SettingsDialog(QDialog):
         self._lightn_beep_r_spin.setValue(int(get_val("lightning_beep_r", 0)))
         self._lightn_beep_pitch_spin.setValue(int(get_val("lightning_beep_pitch", 2800)))
         self._lightn_beep_duration_spin.setValue(int(get_val("lightning_beep_duration", 5)))
+        self._lightn_alert_sound_cb.setChecked(get_val("lightning_alert_sound_enabled", True))
         self._lightn_anim_scale_spin.setValue(float(get_val("lightning_anim_scale", 2.0)))
         self._lightn_font_spin.setValue(int(get_val("lightning_font_size", 7)))
         self._lightn_pitch_spin.setValue(int(get_val("lightning_alert_pitch", 5000)))
@@ -1407,6 +1412,7 @@ class SettingsDialog(QDialog):
         self._lightn_beep_r_spin.setValue(getattr(c, "lightning_beep_r", 0))
         self._lightn_beep_pitch_spin.setValue(getattr(c, "lightning_beep_pitch", 2800))
         self._lightn_beep_duration_spin.setValue(getattr(c, "lightning_beep_duration", 5))
+        self._lightn_alert_sound_cb.setChecked(getattr(c, "lightning_alert_sound_enabled", True))
         self._lightn_anim_scale_spin.setValue(getattr(c, "lightning_anim_scale", 2.0))
         self._lightn_font_spin.setValue(getattr(c, "lightning_font_size", 7))
         self._lightn_pitch_spin.setValue(getattr(c, "lightning_alert_pitch", 5000))
@@ -1475,6 +1481,7 @@ class SettingsDialog(QDialog):
             lightning_beep_r    = self._lightn_beep_r_spin.value(),
             lightning_beep_pitch = self._lightn_beep_pitch_spin.value(),
             lightning_beep_duration = self._lightn_beep_duration_spin.value(),
+            lightning_alert_sound_enabled = self._lightn_alert_sound_cb.isChecked(),
             lightning_alert_pitch = self._lightn_pitch_spin.value(),
             lightning_alert_duration = self._lightn_duration_spin.value(),
             lightning_anim_scale= self._lightn_anim_scale_spin.value(),

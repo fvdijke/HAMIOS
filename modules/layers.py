@@ -386,8 +386,11 @@ class LightningLayer(QGraphicsItem):
                     a = math.sin(dlat/2)**2 + math.cos(qlat)*math.cos(slat)*math.sin(dlon/2)**2
                     km = 2 * R * math.asin(min(1.0, math.sqrt(a)))
                     if km <= beep_r:
-                        # Lightning in alert zone: use alert pitch
-                        sound_func = lambda: play_beep(alert_pitch, alert_duration)
+                        # Lightning in alert zone: use alert pitch if enabled
+                        if getattr(cfg, "lightning_alert_sound_enabled", True):
+                            sound_func = lambda: play_beep(alert_pitch, alert_duration)
+                        else:
+                            return
                     else:
                         # Lightning outside alert zone: no sound
                         return
