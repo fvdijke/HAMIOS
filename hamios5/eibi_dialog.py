@@ -27,18 +27,11 @@ from .theme import ACCENT, BG_PANEL, BG_SURFACE, BG_ROOT, TEXT_H1, TEXT_DIM, TEX
 from .eibi_codes import translate_lang, translate_target, translate_itu, enrich_row
 from .geometry import save_geom, restore_geom
 from .i18n import tr
+from .resources_config import get_eibi_url
 
 from ._appdir import APP_DIR as _HERE
 _CACHE_FILE = os.path.join(_HERE, "hamios_eibi.csv")
 _META_FILE  = os.path.join(_HERE, "hamios_eibi_meta.json")
-
-
-def _eibi_url() -> str:
-    """Bepaal de actuele EIBI-URL (A=zomer/B=winter + 2-cijferig jaar)."""
-    now    = datetime.datetime.now()
-    season = "a" if 4 <= now.month <= 9 else "b"
-    year   = str(now.year)[2:]
-    return f"http://www.eibispace.de/dx/sked-{season}{year}.csv"
 
 
 def _load_cache() -> list[dict]:
@@ -82,7 +75,7 @@ class _EibiDownloadThread(QThread):
 
     def run(self):
         try:
-            url = _eibi_url()
+            url = get_eibi_url()
             self.progress.emit(f"Downloaden: {url} …")
             req = urllib.request.Request(url, headers={"User-Agent": "HAMIOS/5.0"})
             with urllib.request.urlopen(req, timeout=30) as r:

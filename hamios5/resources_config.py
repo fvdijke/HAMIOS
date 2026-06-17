@@ -1,4 +1,4 @@
-"""HAMIOS v5.3 - Online Resource Configuration
+"""HAMIOS v5.4 - Online Resource Configuration
 
 Central definition of all monitored resources with customizable URLs.
 Used by splash screen, resource monitor, and settings resource tab.
@@ -6,9 +6,18 @@ Used by splash screen, resource monitor, and settings resource tab.
 
 import json
 import os
+import datetime
 from ._appdir import APP_DIR as _HERE
 
 _RESOURCES_FILE = os.path.join(_HERE, "hamios_resources.json")
+
+
+def get_eibi_url() -> str:
+    """Get current EIBI schedule URL based on season (A=summer/B=winter) and year."""
+    now = datetime.datetime.now()
+    season = "a" if 4 <= now.month <= 9 else "b"
+    year = str(now.year)[2:]
+    return f"http://www.eibispace.de/dx/sked-{season}{year}.csv"
 
 # Default resources matching splash screen checks
 # Uses "web_" prefix keys to match HAMIOS5.py splash screen resource keys
@@ -71,9 +80,9 @@ DEFAULT_RESOURCES = {
     "web_eibi": {
         "name": "EIBI Space",
         "category": "Broadcast Schedules",
-        "url": "http://www.eibispace.de/",
-        "description": "Shortwave broadcast schedules",
-        "method": "HEAD",
+        "url": get_eibi_url(),
+        "description": "Shortwave broadcast schedules (seasonal schedule)",
+        "method": "GET",
     },
     # Map Data
     "web_wikimedia": {
