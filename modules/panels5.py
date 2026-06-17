@@ -2634,7 +2634,7 @@ class WSPRTableWidget(QWidget):
         self._table.setStyleSheet(
             f"QTableWidget {{ background: {BG_PANEL}; color: {TEXT_BODY}; }}"
             f"QHeaderView::section {{ background: {BG_SURFACE}; color: {TEXT_H1}; "
-            f"padding: 4px; font-size: 8pt; text-align: left; }}"
+            f"padding: 4px; font-size: 8pt; }}"
         )
         self._table.setSelectionBehavior(QAbstractItemView.SelectRows)
         self._table.setSelectionMode(QAbstractItemView.SingleSelection)
@@ -2646,6 +2646,8 @@ class WSPRTableWidget(QWidget):
         self._table.setColumnWidth(5, 60)
         self._table.setColumnWidth(6, 80)
         self._table.verticalHeader().setVisible(False)
+        # Set header alignment to left
+        self._table.horizontalHeader().setDefaultAlignment(Qt.AlignLeft | Qt.AlignVCenter)
         vlay.addWidget(self._table)
 
     def set_wspr_feed(self, feed):
@@ -2738,7 +2740,7 @@ class WSPRTableWidget(QWidget):
         self._table.setStyleSheet(
             f"QTableWidget {{ background: {BG_PANEL}; color: {TEXT_BODY}; font-size: {pt}pt; }}"
             f"QHeaderView::section {{ background: {BG_SURFACE}; color: {TEXT_H1}; "
-            f"padding: 4px; font-size: {pt}pt; text-align: left; }}"
+            f"padding: 4px; font-size: {pt}pt; }}"
         )
 
         # Adjust column widths based on font size
