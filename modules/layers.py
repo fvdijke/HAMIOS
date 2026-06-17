@@ -24,7 +24,7 @@ from PySide6.QtWidgets import QGraphicsItem
 MAP_W, MAP_H = 4096, 2048
 
 
-from .sound import play_tick, play_sat_enter, play_sat_exit
+from .sound import play_tick, play_sat_enter, play_sat_exit, play_lightning_alert
 
 
 class _SatSignaller(QObject):
@@ -365,6 +365,8 @@ class LightningLayer(QGraphicsItem):
         cfg = self._cfg
         if cfg and getattr(cfg, "lightning_beep", False):
             beep_r = int(getattr(cfg, "lightning_beep_r", 0))
+            sound_func = play_tick  # Default: normal tick
+
             if beep_r > 0:
                 # Controleer afstand tot QTH
                 try:
@@ -377,11 +379,16 @@ class LightningLayer(QGraphicsItem):
                     dlat = slat - qlat; dlon = slon - qlon
                     a = math.sin(dlat/2)**2 + math.cos(qlat)*math.cos(slat)*math.sin(dlon/2)**2
                     km = 2 * R * math.asin(min(1.0, math.sqrt(a)))
-                    if km > beep_r:
+                    if km <= beep_r:
+                        # Lightning in alert zone: use higher pitch
+                        sound_func = play_lightning_alert
+                    else:
+                        # Lightning outside alert zone: no sound
                         return
                 except Exception:
                     return
-            threading.Thread(target=play_tick, daemon=True).start()
+
+            threading.Thread(target=sound_func, daemon=True).start()
 
     def _anim_tick(self):
         """20 fps tick — alleen actief redraw als er verse ringen zijn."""

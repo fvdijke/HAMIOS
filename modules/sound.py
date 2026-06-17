@@ -38,3 +38,8 @@ def play_sat_ping() -> None:
         winsound.Beep(1320, 120)    # High tone - rising
     except Exception:
         pass
+
+
+def play_lightning_alert() -> None:
+    """Hoge pitch click voor lightning in alert zone."""
+    play_beep(4500, 8)
