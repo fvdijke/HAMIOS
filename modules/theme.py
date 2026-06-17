@@ -204,9 +204,17 @@ QSpinBox, QDoubleSpinBox {{
     background: {BG_ROOT};
     color: {TEXT_H1};
     border: 1px solid {BORDER};
+    padding-right: 2px;
+    min-width: 70px;
 }}
 QSpinBox:focus, QDoubleSpinBox:focus {{
     border: 1px solid {ACCENT};
+}}
+QSpinBox::up-button, QDoubleSpinBox::up-button {{
+    width: 18px;
+}}
+QSpinBox::down-button, QDoubleSpinBox::down-button {{
+    width: 18px;
 }}
 QComboBox {{
     background: {BG_ROOT};
