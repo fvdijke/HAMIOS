@@ -18,7 +18,7 @@ from PySide6.QtWidgets import (
 
 from .theme import (
     ACCENT, BG_PANEL, BG_SURFACE, BG_ROOT, TEXT_H1, TEXT_DIM,
-    TEXT_BODY, BORDER, make_checkmark_path
+    TEXT_BODY, BORDER
 )
 from .geometry import save_geom, restore_geom
 from .layers import TLE_GROUPS, fetch_tle_group, load_tle_cache, save_tle_cache, TleFetchThread
@@ -45,9 +45,12 @@ QTreeWidget::indicator {{
     height: 14px;
     background: #1a1a1a;
     border: 1px solid #666666;
+    border-radius: 1px;
 }}
 QTreeWidget::indicator:checked {{
-    image: url(SAT_CHECKMARK);
+    background: #1a1a1a;
+    border: 1px solid #666666;
+    image: url(data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTQiIGhlaWdodD0iMTQiIHZpZXdCb3g9IjAgMCAxNCAxNCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cGF0aCBkPSJNMiA3bDMgM2w3LTciIHN0cm9rZT0iI0M4QTg0QiIgc3Ryb2tlLXdpZHRoPSIyIiBmaWxsPSJub25lIiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiLz48L3N2Zz4=);
 }}
 QTreeWidget::indicator:hover {{
     border: 1px solid #888888;
@@ -108,8 +111,7 @@ class SatelliteDialog(QDialog):
         self._cat_filter = tr("sat.filter.all")
         self.setWindowTitle(tr("sat.title"))
         self.setMinimumSize(580, 600)
-        ck = make_checkmark_path()
-        self.setStyleSheet(_QSS.replace("SAT_CHECKMARK", ck))
+        self.setStyleSheet(_QSS)
         self._build_ui()
         # Herstel filter-staat
         self._sel_toggle.setChecked(filter_sel)

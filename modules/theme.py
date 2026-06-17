@@ -243,11 +243,14 @@ QCheckBox::indicator {{
     height: 14px;
     background: #1a1a1a;
     border: 1px solid #666666;
+    border-radius: 1px;
 }}
 QCheckBox::indicator:hover {{
     border: 1px solid #888888;
 }}
 QCheckBox::indicator:checked {{
-    image: url("CHECKMARK_PLACEHOLDER");
+    background: #1a1a1a;
+    border: 1px solid #666666;
+    image: url(data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTQiIGhlaWdodD0iMTQiIHZpZXdCb3g9IjAgMCAxNCAxNCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cGF0aCBkPSJNMiA3bDMgM2w3LTciIHN0cm9rZT0iI0M4QTg0QiIgc3Ryb2tlLXdpZHRoPSIyIiBmaWxsPSJub25lIiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiLz48L3N2Zz4=);
 }}
 """
