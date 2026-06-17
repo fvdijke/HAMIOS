@@ -317,6 +317,12 @@ class ResourceManagerTab(QWidget):
         if reply == QMessageBox.Yes:
             ResourceConfig.reset_to_defaults()
             self._resources = ResourceConfig.load_resources()
-            self.parentWidget().deleteLater()  # Refresh the settings dialog
+            # Clear current layout
+            layout = self.layout()
+            if layout:
+                while layout.count():
+                    item = layout.takeAt(0)
+                    if item.widget():
+                        item.widget().deleteLater()
             # Rebuild UI
             self._build_ui()
