@@ -472,6 +472,14 @@ def main():
     app.setApplicationVersion("5.4")
     app.setOrganizationName("")
 
+    # Global window reference for cleanup
+    _main_window = [None]  # Use list to allow setting in nested scope
+    def _cleanup_on_quit():
+        """Ensure main window closes before app destroys threads."""
+        if _main_window[0] and _main_window[0].isVisible():
+            _main_window[0].close()
+    app.aboutToQuit.connect(_cleanup_on_quit)
+
     # Opstartcontrole
     from modules.startup import check_files
     _, _err = check_files()
@@ -688,6 +696,7 @@ QComboBox::down-arrow {{
     # ── Maak mainwindow aan (altijd, niet alleen als geen splash) ────────────────
     try:
         window = HAMIOSMainWindow()
+        _main_window[0] = window  # Register for cleanup
     except Exception:
         msg = traceback.format_exc()
         print(msg, file=sys.stderr)
