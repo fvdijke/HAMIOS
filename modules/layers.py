@@ -24,7 +24,7 @@ from PySide6.QtWidgets import QGraphicsItem
 MAP_W, MAP_H = 4096, 2048
 
 
-from .sound import play_tick, play_sat_enter, play_sat_exit, play_lightning_alert
+from .sound import play_tick, play_sat_enter, play_sat_exit, play_beep
 
 
 class _SatSignaller(QObject):
@@ -365,6 +365,9 @@ class LightningLayer(QGraphicsItem):
         cfg = self._cfg
         if cfg and getattr(cfg, "lightning_beep", False):
             beep_r = int(getattr(cfg, "lightning_beep_r", 0))
+            # Get configurable alert sound parameters
+            alert_pitch = int(getattr(cfg, "lightning_alert_pitch", 5000))
+            alert_duration = int(getattr(cfg, "lightning_alert_duration", 10))
             sound_func = play_tick  # Default: normal tick
 
             if beep_r > 0:
@@ -380,8 +383,8 @@ class LightningLayer(QGraphicsItem):
                     a = math.sin(dlat/2)**2 + math.cos(qlat)*math.cos(slat)*math.sin(dlon/2)**2
                     km = 2 * R * math.asin(min(1.0, math.sqrt(a)))
                     if km <= beep_r:
-                        # Lightning in alert zone: use higher pitch
-                        sound_func = play_lightning_alert
+                        # Lightning in alert zone: use configurable alert pitch
+                        sound_func = lambda: play_beep(alert_pitch, alert_duration)
                     else:
                         # Lightning outside alert zone: no sound
                         return

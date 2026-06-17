@@ -474,6 +474,28 @@ class SettingsDialog(QDialog):
         h2.addStretch()
         v.addLayout(h2)
 
+        # Alert sound pitch
+        h_pitch = QHBoxLayout()
+        h_pitch.addWidget(QLabel("Sound pitch (Hz):"))
+        self._lightn_pitch_spin = QSpinBox()
+        self._lightn_pitch_spin.setRange(1000, 8000)
+        self._lightn_pitch_spin.setSingleStep(100)
+        self._lightn_pitch_spin.setFixedWidth(80)
+        h_pitch.addWidget(self._lightn_pitch_spin)
+        h_pitch.addStretch()
+        v.addLayout(h_pitch)
+
+        # Alert sound duration
+        h_duration = QHBoxLayout()
+        h_duration.addWidget(QLabel("Sound duration (ms):"))
+        self._lightn_duration_spin = QSpinBox()
+        self._lightn_duration_spin.setRange(1, 100)
+        self._lightn_duration_spin.setSingleStep(1)
+        self._lightn_duration_spin.setFixedWidth(80)
+        h_duration.addWidget(self._lightn_duration_spin)
+        h_duration.addStretch()
+        v.addLayout(h_duration)
+
         _section(v, tr("set.lightn.sound_sec"))
 
         self._lightn_beep_cb = QCheckBox(tr("set.lightn.beep"))
@@ -1230,6 +1252,8 @@ class SettingsDialog(QDialog):
         self._lightn_beep_r_spin.setValue(int(get_val("lightning_beep_r", 0)))
         self._lightn_anim_scale_spin.setValue(float(get_val("lightning_anim_scale", 2.0)))
         self._lightn_font_spin.setValue(int(get_val("lightning_font_size", 7)))
+        self._lightn_pitch_spin.setValue(int(get_val("lightning_alert_pitch", 5000)))
+        self._lightn_duration_spin.setValue(int(get_val("lightning_alert_duration", 10)))
 
         # Meldingen
         self._k_en.setChecked(get_val("k_alert_en", True))
@@ -1359,6 +1383,8 @@ class SettingsDialog(QDialog):
         self._lightn_beep_r_spin.setValue(getattr(c, "lightning_beep_r", 0))
         self._lightn_anim_scale_spin.setValue(getattr(c, "lightning_anim_scale", 2.0))
         self._lightn_font_spin.setValue(getattr(c, "lightning_font_size", 7))
+        self._lightn_pitch_spin.setValue(getattr(c, "lightning_alert_pitch", 5000))
+        self._lightn_duration_spin.setValue(getattr(c, "lightning_alert_duration", 10))
 
         # Meldingen
         self._k_en.setChecked(c.k_alert_en)
@@ -1421,6 +1447,8 @@ class SettingsDialog(QDialog):
             lightning_rate      = self._lightn_rate_spin.value(),
             lightning_beep      = self._lightn_beep_cb.isChecked(),
             lightning_beep_r    = self._lightn_beep_r_spin.value(),
+            lightning_alert_pitch = self._lightn_pitch_spin.value(),
+            lightning_alert_duration = self._lightn_duration_spin.value(),
             lightning_anim_scale= self._lightn_anim_scale_spin.value(),
             lightning_font_size = self._lightn_font_spin.value(),
             snap_grid         = self._snap_cb.currentData(),
