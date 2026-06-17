@@ -107,24 +107,9 @@ class ResourceManagerTab(QWidget):
         container_lay.setContentsMargins(0, 0, 0, 0)
         container_lay.setSpacing(4)
 
-        # Per categorie
-        categories = ResourceConfig.get_categories()
-        for category in categories:
-            cat_resources = {k: v for k, v in self._resources.items() if v.get("category") == category}
-            if not cat_resources:
-                continue
-
-            # Categorie header
-            cat_lbl = QLabel(category)
-            cat_font = QFont("Segoe UI", 9)
-            cat_font.setBold(True)
-            cat_lbl.setFont(cat_font)
-            cat_lbl.setStyleSheet(f"color: {ACCENT};")
-            container_lay.addWidget(cat_lbl)
-
-            # Resources in categorie
-            for key, res in cat_resources.items():
-                self._add_resource_row(container_lay, key, res)
+        # Add all resources (no category headers)
+        for key, res in self._resources.items():
+            self._add_resource_row(container_lay, key, res)
 
         container_lay.addStretch()
         scroll.setWidget(container)
