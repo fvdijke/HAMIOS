@@ -178,6 +178,11 @@ class SatelliteDialog(QDialog):
         self._tree.setUniformRowHeights(True)
         self._tree.setRootIsDecorated(True)
         self._tree.itemChanged.connect(self._on_item_changed)
+        # Remove blue scrollbar styling
+        self._tree.setStyleSheet(
+            "QTreeWidget { border: none; }"
+            "QScrollBar:vertical { width: 0px; }"
+        )
         v.addWidget(self._tree, 1)
 
         # ── Uren-knoppen ──────────────────────────────────────────────────
