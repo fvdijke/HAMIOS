@@ -381,7 +381,7 @@ class LightningLayer(QGraphicsItem):
                         return
                 except Exception:
                     return
-            threading.Thread(target=_play_tick, daemon=True).start()
+            threading.Thread(target=play_tick, daemon=True).start()
 
     def _anim_tick(self):
         """20 fps tick — alleen actief redraw als er verse ringen zijn."""

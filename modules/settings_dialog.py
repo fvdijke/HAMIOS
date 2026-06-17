@@ -71,6 +71,16 @@ from .config import AppConfig, save_config
 from .cat_interface import CatInterface, serial_available, get_instance
 from .i18n import tr
 
+# ── Stylesheet constants ──────────────────────────────────────────────────────
+_STYLE_STATUS_OK = "color: #4CAF50; font-size: 8pt;"
+_STYLE_STATUS_ERR = "color: #EF5350; font-size: 8pt;"
+_STYLE_STATUS_DIM = f"color: {TEXT_DIM}; font-size: 7pt;"
+_STYLE_LABEL_DIM = f"color: {TEXT_DIM}; font-size: 8pt;"
+_STYLE_LABEL_DIM_SMALL = f"color: {TEXT_DIM}; font-size: 7pt; font-style: italic;"
+_STYLE_ERR_DIM = "color: #EF5350; font-size: 7pt;"
+_STYLE_OK_NO_SIZE = "color: #4CAF50;"
+_STYLE_ERR_NO_SIZE = "color: #EF5350;"
+
 _MODES    = ["SSB", "CW", "FT8", "FT4", "WSPR", "AM", "FM", "PSK31", "RTTY"]
 _POWERS   = ["5W", "10W", "25W", "50W", "100W", "200W", "400W", "1kW", "1.5kW"]
 _ANTENNAS = [
@@ -234,7 +244,7 @@ class SettingsDialog(QDialog):
 
         # Status-label voor feedback
         self._status_lbl = QLabel("")
-        self._status_lbl.setStyleSheet(f"color: #4CAF50; font-size: 8pt;")
+        self._status_lbl.setStyleSheet(_STYLE_STATUS_OK)
         self._status_timer = QTimer(self)
         self._status_timer.setSingleShot(True)
         self._status_timer.timeout.connect(lambda: self._status_lbl.setText(""))
@@ -723,7 +733,7 @@ class SettingsDialog(QDialog):
             if not ok:
                 friendly = _friendly_serial_error(err)
                 self._cat_status_lbl.setText(f"✘  {friendly}")
-                self._cat_status_lbl.setStyleSheet("color: #EF5350; font-size: 8pt;")
+                self._cat_status_lbl.setStyleSheet(_STYLE_STATUS_ERR)
                 return
             # Identificeer de radio via ID;
             id_ok, id_resp = cat.identify()
@@ -732,7 +742,7 @@ class SettingsDialog(QDialog):
                 # ID0310 = FT-950, andere waarden voor andere rigs
                 rig = _RADIO_ID_MAP.get(id_resp, id_resp)
                 self._cat_status_lbl.setText(tr("cat.status.ok", rig=rig))
-                self._cat_status_lbl.setStyleSheet("color: #4CAF50; font-size: 8pt;")
+                self._cat_status_lbl.setStyleSheet(_STYLE_STATUS_OK)
             else:
                 self._cat_status_lbl.setText(tr("cat.status.open"))
                 self._cat_status_lbl.setStyleSheet("color: #FFA726; font-size: 8pt;")
@@ -741,7 +751,7 @@ class SettingsDialog(QDialog):
 
         if not serial_available():
             note = QLabel(tr("cat.no_pyserial"))
-            note.setStyleSheet("color: #EF5350; font-size: 7pt;")
+            note.setStyleSheet(_STYLE_ERR_DIM)
             v.addWidget(note)
 
         v.addStretch()
@@ -786,7 +796,7 @@ class SettingsDialog(QDialog):
         if hasattr(self, "_cat_status_lbl"):
             if n == 0:
                 self._cat_status_lbl.setText(tr("cat.no_ports"))
-                self._cat_status_lbl.setStyleSheet("color: #EF5350; font-size: 8pt;")
+                self._cat_status_lbl.setStyleSheet(_STYLE_STATUS_ERR)
             else:
                 self._cat_status_lbl.setText(f"{n} poort{'en' if n > 1 else ''} gevonden")
                 self._cat_status_lbl.setStyleSheet(f"color: {TEXT_DIM}; font-size: 8pt;")
@@ -1078,7 +1088,7 @@ class SettingsDialog(QDialog):
         layout_dict = self._get_current_layout_dict()
         ProfileManager.set_default_profile(config_dict, layout_dict)
         self._status_lbl.setText(tr("set.saved_default"))
-        self._status_lbl.setStyleSheet("color: #4CAF50; font-size: 8pt;")
+        self._status_lbl.setStyleSheet(_STYLE_STATUS_OK)
         self._status_timer.start(2500)
 
     def _reset_to_default(self):
@@ -1091,11 +1101,11 @@ class SettingsDialog(QDialog):
             # Laad layout
             self._apply_layout_dict(layout_dict)
             self._status_lbl.setText("✓  Standaard-instellingen hersteld")
-            self._status_lbl.setStyleSheet("color: #4CAF50; font-size: 8pt;")
+            self._status_lbl.setStyleSheet(_STYLE_STATUS_OK)
             self._status_timer.start(2500)
         else:
             self._status_lbl.setText("✗  Geen standaard-profiel gevonden")
-            self._status_lbl.setStyleSheet("color: #EF5350; font-size: 8pt;")
+            self._status_lbl.setStyleSheet(_STYLE_STATUS_ERR)
             self._status_timer.start(3000)
 
     def _save_new_profile(self):
@@ -1113,11 +1123,11 @@ class SettingsDialog(QDialog):
             self._profile_name.clear()
             self._refresh_profiles()
             self._status_lbl.setText(f"[OK]  Profiel '{name}' opgeslagen")
-            self._status_lbl.setStyleSheet("color: #4CAF50; font-size: 8pt;")
+            self._status_lbl.setStyleSheet(_STYLE_STATUS_OK)
             self._status_timer.start(2500)
         else:
             self._status_lbl.setText(f"✗  Profiel '{name}' kon niet opgeslagen worden")
-            self._status_lbl.setStyleSheet("color: #EF5350; font-size: 8pt;")
+            self._status_lbl.setStyleSheet(_STYLE_STATUS_ERR)
             self._status_timer.start(3000)
 
     def _load_profile(self, name: str):
@@ -1129,11 +1139,11 @@ class SettingsDialog(QDialog):
             # Laad layout
             self._apply_layout_dict(profile.layout)
             self._status_lbl.setText(f"✓  Profiel '{name}' geladen")
-            self._status_lbl.setStyleSheet("color: #4CAF50; font-size: 8pt;")
+            self._status_lbl.setStyleSheet(_STYLE_STATUS_OK)
             self._status_timer.start(2500)
         else:
             self._status_lbl.setText(f"✗  Profiel '{name}' niet gevonden")
-            self._status_lbl.setStyleSheet("color: #EF5350; font-size: 8pt;")
+            self._status_lbl.setStyleSheet(_STYLE_STATUS_ERR)
             self._status_timer.start(3000)
 
     def _overwrite_profile(self, name: str):
@@ -1143,11 +1153,11 @@ class SettingsDialog(QDialog):
 
         if ProfileManager.update_profile(name, config_dict, layout_dict):
             self._status_lbl.setText(f"✓  Profiel '{name}' overschreven")
-            self._status_lbl.setStyleSheet("color: #4CAF50; font-size: 8pt;")
+            self._status_lbl.setStyleSheet(_STYLE_STATUS_OK)
             self._status_timer.start(2500)
         else:
             self._status_lbl.setText(f"✗  Profiel '{name}' kon niet overschreven worden")
-            self._status_lbl.setStyleSheet("color: #EF5350; font-size: 8pt;")
+            self._status_lbl.setStyleSheet(_STYLE_STATUS_ERR)
             self._status_timer.start(3000)
 
     def _delete_profile(self, name: str):
@@ -1161,7 +1171,7 @@ class SettingsDialog(QDialog):
                 self._refresh_profiles()
             else:
                 self._status_lbl.setText(f"✗  Profiel '{name}' kon niet verwijderd worden")
-                self._status_lbl.setStyleSheet("color: #EF5350; font-size: 8pt;")
+                self._status_lbl.setStyleSheet(_STYLE_STATUS_ERR)
                 self._status_timer.start(3000)
 
     def _apply_config_dict(self, config_dict: dict):
@@ -1290,10 +1300,10 @@ class SettingsDialog(QDialog):
             success = test_connection()
             if success:
                 self._lightn_status.setText("✓ Connected")
-                self._lightn_status.setStyleSheet("color: #4CAF50;")
+                self._lightn_status.setStyleSheet(_STYLE_OK_NO_SIZE)
             else:
                 self._lightn_status.setText("✗ Connection failed")
-                self._lightn_status.setStyleSheet("color: #EF5350;")
+                self._lightn_status.setStyleSheet(_STYLE_ERR_NO_SIZE)
 
         threading.Thread(target=run_test, daemon=True).start()
 

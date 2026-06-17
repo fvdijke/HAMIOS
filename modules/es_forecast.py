@@ -60,9 +60,6 @@ class ESForecast:
         9: 0.01,
     }
 
-    def __init__(self):
-        pass
-
     def es_probability(
         self, month: int = 6, hour_local: float = 12.0, k_index: float = 2.0
     ) -> float:

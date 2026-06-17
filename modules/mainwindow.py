@@ -984,7 +984,8 @@ class HAMIOSMainWindow(QMainWindow):
         if not hasattr(self, "_alerts_widget"):
             return
         import math, time as _time
-        from .layers import _qth_in_footprint, _play_sat_enter, _play_sat_exit
+        from .layers import _qth_in_footprint
+        from .sound import play_sat_enter, play_sat_exit
         import threading as _th
         R = 6371.0
         sat = self._map_view._sat_layer
@@ -1030,7 +1031,7 @@ class HAMIOSMainWindow(QMainWindow):
                             "#7080A0", tr("alert.sat_zone"))
                 # Ping — eenmalig in aparte thread
                 if ping_en:
-                    fn = _play_sat_enter if in_zone else _play_sat_exit
+                    fn = play_sat_enter if in_zone else play_sat_exit
                     _th.Thread(target=fn, daemon=True).start()
 
         self._alerts_widget.set_sat_zone(visible)
