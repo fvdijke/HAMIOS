@@ -265,12 +265,20 @@ QLineEdit {{
 QLineEdit:focus {{ border: 1px solid {ACCENT}; }}
 QCheckBox {{
     color: {TEXT_H1};
-    spacing: 4px;
+    spacing: 6px;
 }}
 QCheckBox::indicator {{
-    width: 0px;
-    height: 0px;
-    margin: 0px;
-    padding: 0px;
+    width: 14px;
+    height: 14px;
+    background: #000000;
+    border: 1px solid #666666;
+    border-radius: 1px;
+}}
+QCheckBox::indicator:hover {{
+    border: 1px solid #888888;
+}}
+QCheckBox::indicator:checked {{
+    background: #C8A84B;
+    border: 1px solid #A88A3A;
 }}
 """

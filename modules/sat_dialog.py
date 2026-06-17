@@ -43,14 +43,13 @@ QRadioButton::indicator {{ width: 12px; height: 12px; }}
 QTreeWidget::indicator {{
     width: 14px;
     height: 14px;
-    background: #1a1a1a;
+    background: #000000;
     border: 1px solid #666666;
     border-radius: 1px;
 }}
 QTreeWidget::indicator:checked {{
-    background: #1a1a1a;
-    border: 1px solid #666666;
-    image: url(data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTQiIGhlaWdodD0iMTQiIHZpZXdCb3g9IjAgMCAxNCAxNCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cGF0aCBkPSJNMiA3bDMgM2w3LTciIHN0cm9rZT0iI0M4QTg0QiIgc3Ryb2tlLXdpZHRoPSIyIiBmaWxsPSJub25lIiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiLz48L3N2Zz4=);
+    background: #C8A84B;
+    border: 1px solid #A88A3A;
 }}
 QTreeWidget::indicator:hover {{
     border: 1px solid #888888;
