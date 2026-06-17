@@ -636,11 +636,13 @@ QComboBox::down-arrow {{
             sys.exit(1)
 
         # ── Kaartdownloads starten NÁ signal-verbinding (geeft percentage) ────
+        _dl_threads = []
         dl_threads = window.download_missing_maps()
         started = set()
         for key, thread in dl_threads:
             splash.connect_download(key, thread)
             if id(thread) not in started:
+                _dl_threads.append(thread)  # Keep reference for cleanup
                 thread.start()          # start elke thread slechts één keer
                 started.add(id(thread))
 
@@ -663,12 +665,21 @@ QComboBox::down-arrow {{
         splash.exec()
         splash.close()
 
-        # ── Zorg dat threads proper afgesloten worden ────────────────────────────
+        # ── Zorg dat ALLE threads proper afgesloten worden ────────────────────────
+        # Stop online resource checker
         _online_thread.quit()
         _online_thread.wait()
+
+        # Stop TLE fetcher if running
         if _tle_thread is not None:
             _tle_thread.quit()
             _tle_thread.wait()
+
+        # Stop download threads
+        for thread in _dl_threads:
+            if thread.isRunning():
+                thread.quit()
+                thread.wait()
 
     # ── Maak mainwindow aan (altijd, niet alleen als geen splash) ────────────────
     try:
