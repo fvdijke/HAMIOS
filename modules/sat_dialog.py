@@ -42,14 +42,20 @@ QRadioButton {{ color: {TEXT_BODY}; spacing: 4px; font-size: 8pt; }}
 QRadioButton::indicator {{ width: 12px; height: 12px; }}
 QTreeWidget::indicator {{
     width: 14px; height: 14px;
-    background: #000000; border: 1px solid #808080; border-radius: 0px;
+    background: #1a1a1a;
+    border: 1px solid #666666;
 }}
 QTreeWidget::indicator:checked {{
-    background: #000000; border: 1px solid #808080;
+    background: {ACCENT};
+    border: 1px solid #A88A3A;
     image: url(SAT_CHECKMARK);
 }}
+QTreeWidget::indicator:hover {{
+    border: 1px solid #888888;
+}}
 QTreeWidget::indicator:indeterminate {{
-    background: {BG_SURFACE}; border: 1px solid {BORDER};
+    background: {BG_SURFACE};
+    border: 1px solid {BORDER};
 }}
 QLabel       {{ color: {TEXT_DIM}; font-size: 8pt; }}
 QPushButton  {{
