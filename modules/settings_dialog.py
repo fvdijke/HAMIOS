@@ -423,9 +423,22 @@ class SettingsDialog(QDialog):
 
         _section(v, tr("sec.lightn_blitz"))
 
+        # Enable checkbox + status
+        h_en = QHBoxLayout()
         self._cb_lightn_en = QCheckBox(tr("set.lightn.enable"))
         self._cb_lightn_en.setToolTip(tr("tip.lightn.en"))
-        v.addWidget(self._cb_lightn_en)
+        h_en.addWidget(self._cb_lightn_en)
+
+        self._lightn_status = QLabel("")
+        self._lightn_status.setFont(QFont("Segoe UI", 8))
+        self._lightn_status.setStyleSheet(f"color: {TEXT_DIM};")
+        h_en.addWidget(self._lightn_status)
+        h_en.addStretch()
+
+        # Connect checkbox to status updates
+        self._cb_lightn_en.toggled.connect(self._update_lightn_status)
+
+        v.addLayout(h_en)
 
         h = QHBoxLayout()
         h.addWidget(QLabel(tr("set.lightn.fade")))
@@ -1243,6 +1256,50 @@ class SettingsDialog(QDialog):
         # Update AppConfig object van UI-values en sla op
         self._cfg = self._collect_cfg()
         self._save_cfg()
+
+    # ── Lightning connection status ────────────────────────────────────────────
+    def _update_lightn_status(self, enabled: bool):
+        """Update Lightning connection status when Enable is toggled."""
+        if not enabled:
+            self._lightn_status.setText("○ Disabled")
+            self._lightn_status.setStyleSheet(f"color: {TEXT_DIM};")
+            return
+
+        # Show connecting status
+        self._lightn_status.setText("● Connecting...")
+        self._lightn_status.setStyleSheet("color: #C8A84B;")
+
+        # Start connection test in background
+        from PySide6.QtCore import QThread
+        import threading
+
+        def test_connection():
+            try:
+                # Test WebSocket connection to Blitzortung
+                import asyncio
+                import websockets
+
+                async def ws_test():
+                    async with websockets.connect("wss://ws.blitzortung.org/") as ws:
+                        await asyncio.sleep(0.5)
+                        return True
+
+                # Run async test
+                asyncio.run(ws_test())
+                return True
+            except Exception:
+                return False
+
+        def run_test():
+            success = test_connection()
+            if success:
+                self._lightn_status.setText("✓ Connected")
+                self._lightn_status.setStyleSheet("color: #4CAF50;")
+            else:
+                self._lightn_status.setText("✗ Connection failed")
+                self._lightn_status.setStyleSheet("color: #EF5350;")
+
+        threading.Thread(target=run_test, daemon=True).start()
 
     # ── Config laden/opslaan ──────────────────────────────────────────────────
     def _load_cfg(self):
