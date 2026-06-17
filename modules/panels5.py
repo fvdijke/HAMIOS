@@ -2724,13 +2724,25 @@ class WSPRTableWidget(QWidget):
 
     def set_font_size(self, pt: int) -> None:
         """Set font size for table and adjust column widths accordingly."""
+        # Update table font
         font = self._table.font()
         font.setPointSize(pt)
         self._table.setFont(font)
-        self._status_lbl.setFont(font)
+
+        # Update status label font
+        status_font = self._status_lbl.font()
+        status_font.setPointSize(pt - 1)  # Status label slightly smaller
+        self._status_lbl.setFont(status_font)
+
+        # Update stylesheet to include proper font sizes
+        self._table.setStyleSheet(
+            f"QTableWidget {{ background: {BG_PANEL}; color: {TEXT_BODY}; font-size: {pt}pt; }}"
+            f"QHeaderView::section {{ background: {BG_SURFACE}; color: {TEXT_H1}; "
+            f"padding: 4px; font-size: {pt}pt; }}"
+        )
 
         # Adjust column widths based on font size
-        # Typical widths: call (40), grid (40), freq (60), snr (45), distance (65), azimuth (50), time (70)
+        # Baseline widths at 9pt: call (40), grid (40), freq (60), snr (45), distance (65), azimuth (50), time (70)
         col_widths = [40, 40, 60, 45, 65, 50, 70]
         scale = pt / 9.0  # Scale relative to default 9pt
         for col, base_width in enumerate(col_widths):
