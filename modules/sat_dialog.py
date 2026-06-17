@@ -304,6 +304,8 @@ class SatelliteDialog(QDialog):
                 item.setText(0, name)
                 item.setFont(0, f8)
                 item.setData(0, Qt.UserRole, name)
+                # Only checkboxes are clickable, not the item itself
+                item.setFlags(item.flags() & ~Qt.ItemIsSelectable)
 
                 cs_pos = Qt.Checked if name in self._selected else Qt.Unchecked
                 item.setCheckState(_COL_POS, cs_pos)
