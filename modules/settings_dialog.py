@@ -133,44 +133,12 @@ QTabBar::tab {{
 QTabBar::tab:selected {{ background: {BG_SURFACE}; color: {ACCENT};
     border-bottom: 2px solid {ACCENT}; }}
 
-/* ─ Input fields ─────────────────────────────────────────────────────── */
-QLineEdit, QComboBox {{
+QLineEdit, QSpinBox, QDoubleSpinBox, QComboBox {{
     background: {BG_ROOT}; color: {TEXT_H1};
     border: 1px solid {BORDER}; padding: 3px 6px; border-radius: 2px;
 }}
-QLineEdit:focus, QComboBox:focus {{
+QLineEdit:focus, QSpinBox:focus, QDoubleSpinBox:focus, QComboBox:focus {{
     border: 1px solid {ACCENT};
-}}
-
-/* ─ Spinbox ──────────────────────────────────────────────────────────── */
-QSpinBox, QDoubleSpinBox {{
-    background: {BG_ROOT}; color: {TEXT_H1};
-    border: 1px solid {BORDER}; padding: 2px 2px 2px 6px; border-radius: 2px;
-    margin-right: 2px;
-}}
-QSpinBox:focus, QDoubleSpinBox:focus {{
-    border: 1px solid {ACCENT};
-}}
-QSpinBox::up-button, QDoubleSpinBox::up-button {{
-    subcontrol-origin: border;
-    subcontrol-position: top right;
-    width: 18px;
-    border-left: 1px solid {BORDER};
-    background: {BG_SURFACE};
-}}
-QSpinBox::up-button:hover, QDoubleSpinBox::up-button:hover {{
-    background: {ACCENT};
-}}
-QSpinBox::down-button, QDoubleSpinBox::down-button {{
-    subcontrol-origin: border;
-    subcontrol-position: bottom right;
-    width: 18px;
-    border-left: 1px solid {BORDER};
-    border-top: 1px solid {BORDER};
-    background: {BG_SURFACE};
-}}
-QSpinBox::down-button:hover, QDoubleSpinBox::down-button:hover {{
-    background: {ACCENT};
 }}
 
 QLabel {{ color: {TEXT_DIM}; background: transparent; }}
