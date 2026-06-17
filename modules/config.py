@@ -39,6 +39,8 @@ class AppConfig:
     lightning_rate:           int   = 500   # ms — animatie-update interval
     lightning_beep:           bool  = False # piepje bij elke inslag
     lightning_beep_r:         int   = 0     # piepje alleen binnen radius km (0 = altijd)
+    lightning_alert_pitch:    int   = 5000  # alert zone sound pitch in Hz
+    lightning_alert_duration: int   = 10    # alert zone sound duration in ms
     lightning_anim_scale:     float = 2.0   # schaal animatie (2.0 = standaard voor 4096px kaart)
     lightning_font_size:      int   = 7     # lettergrootte labels op kaart (pt)
     lightning_overlay_visible: bool = True  # overlay zichtbaarheid (onafhankelijk van show_lightning)
