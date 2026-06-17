@@ -635,19 +635,16 @@ QComboBox::down-arrow {{
             _show_error("HAMIOS — Startfout", msg)
             sys.exit(1)
 
-        # ── Kaartdownloads starten NÁ signal-verbinding (geeft percentage) ────
+        # ── Kaartdownloads: skip during splash to avoid thread issues ────────────
+        # Downloads will be triggered from main window if needed
         _dl_threads = []
         try:
-            dl_threads = window.download_missing_maps()
-            started = set()
-            for key, thread in dl_threads:
-                splash.connect_download(key, thread)
-                if id(thread) not in started:
-                    _dl_threads.append(thread)  # Keep reference for cleanup
-                    thread.start()          # start elke thread slechts één keer
-                    started.add(id(thread))
+            # Don't start download threads - they cause thread cleanup issues
+            # Main window will handle map downloads when needed
+            window.download_missing_maps()
+            print("DEBUG: Map downloads deferred to main window", file=sys.stderr)
         except Exception as e:
-            print(f"DEBUG: Error starting download threads: {e}", file=sys.stderr)
+            print(f"DEBUG: Map download check error: {e}", file=sys.stderr)
 
         # ── TLE downloaden als cache ontbreekt ────────────────────────────────
         _tle_thread = None
