@@ -43,22 +43,25 @@
       "dx_own_continent": true,
       "dx_heatmap": false,
       "band_day_auto": true,
-      "sat_visible": false,
+      "sat_visible": true,
       "sat_selected": [
+        "ISS",
         "METEOR-M2 2",
+        "ISS (ZARYA)",
         "METEOR-M2 3",
-        "METEOR-M2 4",
-        "ISS (ZARYA)"
+        "METEOR-M2 4"
       ],
       "sat_path": [
         "METEOR-M2 2",
+        "ISS",
+        "ISS (ZARYA)",
         "METEOR-M2 3",
-        "METEOR-M2 4",
-        "ISS (ZARYA)"
+        "METEOR-M2 4"
       ],
       "sat_fp": [
-        "METEOR-M2 2",
-        "ISS (ZARYA)"
+        "ISS",
+        "ISS (ZARYA)",
+        "METEOR-M2 2"
       ],
       "sat_back_h": 1,
       "sat_fwd_h": 1,
@@ -287,7 +290,7 @@
         1363
       ]
     },
-    "timestamp": "2026-06-17T10:57:25.424831"
+    "timestamp": "2026-06-17T11:07:51.254630"
   },
   "Frank": {
     "config": {

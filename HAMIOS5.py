@@ -495,7 +495,7 @@ QComboBox::down-arrow {{
 """
     app.setStyleSheet(
         _QSS.replace("COMBO_ARROW_PLACEHOLDER", _dn)
-            .replace("CHECKMARK_PLACEHOLDER", f'"{_check}"')
+            .replace("CHECKMARK_PLACEHOLDER", _check)
         + _arrow_qss
     )
 

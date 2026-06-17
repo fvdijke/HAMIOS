@@ -13,19 +13,28 @@ _CHECKMARK_PATH = _os.path.join(_tmp.gettempdir(), "config/hamios_checkmark.png"
 
 
 def make_checkmark_path() -> str:
-    """Genereer zwart vierkantje met amber vinkje-PNG (eenmalig per app-start). Geeft pad terug."""
-    from PySide6.QtGui import QPixmap, QPainter, QPen, QColor
-    from PySide6.QtCore import Qt, QPointF
+    """Generate black square with amber checkmark (14x14). Returns file path."""
+    from PySide6.QtGui import QPixmap, QPainter, QPen, QColor, QBrush
+    from PySide6.QtCore import Qt, QPointF, QRect
+
+    # Create 14x14 pixmap with black background
     pix = QPixmap(14, 14)
     pix.fill(QColor("#000000"))
+
+    # Draw checkmark
     p = QPainter(pix)
-    pen = QPen(QColor(ACCENT), 2.2)
+    p.setRenderHint(QPainter.Antialiasing)
+
+    # Thick amber pen for better visibility
+    pen = QPen(QColor(ACCENT), 2.5)
     pen.setCapStyle(Qt.RoundCap)
     pen.setJoinStyle(Qt.RoundJoin)
-    p.setRenderHint(QPainter.Antialiasing)
     p.setPen(pen)
-    p.drawLine(QPointF(2, 7), QPointF(5.5, 10.5))
-    p.drawLine(QPointF(5.5, 10.5), QPointF(12, 3))
+
+    # Draw checkmark path (scaled for visibility in small box)
+    p.drawLine(QPointF(2.5, 7.5), QPointF(5.5, 10.5))
+    p.drawLine(QPointF(5.5, 10.5), QPointF(11.5, 3))
+
     p.end()
     pix.save(_CHECKMARK_PATH, "PNG")
     return _CHECKMARK_PATH.replace("\\", "/")
@@ -234,11 +243,16 @@ QCheckBox {{
     spacing: 6px;
 }}
 QCheckBox::indicator {{
-    width: 14px; height: 14px;
-    background: #000000; border: 1px solid #808080; border-radius: 0px;
+    width: 14px;
+    height: 14px;
+    background-color: #000000;
+    border: 1px solid #808080;
+    margin-left: 2px;
+}}
+QCheckBox::indicator:hover {{
+    border: 1px solid #A0A0A0;
 }}
 QCheckBox::indicator:checked {{
-    background: #000000; border: 1px solid #808080;
-    image: url(CHECKMARK_PLACEHOLDER);
+    image: url("CHECKMARK_PLACEHOLDER");
 }}
 """
