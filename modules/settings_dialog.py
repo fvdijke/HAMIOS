@@ -397,6 +397,12 @@ class SettingsDialog(QDialog):
         self._callsign_font_spin.setFixedWidth(80)
         row(tr("set.map.font_callsign"), self._callsign_font_spin)
 
+        self._wspr_font_spin = QSpinBox()
+        self._wspr_font_spin.setRange(7, 72)
+        self._wspr_font_spin.setSuffix(" pt")
+        self._wspr_font_spin.setFixedWidth(80)
+        row("WSPR Live font", self._wspr_font_spin)
+
         self._dx_map_font_spin = QSpinBox()
         self._dx_map_font_spin.setRange(6, 72)
         self._dx_map_font_spin.setSuffix(" pt")
@@ -1265,6 +1271,7 @@ class SettingsDialog(QDialog):
         self._sat_font_spin.setValue(int(get_val("sat_font_size", 8)))
         self._sat_path_width_spin.setValue(float(get_val("sat_path_width", 1.2)))
         self._callsign_font_spin.setValue(int(get_val("callsign_overlay_font_size", 7)))
+        self._wspr_font_spin.setValue(int(get_val("wspr_font_size", 9)))
         self._dx_map_font_spin.setValue(int(get_val("dx_map_font_size", 7)))
         self._dx_font_spin.setValue(int(get_val("dx_font_size", 8)))
         self._sun_size_spin.setValue(int(get_val("sun_icon_size", 24)))
@@ -1399,6 +1406,7 @@ class SettingsDialog(QDialog):
         self._sat_font_spin.setValue(getattr(c, "sat_font_size", 8))
         self._sat_path_width_spin.setValue(getattr(c, "sat_path_width", 1.2))
         self._callsign_font_spin.setValue(getattr(c, "callsign_overlay_font_size", 7))
+        self._wspr_font_spin.setValue(getattr(c, "wspr_font_size", 9))
         self._dx_map_font_spin.setValue(getattr(c, "dx_map_font_size", 7))
         self._dx_font_spin.setValue(getattr(c, "dx_font_size", 8))
         self._sun_size_spin.setValue(getattr(c, "sun_icon_size", 24))
@@ -1495,6 +1503,7 @@ class SettingsDialog(QDialog):
             sat_font_size     = self._sat_font_spin.value(),
             sat_path_width    = self._sat_path_width_spin.value(),
             callsign_overlay_font_size = self._callsign_font_spin.value(),
+            wspr_font_size    = self._wspr_font_spin.value(),
             dx_map_font_size  = self._dx_map_font_spin.value(),
             dx_font_size      = self._dx_font_spin.value(),
             sun_icon_size     = self._sun_size_spin.value(),

@@ -31,6 +31,7 @@ class AppConfig:
     show_psk:              bool  = False    # PSKReporter digitale propagatiepaden
     show_callsign_overlay:        bool  = False    # DXCC callsign prefix + country overlay
     callsign_overlay_font_size:   int   = 7        # lettergrootte DXCC overlay (pt)
+    wspr_font_size:     int   = 9        # WSPR Live panel font size (pt)
     map_overlay:    bool  = True    # header-knop staat
 
     # ── Bliksem ───────────────────────────────────────────────────────────────

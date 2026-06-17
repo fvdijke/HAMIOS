@@ -553,6 +553,10 @@ class HAMIOSMainWindow(QMainWindow):
         if hasattr(self, "_dx_spots_widget"):
             self._dx_spots_widget.set_font_size(cfg.dx_font_size)
 
+        # WSPR Live panel font size
+        if hasattr(self, "_wspr_table_widget") and self._wspr_table_widget:
+            self._wspr_table_widget.set_font_size(getattr(cfg, "wspr_font_size", 9))
+
         # CAT: update cfg-referentie en herverbinden indien ingeschakeld
         if hasattr(self, "_cat"):
             self._cat._cfg = cfg
@@ -650,6 +654,8 @@ class HAMIOSMainWindow(QMainWindow):
         self._map_view.set_dx_map_font_size(getattr(c, "dx_map_font_size", 7))
         if hasattr(self, "_dx_spots_widget"):
             self._dx_spots_widget.set_font_size(c.dx_font_size)
+        if hasattr(self, "_wspr_table_widget") and self._wspr_table_widget:
+            self._wspr_table_widget.set_font_size(getattr(c, "wspr_font_size", 9))
         self._map_view.set_lightning_fade(c.lightning_fade)
         self._map_view.set_lightning_enabled(c.show_lightning)   # volledige aan/uit (verbinding)
         self._map_view.set_lightning_visible(getattr(c, "lightning_overlay_visible", True))  # overlay zichtbaarheid

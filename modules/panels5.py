@@ -2721,3 +2721,19 @@ class WSPRTableWidget(QWidget):
             self._table.setItem(row, 6, time_item)
 
         self._table.resizeRowsToContents()
+
+    def set_font_size(self, pt: int) -> None:
+        """Set font size for table and adjust column widths accordingly."""
+        font = self._table.font()
+        font.setPointSize(pt)
+        self._table.setFont(font)
+        self._status_lbl.setFont(font)
+
+        # Adjust column widths based on font size
+        # Typical widths: call (40), grid (40), freq (60), snr (45), distance (65), azimuth (50), time (70)
+        col_widths = [40, 40, 60, 45, 65, 50, 70]
+        scale = pt / 9.0  # Scale relative to default 9pt
+        for col, base_width in enumerate(col_widths):
+            self._table.setColumnWidth(col, int(base_width * scale))
+
+        self._table.resizeRowsToContents()
