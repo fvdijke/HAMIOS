@@ -631,6 +631,34 @@ Data is saved on each refresh in <b>HAMIOS_history.csv</b> (90 days retained).</
 <p>Shows SFI trend over time. K-index shown as a red line on the right axis.
 Red background shading indicates elevated K-index periods.</p>
 """),
+    ("📡 WSPR Live", "WSPR Live Panel", """
+<h3>WSPR Live Panel</h3>
+<p>Real-time WSPR (Weak Signal Propagation Reporting) spots from <b>WSPRnet.org</b>.
+Shows propagation reports from weak-signal transmissions worldwide.</p>
+
+<h4>Columns</h4>
+<ul>
+<li><b>Call</b> — transmitter callsign</li>
+<li><b>Grid</b> — Maidenhead grid locator</li>
+<li><b>Freq</b> — WSPR dial frequency (MHz)</li>
+<li><b>SNR</b> — signal-to-noise ratio (dB)</li>
+<li><b>Distance</b> — distance to transmitter (km)</li>
+<li><b>Azimuth</b> — direction (degrees)</li>
+<li><b>Time</b> — spot timestamp (UTC)</li>
+</ul>
+
+<h4>Numeric sorting</h4>
+<p>All numeric columns (Freq, SNR, Distance, Azimuth, Time) sort correctly
+(e.g., 800 &lt; 1000, not alphabetically).</p>
+
+<h4>Font size control</h4>
+<p>Adjust the WSPR panel font size via <b>⚙ Settings → WSPR Live</b>.
+Range: 7–72 pt (default 9 pt).</p>
+<p>When font size changes, column widths scale proportionally to maintain readability.</p>
+
+<h4>Data refresh</h4>
+<p>Updated on each solar data refresh (default every 5 minutes).</p>
+"""),
     ("📡 DX Spots", "Live DX Spots", """
 <h3>Live DX Spots</h3>
 <p>Real-time DX cluster data from <b>DXWatch.com</b>.
@@ -678,12 +706,12 @@ Value 0 = no path displayed.</p>
 when a selected satellite enters your QTH zone (ascending tone) or leaves it (descending tone).</p>
 """),
     ("⚡ Lightning", "Lightning detection and QRN", """
-<h3>Lightning detection</h3>
+<h3>Lightning detection with dual zones</h3>
 <p>Live lightning discharges from the worldwide <b>Blitzortung.org</b> network.
 Each discharge appears as an animated ring on the map that slowly fades.</p>
+
 <h4>QRN advice</h4>
-<p>The Lightning panel shows the QRN level based on the number of discharges
-within <b>2000 km</b> of your QTH:</p>
+<p>The Lightning panel shows the QRN level based on the number of discharges within <b>2000 km</b> of your QTH:</p>
 <ul>
 <li><b>No activity</b> — no discharges nearby</li>
 <li><b>Low</b> — little QRN expected</li>
@@ -691,17 +719,37 @@ within <b>2000 km</b> of your QTH:</p>
 <li><b>High</b> — QRN on 160m/80m/40m</li>
 <li><b>Severe</b> — strong QRN on all low bands</li>
 </ul>
+
 <h4>Discharge count</h4>
-<p>The panel shows the <b>total discharges</b> within the fade duration period,
-e.g. <code>127 /10m</code>.</p>
+<p>The panel shows the <b>total discharges</b> within the fade duration period, e.g. <code>127 /10m</code>.</p>
+
 <h4>Nearest discharge</h4>
 <p>The distance to the closest recent discharge is shown as <b>Nearest discharge</b>.</p>
-<h4>Radius alerts</h4>
-<p>Set a threshold distance in <b>Settings → Lightning</b> for:</p>
+
+<h4>Alert Zone (inner circle) — High priority</h4>
 <ul>
-<li><b>Header alert (red)</b> — ⚡ LIGHTNING X km appears centred in the header.</li>
-<li><b>Acoustic alert (orange)</b> — Geiger-counter tick sound for discharges within the set radius.</li>
+<li><b>Radius:</b> Configurable distance (km) around your QTH</li>
+<li><b>Sound:</b> High-frequency beep when lightning strikes (5000 Hz, 10ms)</li>
+<li><b>Status:</b> Enable/disable in Settings → Lightning → Alert Zone</li>
+<li><b>Visual:</b> Red circle on map marking the alert zone</li>
 </ul>
+
+<h4>Warning Zone (outer circle) — Lower priority</h4>
+<ul>
+<li><b>Radius:</b> Configurable distance (km, larger than Alert Zone)</li>
+<li><b>Sound:</b> Lower-frequency tick when lightning strikes (2800 Hz, 5ms)</li>
+<li><b>Status:</b> Enable/disable in Settings → Lightning → Warning Zone</li>
+<li><b>Visual:</b> Orange circle on map marking the warning zone</li>
+</ul>
+
+<h4>Customizable sound parameters</h4>
+<p>For each zone:</p>
+<ul>
+<li><b>Pitch:</b> Frequency in Hz (300–8000)</li>
+<li><b>Duration:</b> Length in milliseconds (1–100)</li>
+<li>Live preview: adjust and hear the sound immediately</li>
+</ul>
+
 <p>Both circles are visible on the map while lightning detection is enabled.</p>
 """),
     ("🕵 SpyStations", "SpyStations and numbers stations", """
@@ -772,7 +820,7 @@ The radio is polled every 2 seconds.</p>
 <p>Manage all URLs of online resources used by HAMIOS for real-time data,
 satellite tracking, weather information and more.</p>
 
-<h4>Available Resources (9 categories)</h4>
+<h4>Available Resources (7 categories)</h4>
 <ul>
 <li><b>Solar &amp; Ionosphere</b> — NOAA SWPC (wind, magnetic field, Kp index), HamQSL (SFI)</li>
 <li><b>Satellites</b> — CelesTrak (TLE data for amateurs, ISS, cubesats)</li>
@@ -783,35 +831,25 @@ satellite tracking, weather information and more.</p>
 <li><b>Map Data</b> — Wikimedia (NASA Blue Marble maps)</li>
 </ul>
 
-<h4>Customize Resources</h4>
+<h4>How to customize</h4>
 <ol>
 <li>Open <b>⚙ Settings → Resources</b>.</li>
 <li>For each resource you'll see:
   <ul>
-  <li>Current URL (editable)</li>
-  <li><b>Test</b> button — check connectivity and HTTP status</li>
-  <li><b>⚙</b> button — investigate alternative endpoints</li>
+  <li>Resource name and description</li>
+  <li>Current URL (editable text field)</li>
   </ul>
 </li>
-<li>Changes are saved automatically.</li>
+<li>Edit the URL directly in the text field.</li>
+<li>Click <b>Save</b> to apply changes.</li>
+<li>Click <b>Reset to Defaults</b> to restore all URLs to HAMIOS defaults.</li>
 </ol>
 
-<h4>Test URLs</h4>
-<p>Click the <b>Test</b> button to check direct connectivity.
-Status shows HTTP code and timeout information.</p>
-
-<h4>Investigate Alternative Endpoints</h4>
-<p>Click <b>⚙</b> to get guidelines for finding alternative endpoints
-(e.g., mirror servers, backup APIs).</p>
-
-<h4>Reset to Defaults</h4>
-<p>Click <b>Reset to defaults</b> to restore all URLs to HAMIOS defaults.</p>
-
-<h4>Why Resource Manager?</h4>
+<h4>Use cases</h4>
 <ul>
 <li><b>Failover</b> — if a service is down, configure a mirror server</li>
 <li><b>Privacy</b> — use alternative API endpoints</li>
-<li><b>Debugging</b> — replace slow services with faster test servers</li>
+<li><b>Debugging</b> — test with alternative servers</li>
 <li><b>Maintenance</b> — quickly update API endpoints that change</li>
 </ul>
 """),
@@ -834,21 +872,32 @@ Oldest alerts are automatically removed.</p>
 <h3>Settings</h3>
 <p>All configuration via <b>⚙ Settings</b> in the header.
 All changes are <b>live</b> — visible immediately without restarting.</p>
-<h4>Tabs</h4>
+
+<h4>Settings tabs</h4>
 <ul>
 <li><b>📡 Station</b> — callsign, QTH, mode, power, antenna</li>
 <li><b>🪟 Panels</b> — show/hide panels</li>
 <li><b>🗺 Map</b> — snap grid, overlay font sizes, icon sizes</li>
-<li><b>⚡ Lightning</b> — fade duration, proximity alert, sound, animation scale</li>
+<li><b>⚡ Lightning</b> — dual zones (Alert &amp; Warning), radius, pitch, duration, fade time</li>
+<li><b>📡 WSPR Live</b> — panel font size (7–72 pt)</li>
 <li><b>🔔 Alerts</b> — K-threshold, X-flare, band threshold, FIFO limit</li>
 <li><b>📟 CAT</b> — serial port, radio type, presets, terminal</li>
-<li><b>🌐 Resources</b> — online resource URLs, test and investigate endpoints</li>
+<li><b>🌐 Resources</b> — online resource URLs, editable</li>
 <li><b>📐 Layout</b> — save/restore default, profiles, snap grid</li>
 <li><b>📦 About</b> — version, dependencies, file status, language</li>
 </ul>
+
+<h4>v5.4 — New Settings</h4>
+<ul>
+<li><b>Lightning Alert Zone</b> — inner circle with high-priority sound</li>
+<li><b>Lightning Warning Zone</b> — outer circle with lower-priority sound</li>
+<li><b>Configurable pitch &amp; duration</b> — customize alert and warning sounds</li>
+<li><b>WSPR panel font size</b> — scale the WSPR Live data table dynamically</li>
+</ul>
+
 <h4>Settings stored in</h4>
 <p><code>hamios_config.json</code> in the application folder. All settings —
-panel positions, CAT configuration, lightning settings and satellite data — are
+panel positions, CAT configuration, lightning settings, WSPR font size and satellite data — are
 in this single file.</p>
 """),
     ("⚙ Settings", "Layout profiles", """
