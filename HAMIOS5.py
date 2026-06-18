@@ -464,6 +464,11 @@ def main():
     QApplication.setHighDpiScaleFactorRoundingPolicy(
         Qt.HighDpiScaleFactorRoundingPolicy.PassThrough)
 
+    # Ensure config directories exist early
+    from modules._appdir import APP_DIR
+    _cfg_dir = os.path.join(APP_DIR, "config")
+    os.makedirs(_cfg_dir, exist_ok=True)
+
     # Save default resource URLs on startup
     ResourceConfig.save_defaults()
 

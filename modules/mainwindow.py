@@ -258,6 +258,9 @@ class HAMIOSMainWindow(QMainWindow):
         # Config toepassen na layout laden
         QTimer.singleShot(200, self._apply_config)
 
+        # Ensure config directories exist after initialization
+        save_config(self._cfg)
+
     # ── Panels ────────────────────────────────────────────────────────────────
     def _build_panels(self):
         """Maak alle panels aan als kind-widgets van _desktop."""
