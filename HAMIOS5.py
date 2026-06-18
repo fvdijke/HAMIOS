@@ -643,6 +643,8 @@ def main():
             dl_list = window.download_missing_maps()
             for name, thread in dl_list:
                 _dl_threads.append(thread)
+                # Connect to splash screen for progress tracking
+                splash.connect_download(name, thread)
                 thread.start()
         except Exception:
             pass
