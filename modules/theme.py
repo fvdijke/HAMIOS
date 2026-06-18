@@ -253,10 +253,18 @@ QCheckBox::indicator {{
     border-radius: 1px;
 }}
 QCheckBox::indicator:hover {{
-    border: 1px solid #888888;
+    border: 2px solid {ACCENT};
+    width: 13px;
+    height: 13px;
 }}
 QCheckBox::indicator:checked {{
-    background: #C8A84B;
+    background: {ACCENT};
     border: 1px solid #A88A3A;
+}}
+QCheckBox::indicator:checked:hover {{
+    border: 2px solid {ACCENT};
+    width: 13px;
+    height: 13px;
+    background: {ACCENT};
 }}
 """

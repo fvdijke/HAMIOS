@@ -1601,7 +1601,8 @@ class AlertsWidget(QWidget):
             # Ping-geluid voor elke nieuw binnengekomen satelliet
             if getattr(self._cfg, "sat_zone_ping", True):
                 import threading
-                threading.Thread(target=_play_sat_ping, daemon=True).start()
+                from .sound import play_sat_ping
+                threading.Thread(target=play_sat_ping, daemon=True).start()
         self._rebuild()
 
     def add_alert(self, icon: str, text: str, color: str, detail: str = ""):

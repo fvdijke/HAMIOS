@@ -47,7 +47,7 @@
       "sun_icon_size": 64,
       "moon_icon_size": 64,
       "show_splash": false,
-      "dx_own_continent": false,
+      "dx_own_continent": true,
       "dx_heatmap": false,
       "band_day_auto": true,
       "sat_visible": false,
@@ -292,7 +292,7 @@
         1363
       ]
     },
-    "timestamp": "2026-06-18T08:38:21.474913"
+    "timestamp": "2026-06-18T10:51:55.963760"
   },
   "Frank": {
     "config": {

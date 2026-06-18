@@ -39,7 +39,28 @@ QHeaderView::section {{
     border: none; padding: 3px; font-size: 8pt; font-weight: bold;
 }}
 QRadioButton {{ color: {TEXT_BODY}; spacing: 4px; font-size: 8pt; }}
-QRadioButton::indicator {{ width: 12px; height: 12px; }}
+QRadioButton::indicator {{
+    width: 12px;
+    height: 12px;
+    background: #000000;
+    border: 1px solid #666666;
+    border-radius: 6px;
+}}
+QRadioButton::indicator:hover {{
+    border: 2px solid {ACCENT};
+    width: 11px;
+    height: 11px;
+}}
+QRadioButton::indicator:checked {{
+    background: {ACCENT};
+    border: 1px solid #A88A3A;
+}}
+QRadioButton::indicator:checked:hover {{
+    border: 2px solid {ACCENT};
+    width: 11px;
+    height: 11px;
+    background: {ACCENT};
+}}
 QTreeWidget::indicator {{
     width: 14px;
     height: 14px;
