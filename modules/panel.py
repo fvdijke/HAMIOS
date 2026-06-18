@@ -103,9 +103,10 @@ class PanelTitleBar(QWidget):
         self._close.setFixedSize(20, 20)
         self._close.setStyleSheet(
             f"QPushButton {{ background: transparent; color: {ACCENT};"
-            f" border: none; font-size: 8pt; }}"
-            f"QPushButton:hover {{ background: {ACCENT}; color: {BG_ROOT}; }}")
-        self._close.setCursor(Qt.ArrowCursor)
+            f" border: none; font-size: 10pt; font-weight: bold; }}"
+            f"QPushButton:hover {{ color: {ACCENT}; border: 1px solid {ACCENT};"
+            f" border-radius: 3px; }}")
+        self._close.setCursor(Qt.PointingHandCursor)
         layout.addWidget(self._close)
 
         self.setStyleSheet(f"background: {BG_PANEL};")
