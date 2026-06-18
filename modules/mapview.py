@@ -780,6 +780,11 @@ class _HiresDownloadThread(QThread):
         tmp = self._dest + ".tmp"
         try:
             import urllib.request
+            # Ensure destination directory exists
+            dest_dir = os.path.dirname(self._dest)
+            if dest_dir:
+                os.makedirs(dest_dir, exist_ok=True)
+
             req = urllib.request.Request(self._url, headers={"User-Agent": self._UA})
             with urllib.request.urlopen(req, timeout=30) as resp:
                 total     = int(resp.headers.get("Content-Length", -1))
@@ -804,7 +809,10 @@ class _HiresDownloadThread(QThread):
                 except Exception:
                     pass
             self.done.emit()
-        except Exception:
+        except Exception as e:
+            import traceback
+            print(f"Map download failed: {e}", file=__import__('sys').stderr)
+            traceback.print_exc(file=__import__('sys').stderr)
             try:
                 os.remove(tmp)
             except OSError:

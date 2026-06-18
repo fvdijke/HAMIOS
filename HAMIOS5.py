@@ -639,9 +639,11 @@ def main():
         # Downloads will be triggered from main window if needed
         _dl_threads = []
         try:
-            # Don't start download threads - they cause thread cleanup issues
-            # Main window will handle map downloads when needed
-            window.download_missing_maps()
+            # Start map downloads and keep references to threads
+            dl_list = window.download_missing_maps()
+            for name, thread in dl_list:
+                _dl_threads.append(thread)
+                thread.start()
         except Exception:
             pass
 
