@@ -113,6 +113,7 @@ class AppConfig:
 def load_config() -> AppConfig:
     cfg = AppConfig()
     try:
+        os.makedirs(os.path.dirname(_CONFIG_FILE), exist_ok=True)
         if os.path.exists(_CONFIG_FILE):
             with open(_CONFIG_FILE, encoding="utf-8") as f:
                 data = json.load(f)
@@ -140,6 +141,7 @@ def save_config(cfg: AppConfig):
                 cfg.dialog_geometries = existing["dialog_geometries"]
             if not cfg.layouts and existing.get("layouts"):
                 cfg.layouts = existing["layouts"]
+        os.makedirs(os.path.dirname(_CONFIG_FILE), exist_ok=True)
         with open(_CONFIG_FILE, "w", encoding="utf-8") as f:
             json.dump(asdict(cfg), f, ensure_ascii=False, indent=2)
     except Exception as e:
