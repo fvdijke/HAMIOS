@@ -320,11 +320,13 @@ class AntennaCalculator(QDialog):
         wave_group = self._create_group("Wave Type")
         wave_layout = QHBoxLayout(wave_group)
         self.wave_fractions = {"1/4": 0.25, "1/2": 0.50, "5/8": 0.625, "Full": 1.0}
+        self.wave_buttons = {}
         for label in ["1/4", "1/2", "5/8", "Full"]:
             btn = QPushButton(f"{label}λ")
             btn.setCheckable(True)
             btn.setChecked(label == "1/2")
             btn.clicked.connect(lambda checked, l=label: self._on_wave_type_changed(l))
+            self.wave_buttons[label] = btn
             wave_layout.addWidget(btn)
         left.addWidget(wave_group)
 
@@ -493,6 +495,13 @@ class AntennaCalculator(QDialog):
     def _on_wave_type_changed(self, wave_label: str):
         """Handle wave type selection."""
         self._wave_fraction = self.wave_fractions[wave_label]
+
+        # Update button states
+        for label, btn in self.wave_buttons.items():
+            btn.blockSignals(True)
+            btn.setChecked(label == wave_label)
+            btn.blockSignals(False)
+
         self._save_settings()
         self._update_calculations()
 
@@ -907,17 +916,17 @@ class AntennaCalculator(QDialog):
 
             # Parse formula strings to calculate length
             if "468" in ant.formula_ft:
-                total_length = (468 / f) * vf
+                total_length = (468 / f) * vf * self._wave_fraction
             elif "234" in ant.formula_ft:
-                total_length = (234 / f) * vf
+                total_length = (234 / f) * vf * self._wave_fraction
             elif "1005" in ant.formula_ft:
-                total_length = (1005 / f) * vf
+                total_length = (1005 / f) * vf * self._wave_fraction
             elif "702" in ant.formula_ft:
-                total_length = (702 / f) * vf
+                total_length = (702 / f) * vf * self._wave_fraction
             elif "585" in ant.formula_ft:
-                total_length = (585 / f) * vf
+                total_length = (585 / f) * vf * self._wave_fraction
             else:
-                total_length = 50  # Default
+                total_length = 50 * self._wave_fraction  # Default
 
             # Generate schematic based on antenna ID
             if ant.id == "hw_dipole":
