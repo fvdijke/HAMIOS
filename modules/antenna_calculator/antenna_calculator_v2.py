@@ -29,6 +29,7 @@ from .antenna_database import (
     get_antenna_by_id
 )
 from .antenna_record import AntennaRecord, FieldExpeditentSWRCheck
+from .antenna_diagrams import AntennaDiagrams
 
 
 class AntennaCalculatorV2(QDialog):
@@ -739,13 +740,90 @@ class AntennaCalculatorV2(QDialog):
             return f"{m:.2f}m" if m >= 1 else f"{m*100:.1f}cm"
 
     def _draw_diagram(self):
-        """Draw antenna diagram placeholder."""
+        """Draw complete antenna schematic."""
         self.graphics_scene.clear()
         ant = ANTENNA_TYPES[self._antenna_idx]
+        vf = VELOCITY_FACTORS[self._velocity_factor_idx].velocity_factor
 
-        # Simple text placeholder - no rendering
-        text_item = self.graphics_scene.addText(f"{ant.name.replace(chr(10), ' ')}")
-        text_item.setDefaultTextColor(QColor("#C8A84B"))
+        # Get dimensions
+        raw_dims = ant.dimensions_formula(self._frequency_mhz)
+        dims = [(label, value * vf if not any(x in label for x in ["SPACING", "DROOP", "HOIST"]) else value, sub)
+               for label, value, sub in raw_dims]
+
+        svg_content = ""
+
+        try:
+            if ant.id == "dipole":
+                total = dims[0][1]
+                half = total / 2
+                svg_content = AntennaDiagrams.dipole_diagram(total, half)
+
+            elif ant.id == "invv":
+                total = dims[0][1]
+                half = total / 2
+                svg_content = AntennaDiagrams.invv_diagram(total, half, angle=45)
+
+            elif ant.id in ["qwave", "jungleGP"]:
+                elem = dims[0][1]
+                radial = dims[1][1] if len(dims) > 1 else elem
+                svg_content = AntennaDiagrams.vertical_diagram(elem, radial, num_radials=4)
+
+            elif ant.id == "efhw":
+                total = dims[0][1]
+                cp = total * 0.05
+                svg_content = AntennaDiagrams.efhw_diagram(total, cp)
+
+            elif ant.id == "loop":
+                perimeter = dims[0][1]
+                side = perimeter / 4
+                svg_content = AntennaDiagrams.loop_diagram(perimeter, side)
+
+            elif ant.id == "delta":
+                side = dims[0][1]
+                height = side * math.sqrt(3) / 2
+                svg_content = AntennaDiagrams.delta_diagram(side, height)
+
+            else:
+                # Generic diagram for other types
+                text_item = self.graphics_scene.addText(
+                    f"{ant.name.replace(chr(10), ' ')}\n"
+                    f"Measurements: {', '.join([f'{label}: {self._format_value(value)}' for label, value, _ in dims[:3]])}"
+                )
+                text_item.setDefaultTextColor(QColor("#C8A84B"))
+                return
+
+            # Render SVG as image
+            if svg_content:
+                self._render_svg_to_scene(svg_content)
+
+        except Exception as e:
+            text_item = self.graphics_scene.addText(f"Diagram error: {str(e)}")
+            text_item.setDefaultTextColor(QColor("#CC0000"))
+
+    def _render_svg_to_scene(self, svg_content: str):
+        """Render SVG content to graphics scene."""
+        try:
+            from PySide6.QtSvg import QSvgRenderer
+            from PySide6.QtCore import QByteArray
+            from PySide6.QtGui import QPixmap
+
+            # Convert SVG to pixmap
+            svg_renderer = QSvgRenderer(QByteArray(svg_content.encode('utf-8')))
+            pixmap = QPixmap(600, 500)
+            pixmap.fill(QColor("#2A2D32"))
+            from PySide6.QtGui import QPainter
+            painter = QPainter(pixmap)
+            svg_renderer.render(painter)
+            painter.end()
+
+            # Add to scene
+            pixmap_item = self.graphics_scene.addPixmap(pixmap)
+            pixmap_item.setPos(0, 0)
+
+        except Exception:
+            # Fallback: show text
+            text_item = self.graphics_scene.addText("SVG Diagram")
+            text_item.setDefaultTextColor(QColor("#C8A84B"))
 
     def _create_dipole_diagram(self, dims):
         """Create dipole diagram SVG."""
@@ -783,7 +861,7 @@ class AntennaCalculatorV2(QDialog):
         return f"EFHW {self._format_value(total)}"
 
     def _update_coax_calc(self):
-        """Update coax loss calculation."""
+        """Update coax loss calculation with color coding."""
         if not self._frequency_mhz or self._frequency_mhz <= 0:
             return
 
@@ -807,20 +885,39 @@ class AntennaCalculatorV2(QDialog):
         total_loss_db = loss_per_100ft * (length_ft / 100.0)
         efficiency = 10.0 ** (-total_loss_db / 10.0) * 100
 
-        # Update table
+        # Update table with color coding
         self.table_coax.setRowCount(0)
         for freq in sorted(coax.loss_db_per_100ft.keys()):
             loss_per = coax.loss_db_per_100ft[freq]
             total = loss_per * (length_ft / 100.0)
             eff = 10.0 ** (-total / 10.0) * 100
-            verdict = "Good" if total < 1 else "Fair" if total < 2 else "Poor"
+
+            # Color coding
+            if eff >= 95:
+                color = QColor("#00AA00")  # Green - excellent
+                verdict = "Excellent"
+            elif eff >= 80:
+                color = QColor("#CCAA00")  # Amber/Yellow - acceptable
+                verdict = "Acceptable"
+            else:
+                color = QColor("#CC0000")  # Red - poor
+                verdict = "Poor"
 
             self.table_coax.insertRow(self.table_coax.rowCount())
-            self.table_coax.setItem(self.table_coax.rowCount() - 1, 0, QTableWidgetItem(f"{freq} MHz"))
-            self.table_coax.setItem(self.table_coax.rowCount() - 1, 1, QTableWidgetItem(f"{loss_per:.2f} dB"))
-            self.table_coax.setItem(self.table_coax.rowCount() - 1, 2, QTableWidgetItem(f"{total:.2f} dB"))
-            self.table_coax.setItem(self.table_coax.rowCount() - 1, 3, QTableWidgetItem(f"{eff:.1f}%"))
-            self.table_coax.setItem(self.table_coax.rowCount() - 1, 4, QTableWidgetItem(verdict))
+            row = self.table_coax.rowCount() - 1
+
+            items = [
+                QTableWidgetItem(f"{freq} MHz"),
+                QTableWidgetItem(f"{loss_per:.2f} dB"),
+                QTableWidgetItem(f"{total:.2f} dB"),
+                QTableWidgetItem(f"{eff:.1f}%"),
+                QTableWidgetItem(verdict),
+            ]
+
+            for col, item in enumerate(items):
+                item.setBackground(color)
+                item.setForeground(QColor("#000000"))
+                self.table_coax.setItem(row, col, item)
 
     def _update_trim_calc(self):
         """Update trim calculator."""
