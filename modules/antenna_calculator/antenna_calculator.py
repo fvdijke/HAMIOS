@@ -364,35 +364,57 @@ class AntennaCalculator(QDialog):
         # Right panel: Results + Diagram
         right = QVBoxLayout()
 
-        # Results scroll area
+        # TOP ROW: Horizontal split - Dimensions (LEFT) | Diagram (RIGHT)
+        top_row = QHBoxLayout()
+        top_row.setSpacing(8)
+
+        # LEFT SIDE: Calculated Dimensions
+        left_panel = QWidget()
+        left_layout = QVBoxLayout(left_panel)
+        left_layout.setContentsMargins(0, 0, 0, 0)
+        left_layout.addWidget(QLabel("📊 Calculated Dimensions:"))
+        left_layout.addWidget(QLabel(""))  # Spacer
+
         self.scroll_results = QScrollArea()
         self.scroll_results.setWidgetResizable(True)
-        self.scroll_results.setMinimumHeight(150)  # Prevent collapse
+        self.scroll_results.setMinimumWidth(280)
+        self.scroll_results.setStyleSheet(
+            "QScrollArea { border: 1px solid #3A4050; border-radius: 4px; }"
+        )
         self.results_widget = QWidget()
         self.results_layout = QVBoxLayout(self.results_widget)
+        self.results_layout.setContentsMargins(4, 4, 4, 4)
         self.scroll_results.setWidget(self.results_widget)
-        right.addWidget(QLabel("Calculated Dimensions:"))
-        right.addWidget(self.scroll_results, 1)  # Stretch=1, takes remaining space
+        left_layout.addWidget(self.scroll_results, 1)
+        top_row.addWidget(left_panel, 1)
 
-        # Diagram (SVG schematic)
+        # RIGHT SIDE: Antenna Diagram
+        right_panel = QWidget()
+        right_layout = QVBoxLayout(right_panel)
+        right_layout.setContentsMargins(0, 0, 0, 0)
+        right_layout.addWidget(QLabel("🎯 Antenna Schematic:"))
+        right_layout.addWidget(QLabel(""))  # Spacer
+
         self.svg_diagram = QWebEngineView()
         self.svg_diagram.setStyleSheet(
-            "background-color: #1A1D22; border: 1px solid #3A4050;"
+            "background-color: #1A1D22; border: 1px solid #3A4050; border-radius: 4px;"
         )
-        self.svg_diagram.setMinimumHeight(250)
-        self.svg_diagram.setMaximumHeight(380)  # Prevent hogging space
-        right.addWidget(QLabel("Antenna Schematic:"))
-        right.addWidget(self.svg_diagram, 0)  # Stretch=0, fixed size
+        self.svg_diagram.setMinimumWidth(350)
+        self.svg_diagram.setMinimumHeight(300)
+        right_layout.addWidget(self.svg_diagram, 1)
+        top_row.addWidget(right_panel, 1)
 
-        # Matching info
-        self.match_box = QGroupBox("Matching Transformer")
+        right.addLayout(top_row, 2)
+
+        # BOTTOM: Matching Transformer
+        self.match_box = QGroupBox("⚙️ Matching Transformer")
         match_layout = QVBoxLayout(self.match_box)
         self.label_match = QLabel()
         self.label_match.setWordWrap(True)
         self.label_match.setStyleSheet("font-size: 10px;")
         match_layout.addWidget(self.label_match)
-        self.match_box.setMinimumHeight(80)  # Ensure space
-        right.addWidget(self.match_box, 0)  # No stretch, fixed size
+        self.match_box.setMinimumHeight(90)
+        right.addWidget(self.match_box, 1)
 
         # Combine panels
         layout.addLayout(left, 1)
