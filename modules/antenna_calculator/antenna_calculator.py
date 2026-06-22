@@ -52,6 +52,7 @@ class AntennaCalculator(QDialog):
         # State - load persisted settings
         self._frequency_mhz = 14.225
         self._velocity_factor_idx = 2  # STD PVC
+        self._custom_vf = None  # Custom VF value (if CUSTOM selected)
         self._antenna_idx = 0  # Dipole
         self._coax_idx = 2  # RG-8X
         self._unit = "ft"  # feet or meters (default)
@@ -544,13 +545,11 @@ class AntennaCalculator(QDialog):
         self._update_calculations()
 
     def _on_custom_vf_changed(self):
-        """Handle custom VF input."""
-        if self.combo_vf.currentText() == "CUSTOM":
-            # Set VF to custom value
-            vf_obj = VELOCITY_FACTORS[self._velocity_factor_idx]
-            # Create temp object with custom VF
-            self._save_settings()
-            self._update_calculations()
+        """Handle custom VF input - apply custom value to calculations."""
+        # Store custom VF value and trigger recalculation
+        self._custom_vf = self.spin_vf_custom.value()
+        self._save_settings()
+        self._update_calculations()
 
     def _build_record_tab(self) -> QWidget:
         """Antenna Birth Certificate."""
@@ -707,13 +706,15 @@ class AntennaCalculator(QDialog):
         self._update_calculations()
 
     def _on_vf_changed(self):
-        """Handle VF selection."""
+        """Handle VF selection - support both preset and custom values."""
         current_text = self.combo_vf.currentText()
 
         # Check if CUSTOM is selected
         if "CUSTOM" in current_text:
             self.spin_vf_custom.setVisible(True)
-            self.label_vf_info.setText(f"VF {self.spin_vf_custom.value()}\nCustom value")
+            self._custom_vf = self.spin_vf_custom.value()
+            self.label_vf_info.setText(f"VF {self._custom_vf:.3f}\nCustom value")
+            self._velocity_factor_idx = -1  # Mark as custom
         else:
             self.spin_vf_custom.setVisible(False)
             self._velocity_factor_idx = self.combo_vf.currentIndex()
@@ -722,6 +723,7 @@ class AntennaCalculator(QDialog):
             if 0 <= self._velocity_factor_idx < len(VELOCITY_FACTORS):
                 vf = VELOCITY_FACTORS[self._velocity_factor_idx]
                 self.label_vf_info.setText(f"VF {vf.velocity_factor}\n{vf.examples}")
+                self._custom_vf = None  # Clear custom value
 
         self._save_settings()
         self._update_calculations()
@@ -778,8 +780,10 @@ class AntennaCalculator(QDialog):
         if not self._frequency_mhz or self._frequency_mhz <= 0:
             return
 
-        # Get VF with bounds checking
-        if 0 <= self._velocity_factor_idx < len(VELOCITY_FACTORS):
+        # Get VF - use custom if set, otherwise database value
+        if self._custom_vf is not None:
+            vf = self._custom_vf
+        elif 0 <= self._velocity_factor_idx < len(VELOCITY_FACTORS):
             vf = VELOCITY_FACTORS[self._velocity_factor_idx].velocity_factor
         else:
             vf = 0.95  # Default fallback
@@ -801,20 +805,23 @@ class AntennaCalculator(QDialog):
         # since they have different architectures
         dims = []
         try:
-            # Basic dimension calculation using formula
+            # Basic dimension calculation using formula (with wave_fraction applied)
             formula = ant.formula_ft
             if "468" in formula:
-                length = (468 / self._frequency_mhz) * vf
+                length = (468 / self._frequency_mhz) * vf * self._wave_fraction
                 dims.append(("Total Length", length, "Half-wave dipole"))
             elif "234" in formula:
-                length = (234 / self._frequency_mhz) * vf
+                length = (234 / self._frequency_mhz) * vf * self._wave_fraction
                 dims.append(("Vertical Height", length, "Quarter-wave"))
             elif "1005" in formula:
-                length = (1005 / self._frequency_mhz) * vf
+                length = (1005 / self._frequency_mhz) * vf * self._wave_fraction
                 dims.append(("Loop Perimeter", length, "Full-wave loop"))
             elif "702" in formula:
-                length = (702 / self._frequency_mhz) * vf
+                length = (702 / self._frequency_mhz) * vf * self._wave_fraction
                 dims.append(("Total Length", length, "J-Pole/Zepp"))
+            elif "585" in formula:
+                length = (585 / self._frequency_mhz) * vf * self._wave_fraction
+                dims.append(("Total Length", length, "5/8-wave"))
             else:
                 dims.append(("Frequency", self._frequency_mhz, "MHz"))
         except Exception:
@@ -1083,7 +1090,8 @@ class AntennaCalculator(QDialog):
             self.label_trim_result.setText("Enter valid values")
             return
 
-        ratio = meas / tgt
+        # Correct ratio: new_frequency / old_frequency = target / measured
+        ratio = tgt / meas
         new_leg = leg * ratio
         diff = leg - new_leg
 
