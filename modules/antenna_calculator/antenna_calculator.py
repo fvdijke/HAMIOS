@@ -940,9 +940,12 @@ class AntennaCalculator(QDialog):
 
         return box
 
-    def _format_value(self, feet: float) -> str:
+    def _format_value(self, feet) -> str:
         """Format value in current unit system."""
-        if not math.isfinite(feet) or feet < 0:
+        # Handle strings or non-numeric values
+        if isinstance(feet, str):
+            return feet
+        if not isinstance(feet, (int, float)) or not math.isfinite(feet) or feet < 0:
             return "---"
 
         if self._unit == "ft":
