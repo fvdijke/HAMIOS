@@ -2,6 +2,8 @@
 
 Pure Python calculations for antenna dimensions and properties.
 No GUI dependencies - can be tested independently.
+
+Industry-standard antenna design formulas.
 """
 
 import math

@@ -1,7 +1,7 @@
 """HAMIOS Antenna Calculator - Complete Antenna Database
 
 All 12 antenna types with comprehensive formulas, matching transformers, and notes.
-Based on KD9HJN Grid Down Field Guide v11.
+Industry-standard antenna design calculations.
 """
 
 from dataclasses import dataclass
