@@ -39,6 +39,7 @@ from .spy_dialog import SpyStationsDialog
 from .eibi_dialog import EibiDialog
 from .ft8_dialog import Ft8Dialog
 from .help_dialog import HelpDialog
+from .antenna_calculator import AntennaCalculatorDialog
 from . import cat_interface as _cat_mod
 
 # Pad naar layouts-bestand (gedeeld met v4)
@@ -739,6 +740,10 @@ class HAMIOSMainWindow(QMainWindow):
 
     def _open_ft8_dialog(self):
         self._show_dialog("ft8", Ft8Dialog(self))
+
+    def _open_antenna_calculator_dialog(self):
+        dialog = AntennaCalculatorDialog(self)
+        dialog.exec()
 
     def _open_overlay_menu(self):
         """Modeless overlay selection panel (multiple toggles, stays open)."""
