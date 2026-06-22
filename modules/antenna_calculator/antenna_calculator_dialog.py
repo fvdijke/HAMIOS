@@ -28,6 +28,7 @@ from .antenna_graphics import AntennaGraphicsEngine
 from .feedline_calculator import FeedlineCalculatorTab
 from .antenna_library import AntennaLibrary
 from .pdf_generator import PdfGenerator
+from .antenna_record import AntennaRecord, FieldExpeditentSWRCheck
 
 
 class AntennaCalculatorDialog(QDialog):
@@ -67,6 +68,7 @@ class AntennaCalculatorDialog(QDialog):
         tabs.addTab(self._build_calculator_tab(), "Calculator")
         tabs.addTab(self._build_feedline_tab(), "Feedline")
         tabs.addTab(self._build_library_tab(), "Library")
+        tabs.addTab(self._build_field_record_tab(), "Field Record")
         main_layout.addWidget(tabs)
 
         # ── Buttons ────────────────────────────────────────────────────────────
@@ -220,6 +222,203 @@ class AntennaCalculatorDialog(QDialog):
         self._refresh_antenna_list()
 
         return widget
+
+    def _build_field_record_tab(self) -> QWidget:
+        """Build the field record / antenna birth certificate tab."""
+        widget = QWidget()
+        layout = QVBoxLayout(widget)
+
+        # Scrollable form
+        scroll = QScrollArea()
+        scroll.setWidgetResizable(True)
+        form_widget = QWidget()
+        form_layout = QGridLayout(form_widget)
+
+        row = 0
+
+        # Callsign
+        form_layout.addWidget(QLabel("Callsign:"), row, 0)
+        self.field_callsign = QComboBox()
+        self.field_callsign.setEditable(True)
+        form_layout.addWidget(self.field_callsign, row, 1)
+        row += 1
+
+        # Antenna Type
+        form_layout.addWidget(QLabel("Antenna Type:"), row, 0)
+        self.field_antenna_type = QComboBox()
+        form_layout.addWidget(self.field_antenna_type, row, 1)
+        row += 1
+
+        # Date Built
+        form_layout.addWidget(QLabel("Date Built:"), row, 0)
+        self.field_date = QComboBox()
+        self.field_date.setEditable(True)
+        self.field_date.setCurrentText(__import__("datetime").date.today().strftime("%Y-%m-%d"))
+        form_layout.addWidget(self.field_date, row, 1)
+        row += 1
+
+        # Location/Grid
+        form_layout.addWidget(QLabel("Location/Grid:"), row, 0)
+        self.field_location = QComboBox()
+        self.field_location.setEditable(True)
+        form_layout.addWidget(self.field_location, row, 1)
+        row += 1
+
+        # Target Frequency
+        form_layout.addWidget(QLabel("Target Frequency (MHz):"), row, 0)
+        self.field_freq = QDoubleSpinBox()
+        self.field_freq.setValue(7.1)
+        self.field_freq.setMaximum(10000)
+        form_layout.addWidget(self.field_freq, row, 1)
+        row += 1
+
+        # Calculated Length
+        form_layout.addWidget(QLabel("Calculated Length (m):"), row, 0)
+        self.field_calc_length = QDoubleSpinBox()
+        self.field_calc_length.setMaximum(1000)
+        form_layout.addWidget(self.field_calc_length, row, 1)
+        row += 1
+
+        # === AS-BUILT SECTION ===
+        form_layout.addWidget(QLabel(""), row, 0)  # Spacer
+        row += 1
+        as_built_label = QLabel("AS-BUILT (Measured in Field)")
+        as_built_label.setStyleSheet("font-weight: bold; background: #f0f0f0; padding: 5px;")
+        form_layout.addWidget(as_built_label, row, 0, 1, 2)
+        row += 1
+
+        # Final Tuned Length
+        form_layout.addWidget(QLabel("Final Tuned Length (m):"), row, 0)
+        self.field_final_length = QDoubleSpinBox()
+        self.field_final_length.setMaximum(1000)
+        form_layout.addWidget(self.field_final_length, row, 1)
+        row += 1
+
+        # Resonant Frequency
+        form_layout.addWidget(QLabel("Resonant Frequency (MHz):"), row, 0)
+        self.field_res_freq = QDoubleSpinBox()
+        self.field_res_freq.setMaximum(10000)
+        form_layout.addWidget(self.field_res_freq, row, 1)
+        row += 1
+
+        # Measured SWR
+        form_layout.addWidget(QLabel("Measured SWR:"), row, 0)
+        self.field_swr = QDoubleSpinBox()
+        self.field_swr.setMinimum(1.0)
+        self.field_swr.setMaximum(50.0)
+        self.field_swr.setSingleStep(0.1)
+        form_layout.addWidget(self.field_swr, row, 1)
+        row += 1
+
+        # Impedance
+        form_layout.addWidget(QLabel("Feedpoint Impedance (Ω):"), row, 0)
+        self.field_impedance = QSpinBox()
+        self.field_impedance.setMaximum(1000)
+        form_layout.addWidget(self.field_impedance, row, 1)
+        row += 1
+
+        # === RADIALS / GROUND PLANE ===
+        form_layout.addWidget(QLabel(""), row, 0)
+        row += 1
+        radial_label = QLabel("Ground Plane / Radials (for verticals)")
+        radial_label.setStyleSheet("font-weight: bold; background: #f0f0f0; padding: 5px;")
+        form_layout.addWidget(radial_label, row, 0, 1, 2)
+        row += 1
+
+        # Number of Radials
+        form_layout.addWidget(QLabel("Number of Radials:"), row, 0)
+        self.field_num_radials = QSpinBox()
+        self.field_num_radials.setValue(4)
+        self.field_num_radials.setMaximum(32)
+        form_layout.addWidget(self.field_num_radials, row, 1)
+        row += 1
+
+        # Radial Length
+        form_layout.addWidget(QLabel("Radial Length (m):"), row, 0)
+        self.field_radial_length = QDoubleSpinBox()
+        self.field_radial_length.setMaximum(1000)
+        form_layout.addWidget(self.field_radial_length, row, 1)
+        row += 1
+
+        # Counter Poise
+        form_layout.addWidget(QLabel("Counter Poise System:"), row, 0)
+        self.field_counter_poise = QComboBox()
+        self.field_counter_poise.setEditable(True)
+        self.field_counter_poise.addItems(["None", "Wire on ground", "Elevated radials", "Copper mesh"])
+        form_layout.addWidget(self.field_counter_poise, row, 1)
+        row += 1
+
+        # === FIELD NOTES ===
+        form_layout.addWidget(QLabel(""), row, 0)
+        row += 1
+        notes_label = QLabel("Field Notes & Observations")
+        notes_label.setStyleSheet("font-weight: bold; background: #f0f0f0; padding: 5px;")
+        form_layout.addWidget(notes_label, row, 0, 1, 2)
+        row += 1
+
+        # Field Notes Text
+        form_layout.addWidget(QLabel("Field Notes:"), row, 0, 1, 2)
+        row += 1
+        self.field_notes_text = QComboBox()
+        self.field_notes_text.setEditable(True)
+        form_layout.addWidget(self.field_notes_text, row, 0, 1, 2)
+        row += 1
+
+        # Buttons
+        button_layout = QHBoxLayout()
+        btn_export_html = QPushButton("Export as HTML")
+        btn_export_html.clicked.connect(self._on_export_antenna_record)
+        button_layout.addWidget(btn_export_html)
+
+        btn_swr_check = QPushButton("SWR Check Guide")
+        btn_swr_check.clicked.connect(self._on_show_swr_checklist)
+        button_layout.addWidget(btn_swr_check)
+
+        button_layout.addStretch()
+
+        scroll.setWidget(form_widget)
+        layout.addWidget(scroll)
+        layout.addLayout(button_layout)
+
+        return widget
+
+    def _on_export_antenna_record(self):
+        """Export antenna record as HTML birth certificate."""
+        filename, _ = QFileDialog.getSaveFileName(
+            self, "Export Antenna Record", "", "HTML Files (*.html)"
+        )
+        if not filename:
+            return
+
+        record = AntennaRecord(
+            callsign=self.field_callsign.currentText() or "N0CALL",
+            antenna_type=self._current_antenna_type.value,
+            date_built=self.field_date.currentText(),
+            location_grid=self.field_location.currentText(),
+            target_frequency_mhz=self.field_freq.value(),
+            calculated_length_m=self.field_calc_length.value(),
+            final_tuned_length_m=self.field_final_length.value() or None,
+            resonant_frequency_mhz=self.field_res_freq.value() or None,
+            measured_swr=self.field_swr.value() or None,
+            impedance_ohms=self.field_impedance.value() or None,
+            num_radials=self.field_num_radials.value(),
+            radial_length_m=self.field_radial_length.value() or None,
+            counter_poise_system=self.field_counter_poise.currentText(),
+            field_notes=self.field_notes_text.currentText(),
+        )
+
+        try:
+            with open(filename, "w", encoding="utf-8") as f:
+                f.write(record.to_html())
+            QMessageBox.information(self, "Success", f"Antenna record exported to:\n{filename}")
+        except Exception as e:
+            QMessageBox.warning(self, "Error", f"Failed to export:\n{str(e)}")
+
+    def _on_show_swr_checklist(self):
+        """Show field expedient SWR check checklist."""
+        checklist = FieldExpeditentSWRCheck.field_check_checklist()
+        msg = "\n".join(checklist)
+        QMessageBox.information(self, "Field Expedient SWR Check", msg)
 
     def _create_group(self, title: str) -> QGroupBox:
         """Create a styled group box."""
