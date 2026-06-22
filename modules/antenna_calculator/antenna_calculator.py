@@ -9,9 +9,10 @@ from PySide6.QtWidgets import (
     QLabel, QComboBox, QSpinBox, QDoubleSpinBox, QPushButton,
     QTabWidget, QWidget, QGroupBox, QScrollArea, QGraphicsView, QGraphicsScene,
     QInputDialog, QMessageBox, QFileDialog, QTableWidget, QTableWidgetItem,
-    QTextEdit, QDateEdit, QSvgWidget
+    QTextEdit, QDateEdit
 )
-from PySide6.QtCore import Qt, QSize, QDate, QByteArray
+from PySide6.QtWebEngineWidgets import QWebEngineView
+from PySide6.QtCore import Qt, QSize, QDate, QByteArray, QUrl
 from PySide6.QtGui import QFont, QColor
 from pathlib import Path
 import math
@@ -372,7 +373,7 @@ class AntennaCalculator(QDialog):
         right.addWidget(self.scroll_results, 1)
 
         # Diagram (SVG schematic)
-        self.svg_diagram = QSvgWidget()
+        self.svg_diagram = QWebEngineView()
         self.svg_diagram.setStyleSheet(
             "background-color: #1A1D22; border: 1px solid #3A4050;"
         )
@@ -964,7 +965,15 @@ class AntennaCalculator(QDialog):
 
             # Display SVG
             if svg_content:
-                self.svg_diagram.load(QByteArray(svg_content.encode('utf-8')))
+                html_content = f"""
+                <html>
+                <head><style>body {{ margin:0; padding:0; background:#1A1D22; }}</style></head>
+                <body>
+                {svg_content}
+                </body>
+                </html>
+                """
+                self.svg_diagram.setHtml(html_content)
 
         except Exception as e:
             pass  # Silent fallback
