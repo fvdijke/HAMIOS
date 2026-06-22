@@ -496,10 +496,27 @@ class AntennaCalculator(QDialog):
         """Handle wave type selection."""
         self._wave_fraction = self.wave_fractions[wave_label]
 
-        # Update button states
+        # Update button states with amber styling for selected
         for label, btn in self.wave_buttons.items():
             btn.blockSignals(True)
-            btn.setChecked(label == wave_label)
+            is_selected = label == wave_label
+            btn.setChecked(is_selected)
+
+            if is_selected:
+                # Selected: amber background, black text
+                btn.setStyleSheet(
+                    "QPushButton { background-color: #C8A84B; color: #000000; "
+                    "border: 1px solid #C8A84B; border-radius: 4px; padding: 4px 12px; font-weight: bold; } "
+                    "QPushButton:hover { background-color: #D4B856; }"
+                )
+            else:
+                # Unselected: default style
+                btn.setStyleSheet(
+                    "QPushButton { background-color: #2A2D32; color: #C8A84B; "
+                    "border: 1px solid #3A4050; border-radius: 4px; padding: 4px 12px; font-weight: bold; } "
+                    "QPushButton:hover { background-color: #3A3D42; border: 1px solid #C8A84B; }"
+                )
+
             btn.blockSignals(False)
 
         self._save_settings()
