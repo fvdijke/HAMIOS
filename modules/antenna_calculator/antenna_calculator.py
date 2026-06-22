@@ -745,6 +745,10 @@ class AntennaCalculator(QDialog):
 
     def _update_calculations(self):
         """Recalculate and display all results."""
+        # Guard: ensure UI is built before proceeding
+        if not hasattr(self, 'results_layout'):
+            return
+
         if not self._frequency_mhz or self._frequency_mhz <= 0:
             return
 
