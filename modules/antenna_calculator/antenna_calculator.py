@@ -665,9 +665,21 @@ class AntennaCalculator(QDialog):
 
     def _on_vf_changed(self):
         """Handle VF selection."""
-        self._velocity_factor_idx = self.combo_vf.currentIndex()
-        vf = VELOCITY_FACTORS[self._velocity_factor_idx]
-        self.label_vf_info.setText(f"VF {vf.velocity_factor}\n{vf.examples}")
+        current_text = self.combo_vf.currentText()
+
+        # Check if CUSTOM is selected
+        if "CUSTOM" in current_text:
+            self.spin_vf_custom.setVisible(True)
+            self.label_vf_info.setText(f"VF {self.spin_vf_custom.value()}\nCustom value")
+        else:
+            self.spin_vf_custom.setVisible(False)
+            self._velocity_factor_idx = self.combo_vf.currentIndex()
+
+            # Validate index
+            if 0 <= self._velocity_factor_idx < len(VELOCITY_FACTORS):
+                vf = VELOCITY_FACTORS[self._velocity_factor_idx]
+                self.label_vf_info.setText(f"VF {vf.velocity_factor}\n{vf.examples}")
+
         self._save_settings()
         self._update_calculations()
 
