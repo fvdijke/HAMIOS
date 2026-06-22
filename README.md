@@ -16,7 +16,7 @@
 [![Language](https://img.shields.io/badge/language-EN%20%7C%20NL-green)](https://github.com/fvdijke/HAMIOS)
 
 ---
-  <img width="3155" height="1683" alt="2026-06-15 13_51_27-HF Propagation   Atmosphere Monitor" src="https://github.com/user-attachments/assets/04fc0a87-3e2d-4600-bc87-eadce8139d6c" />![Uploading 2026-06-15 13_51_00-HAMIOS.png…]()
+  <img width="3155" height="1683" alt="2026-06-15 13_51_27-HF Propagation   Atmosphere Monitor" src="https://github.com/user-attachments/assets/04fc0a87-3e2d-4600-bc87-eadce8139d6c" />
 
 ## Overview
 
