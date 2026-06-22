@@ -9,9 +9,9 @@ from PySide6.QtWidgets import (
     QLabel, QComboBox, QSpinBox, QDoubleSpinBox, QPushButton,
     QTabWidget, QWidget, QGroupBox, QScrollArea, QGraphicsView, QGraphicsScene,
     QInputDialog, QMessageBox, QFileDialog, QTableWidget, QTableWidgetItem,
-    QTextEdit, QDateEdit
+    QTextEdit, QDateEdit, QSvgWidget
 )
-from PySide6.QtCore import Qt, QSize, QDate
+from PySide6.QtCore import Qt, QSize, QDate, QByteArray
 from PySide6.QtGui import QFont, QColor
 from pathlib import Path
 import math
@@ -371,16 +371,14 @@ class AntennaCalculator(QDialog):
         right.addWidget(QLabel("Calculated Dimensions:"))
         right.addWidget(self.scroll_results, 1)
 
-        # Diagram (text-based schematic)
-        self.text_diagram = QTextEdit()
-        self.text_diagram.setReadOnly(True)
-        self.text_diagram.setFont(QFont("Courier New", 9))
-        self.text_diagram.setStyleSheet(
-            "background-color: #1A1D22; color: #C8D0DC; border: 1px solid #3A4050;"
+        # Diagram (SVG schematic)
+        self.svg_diagram = QSvgWidget()
+        self.svg_diagram.setStyleSheet(
+            "background-color: #1A1D22; border: 1px solid #3A4050;"
         )
-        self.text_diagram.setMinimumHeight(280)
+        self.svg_diagram.setMinimumHeight(280)
         right.addWidget(QLabel("Antenna Schematic:"))
-        right.addWidget(self.text_diagram, 1)
+        right.addWidget(self.svg_diagram, 1)
 
         # Matching info
         self.match_box = QGroupBox("Matching Transformer")
@@ -904,9 +902,7 @@ class AntennaCalculator(QDialog):
             return f"{m:.2f}m" if m >= 1 else f"{m*100:.1f}cm"
 
     def _draw_diagram(self):
-        """Draw antenna schematic (text-based)."""
-        from .antenna_schematics import AntennaSchematic
-
+        """Draw antenna schematic (SVG graphics)."""
         # Get antenna from extended types
         category = self.combo_category.currentText()
         antenna_name = self.combo_antenna.currentText()
@@ -918,7 +914,6 @@ class AntennaCalculator(QDialog):
                 break
 
         if ant is None:
-            self.text_diagram.setPlainText("No antenna selected")
             return
 
         try:
@@ -946,36 +941,33 @@ class AntennaCalculator(QDialog):
             else:
                 total_length = 50 * self._wave_fraction  # Default
 
-            # Generate schematic based on antenna ID
+            # Generate SVG based on antenna ID
+            svg_content = ""
             if ant.id == "hw_dipole":
                 half = total_length / 2
-                schematic = AntennaSchematic.dipole(total_length, half)
+                svg_content = AntennaSVGGraphics.dipole_diagram(total_length, half, f, vf, self._wave_fraction)
             elif ant.id == "inverted_v":
                 half = total_length / 2
-                schematic = AntennaSchematic.inverted_v(total_length, half)
+                svg_content = AntennaSVGGraphics.dipole_diagram(total_length, half, f, vf, self._wave_fraction)
             elif ant.id in ["qwave_vert", "gp_antenna"]:
-                schematic = AntennaSchematic.vertical(total_length, total_length, num_radials=4)
+                radial = total_length  # Equal to element
+                svg_content = AntennaSVGGraphics.vertical_diagram(total_length, radial, 4, f, vf, self._wave_fraction)
             elif ant.id == "efhw":
                 cp = total_length * 0.05
-                schematic = AntennaSchematic.efhw(total_length, cp)
+                svg_content = AntennaSVGGraphics.efhw_diagram(total_length, cp, f, vf, self._wave_fraction)
             elif ant.id in ["full_loop", "square_loop"]:
                 side = total_length / 4
-                schematic = AntennaSchematic.loop(total_length, side)
-            elif ant.id == "delta_loop":
-                side = total_length / 3
-                schematic = AntennaSchematic.loop(total_length, side)
+                svg_content = AntennaSVGGraphics.loop_diagram(total_length, side, f, vf, self._wave_fraction)
             else:
-                # Generic schematic for all other types
-                schematic = AntennaSchematic.generic(
-                    ant.name_nl,
-                    ant.formula_ft,
-                    ant.impedance
-                )
+                # Generic fallback for other types
+                svg_content = AntennaSVGGraphics.loop_diagram(total_length, total_length/4, f, vf, self._wave_fraction)
 
-            self.text_diagram.setPlainText(schematic)
+            # Display SVG
+            if svg_content:
+                self.svg_diagram.load(QByteArray(svg_content.encode('utf-8')))
 
         except Exception as e:
-            self.text_diagram.setPlainText(f"Diagram: {ant.name_nl} @ {self._frequency_mhz} MHz")
+            pass  # Silent fallback
 
 
     def _create_dipole_diagram(self, dims):
