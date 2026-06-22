@@ -29,7 +29,6 @@ from .antenna_database import (
     get_antenna_by_id
 )
 from .antenna_record import AntennaRecord, FieldExpeditentSWRCheck
-from .antenna_diagrams import AntennaDiagrams
 
 
 class AntennaCalculator(QDialog):
@@ -812,8 +811,9 @@ class AntennaCalculator(QDialog):
             return f"{m:.2f}m" if m >= 1 else f"{m*100:.1f}cm"
 
     def _draw_diagram(self):
-        """Draw complete antenna schematic."""
-        self.graphics_scene.clear()
+        """Draw antenna schematic (text-based)."""
+        from .antenna_schematics import AntennaSchematic
+
         ant = ANTENNA_TYPES[self._antenna_idx]
         vf = VELOCITY_FACTORS[self._velocity_factor_idx].velocity_factor
 
@@ -822,80 +822,52 @@ class AntennaCalculator(QDialog):
         dims = [(label, value * vf if not any(x in label for x in ["SPACING", "DROOP", "HOIST"]) else value, sub)
                for label, value, sub in raw_dims]
 
-        svg_content = ""
+        schematic = ""
 
         try:
             if ant.id == "dipole":
                 total = dims[0][1]
                 half = total / 2
-                svg_content = AntennaDiagrams.dipole_diagram(total, half)
+                schematic = AntennaSchematic.dipole(total, half)
 
             elif ant.id == "invv":
                 total = dims[0][1]
                 half = total / 2
-                svg_content = AntennaDiagrams.invv_diagram(total, half, angle=45)
+                schematic = AntennaSchematic.inverted_v(total, half)
 
             elif ant.id in ["qwave", "jungleGP"]:
                 elem = dims[0][1]
                 radial = dims[1][1] if len(dims) > 1 else elem
-                svg_content = AntennaDiagrams.vertical_diagram(elem, radial, num_radials=4)
+                schematic = AntennaSchematic.vertical(elem, radial, num_radials=4)
 
             elif ant.id == "efhw":
                 total = dims[0][1]
                 cp = total * 0.05
-                svg_content = AntennaDiagrams.efhw_diagram(total, cp)
+                schematic = AntennaSchematic.efhw(total, cp)
 
             elif ant.id == "loop":
                 perimeter = dims[0][1]
                 side = perimeter / 4
-                svg_content = AntennaDiagrams.loop_diagram(perimeter, side)
+                schematic = AntennaSchematic.loop(perimeter, side)
 
             elif ant.id == "delta":
                 side = dims[0][1]
                 height = side * math.sqrt(3) / 2
-                svg_content = AntennaDiagrams.delta_diagram(side, height)
+                schematic = AntennaSchematic.loop(side * 3, side)  # Use loop schematic
 
             else:
-                # Generic diagram for other types
-                text_item = self.graphics_scene.addText(
-                    f"{ant.name.replace(chr(10), ' ')}\n"
-                    f"Measurements: {', '.join([f'{label}: {self._format_value(value)}' for label, value, _ in dims[:3]])}"
+                # Generic schematic for other types
+                schematic = AntennaSchematic.generic(
+                    ant.name.replace("\n", " "),
+                    f"{ant.formula_ft}",
+                    ant.match_impedance
                 )
-                text_item.setDefaultTextColor(QColor("#C8A84B"))
-                return
 
-            # Render SVG as image
-            if svg_content:
-                self._render_svg_to_scene(svg_content)
+            self.text_diagram.setPlainText(schematic)
 
         except Exception as e:
-            text_item = self.graphics_scene.addText(f"Diagram error: {str(e)}")
-            text_item.setDefaultTextColor(QColor("#CC0000"))
+            self.text_diagram.setPlainText(f"Diagram error: {str(e)}")
 
-    def _render_svg_to_scene(self, svg_content: str):
-        """Render SVG content to graphics scene."""
-        try:
-            from PySide6.QtSvg import QSvgRenderer
-            from PySide6.QtCore import QByteArray
-            from PySide6.QtGui import QPixmap
-
-            # Convert SVG to pixmap
-            svg_renderer = QSvgRenderer(QByteArray(svg_content.encode('utf-8')))
-            pixmap = QPixmap(600, 500)
-            pixmap.fill(QColor("#2A2D32"))
-            from PySide6.QtGui import QPainter
-            painter = QPainter(pixmap)
-            svg_renderer.render(painter)
-            painter.end()
-
-            # Add to scene
-            pixmap_item = self.graphics_scene.addPixmap(pixmap)
-            pixmap_item.setPos(0, 0)
-
-        except Exception:
-            # Fallback: show text
-            text_item = self.graphics_scene.addText("SVG Diagram")
-            text_item.setDefaultTextColor(QColor("#C8A84B"))
 
     def _create_dipole_diagram(self, dims):
         """Create dipole diagram SVG."""
