@@ -206,11 +206,11 @@ class SavedAntenna:
     """User-saved antenna configuration."""
     name: str
     description: str
-    antenna_type: AntennaType
+    antenna_type: str  # Antenna type ID (e.g., "dipole", "efhw")
     frequency_mhz: float
-    wire_type: WireType
+    wire_type: str  # Wire type label (e.g., "BARE", "STD PVC")
     velocity_factor: float
-    feedline_type: Optional[CoaxType] = None
+    feedline_type: Optional[str] = None
     feedline_length_m: float = 0.0
     created_date: str = field(default_factory=lambda: datetime.now().isoformat())
     modified_date: str = field(default_factory=lambda: datetime.now().isoformat())
@@ -220,11 +220,11 @@ class SavedAntenna:
         return {
             "name": self.name,
             "description": self.description,
-            "antenna_type": self.antenna_type.value,
+            "antenna_type": self.antenna_type,
             "frequency_mhz": self.frequency_mhz,
-            "wire_type": self.wire_type.name,
+            "wire_type": self.wire_type,
             "velocity_factor": self.velocity_factor,
-            "feedline_type": self.feedline_type.value if self.feedline_type else None,
+            "feedline_type": self.feedline_type,
             "feedline_length_m": self.feedline_length_m,
             "created_date": self.created_date,
             "modified_date": self.modified_date,
@@ -234,13 +234,13 @@ class SavedAntenna:
     def from_dict(cls, data: dict) -> "SavedAntenna":
         """Create from dictionary (JSON deserialization)."""
         return cls(
-            name=data["name"],
-            description=data["description"],
-            antenna_type=AntennaType(data["antenna_type"]),
-            frequency_mhz=data["frequency_mhz"],
-            wire_type=WireType[data["wire_type"]],
-            velocity_factor=data["velocity_factor"],
-            feedline_type=CoaxType(data["feedline_type"]) if data.get("feedline_type") else None,
+            name=data.get("name", "Unnamed"),
+            description=data.get("description", ""),
+            antenna_type=data.get("antenna_type", "dipole"),
+            frequency_mhz=data.get("frequency_mhz", 14.225),
+            wire_type=data.get("wire_type", "STD PVC"),
+            velocity_factor=data.get("velocity_factor", 0.985),
+            feedline_type=data.get("feedline_type"),
             feedline_length_m=data.get("feedline_length_m", 0.0),
             created_date=data.get("created_date", datetime.now().isoformat()),
             modified_date=data.get("modified_date", datetime.now().isoformat()),
