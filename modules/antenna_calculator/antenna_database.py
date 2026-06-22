@@ -28,6 +28,12 @@ VELOCITY_FACTORS = [
         examples="Bare copper wire · Military WD-1 · Magnet wire · Thermostat wire"
     ),
     VelocityFactorOption(
+        label="LITZE",
+        name="Litze/stranded",
+        velocity_factor=0.995,
+        examples="Multi-strand litze wire · Flexible antenna wire · Radio stranded wire"
+    ),
+    VelocityFactorOption(
         label="THIN",
         name="Thin coat ~1%",
         velocity_factor=0.99,
@@ -40,10 +46,28 @@ VELOCITY_FACTORS = [
         examples="Automotive hookup · Marine tinned PVC · THHN building wire · Christmas light wire"
     ),
     VelocityFactorOption(
+        label="SPEAKER",
+        name="Speaker cable",
+        velocity_factor=0.98,
+        examples="Audio speaker wire · 2-conductor cable · Zip cord speaker wire"
+    ),
+    VelocityFactorOption(
+        label="SILICONE",
+        name="Silicone rubber",
+        velocity_factor=0.975,
+        examples="Silicone-coated wire · Flex silicone cable · High-temp silicone wire"
+    ),
+    VelocityFactorOption(
         label="HEAVY",
         name="Heavy jacket ~2%",
         velocity_factor=0.98,
         examples="Welding cable · Heavy rubber jacket · Silicone flex wire · Ribbon cable"
+    ),
+    VelocityFactorOption(
+        label="ALUMINUM",
+        name="Aluminum conductor",
+        velocity_factor=1.00,
+        examples="Aluminum wire · Aluminum tubing (dipole) · Aluminum rod"
     ),
 ]
 
