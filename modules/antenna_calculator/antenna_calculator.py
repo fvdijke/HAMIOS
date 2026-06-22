@@ -367,20 +367,22 @@ class AntennaCalculator(QDialog):
         # Results scroll area
         self.scroll_results = QScrollArea()
         self.scroll_results.setWidgetResizable(True)
+        self.scroll_results.setMinimumHeight(150)  # Prevent collapse
         self.results_widget = QWidget()
         self.results_layout = QVBoxLayout(self.results_widget)
         self.scroll_results.setWidget(self.results_widget)
         right.addWidget(QLabel("Calculated Dimensions:"))
-        right.addWidget(self.scroll_results, 1)
+        right.addWidget(self.scroll_results, 1)  # Stretch=1, takes remaining space
 
         # Diagram (SVG schematic)
         self.svg_diagram = QWebEngineView()
         self.svg_diagram.setStyleSheet(
             "background-color: #1A1D22; border: 1px solid #3A4050;"
         )
-        self.svg_diagram.setMinimumHeight(280)
+        self.svg_diagram.setMinimumHeight(250)
+        self.svg_diagram.setMaximumHeight(380)  # Prevent hogging space
         right.addWidget(QLabel("Antenna Schematic:"))
-        right.addWidget(self.svg_diagram, 1)
+        right.addWidget(self.svg_diagram, 0)  # Stretch=0, fixed size
 
         # Matching info
         self.match_box = QGroupBox("Matching Transformer")
@@ -389,7 +391,8 @@ class AntennaCalculator(QDialog):
         self.label_match.setWordWrap(True)
         self.label_match.setStyleSheet("font-size: 10px;")
         match_layout.addWidget(self.label_match)
-        right.addWidget(self.match_box)
+        self.match_box.setMinimumHeight(80)  # Ensure space
+        right.addWidget(self.match_box, 0)  # No stretch, fixed size
 
         # Combine panels
         layout.addLayout(left, 1)
@@ -1108,8 +1111,9 @@ class AntennaCalculator(QDialog):
             self.label_trim_result.setText("Enter valid values")
             return
 
-        # Correct ratio: new_frequency / old_frequency = target / measured
-        ratio = tgt / meas
+        # Antenna physics: L ∝ 1/f, so: L2 = L1 × (f1/f2)
+        # ratio = measured / target (not target/measured!)
+        ratio = meas / tgt
         new_leg = leg * ratio
         diff = leg - new_leg
 
