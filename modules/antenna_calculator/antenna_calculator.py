@@ -894,62 +894,61 @@ class AntennaCalculator(QDialog):
             self.text_diagram.setPlainText("No antenna selected")
             return
 
-        # Get VF with bounds checking
-        if 0 <= self._velocity_factor_idx < len(VELOCITY_FACTORS):
-            vf = VELOCITY_FACTORS[self._velocity_factor_idx].velocity_factor
-        else:
-            vf = 0.95
-
-        # Get dimensions
-        raw_dims = ant.dimensions_formula(self._frequency_mhz)
-        dims = [(label, value * vf if not any(x in label for x in ["SPACING", "DROOP", "HOIST"]) else value, sub)
-               for label, value, sub in raw_dims]
-
-        schematic = ""
-
         try:
-            if ant.id == "dipole":
-                total = dims[0][1]
-                half = total / 2
-                schematic = AntennaSchematic.dipole(total, half)
-
-            elif ant.id == "invv":
-                total = dims[0][1]
-                half = total / 2
-                schematic = AntennaSchematic.inverted_v(total, half)
-
-            elif ant.id in ["qwave", "jungleGP"]:
-                elem = dims[0][1]
-                radial = dims[1][1] if len(dims) > 1 else elem
-                schematic = AntennaSchematic.vertical(elem, radial, num_radials=4)
-
-            elif ant.id == "efhw":
-                total = dims[0][1]
-                cp = total * 0.05
-                schematic = AntennaSchematic.efhw(total, cp)
-
-            elif ant.id == "loop":
-                perimeter = dims[0][1]
-                side = perimeter / 4
-                schematic = AntennaSchematic.loop(perimeter, side)
-
-            elif ant.id == "delta":
-                side = dims[0][1]
-                height = side * math.sqrt(3) / 2
-                schematic = AntennaSchematic.loop(side * 3, side)  # Use loop schematic
-
+            # Get VF with bounds checking
+            if 0 <= self._velocity_factor_idx < len(VELOCITY_FACTORS):
+                vf = VELOCITY_FACTORS[self._velocity_factor_idx].velocity_factor
             else:
-                # Generic schematic for other types
+                vf = 0.95
+
+            # Calculate basic dimensions from formula string
+            f = self._frequency_mhz
+            total_length = None
+
+            # Parse formula strings to calculate length
+            if "468" in ant.formula_ft:
+                total_length = (468 / f) * vf
+            elif "234" in ant.formula_ft:
+                total_length = (234 / f) * vf
+            elif "1005" in ant.formula_ft:
+                total_length = (1005 / f) * vf
+            elif "702" in ant.formula_ft:
+                total_length = (702 / f) * vf
+            elif "585" in ant.formula_ft:
+                total_length = (585 / f) * vf
+            else:
+                total_length = 50  # Default
+
+            # Generate schematic based on antenna ID
+            if ant.id == "hw_dipole":
+                half = total_length / 2
+                schematic = AntennaSchematic.dipole(total_length, half)
+            elif ant.id == "inverted_v":
+                half = total_length / 2
+                schematic = AntennaSchematic.inverted_v(total_length, half)
+            elif ant.id in ["qwave_vert", "gp_antenna"]:
+                schematic = AntennaSchematic.vertical(total_length, total_length, num_radials=4)
+            elif ant.id == "efhw":
+                cp = total_length * 0.05
+                schematic = AntennaSchematic.efhw(total_length, cp)
+            elif ant.id in ["full_loop", "square_loop"]:
+                side = total_length / 4
+                schematic = AntennaSchematic.loop(total_length, side)
+            elif ant.id == "delta_loop":
+                side = total_length / 3
+                schematic = AntennaSchematic.loop(total_length, side)
+            else:
+                # Generic schematic for all other types
                 schematic = AntennaSchematic.generic(
-                    ant.name.replace("\n", " "),
-                    f"{ant.formula_ft}",
-                    ant.match_impedance
+                    ant.name_nl,
+                    ant.formula_ft,
+                    ant.impedance
                 )
 
             self.text_diagram.setPlainText(schematic)
 
         except Exception as e:
-            self.text_diagram.setPlainText(f"Diagram error: {str(e)}")
+            self.text_diagram.setPlainText(f"Diagram: {ant.name_nl} @ {self._frequency_mhz} MHz")
 
 
     def _create_dipole_diagram(self, dims):
