@@ -746,16 +746,47 @@ class AntennaCalculator(QDialog):
         if not self._frequency_mhz or self._frequency_mhz <= 0:
             return
 
-        # Get antenna and VF
-        ant = ANTENNA_TYPES[self._antenna_idx]
-        vf = VELOCITY_FACTORS[self._velocity_factor_idx].velocity_factor
+        # Get VF with bounds checking
+        if 0 <= self._velocity_factor_idx < len(VELOCITY_FACTORS):
+            vf = VELOCITY_FACTORS[self._velocity_factor_idx].velocity_factor
+        else:
+            vf = 0.95  # Default fallback
 
-        # Calculate dimensions
-        raw_dims = ant.dimensions_formula(self._frequency_mhz)
-        dims = [
-            (label, value * vf, sub) if not label.startswith("SPACING") and not label.startswith("DROOP") and not label.startswith("HOIST") else (label, value, sub)
-            for label, value, sub in raw_dims
-        ]
+        # Get antenna from extended types based on current selection
+        category = self.combo_category.currentText()
+        antenna_name = self.combo_antenna.currentText()
+
+        ant = None
+        for antenna in ANTENNA_TYPES_EXTENDED:
+            if antenna.category_en == category and antenna_name.startswith(antenna.name_nl):
+                ant = antenna
+                break
+
+        if ant is None:
+            return  # No antenna selected
+
+        # For extended antenna types, use basic calculations (not formula-based)
+        # since they have different architectures
+        dims = []
+        try:
+            # Basic dimension calculation using formula
+            formula = ant.formula_ft
+            if "468" in formula:
+                length = (468 / self._frequency_mhz) * vf
+                dims.append(("Total Length", length, "Half-wave dipole"))
+            elif "234" in formula:
+                length = (234 / self._frequency_mhz) * vf
+                dims.append(("Vertical Height", length, "Quarter-wave"))
+            elif "1005" in formula:
+                length = (1005 / self._frequency_mhz) * vf
+                dims.append(("Loop Perimeter", length, "Full-wave loop"))
+            elif "702" in formula:
+                length = (702 / self._frequency_mhz) * vf
+                dims.append(("Total Length", length, "J-Pole/Zepp"))
+            else:
+                dims.append(("Frequency", self._frequency_mhz, "MHz"))
+        except Exception:
+            dims.append(("Frequency", self._frequency_mhz, "MHz"))
 
         # Display results - clear old widgets
         while self.results_layout.count():
@@ -764,7 +795,7 @@ class AntennaCalculator(QDialog):
                 item.widget().deleteLater()
 
         # Add antenna info header
-        info_label = QLabel(f"<b>{ant.name.replace(chr(10), ' ')}</b><br>{self._frequency_mhz} MHz")
+        info_label = QLabel(f"<b>{ant.name_nl} / {ant.name_en}</b><br>{self._frequency_mhz} MHz")
         info_label.setStyleSheet("color: #C8A84B; font-size: 11px;")
         self.results_layout.addWidget(info_label)
 
@@ -773,41 +804,20 @@ class AntennaCalculator(QDialog):
             widget = self._create_result_box(label, value, sub)
             self.results_layout.addWidget(widget)
 
-        # Add radials/counter poise info if vertical antenna
-        if any(x in ant.id for x in ["qwave", "jungleGP", "vertical"]) or "Vertical" in ant.name:
-            radials_box = QGroupBox("Radials / Ground Plane")
-            radials_layout = QVBoxLayout(radials_box)
-
-            radial_len = dims[1][1] if len(dims) > 1 else dims[0][1]
-
-            radials_info = (
-                f"<b>Minimum Radials:</b> 4<br>"
-                f"<b>Recommended:</b> 8 or more<br>"
-                f"<b>Radial Length:</b> {self._format_value(radial_len)}<br>"
-                f"<b>Deployment:</b> Spread 90° apart, or 120° for 3 radials<br>"
-                f"<b>Performance:</b> More radials = better efficiency"
-            )
-            radials_label = QLabel(radials_info)
-            radials_label.setWordWrap(True)
-            radials_label.setStyleSheet("font-size: 9px;")
-            radials_layout.addWidget(radials_label)
-            self.results_layout.addWidget(radials_box)
-
-        # Add counter poise info for EFHW (in Calculated Dimensions section)
-        if ant.id == "efhw":
-            total_len = dims[0][1]
-            cp_len = total_len * 0.05
-            cp_widget = self._create_result_box("COUNTERPOISE", cp_len, "~5% of wire length")
-            self.results_layout.addWidget(cp_widget)
-
-        # Add antenna notes
-        notes_box = QGroupBox("Deployment Notes")
-        notes_layout = QVBoxLayout(notes_box)
-        notes_label = QLabel(ant.field_notes)
-        notes_label.setWordWrap(True)
-        notes_label.setStyleSheet("font-size: 8px; color: #999;")
-        notes_layout.addWidget(notes_label)
-        self.results_layout.addWidget(notes_box)
+        # Add antenna specifications box
+        spec_box = QGroupBox("Specifications")
+        spec_layout = QVBoxLayout(spec_box)
+        spec_info = (
+            f"<b>Impedance:</b> {ant.impedance}<br>"
+            f"<b>Matching:</b> {ant.balun}<br>"
+            f"<b>ATU Needed:</b> {ant.atu_needed}<br>"
+            f"<b>RX Suitable:</b> {'Yes ✓' if ant.suitable_for_rx else 'No'}"
+        )
+        spec_label = QLabel(spec_info)
+        spec_label.setWordWrap(True)
+        spec_label.setStyleSheet("font-size: 9px;")
+        spec_layout.addWidget(spec_label)
+        self.results_layout.addWidget(spec_box)
 
         self.results_layout.addStretch()
 
@@ -816,11 +826,10 @@ class AntennaCalculator(QDialog):
 
         # Matching info
         self.label_match.setText(
-            f"<b>{ant.match_type}</b><br>"
-            f"Ratio: {ant.match_ratio}<br>"
-            f"Impedance: {ant.match_impedance}<br>"
+            f"<b>{ant.balun}</b><br>"
+            f"Impedance: {ant.impedance}<br>"
             f"ATU: {ant.atu_needed}<br><br>"
-            f"{ant.match_note}"
+            f"Category: {ant.category_en}"
         )
 
         # Update coax and trim calculations
@@ -865,8 +874,25 @@ class AntennaCalculator(QDialog):
         """Draw antenna schematic (text-based)."""
         from .antenna_schematics import AntennaSchematic
 
-        ant = ANTENNA_TYPES[self._antenna_idx]
-        vf = VELOCITY_FACTORS[self._velocity_factor_idx].velocity_factor
+        # Get antenna from extended types
+        category = self.combo_category.currentText()
+        antenna_name = self.combo_antenna.currentText()
+
+        ant = None
+        for antenna in ANTENNA_TYPES_EXTENDED:
+            if antenna.category_en == category and antenna_name.startswith(antenna.name_nl):
+                ant = antenna
+                break
+
+        if ant is None:
+            self.text_diagram.setPlainText("No antenna selected")
+            return
+
+        # Get VF with bounds checking
+        if 0 <= self._velocity_factor_idx < len(VELOCITY_FACTORS):
+            vf = VELOCITY_FACTORS[self._velocity_factor_idx].velocity_factor
+        else:
+            vf = 0.95
 
         # Get dimensions
         raw_dims = ant.dimensions_formula(self._frequency_mhz)
