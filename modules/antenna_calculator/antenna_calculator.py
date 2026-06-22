@@ -28,6 +28,7 @@ from .antenna_database import (
     VELOCITY_FACTORS, COAX_CABLES, ANTENNA_TYPES,
     get_antenna_by_id
 )
+from .antenna_types_extended import ANTENNA_TYPES_EXTENDED, get_categories
 from .antenna_record import AntennaRecord, FieldExpeditentSWRCheck
 
 
@@ -324,18 +325,32 @@ class AntennaCalculator(QDialog):
             wave_layout.addWidget(btn)
         left.addWidget(wave_group)
 
-        # Antenna Type
-        ant_group = self._create_group("Antenna Type")
+        # Antenna Type Selector - Organized by Category
+        ant_group = self._create_group("Antenna Type (100+)")
         ant_layout = QVBoxLayout(ant_group)
+
+        # Category selector
+        self.combo_category = QComboBox()
+        categories = get_categories()
+        self.combo_category.addItems(categories)
+        self.combo_category.currentTextChanged.connect(self._on_category_changed)
+        ant_layout.addWidget(QLabel("Category:"))
+        ant_layout.addWidget(self.combo_category)
+
+        # Antenna selector within category
         self.combo_antenna = QComboBox()
-        self.combo_antenna.addItems([ant.name.replace("\n", " ") for ant in ANTENNA_TYPES])
         self.combo_antenna.currentIndexChanged.connect(self._on_antenna_changed)
+        ant_layout.addWidget(QLabel("Antenna Type:"))
         ant_layout.addWidget(self.combo_antenna)
+
+        # Formula display
         self.label_ant_formula = QLabel()
         self.label_ant_formula.setWordWrap(True)
         self.label_ant_formula.setStyleSheet("font-size: 9px; color: #666; font-family: monospace;")
         ant_layout.addWidget(self.label_ant_formula)
+
         left.addWidget(ant_group)
+        self._populate_antennas_for_category()
 
         left.addStretch()
 
@@ -683,12 +698,36 @@ class AntennaCalculator(QDialog):
         self._save_settings()
         self._update_calculations()
 
+    def _populate_antennas_for_category(self):
+        """Populate antenna selector for current category."""
+        category = self.combo_category.currentText()
+        self.combo_antenna.blockSignals(True)
+        self.combo_antenna.clear()
+
+        for ant in ANTENNA_TYPES_EXTENDED:
+            if ant.category_en == category:
+                self.combo_antenna.addItem(f"{ant.name_nl} / {ant.name_en}")
+
+        self.combo_antenna.blockSignals(False)
+        self._on_antenna_changed()
+
+    def _on_category_changed(self):
+        """Handle category change."""
+        self._populate_antennas_for_category()
+
     def _on_antenna_changed(self):
         """Handle antenna type change."""
-        self._antenna_idx = self.combo_antenna.currentIndex()
-        ant = ANTENNA_TYPES[self._antenna_idx]
-        formula = f"ft: {ant.formula_ft}" if self._unit == "ft" else f"m: {ant.formula_m}"
-        self.label_ant_formula.setText(formula)
+        category = self.combo_category.currentText()
+        antenna_name = self.combo_antenna.currentText()
+
+        # Find matching antenna in extended types
+        for ant in ANTENNA_TYPES_EXTENDED:
+            if ant.category_en == category and antenna_name.startswith(ant.name_nl):
+                formula = f"ft: {ant.formula_ft}" if self._unit == "ft" else f"m: {ant.formula_m}"
+                impedance = f"Impedance: {ant.impedance}"
+                self.label_ant_formula.setText(f"{formula}\n{impedance}")
+                break
+
         self._save_settings()
         self._update_calculations()
 

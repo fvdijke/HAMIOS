@@ -66,7 +66,7 @@ class HeaderBar(QWidget):
         self._btn_overlay.setToolTip(tr("hdr.overlays.tip"))
         self._btn_panels = self._btn(tr("hdr.panels"),       amber=True)
         self._btn_panels.setToolTip(tr("hdr.panels"))
-        self._btn_tools = self._btn("Antenna", amber=True)
+        self._btn_tools = self._btn("📡 Antenna", amber=True)
         self._btn_tools.setToolTip("Antenna Calculator & Tools")
         self._btn_exit     = self._btn(tr("app.close"), bg="#5A1010", hover="#8B1A1A")
         self._btn_settings = self._btn(tr("hdr.settings"), amber=True)
