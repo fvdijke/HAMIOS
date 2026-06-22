@@ -21,53 +21,164 @@ class VelocityFactorOption:
 
 
 VELOCITY_FACTORS = [
+    # ── BARE CONDUCTORS ────────────────────────────────────────────────────
     VelocityFactorOption(
-        label="BARE",
-        name="Bare copper",
-        velocity_factor=1.00,
-        examples="Bare copper wire · Military WD-1 · Magnet wire · Thermostat wire"
+        label="KALE_KOPER",
+        name="Kale koperdraad",
+        velocity_factor=0.98,
+        examples="Bare copper wire · Military WD-1 · Magnet wire"
+    ),
+    VelocityFactorOption(
+        label="VERTINDE_KOPER",
+        name="Vertinde koperdraad",
+        velocity_factor=0.98,
+        examples="Tinned copper wire · Marine grade · Flexible stranded bare"
+    ),
+
+    # ── PVC INSULATION ────────────────────────────────────────────────────
+    VelocityFactorOption(
+        label="PVC_THIN",
+        name="Koperdraad met dunne PVC",
+        velocity_factor=0.95,
+        examples="Thin PVC insulation · Standard hookup wire · Automotive wire"
+    ),
+    VelocityFactorOption(
+        label="PVC_THICK",
+        name="Koperdraad met dikke PVC",
+        velocity_factor=0.93,
+        examples="Heavy PVC jacket · Outdoor weatherproof wire · Marine cable"
+    ),
+
+    # ── INSTALLATION WIRE ────────────────────────────────────────────────
+    VelocityFactorOption(
+        label="VD_1P5",
+        name="Installatiedraad VD 1,5 mm²",
+        velocity_factor=0.95,
+        examples="Standard building wire 1.5mm · Household installation wire"
+    ),
+    VelocityFactorOption(
+        label="VD_2P5",
+        name="Installatiedraad VD 2,5 mm²",
+        velocity_factor=0.95,
+        examples="Standard building wire 2.5mm · Household installation wire"
+    ),
+
+    # ── SPEAKER & AUDIO CABLES ────────────────────────────────────────────
+    VelocityFactorOption(
+        label="SPEAKER",
+        name="Speakerwire (platte luidsprekerkabel)",
+        velocity_factor=0.94,
+        examples="Flat audio speaker cable · 2-conductor zip cord · Audio hookup"
+    ),
+
+    # ── PREMIUM ANTENNA WIRE ───────────────────────────────────────────────
+    VelocityFactorOption(
+        label="DX_PREMIUM",
+        name="DX-Wire Premium Antenna Wire",
+        velocity_factor=0.97,
+        examples="High-quality antenna wire · DX-Wire brand · Professional grade"
+    ),
+    VelocityFactorOption(
+        label="DX_FLEXWEAVE",
+        name="DX-Wire Flexweave",
+        velocity_factor=0.97,
+        examples="Flexible premium antenna · DX-Wire brand · Stranded design"
+    ),
+
+    # ── SPECIALTY INSULATION ───────────────────────────────────────────────
+    VelocityFactorOption(
+        label="SILICONE",
+        name="Silicium geïsoleerde draad",
+        velocity_factor=0.96,
+        examples="Silicone rubber insulation · High-temp antenna wire · Flex cable"
+    ),
+    VelocityFactorOption(
+        label="PTFE",
+        name="PTFE (Teflon) geïsoleerde draad",
+        velocity_factor=0.97,
+        examples="Teflon insulation · Low-loss RF cable · Premium antenna wire"
+    ),
+    VelocityFactorOption(
+        label="RUBBER",
+        name="Rubber geïsoleerde draad",
+        velocity_factor=0.94,
+        examples="Rubber jacket · Flexible antenna wire · Vintage antenna wire"
+    ),
+
+    # ── MAGNET & STRANDED WIRE ────────────────────────────────────────────
+    VelocityFactorOption(
+        label="EMAILLE",
+        name="Emaille draad (magneetdraad)",
+        velocity_factor=0.98,
+        examples="Magnet wire · Enameled copper · Radio coil wire"
     ),
     VelocityFactorOption(
         label="LITZE",
-        name="Litze/stranded",
-        velocity_factor=0.995,
-        examples="Multi-strand litze wire · Flexible antenna wire · Radio stranded wire"
+        name="Litze draad",
+        velocity_factor=0.96,
+        examples="Multi-strand litze wire · Flexible stranded antenna wire"
     ),
-    VelocityFactorOption(
-        label="THIN",
-        name="Thin coat ~1%",
-        velocity_factor=0.99,
-        examples="Speaker wire · Extension cord inner · Lamp/zip cord · Phone wire solid core"
-    ),
-    VelocityFactorOption(
-        label="STD PVC",
-        name="Standard ~1.5%",
-        velocity_factor=0.985,
-        examples="Automotive hookup · Marine tinned PVC · THHN building wire · Christmas light wire"
-    ),
-    VelocityFactorOption(
-        label="SPEAKER",
-        name="Speaker cable",
-        velocity_factor=0.98,
-        examples="Audio speaker wire · 2-conductor cable · Zip cord speaker wire"
-    ),
-    VelocityFactorOption(
-        label="SILICONE",
-        name="Silicone rubber",
-        velocity_factor=0.975,
-        examples="Silicone-coated wire · Flex silicone cable · High-temp silicone wire"
-    ),
-    VelocityFactorOption(
-        label="HEAVY",
-        name="Heavy jacket ~2%",
-        velocity_factor=0.98,
-        examples="Welding cable · Heavy rubber jacket · Silicone flex wire · Ribbon cable"
-    ),
+
+    # ── ALTERNATIVE CONDUCTORS ────────────────────────────────────────────
     VelocityFactorOption(
         label="ALUMINUM",
-        name="Aluminum conductor",
-        velocity_factor=1.00,
-        examples="Aluminum wire · Aluminum tubing (dipole) · Aluminum rod"
+        name="Aluminiumdraad",
+        velocity_factor=0.98,
+        examples="Aluminum conductor · Aluminum tubing · Aluminum rod"
+    ),
+    VelocityFactorOption(
+        label="COPPERWELD",
+        name="Copperweld",
+        velocity_factor=0.98,
+        examples="Copper-clad steel · Hybrid conductor · High strength"
+    ),
+    VelocityFactorOption(
+        label="STAINLESS",
+        name="RVS draad",
+        velocity_factor=0.98,
+        examples="Stainless steel wire · Corrosion resistant · Marine grade"
+    ),
+    VelocityFactorOption(
+        label="ELECTRIC_FENCE",
+        name="Elektrisch schrikdraad (staal)",
+        velocity_factor=0.98,
+        examples="Electric fence wire · High-strength steel · Farm wire"
+    ),
+
+    # ── MILITARY & SPECIAL PURPOSE ────────────────────────────────────────
+    VelocityFactorOption(
+        label="WD1A",
+        name="Militaire veldtelefoondraad WD-1A/TT",
+        velocity_factor=0.95,
+        examples="Military field telephone wire · WD-1A standard · Durable field wire"
+    ),
+
+    # ── DATA CABLE AS ANTENNA WIRE ────────────────────────────────────────
+    VelocityFactorOption(
+        label="CAT5",
+        name="CAT5 ader als antennedraad",
+        velocity_factor=0.94,
+        examples="CAT5 network cable · Twisted pair · Salvaged Ethernet wire"
+    ),
+    VelocityFactorOption(
+        label="CAT6",
+        name="CAT6 ader als antennedraad",
+        velocity_factor=0.94,
+        examples="CAT6 network cable · Twisted pair · Salvaged Ethernet wire"
+    ),
+
+    # ── POLYESTER & POLYETHYLENE ──────────────────────────────────────────
+    VelocityFactorOption(
+        label="POLYESTER",
+        name="Polyester ommantelde antennedraad",
+        velocity_factor=0.95,
+        examples="Polyester jacket antenna wire · Weather resistant · UV resistant"
+    ),
+    VelocityFactorOption(
+        label="POLYETHYLENE",
+        name="Polyethyleen (PE) geïsoleerde draad",
+        velocity_factor=0.96,
+        examples="Polyethylene insulation · Flexible antenna wire · RF cable"
     ),
 ]
 

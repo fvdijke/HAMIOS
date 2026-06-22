@@ -269,7 +269,9 @@ class AntennaCalculator(QDialog):
         vf_group = self._create_group("Wire / Velocity Factor")
         vf_layout = QVBoxLayout(vf_group)
         self.combo_vf = QComboBox()
-        self.combo_vf.addItems([vf.label for vf in VELOCITY_FACTORS])
+        # Add items with VF values displayed
+        for vf in VELOCITY_FACTORS:
+            self.combo_vf.addItem(f"{vf.label}  (VF {vf.velocity_factor})")
         self.combo_vf.addItem("CUSTOM")
         self.combo_vf.currentIndexChanged.connect(self._on_vf_changed)
         vf_layout.addWidget(self.combo_vf)
