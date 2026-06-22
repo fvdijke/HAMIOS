@@ -899,16 +899,21 @@ class AntennaCalculator(QDialog):
     def _create_result_box(self, label: str, value: float, sub: str = "") -> QGroupBox:
         """Create result display box."""
         box = QGroupBox(label)
+        box.setMaximumHeight(100)  # Limit height
         layout = QVBoxLayout(box)
+        layout.setContentsMargins(4, 4, 4, 4)  # Compact margins
+        layout.setSpacing(2)  # Tight spacing
 
         val_text = self._format_value(value)
         val_label = QLabel(val_text)
-        val_label.setStyleSheet("font-size: 14pt; font-weight: bold; color: #00ff41;")
+        val_label.setWordWrap(True)  # Allow text wrapping
+        val_label.setStyleSheet("font-size: 11pt; font-weight: bold; color: #C8A84B;")  # Smaller, amber
         layout.addWidget(val_label)
 
         if sub:
             sub_label = QLabel(sub)
-            sub_label.setStyleSheet("font-size: 9px; color: #888;")
+            sub_label.setWordWrap(True)
+            sub_label.setStyleSheet("font-size: 8px; color: #888;")
             layout.addWidget(sub_label)
 
         return box
