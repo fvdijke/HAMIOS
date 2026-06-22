@@ -805,25 +805,43 @@ class AntennaCalculator(QDialog):
         # since they have different architectures
         dims = []
         try:
-            # Basic dimension calculation using formula (with wave_fraction applied)
+            # Parse formula and calculate dimensions
             formula = ant.formula_ft
-            if "468" in formula:
-                length = (468 / self._frequency_mhz) * vf * self._wave_fraction
-                dims.append(("Total Length", length, "Half-wave dipole"))
-            elif "234" in formula:
-                length = (234 / self._frequency_mhz) * vf * self._wave_fraction
-                dims.append(("Vertical Height", length, "Quarter-wave"))
-            elif "1005" in formula:
-                length = (1005 / self._frequency_mhz) * vf * self._wave_fraction
-                dims.append(("Loop Perimeter", length, "Full-wave loop"))
-            elif "702" in formula:
-                length = (702 / self._frequency_mhz) * vf * self._wave_fraction
-                dims.append(("Total Length", length, "J-Pole/Zepp"))
-            elif "585" in formula:
-                length = (585 / self._frequency_mhz) * vf * self._wave_fraction
-                dims.append(("Total Length", length, "5/8-wave"))
-            else:
-                dims.append(("Frequency", self._frequency_mhz, "MHz"))
+            length = None
+            label = "Dimension"
+
+            # Try to parse numeric formulas (468/f, 234/f, etc)
+            if "/" in formula and "f" in formula.lower():
+                try:
+                    # Extract numerator from "NNN/f" format
+                    numerator_str = formula.split('/')[0].strip()
+                    numerator = float(numerator_str)
+                    length = (numerator / self._frequency_mhz) * vf * self._wave_fraction
+                    label = f"Length ({numerator_str}/f)"
+                except (ValueError, IndexError):
+                    pass
+
+            # If still no length, use sensible defaults based on antenna type
+            if length is None:
+                if "dipole" in ant.name_nl.lower():
+                    # Standard dipole: 468/f
+                    length = (468 / self._frequency_mhz) * vf * self._wave_fraction
+                    label = "Length (468/f estimate)"
+                elif "vertical" in ant.name_nl.lower() or "vertical" in formula.lower():
+                    # Standard vertical: 234/f
+                    length = (234 / self._frequency_mhz) * vf * self._wave_fraction
+                    label = "Height (234/f estimate)"
+                elif "loop" in ant.name_nl.lower():
+                    # Standard loop: 1005/f
+                    length = (1005 / self._frequency_mhz) * vf * self._wave_fraction
+                    label = "Perimeter (1005/f estimate)"
+                else:
+                    # Fallback: show frequency only for unknown types
+                    dims.append(("Antenna Type", ant.name_en, f"{ant.category_en}"))
+                    dims.append(("Formula", ant.formula_ft, "See reference"))
+
+            if length is not None and length > 0:
+                dims.append((label, length, f"{ant.impedance} impedance"))
         except Exception:
             dims.append(("Frequency", self._frequency_mhz, "MHz"))
 
