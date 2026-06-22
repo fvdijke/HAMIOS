@@ -40,7 +40,8 @@ class AntennaCalculator(QDialog):
     def __init__(self, parent=None):
         super().__init__(parent)
         self.setWindowTitle("HAMIOS Antenna Calculator")
-        self.setMinimumSize(QSize(1600, 950))
+        self.setMinimumSize(QSize(1800, 1000))
+        self.resize(QSize(1900, 1100))  # Default size
 
         # Apply HAMIOS dark theme
         self._apply_theme()
@@ -399,8 +400,9 @@ class AntennaCalculator(QDialog):
         self.svg_diagram.setStyleSheet(
             "background-color: #1A1D22; border: 1px solid #3A4050; border-radius: 4px;"
         )
-        self.svg_diagram.setMinimumWidth(350)
-        self.svg_diagram.setMinimumHeight(300)
+        self.svg_diagram.setMinimumWidth(400)
+        self.svg_diagram.setMinimumHeight(350)
+        # No max size - let it grow to fill available space
         right_layout.addWidget(self.svg_diagram, 1)
         top_row.addWidget(right_panel, 1)
 
