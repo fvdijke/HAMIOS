@@ -330,6 +330,7 @@ class HAMIOSMainWindow(QMainWindow):
         self._header.btn_ft8.clicked.connect(self._open_ft8_dialog)
         self._header.btn_overlay.clicked.connect(self._open_overlay_menu)
         self._header.btn_panels.clicked.connect(self._open_panel_chooser)
+        self._header.btn_tools.clicked.connect(self._open_antenna_calculator_dialog)
         self._header.btn_help.clicked.connect(self._open_help)
         self._header.btn_settings.clicked.connect(self._open_settings)
 

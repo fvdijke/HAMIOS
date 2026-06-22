@@ -66,6 +66,8 @@ class HeaderBar(QWidget):
         self._btn_overlay.setToolTip(tr("hdr.overlays.tip"))
         self._btn_panels = self._btn(tr("hdr.panels"),       amber=True)
         self._btn_panels.setToolTip(tr("hdr.panels"))
+        self._btn_tools = self._btn("Tools", amber=True)
+        self._btn_tools.setToolTip("Antenna Calculator & Tools")
         self._btn_exit     = self._btn(tr("app.close"), bg="#5A1010", hover="#8B1A1A")
         self._btn_settings = self._btn(tr("hdr.settings"), amber=True)
 
@@ -90,7 +92,7 @@ class HeaderBar(QWidget):
         self._local_tz = _tz_from_latlon(52.0, 5.0)   # default NL; update via set_qth()
 
         for b in [self._btn_sat, self._btn_spy, self._btn_eibi,
-                  self._btn_ft8, self._btn_overlay, self._btn_panels]:
+                  self._btn_ft8, self._btn_overlay, self._btn_panels, self._btn_tools]:
             layout.addWidget(b)
 
         # Radio frequentie display
@@ -291,6 +293,8 @@ class HeaderBar(QWidget):
     def btn_eibi(self):       return self._btn_eibi
     @property
     def btn_ft8(self):        return self._btn_ft8
+    @property
+    def btn_tools(self):      return self._btn_tools
     @property
     def btn_overlay(self):    return self._btn_overlay
     @property
