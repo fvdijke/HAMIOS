@@ -54,6 +54,7 @@ class AntennaCalculator(QDialog):
         self._coax_idx = 2  # RG-8X
         self._unit = "ft"  # feet or meters (default)
         self._rx_only = False  # RX-only mode
+        self._wave_fraction = 0.50  # 1/2 wave default
 
         self._load_settings()
 
@@ -312,6 +313,18 @@ class AntennaCalculator(QDialog):
         vf_layout.addWidget(self.label_vf_info)
         left.addWidget(vf_group)
 
+        # Wave Type Selector
+        wave_group = self._create_group("Wave Type")
+        wave_layout = QHBoxLayout(wave_group)
+        self.wave_fractions = {"1/4": 0.25, "1/2": 0.50, "5/8": 0.625, "Full": 1.0}
+        for label in ["1/4", "1/2", "5/8", "Full"]:
+            btn = QPushButton(f"{label}λ")
+            btn.setCheckable(True)
+            btn.setChecked(label == "1/2")
+            btn.clicked.connect(lambda checked, l=label: self._on_wave_type_changed(l))
+            wave_layout.addWidget(btn)
+        left.addWidget(wave_group)
+
         # Antenna Type
         ant_group = self._create_group("Antenna Type")
         ant_layout = QVBoxLayout(ant_group)
@@ -339,13 +352,16 @@ class AntennaCalculator(QDialog):
         right.addWidget(QLabel("Calculated Dimensions:"))
         right.addWidget(self.scroll_results, 1)
 
-        # Diagram
-        self.graphics_view = QGraphicsView()
-        self.graphics_scene = QGraphicsScene()
-        self.graphics_view.setScene(self.graphics_scene)
-        self.graphics_view.setMinimumHeight(300)
-        right.addWidget(QLabel("Antenna Diagram:"))
-        right.addWidget(self.graphics_view, 1)
+        # Diagram (text-based schematic)
+        self.text_diagram = QTextEdit()
+        self.text_diagram.setReadOnly(True)
+        self.text_diagram.setFont(QFont("Courier New", 9))
+        self.text_diagram.setStyleSheet(
+            "background-color: #1A1D22; color: #C8D0DC; border: 1px solid #3A4050;"
+        )
+        self.text_diagram.setMinimumHeight(280)
+        right.addWidget(QLabel("Antenna Schematic:"))
+        right.addWidget(self.text_diagram, 1)
 
         # Matching info
         self.match_box = QGroupBox("Matching Transformer")
@@ -457,6 +473,12 @@ class AntennaCalculator(QDialog):
 
         layout.addStretch()
         return widget
+
+    def _on_wave_type_changed(self, wave_label: str):
+        """Handle wave type selection."""
+        self._wave_fraction = self.wave_fractions[wave_label]
+        self._save_settings()
+        self._update_calculations()
 
     def _on_rx_mode_changed(self):
         """Handle RX-only mode toggle."""
