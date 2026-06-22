@@ -53,6 +53,7 @@ class AntennaCalculator(QDialog):
         self._antenna_idx = 0  # Dipole
         self._coax_idx = 2  # RG-8X
         self._unit = "ft"  # feet or meters (default)
+        self._rx_only = False  # RX-only mode
 
         self._load_settings()
 
@@ -226,6 +227,23 @@ class AntennaCalculator(QDialog):
 
         # Left panel: Controls
         left = QVBoxLayout()
+
+        # RX-Only Mode
+        from PySide6.QtWidgets import QCheckBox
+        rx_group = self._create_group("Mode")
+        rx_layout = QHBoxLayout(rx_group)
+        self.check_rx_only = QCheckBox("RX-Only (Receive)")
+        self.check_rx_only.stateChanged.connect(self._on_rx_mode_changed)
+        rx_layout.addWidget(self.check_rx_only)
+        rx_layout.addStretch()
+        left.addWidget(rx_group)
+
+        # RX-Suitable Antennas info
+        self.label_rx_suitable = QLabel()
+        self.label_rx_suitable.setWordWrap(True)
+        self.label_rx_suitable.setStyleSheet("font-size: 9px; color: #00AA00;")
+        self.label_rx_suitable.setVisible(False)
+        left.addWidget(self.label_rx_suitable)
 
         # Operating Frequency
         freq_group = self._create_group("Operating Frequency")
@@ -439,6 +457,27 @@ class AntennaCalculator(QDialog):
 
         layout.addStretch()
         return widget
+
+    def _on_rx_mode_changed(self):
+        """Handle RX-only mode toggle."""
+        self._rx_only = self.check_rx_only.isChecked()
+
+        if self._rx_only:
+            # Show suitable RX antennas
+            rx_suitable = [
+                "Full-Wave Loop (excellent isolation)",
+                "Delta Loop (good RX gain)",
+                "Magnetic Loop (directional, low noise)",
+                "Beverage antenna (long-range RX)",
+                "Random Wire (wideband RX)",
+            ]
+            self.label_rx_suitable.setText("✓ Best for RX:\n" + "\n".join(rx_suitable))
+            self.label_rx_suitable.setVisible(True)
+        else:
+            self.label_rx_suitable.setVisible(False)
+
+        self._save_settings()
+        self._update_calculations()
 
     def _on_custom_vf_changed(self):
         """Handle custom VF input."""
