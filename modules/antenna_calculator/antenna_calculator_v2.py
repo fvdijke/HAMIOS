@@ -587,9 +587,66 @@ class AntennaCalculatorV2(QDialog):
         while self.results_layout.count():
             self.results_layout.takeAt(0).widget().deleteLater()
 
+        # Add antenna info header
+        info_label = QLabel(f"<b>{ant.name.replace(chr(10), ' ')}</b><br>{self._frequency_mhz} MHz")
+        info_label.setStyleSheet("color: #C8A84B; font-size: 11px;")
+        self.results_layout.addWidget(info_label)
+
+        # Add calculated dimensions
         for label, value, sub in dims:
             widget = self._create_result_box(label, value, sub)
             self.results_layout.addWidget(widget)
+
+        # Add radials/counter poise info if vertical antenna
+        if any(x in ant.id for x in ["qwave", "jungleGP", "vertical"]) or "Vertical" in ant.name:
+            radials_box = QGroupBox("Radials / Ground Plane")
+            radials_layout = QVBoxLayout(radials_box)
+
+            radial_len = dims[1][1] if len(dims) > 1 else dims[0][1]
+
+            radials_info = (
+                f"<b>Minimum Radials:</b> 4<br>"
+                f"<b>Recommended:</b> 8 or more<br>"
+                f"<b>Radial Length:</b> {self._format_value(radial_len)}<br>"
+                f"<b>Deployment:</b> Spread 90° apart, or 120° for 3 radials<br>"
+                f"<b>Performance:</b> More radials = better efficiency"
+            )
+            radials_label = QLabel(radials_info)
+            radials_label.setWordWrap(True)
+            radials_label.setStyleSheet("font-size: 9px;")
+            radials_layout.addWidget(radials_label)
+            self.results_layout.addWidget(radials_box)
+
+        # Add counter poise info for EFHW
+        if ant.id == "efhw":
+            cp_box = QGroupBox("Counter Poise / Counterpoise")
+            cp_layout = QVBoxLayout(cp_box)
+
+            total_len = dims[0][1]
+            cp_len = total_len * 0.05
+
+            cp_info = (
+                f"<b>Counterpoise Length:</b> {self._format_value(cp_len)} (~5% of wire)<br>"
+                f"<b>Material:</b> Bare copper wire or coax shield<br>"
+                f"<b>Deployment:</b> Horizontal radial, same feedpoint<br>"
+                f"<b>Function:</b> Completes RF circuit for balanced operation"
+            )
+            cp_label = QLabel(cp_info)
+            cp_label.setWordWrap(True)
+            cp_label.setStyleSheet("font-size: 9px;")
+            cp_layout.addWidget(cp_label)
+            self.results_layout.addWidget(cp_box)
+
+        # Add antenna notes
+        notes_box = QGroupBox("Deployment Notes")
+        notes_layout = QVBoxLayout(notes_box)
+        notes_label = QLabel(ant.field_notes)
+        notes_label.setWordWrap(True)
+        notes_label.setStyleSheet("font-size: 8px; color: #999;")
+        notes_layout.addWidget(notes_label)
+        self.results_layout.addWidget(notes_box)
+
+        self.results_layout.addStretch()
 
         # Diagram
         self._draw_diagram()
