@@ -221,6 +221,9 @@ class AntennaCalculator(QDialog):
 
         main_layout.addLayout(btn_layout)
 
+        # Populate antenna list AFTER all UI is built
+        self._populate_antennas_for_category()
+
     def _build_calculator_tab(self) -> QWidget:
         """Main calculator tab with all 12 antenna types."""
         widget = QWidget()
@@ -350,7 +353,6 @@ class AntennaCalculator(QDialog):
         ant_layout.addWidget(self.label_ant_formula)
 
         left.addWidget(ant_group)
-        self._populate_antennas_for_category()
 
         left.addStretch()
 
