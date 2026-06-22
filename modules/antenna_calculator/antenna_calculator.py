@@ -30,6 +30,7 @@ from .antenna_database import (
 )
 from .antenna_types_extended import ANTENNA_TYPES_EXTENDED, get_categories
 from .antenna_record import AntennaRecord, FieldExpeditentSWRCheck
+from .antenna_graphics_svg import AntennaSVGGraphics
 
 
 class AntennaCalculator(QDialog):
