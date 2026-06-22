@@ -32,8 +32,8 @@ from .antenna_record import AntennaRecord, FieldExpeditentSWRCheck
 from .antenna_diagrams import AntennaDiagrams
 
 
-class AntennaCalculatorV2(QDialog):
-    """Complete production-ready antenna calculator with all features."""
+class AntennaCalculator(QDialog):
+    """Professional antenna calculator with all features."""
 
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -202,7 +202,6 @@ class AntennaCalculatorV2(QDialog):
         tabs.addTab(self._build_calculator_tab(), "Calculator")
         tabs.addTab(self._build_coax_tab(), "Feedline Loss")
         tabs.addTab(self._build_trim_tab(), "Field Trim")
-        tabs.addTab(self._build_record_tab(), "Birth Certificate")
         tabs.addTab(self._build_library_tab(), "Library")
         main_layout.addWidget(tabs)
 
@@ -271,8 +270,22 @@ class AntennaCalculatorV2(QDialog):
         vf_layout = QVBoxLayout(vf_group)
         self.combo_vf = QComboBox()
         self.combo_vf.addItems([vf.label for vf in VELOCITY_FACTORS])
+        self.combo_vf.addItem("CUSTOM")
         self.combo_vf.currentIndexChanged.connect(self._on_vf_changed)
         vf_layout.addWidget(self.combo_vf)
+
+        # Custom VF input
+        self.spin_vf_custom = QDoubleSpinBox()
+        self.spin_vf_custom.setMinimum(0.50)
+        self.spin_vf_custom.setMaximum(1.00)
+        self.spin_vf_custom.setValue(0.95)
+        self.spin_vf_custom.setDecimals(3)
+        self.spin_vf_custom.setSingleStep(0.01)
+        self.spin_vf_custom.setVisible(False)
+        self.spin_vf_custom.valueChanged.connect(self._on_custom_vf_changed)
+        vf_layout.addWidget(QLabel("Custom VF:"))
+        vf_layout.addWidget(self.spin_vf_custom)
+
         self.label_vf_info = QLabel()
         self.label_vf_info.setWordWrap(True)
         self.label_vf_info.setStyleSheet("font-size: 9px; color: #888;")
@@ -424,6 +437,15 @@ class AntennaCalculatorV2(QDialog):
 
         layout.addStretch()
         return widget
+
+    def _on_custom_vf_changed(self):
+        """Handle custom VF input."""
+        if self.combo_vf.currentText() == "CUSTOM":
+            # Set VF to custom value
+            vf_obj = VELOCITY_FACTORS[self._velocity_factor_idx]
+            # Create temp object with custom VF
+            self._save_settings()
+            self._update_calculations()
 
     def _build_record_tab(self) -> QWidget:
         """Antenna Birth Certificate."""
@@ -658,25 +680,12 @@ class AntennaCalculatorV2(QDialog):
             radials_layout.addWidget(radials_label)
             self.results_layout.addWidget(radials_box)
 
-        # Add counter poise info for EFHW
+        # Add counter poise info for EFHW (in Calculated Dimensions section)
         if ant.id == "efhw":
-            cp_box = QGroupBox("Counter Poise / Counterpoise")
-            cp_layout = QVBoxLayout(cp_box)
-
             total_len = dims[0][1]
             cp_len = total_len * 0.05
-
-            cp_info = (
-                f"<b>Counterpoise Length:</b> {self._format_value(cp_len)} (~5% of wire)<br>"
-                f"<b>Material:</b> Bare copper wire or coax shield<br>"
-                f"<b>Deployment:</b> Horizontal radial, same feedpoint<br>"
-                f"<b>Function:</b> Completes RF circuit for balanced operation"
-            )
-            cp_label = QLabel(cp_info)
-            cp_label.setWordWrap(True)
-            cp_label.setStyleSheet("font-size: 9px;")
-            cp_layout.addWidget(cp_label)
-            self.results_layout.addWidget(cp_box)
+            cp_widget = self._create_result_box("COUNTERPOISE", cp_len, "~5% of wire length")
+            self.results_layout.addWidget(cp_widget)
 
         # Add antenna notes
         notes_box = QGroupBox("Deployment Notes")

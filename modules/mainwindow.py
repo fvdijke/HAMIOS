@@ -39,7 +39,7 @@ from .spy_dialog import SpyStationsDialog
 from .eibi_dialog import EibiDialog
 from .ft8_dialog import Ft8Dialog
 from .help_dialog import HelpDialog
-from .antenna_calculator.antenna_calculator_v2 import AntennaCalculatorV2
+from .antenna_calculator.antenna_calculator import AntennaCalculator
 from . import cat_interface as _cat_mod
 
 # Pad naar layouts-bestand (gedeeld met v4)
@@ -744,7 +744,7 @@ class HAMIOSMainWindow(QMainWindow):
 
     def _open_antenna_calculator_dialog(self):
         """Open the antenna calculator."""
-        calculator = AntennaCalculatorV2(self)
+        calculator = AntennaCalculator(self)
         calculator.exec()
 
     def _open_overlay_menu(self):
