@@ -36,8 +36,11 @@ class AntennaCalculatorV2(QDialog):
 
     def __init__(self, parent=None):
         super().__init__(parent)
-        self.setWindowTitle("HAMIOS Antenna Calculator - Grid Down Field Guide")
+        self.setWindowTitle("HAMIOS Antenna Calculator")
         self.setMinimumSize(QSize(1600, 950))
+
+        # Apply HAMIOS dark theme
+        self._apply_theme()
 
         # State
         self._frequency_mhz = 14.225
@@ -54,6 +57,101 @@ class AntennaCalculatorV2(QDialog):
         self._connect_signals()
         self._update_calculations()
 
+    def _apply_theme(self):
+        """Apply HAMIOS dark theme with amber accents."""
+        sheet = """
+        QDialog, QWidget {
+            background-color: #1A1D22;
+            color: #C8D0DC;
+        }
+        QLabel {
+            color: #C8D0DC;
+        }
+        QGroupBox {
+            color: #C8A84B;
+            border: 1px solid #3A4050;
+            border-radius: 4px;
+            margin-top: 8px;
+            padding-top: 8px;
+        }
+        QGroupBox::title {
+            subcontrol-origin: margin;
+            left: 10px;
+            padding: 0 3px 0 3px;
+            color: #C8A84B;
+        }
+        QPushButton {
+            background-color: #2A2D32;
+            color: #C8A84B;
+            border: 1px solid #3A4050;
+            border-radius: 4px;
+            padding: 4px 12px;
+            font-weight: bold;
+        }
+        QPushButton:hover {
+            background-color: #3A3D42;
+            border: 1px solid #C8A84B;
+        }
+        QPushButton:pressed {
+            background-color: #1A1D22;
+        }
+        QComboBox, QSpinBox, QDoubleSpinBox, QDateEdit {
+            background-color: #2A2D32;
+            color: #C8D0DC;
+            border: 1px solid #3A4050;
+            border-radius: 4px;
+            padding: 4px;
+        }
+        QComboBox:hover, QSpinBox:hover, QDoubleSpinBox:hover {
+            border: 1px solid #C8A84B;
+        }
+        QTabWidget::pane {
+            border: 1px solid #3A4050;
+        }
+        QTabBar::tab {
+            background-color: #2A2D32;
+            color: #C8D0DC;
+            padding: 6px 20px;
+            border: 1px solid #3A4050;
+            margin-right: 2px;
+        }
+        QTabBar::tab:selected {
+            background-color: #3A3D42;
+            color: #C8A84B;
+            border-bottom: 2px solid #C8A84B;
+        }
+        QTableWidget {
+            background-color: #1A1D22;
+            alternate-background-color: #2A2D32;
+            color: #C8D0DC;
+            gridline-color: #3A4050;
+        }
+        QTableWidget::item {
+            padding: 4px;
+        }
+        QHeaderView::section {
+            background-color: #2A2D32;
+            color: #C8A84B;
+            padding: 4px;
+            border: 1px solid #3A4050;
+        }
+        QTextEdit {
+            background-color: #2A2D32;
+            color: #C8D0DC;
+            border: 1px solid #3A4050;
+            border-radius: 4px;
+        }
+        QScrollArea {
+            background-color: #1A1D22;
+            border: none;
+        }
+        QGraphicsView {
+            background-color: #2A2D32;
+            border: 1px solid #3A4050;
+        }
+        """
+        self.setStyleSheet(sheet)
+
     def _build_ui(self):
         """Build the complete user interface."""
         main_layout = QVBoxLayout(self)
@@ -62,6 +160,7 @@ class AntennaCalculatorV2(QDialog):
         title = QLabel("HAMIOS Antenna Calculator")
         title_font = QFont("Segoe UI", 12, QFont.Bold)
         title.setFont(title_font)
+        title.setStyleSheet("color: #C8A84B;")
         main_layout.addWidget(title)
 
         # Main tabs
@@ -543,48 +642,13 @@ class AntennaCalculatorV2(QDialog):
             return f"{m:.2f}m" if m >= 1 else f"{m*100:.1f}cm"
 
     def _draw_diagram(self):
-        """Draw antenna diagram for current antenna type."""
+        """Draw antenna diagram placeholder."""
         self.graphics_scene.clear()
         ant = ANTENNA_TYPES[self._antenna_idx]
-        vf = VELOCITY_FACTORS[self._velocity_factor_idx].velocity_factor
 
-        # Get dimensions
-        raw_dims = ant.dimensions_formula(self._frequency_mhz)
-        dims = [
-            (label, value * vf, sub) if not any(x in label for x in ["SPACING", "DROOP", "HOIST"]) else (label, value, sub)
-            for label, value, sub in raw_dims
-        ]
-
-        # Use antenna graphics engine if available
-        try:
-            if ant.id == "dipole":
-                svg = self._create_dipole_diagram(dims)
-            elif ant.id == "invv":
-                svg = self._create_invv_diagram(dims)
-            elif ant.id == "qwave":
-                svg = self._create_vertical_diagram(dims)
-            elif ant.id == "jungleGP":
-                svg = self._create_jungle_gp_diagram(dims)
-            elif ant.id == "loop":
-                svg = self._create_loop_diagram(dims)
-            elif ant.id == "delta":
-                svg = self._create_delta_diagram(dims)
-            elif ant.id == "efhw":
-                svg = self._create_efhw_diagram(dims)
-            else:
-                # Generic placeholder for other types
-                text = self.graphics_scene.addText(
-                    f"{ant.name.replace(chr(10), ' ')}\n"
-                    f"Formula: {ant.formula_ft}\n"
-                    f"Diagram: Schematic available"
-                )
-                return
-
-            # If we got SVG, render it (simplified for now)
-            text = self.graphics_scene.addText(f"{ant.name.replace(chr(10), ' ')}\nDiagram rendered")
-
-        except Exception as e:
-            text = self.graphics_scene.addText(f"Diagram error: {str(e)}")
+        # Simple text placeholder - no rendering
+        text_item = self.graphics_scene.addText(f"{ant.name.replace(chr(10), ' ')}")
+        text_item.setDefaultTextColor(QColor("#C8A84B"))
 
     def _create_dipole_diagram(self, dims):
         """Create dipole diagram SVG."""
