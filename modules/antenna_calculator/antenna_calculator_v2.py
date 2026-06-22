@@ -583,9 +583,11 @@ class AntennaCalculatorV2(QDialog):
             for label, value, sub in raw_dims
         ]
 
-        # Display results
+        # Display results - clear old widgets
         while self.results_layout.count():
-            self.results_layout.takeAt(0).widget().deleteLater()
+            item = self.results_layout.takeAt(0)
+            if item and item.widget():
+                item.widget().deleteLater()
 
         # Add antenna info header
         info_label = QLabel(f"<b>{ant.name.replace(chr(10), ' ')}</b><br>{self._frequency_mhz} MHz")
