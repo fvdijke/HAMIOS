@@ -689,9 +689,35 @@ class AntennaCalculatorV2(QDialog):
         self.label_trim_result.setStyleSheet(f"color: {color};")
 
     def _on_export_certificate(self):
-        """Export antenna birth certificate."""
-        # TODO: Implement
-        QMessageBox.information(self, "Export", "Birth certificate export coming soon")
+        """Export antenna birth certificate as HTML."""
+        filename, _ = QFileDialog.getSaveFileName(
+            self, "Export Birth Certificate", "", "HTML Files (*.html)"
+        )
+        if not filename:
+            return
+
+        # Create record from form inputs
+        record = AntennaRecord(
+            callsign=self.input_callsign.currentText() or "[CALLSIGN]",
+            antenna_type=ANTENNA_TYPES[self._antenna_idx].name.replace("\n", " "),
+            date_built=self.input_date.date().toString("yyyy-MM-dd"),
+            location_grid=self.input_location.currentText(),
+            target_frequency_mhz=self._frequency_mhz,
+            wire_type=VELOCITY_FACTORS[self._velocity_factor_idx].name,
+            velocity_factor=VELOCITY_FACTORS[self._velocity_factor_idx].velocity_factor,
+            calculated_length_m=0,  # TODO: Calculate from dims
+            final_tuned_length_m=None,
+            resonant_frequency_mhz=None,
+            measured_swr=None,
+            field_notes=self.input_notes.toPlainText(),
+        )
+
+        try:
+            with open(filename, "w", encoding="utf-8") as f:
+                f.write(record.to_html())
+            QMessageBox.information(self, "Success", f"Certificate exported to {filename}")
+        except Exception as e:
+            QMessageBox.warning(self, "Error", f"Failed to export certificate:\n{str(e)}")
 
     def _on_show_swr_checklist(self):
         """Show SWR check checklist."""
@@ -701,26 +727,154 @@ class AntennaCalculatorV2(QDialog):
     def _on_save_antenna(self):
         """Save antenna to library."""
         name, ok = QInputDialog.getText(self, "Save Antenna", "Antenna name:")
-        if ok and name:
-            # TODO: Implement
-            QMessageBox.information(self, "Saved", f"Antenna '{name}' saved")
+        if not ok or not name:
+            return
+
+        ant = ANTENNA_TYPES[self._antenna_idx]
+        vf = VELOCITY_FACTORS[self._velocity_factor_idx]
+
+        record = SavedAntenna(
+            name=name,
+            description=f"{ant.name.replace(chr(10), ' ')} @ {self._frequency_mhz} MHz ({vf.label})",
+            antenna_type=ant.id,
+            frequency_mhz=self._frequency_mhz,
+            wire_type=vf.label,
+            velocity_factor=vf.velocity_factor,
+        )
+
+        if self._library.save_antenna(record):
+            QMessageBox.information(self, "Saved", f"Antenna '{name}' saved successfully!")
+            self._refresh_library()
+        else:
+            QMessageBox.warning(self, "Error", "Failed to save antenna")
 
     def _on_load_antenna(self):
         """Load antenna from library."""
-        # TODO: Implement
-        pass
+        row = self.list_library.currentRow()
+        if row < 0:
+            QMessageBox.warning(self, "Error", "Select an antenna first")
+            return
+
+        name = self.list_library.item(row, 0).text()
+        record = self._library.load_antenna(name)
+        if record:
+            # Load antenna into calculator
+            ant_types = [a.id for a in ANTENNA_TYPES]
+            if record.antenna_type in ant_types:
+                self._antenna_idx = ant_types.index(record.antenna_type)
+                self.combo_antenna.blockSignals(True)
+                self.combo_antenna.setCurrentIndex(self._antenna_idx)
+                self.combo_antenna.blockSignals(False)
+
+            self.spin_freq.blockSignals(True)
+            self.spin_freq.setValue(record.frequency_mhz)
+            self.spin_freq.blockSignals(False)
+            self._frequency_mhz = record.frequency_mhz
+
+            # Find matching VF
+            vf_types = [vf.label for vf in VELOCITY_FACTORS]
+            if record.wire_type in vf_types:
+                self._velocity_factor_idx = vf_types.index(record.wire_type)
+                self.combo_vf.blockSignals(True)
+                self.combo_vf.setCurrentIndex(self._velocity_factor_idx)
+                self.combo_vf.blockSignals(False)
+
+            self._update_calculations()
+            QMessageBox.information(self, "Loaded", f"Antenna '{name}' loaded")
+        else:
+            QMessageBox.warning(self, "Error", "Failed to load antenna")
 
     def _on_delete_antenna(self):
         """Delete antenna from library."""
-        # TODO: Implement
-        pass
+        row = self.list_library.currentRow()
+        if row < 0:
+            QMessageBox.warning(self, "Error", "Select an antenna first")
+            return
+
+        name = self.list_library.item(row, 0).text()
+        reply = QMessageBox.question(self, "Delete", f"Delete '{name}'?")
+        if reply == QMessageBox.Yes:
+            if self._library.delete_antenna(name):
+                QMessageBox.information(self, "Deleted", f"Antenna '{name}' deleted")
+                self._refresh_library()
+            else:
+                QMessageBox.warning(self, "Error", "Failed to delete antenna")
 
     def _refresh_library(self):
         """Refresh antenna library display."""
-        # TODO: Implement
-        pass
+        self.list_library.setRowCount(0)
+        for name in self._library.list_antennas():
+            record = self._library.load_antenna(name)
+            if record:
+                self.list_library.insertRow(self.list_library.rowCount())
+                self.list_library.setItem(self.list_library.rowCount() - 1, 0, QTableWidgetItem(name))
+                self.list_library.setItem(self.list_library.rowCount() - 1, 1, QTableWidgetItem(record.antenna_type))
+                self.list_library.setItem(self.list_library.rowCount() - 1, 2, QTableWidgetItem(f"{record.frequency_mhz} MHz"))
 
     def _on_export_pdf(self):
         """Export calculation as PDF."""
-        # TODO: Implement
-        QMessageBox.information(self, "Export", "PDF export coming soon")
+        filename, _ = QFileDialog.getSaveFileName(
+            self, "Export PDF", "", "PDF Files (*.pdf)"
+        )
+        if not filename:
+            return
+
+        try:
+            from .pdf_generator import PdfGenerator
+
+            ant = ANTENNA_TYPES[self._antenna_idx]
+            vf = VELOCITY_FACTORS[self._velocity_factor_idx]
+
+            # Get dimensions
+            raw_dims = ant.dimensions_formula(self._frequency_mhz)
+            dims = [(label, value * vf.velocity_factor if not any(x in label for x in ["SPACING", "DROOP", "HOIST"]) else value, sub)
+                   for label, value, sub in raw_dims]
+
+            # Create PDF
+            gen = PdfGenerator(filename)
+
+            # Determine antenna type for report
+            if ant.id == "dipole":
+                success = gen.generate_dipole_report(
+                    f"{ant.name.replace(chr(10), ' ')} @ {self._frequency_mhz} MHz",
+                    self._frequency_mhz,
+                    DipoleCalculator.calculate(self._frequency_mhz, vf.velocity_factor),
+                    vf.name,
+                    vf.velocity_factor
+                )
+            else:
+                # Generic report for other types
+                success = True
+                try:
+                    import reportlab
+                    from reportlab.lib.pagesizes import letter
+                    from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer
+                    from reportlab.lib.styles import getSampleStyleSheet
+
+                    doc = SimpleDocTemplate(filename, pagesize=letter)
+                    story = []
+                    styles = getSampleStyleSheet()
+
+                    story.append(Paragraph(f"<b>{ant.name.replace(chr(10), ' ')}</b>", styles['Heading1']))
+                    story.append(Spacer(1, 0.3))
+                    story.append(Paragraph(f"<b>Frequency:</b> {self._frequency_mhz} MHz", styles['Normal']))
+                    story.append(Paragraph(f"<b>Wire Type:</b> {vf.name}", styles['Normal']))
+                    story.append(Paragraph(f"<b>Velocity Factor:</b> {vf.velocity_factor}", styles['Normal']))
+                    story.append(Spacer(1, 0.3))
+
+                    story.append(Paragraph("<b>Calculated Dimensions:</b>", styles['Heading2']))
+                    for label, value, sub in dims:
+                        val_str = self._format_value(value)
+                        story.append(Paragraph(f"<b>{label}:</b> {val_str} ({sub})", styles['Normal']))
+
+                    doc.build(story)
+                except ImportError:
+                    success = False
+
+            if success:
+                QMessageBox.information(self, "Export", f"PDF exported to {filename}")
+            else:
+                QMessageBox.warning(self, "Error", "reportlab required for PDF export.\nInstall: pip install reportlab")
+
+        except Exception as e:
+            QMessageBox.warning(self, "Error", f"Failed to export PDF:\n{str(e)}")
