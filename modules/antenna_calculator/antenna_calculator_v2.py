@@ -42,20 +42,53 @@ class AntennaCalculatorV2(QDialog):
         # Apply HAMIOS dark theme
         self._apply_theme()
 
-        # State
+        # Library (for config storage)
+        self._library = AntennaLibrary()
+        self._config_file = self._library.library_path / "calculator_config.json"
+
+        # State - load persisted settings
         self._frequency_mhz = 14.225
         self._velocity_factor_idx = 2  # STD PVC
         self._antenna_idx = 0  # Dipole
         self._coax_idx = 2  # RG-8X
-        self._unit = "ft"  # feet or meters
+        self._unit = "ft"  # feet or meters (default)
 
-        # Library
-        self._library = AntennaLibrary()
+        self._load_settings()
 
         # Build UI
         self._build_ui()
         self._connect_signals()
         self._update_calculations()
+
+    def _load_settings(self):
+        """Load persisted calculator settings."""
+        try:
+            import json
+            if self._config_file.exists():
+                with open(self._config_file, "r", encoding="utf-8") as f:
+                    config = json.load(f)
+                    self._unit = config.get("unit", "ft")
+                    self._antenna_idx = config.get("antenna_idx", 0)
+                    self._velocity_factor_idx = config.get("velocity_factor_idx", 2)
+                    self._frequency_mhz = config.get("frequency_mhz", 14.225)
+        except Exception:
+            pass  # Use defaults if config load fails
+
+    def _save_settings(self):
+        """Save calculator settings for next session."""
+        try:
+            import json
+            config = {
+                "unit": self._unit,
+                "antenna_idx": self._antenna_idx,
+                "velocity_factor_idx": self._velocity_factor_idx,
+                "frequency_mhz": self._frequency_mhz,
+            }
+            self._config_file.parent.mkdir(parents=True, exist_ok=True)
+            with open(self._config_file, "w", encoding="utf-8") as f:
+                json.dump(config, f, indent=2)
+        except Exception:
+            pass  # Silently fail if save doesn't work
 
     def _apply_theme(self):
         """Apply HAMIOS dark theme with amber accents."""
@@ -533,6 +566,7 @@ class AntennaCalculatorV2(QDialog):
             self.spin_freq.setValue(band_freqs[idx - 1])
             self.spin_freq.blockSignals(False)
             self._frequency_mhz = band_freqs[idx - 1]
+            self._save_settings()
             self._update_calculations()
 
     def _on_frequency_changed(self):
@@ -541,6 +575,7 @@ class AntennaCalculatorV2(QDialog):
         self.combo_band.blockSignals(True)
         self.combo_band.setCurrentIndex(0)  # Custom
         self.combo_band.blockSignals(False)
+        self._save_settings()
         self._update_calculations()
 
     def _on_vf_changed(self):
@@ -548,6 +583,7 @@ class AntennaCalculatorV2(QDialog):
         self._velocity_factor_idx = self.combo_vf.currentIndex()
         vf = VELOCITY_FACTORS[self._velocity_factor_idx]
         self.label_vf_info.setText(f"VF {vf.velocity_factor}\n{vf.examples}")
+        self._save_settings()
         self._update_calculations()
 
     def _on_antenna_changed(self):
@@ -556,15 +592,17 @@ class AntennaCalculatorV2(QDialog):
         ant = ANTENNA_TYPES[self._antenna_idx]
         formula = f"ft: {ant.formula_ft}" if self._unit == "ft" else f"m: {ant.formula_m}"
         self.label_ant_formula.setText(formula)
+        self._save_settings()
         self._update_calculations()
 
     def _set_unit(self, unit: str):
-        """Set unit system."""
+        """Set unit system and save preference."""
         self._unit = unit
         self.btn_feet.setChecked(unit == "ft")
         self.btn_meters.setChecked(unit == "m")
         self.label_coax_unit.setText("ft" if unit == "ft" else "m")
         self.label_trim_unit.setText("ft" if unit == "ft" else "m")
+        self._save_settings()
         self._update_calculations()
 
     def _update_calculations(self):
