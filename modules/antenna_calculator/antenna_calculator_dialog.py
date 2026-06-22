@@ -16,10 +16,13 @@ from pathlib import Path
 from .antenna_models import (
     AntennaType, WireType, AMATEUR_BANDS, FrequencyBand,
     DipoleCalculation, EfhwCalculation, GroundPlaneCalculation,
-    SavedAntenna
+    FullWaveLoopCalculation, DeltaLoopCalculation, BeverageCalculation,
+    MagneticLoopCalculation, SavedAntenna
 )
 from .antenna_math import (
-    DipoleCalculator, EfhwCalculator, GroundPlaneCalculator, MiscCalculations
+    DipoleCalculator, EfhwCalculator, GroundPlaneCalculator,
+    FullWaveLoopCalculator, DeltaLoopCalculator, BeverageCalculator,
+    MagneticLoopCalculator, MiscCalculations
 )
 from .antenna_graphics import AntennaGraphicsEngine
 from .feedline_calculator import FeedlineCalculatorTab
@@ -100,6 +103,10 @@ class AntennaCalculatorDialog(QDialog):
             "Dipole",
             "EFHW (End-Fed Half Wave)",
             "Ground Plane Vertical",
+            "Full-Wave Loop",
+            "Delta Loop",
+            "Beverage",
+            "Magnetic Loop",
         ])
         self.combo_antenna_type.currentIndexChanged.connect(self._on_antenna_type_changed)
         type_layout.addWidget(self.combo_antenna_type)
@@ -230,7 +237,11 @@ class AntennaCalculatorDialog(QDialog):
     def _on_antenna_type_changed(self):
         """Handle antenna type change."""
         index = self.combo_antenna_type.currentIndex()
-        antenna_types = [AntennaType.DIPOLE, AntennaType.EFHW, AntennaType.GROUND_PLANE]
+        antenna_types = [
+            AntennaType.DIPOLE, AntennaType.EFHW, AntennaType.GROUND_PLANE,
+            AntennaType.FULL_WAVE_LOOP, AntennaType.DELTA_LOOP,
+            AntennaType.BEVERAGE, AntennaType.MAGNETIC_LOOP
+        ]
         self._current_antenna_type = antenna_types[index]
         self._update_all_calculations()
 
@@ -297,6 +308,38 @@ class AntennaCalculatorDialog(QDialog):
             self._display_ground_plane_results(result)
             self._draw_ground_plane_diagram(result)
 
+        elif self._current_antenna_type == AntennaType.FULL_WAVE_LOOP:
+            result = FullWaveLoopCalculator.calculate(
+                self._current_frequency_mhz,
+                self._current_velocity_factor,
+            )
+            self._display_full_wave_loop_results(result)
+            self._draw_generic_diagram("Full-Wave Loop")
+
+        elif self._current_antenna_type == AntennaType.DELTA_LOOP:
+            result = DeltaLoopCalculator.calculate(
+                self._current_frequency_mhz,
+                self._current_velocity_factor,
+            )
+            self._display_delta_loop_results(result)
+            self._draw_generic_diagram("Delta Loop")
+
+        elif self._current_antenna_type == AntennaType.BEVERAGE:
+            result = BeverageCalculator.calculate(
+                self._current_frequency_mhz,
+                self._current_velocity_factor,
+            )
+            self._display_beverage_results(result)
+            self._draw_generic_diagram("Beverage Antenna")
+
+        elif self._current_antenna_type == AntennaType.MAGNETIC_LOOP:
+            result = MagneticLoopCalculator.calculate(
+                self._current_frequency_mhz,
+                self._current_velocity_factor,
+            )
+            self._display_magnetic_loop_results(result)
+            self._draw_generic_diagram("Magnetic Loop")
+
     def _display_dipole_results(self, result: DipoleCalculation):
         """Display dipole calculation results."""
         results_widget = self._create_results_widget([
@@ -331,6 +374,51 @@ class AntennaCalculatorDialog(QDialog):
         ])
         self.results_layout.addWidget(results_widget)
 
+    def _display_full_wave_loop_results(self, result: FullWaveLoopCalculation):
+        """Display full-wave loop calculation results."""
+        results_widget = self._create_results_widget([
+            ("Perimeter", f"{result.perimeter_m:.2f} m ({MiscCalculations.meters_to_feet(result.perimeter_m):.2f} ft)"),
+            ("Per Side", f"{result.side_length_m:.2f} m"),
+            ("Impedance", f"{result.impedance_ohms} Ω"),
+            ("Gain", f"{result.gain_dbi:.1f} dBi"),
+            ("Efficiency", f"{result.efficiency_percent}%"),
+        ])
+        self.results_layout.addWidget(results_widget)
+
+    def _display_delta_loop_results(self, result: DeltaLoopCalculation):
+        """Display delta loop calculation results."""
+        results_widget = self._create_results_widget([
+            ("Perimeter", f"{result.perimeter_m:.2f} m ({MiscCalculations.meters_to_feet(result.perimeter_m):.2f} ft)"),
+            ("Height", f"{result.height_m:.2f} m"),
+            ("Base Width", f"{result.base_width_m:.2f} m"),
+            ("Impedance", f"{result.impedance_ohms} Ω"),
+            ("Efficiency", f"{result.efficiency_percent}%"),
+        ])
+        self.results_layout.addWidget(results_widget)
+
+    def _display_beverage_results(self, result: BeverageCalculation):
+        """Display beverage antenna calculation results."""
+        results_widget = self._create_results_widget([
+            ("Length", f"{result.length_m:.2f} m ({MiscCalculations.meters_to_feet(result.length_m):.2f} ft)"),
+            ("Height", f"{result.height_m:.2f} m"),
+            ("Impedance", f"{result.impedance_ohms} Ω"),
+            ("Termination", f"{result.termination_ohms} Ω"),
+            ("Gain", f"{result.gain_dbi:.1f} dBi"),
+            ("Directivity", result.directivity),
+        ])
+        self.results_layout.addWidget(results_widget)
+
+    def _display_magnetic_loop_results(self, result: MagneticLoopCalculation):
+        """Display magnetic loop calculation results."""
+        results_widget = self._create_results_widget([
+            ("Diameter", f"{result.diameter_m:.3f} m ({MiscCalculations.meters_to_feet(result.diameter_m):.2f} ft)"),
+            ("Capacitor Range", f"{result.capacitance_min_pf}-{result.capacitance_max_pf} pF"),
+            ("Q Factor", f"{result.q_factor:.0f}"),
+            ("Impedance", f"{result.impedance_ohms} Ω"),
+            ("Efficiency", f"{result.efficiency_percent}%"),
+        ])
+        self.results_layout.addWidget(results_widget)
+
     def _create_results_widget(self, items: list[tuple[str, str]]) -> QWidget:
         """Create a formatted results display widget."""
         widget = QWidget()
@@ -360,6 +448,14 @@ class AntennaCalculatorDialog(QDialog):
     def _draw_ground_plane_diagram(self, result: GroundPlaneCalculation):
         """Draw ground plane antenna diagram."""
         AntennaGraphicsEngine.draw_ground_plane(self.graphics_scene, result)
+
+    def _draw_generic_diagram(self, antenna_name: str):
+        """Draw generic placeholder diagram for antenna types without specific graphics."""
+        self.graphics_scene.clear()
+        text = self.graphics_scene.addText(f"{antenna_name}\n\nDetailed diagram coming soon")
+        from PySide6.QtGui import QColor
+        text.setDefaultTextColor(QColor("#C8A84B"))
+        text.setFont(QFont("Segoe UI", 12))
 
     def _on_save_antenna(self):
         """Save current antenna configuration."""

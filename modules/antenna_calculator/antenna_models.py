@@ -16,6 +16,10 @@ class AntennaType(Enum):
     DIPOLE = "dipole"
     EFHW = "efhw"
     GROUND_PLANE = "ground_plane"
+    FULL_WAVE_LOOP = "full_wave_loop"
+    DELTA_LOOP = "delta_loop"
+    BEVERAGE = "beverage"
+    MAGNETIC_LOOP = "magnetic_loop"
 
 
 class WireType(Enum):
@@ -113,6 +117,48 @@ class GroundPlaneCalculation:
     num_radials: int               # Number of radials (typical 4-8)
     impedance_ohms: int            # Feedpoint impedance
     take_off_angle: float          # Take-off angle in degrees
+    efficiency_percent: float
+
+
+@dataclass
+class FullWaveLoopCalculation:
+    """Full-wave loop antenna calculation results."""
+    perimeter_m: float             # Total loop perimeter
+    side_length_m: float            # Length per side (square loop)
+    impedance_ohms: int            # Feedpoint impedance
+    gain_dbi: float                # Gain relative to isotropic
+    efficiency_percent: float
+
+
+@dataclass
+class DeltaLoopCalculation:
+    """Delta (triangular) loop antenna calculation results."""
+    perimeter_m: float             # Total perimeter
+    height_m: float                # Height of triangle
+    base_width_m: float            # Base width
+    impedance_ohms: int            # Feedpoint impedance
+    efficiency_percent: float
+
+
+@dataclass
+class BeverageCalculation:
+    """Beverage antenna (traveling wave) calculation results."""
+    length_m: float                # Antenna length
+    height_m: float                # Height above ground
+    termination_ohms: int          # Termination resistance
+    impedance_ohms: int            # Feedpoint impedance
+    gain_dbi: float                # Gain relative to isotropic
+    directivity: str               # End-fire, broadside, etc.
+
+
+@dataclass
+class MagneticLoopCalculation:
+    """Magnetic loop antenna calculation results."""
+    diameter_m: float              # Loop diameter
+    capacitance_min_pf: float      # Capacitor range minimum
+    capacitance_max_pf: float      # Capacitor range maximum
+    q_factor: float                # Quality factor
+    impedance_ohms: int            # Feedpoint impedance
     efficiency_percent: float
 
 

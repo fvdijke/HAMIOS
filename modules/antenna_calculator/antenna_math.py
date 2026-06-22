@@ -8,7 +8,8 @@ import math
 from typing import NamedTuple
 from .antenna_models import (
     DipoleCalculation, EfhwCalculation, GroundPlaneCalculation,
-    UnunType, WireType
+    FullWaveLoopCalculation, DeltaLoopCalculation, BeverageCalculation,
+    MagneticLoopCalculation, UnunType, WireType
 )
 
 
@@ -294,3 +295,116 @@ class MiscCalculations:
         if swr <= 1.0:
             return float('inf')
         return 20.0 * math.log10((swr - 1.0) / (swr + 1.0))
+
+
+class FullWaveLoopCalculator:
+    """Calculate full-wave loop antenna dimensions."""
+
+    @staticmethod
+    def calculate(
+        frequency_mhz: float,
+        velocity_factor: float = 0.95,
+    ) -> FullWaveLoopCalculation:
+        """Calculate full-wave loop antenna."""
+        wavelength_m = AntennaConstants.WAVELENGTH_FACTOR / frequency_mhz
+        perimeter_m = wavelength_m * velocity_factor * 0.98
+        side_length_m = perimeter_m / 4.0
+
+        return FullWaveLoopCalculation(
+            perimeter_m=round(perimeter_m, 3),
+            side_length_m=round(side_length_m, 3),
+            impedance_ohms=120,  # Typical full-wave loop impedance
+            gain_dbi=2.2,  # Gain over isotropic
+            efficiency_percent=92.0,
+        )
+
+
+class DeltaLoopCalculator:
+    """Calculate delta (triangular) loop antenna dimensions."""
+
+    @staticmethod
+    def calculate(
+        frequency_mhz: float,
+        velocity_factor: float = 0.95,
+    ) -> DeltaLoopCalculation:
+        """Calculate delta loop antenna."""
+        wavelength_m = AntennaConstants.WAVELENGTH_FACTOR / frequency_mhz
+        perimeter_m = wavelength_m * velocity_factor * 0.98
+        side_length_m = perimeter_m / 3.0
+
+        # For equilateral triangle
+        height_m = side_length_m * math.sqrt(3) / 2.0
+        base_width_m = side_length_m
+
+        return DeltaLoopCalculation(
+            perimeter_m=round(perimeter_m, 3),
+            height_m=round(height_m, 3),
+            base_width_m=round(base_width_m, 3),
+            impedance_ohms=50,  # Can match 50Ω directly
+            efficiency_percent=88.0,
+        )
+
+
+class BeverageCalculator:
+    """Calculate beverage (traveling wave) antenna dimensions."""
+
+    @staticmethod
+    def calculate(
+        frequency_mhz: float,
+        velocity_factor: float = 0.95,
+    ) -> BeverageCalculation:
+        """Calculate beverage antenna."""
+        wavelength_m = AntennaConstants.WAVELENGTH_FACTOR / frequency_mhz
+
+        # Beverage length: 1-2 wavelengths is typical, use 1.5λ
+        length_m = wavelength_m * 1.5 * velocity_factor
+
+        # Height: typically λ/4 to λ/2 above ground
+        height_m = wavelength_m / 3.0
+
+        # Termination resistance: approximately 600 ohms for matched termination
+        termination_ohms = 600
+
+        return BeverageCalculation(
+            length_m=round(length_m, 3),
+            height_m=round(height_m, 3),
+            termination_ohms=termination_ohms,
+            impedance_ohms=600,
+            gain_dbi=5.0,  # Beverage can have good gain
+            directivity="End-fire",
+        )
+
+
+class MagneticLoopCalculator:
+    """Calculate magnetic loop antenna dimensions."""
+
+    @staticmethod
+    def calculate(
+        frequency_mhz: float,
+        velocity_factor: float = 0.95,
+    ) -> MagneticLoopCalculation:
+        """Calculate magnetic loop antenna."""
+        wavelength_m = AntennaConstants.WAVELENGTH_FACTOR / frequency_mhz
+
+        # Magnetic loop diameter: typically 0.1λ to 0.3λ
+        diameter_m = wavelength_m * 0.2
+
+        # Capacitance calculation: C = 1/(4π²f²L) where L is loop inductance
+        # Simplified: capacitance range for matching
+        frequency_hz = frequency_mhz * 1e6
+
+        # Approximate capacitor range (typical values)
+        capacitance_min_pf = 100
+        capacitance_max_pf = 5000
+
+        # Q factor (quality factor) - inversely proportional to loss
+        q_factor = 100.0  # Typical magnetic loop Q
+
+        return MagneticLoopCalculation(
+            diameter_m=round(diameter_m, 3),
+            capacitance_min_pf=capacitance_min_pf,
+            capacitance_max_pf=capacitance_max_pf,
+            q_factor=q_factor,
+            impedance_ohms=50,
+            efficiency_percent=50.0,  # Lower efficiency due to small loop
+        )
