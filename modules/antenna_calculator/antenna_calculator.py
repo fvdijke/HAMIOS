@@ -857,25 +857,22 @@ class AntennaCalculator(QDialog):
         info_label.setStyleSheet("color: #C8A84B; font-size: 11px;")
         self.results_layout.addWidget(info_label)
 
-        # Add calculated dimensions
+        # Add calculated dimensions (clean lines, no boxes)
         for label, value, sub in dims:
-            widget = self._create_result_box(label, value, sub)
+            widget = self._create_result_line(label, value, sub)
             self.results_layout.addWidget(widget)
 
         # Add antenna specifications box
-        spec_box = QGroupBox("Specifications")
-        spec_layout = QVBoxLayout(spec_box)
-        spec_info = (
-            f"<b>Impedance:</b> {ant.impedance}<br>"
-            f"<b>Matching:</b> {ant.balun}<br>"
-            f"<b>ATU Needed:</b> {ant.atu_needed}<br>"
-            f"<b>RX Suitable:</b> {'Yes ✓' if ant.suitable_for_rx else 'No'}"
-        )
-        spec_label = QLabel(spec_info)
-        spec_label.setWordWrap(True)
-        spec_label.setStyleSheet("font-size: 9px;")
-        spec_layout.addWidget(spec_label)
-        self.results_layout.addWidget(spec_box)
+        # Specifications - clean lines, no box
+        self.results_layout.addSpacing(10)
+        header = QLabel("⚙️ SPECIFICATIONS")
+        header.setStyleSheet("color: #C8A84B; font-size: 10pt; font-weight: bold;")
+        self.results_layout.addWidget(header)
+
+        self.results_layout.addWidget(self._create_result_line("Impedance", 0, ant.impedance))
+        self.results_layout.addWidget(self._create_result_line("Matching", 0, ant.balun))
+        self.results_layout.addWidget(self._create_result_line("ATU Required", 0, ant.atu_needed))
+        self.results_layout.addWidget(self._create_result_line("RX Suitable", 0, "Yes ✓" if ant.suitable_for_rx else "No"))
 
         self.results_layout.addStretch()
 
@@ -894,27 +891,32 @@ class AntennaCalculator(QDialog):
         self._update_coax_calc()
         self._update_trim_calc()
 
-    def _create_result_box(self, label: str, value: float, sub: str = "") -> QGroupBox:
-        """Create result display box - clear and readable."""
-        box = QGroupBox(label)
-        # NO max-height - let content breathe
-        layout = QVBoxLayout(box)
-        layout.setContentsMargins(6, 6, 6, 6)  # More space
-        layout.setSpacing(3)
+    def _create_result_line(self, label: str, value: float, sub: str = "") -> QWidget:
+        """Create clean result line - no boxes, no borders."""
+        container = QWidget()
+        layout = QHBoxLayout(container)
+        layout.setContentsMargins(0, 4, 0, 4)
+        layout.setSpacing(12)
 
+        # Label (left)
+        label_widget = QLabel(label)
+        label_widget.setStyleSheet("color: #AAA; font-size: 10pt; min-width: 140px;")
+        layout.addWidget(label_widget)
+
+        # Value (right, bright)
         val_text = self._format_value(value)
         val_label = QLabel(val_text)
         val_label.setWordWrap(True)
-        val_label.setStyleSheet("font-size: 13pt; font-weight: bold; color: #00FF41;")  # Bright green, bigger
-        layout.addWidget(val_label)
+        val_label.setStyleSheet("font-size: 11pt; font-weight: bold; color: #00FF41;")
+        layout.addWidget(val_label, 1)
 
+        # Sub-text (if provided)
         if sub:
             sub_label = QLabel(sub)
-            sub_label.setWordWrap(True)
-            sub_label.setStyleSheet("font-size: 10px; color: #BBB;")  # Larger, lighter
+            sub_label.setStyleSheet("font-size: 9px; color: #666;")
             layout.addWidget(sub_label)
 
-        return box
+        return container
 
     def _format_value(self, feet) -> str:
         """Format value in current unit system."""
