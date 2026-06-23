@@ -365,48 +365,22 @@ class AntennaCalculator(QDialog):
         # Right panel: Results + Diagram
         right = QVBoxLayout()
 
-        # TOP ROW: Horizontal split - Dimensions (LEFT) | Diagram (RIGHT)
-        top_row = QHBoxLayout()
-        top_row.setSpacing(8)
-
-        # LEFT SIDE: Calculated Dimensions
-        left_panel = QWidget()
-        left_layout = QVBoxLayout(left_panel)
-        left_layout.setContentsMargins(0, 0, 0, 0)
-        left_layout.addWidget(QLabel("📊 Calculated Dimensions:"))
-        left_layout.addWidget(QLabel(""))  # Spacer
-
+        # FULL WIDTH: Calculated Dimensions (prominently displayed)
         self.scroll_results = QScrollArea()
         self.scroll_results.setWidgetResizable(True)
-        self.scroll_results.setMinimumWidth(280)
         self.scroll_results.setStyleSheet(
             "QScrollArea { border: 1px solid #3A4050; border-radius: 4px; }"
         )
         self.results_widget = QWidget()
         self.results_layout = QVBoxLayout(self.results_widget)
-        self.results_layout.setContentsMargins(4, 4, 4, 4)
+        self.results_layout.setContentsMargins(8, 8, 8, 8)
+        self.results_layout.setSpacing(6)
         self.scroll_results.setWidget(self.results_widget)
-        left_layout.addWidget(self.scroll_results, 1)
-        top_row.addWidget(left_panel, 1)
 
-        # RIGHT SIDE: Antenna Diagram
-        right_panel = QWidget()
-        right_layout = QVBoxLayout(right_panel)
-        right_layout.setContentsMargins(0, 0, 0, 0)
-        right_layout.addWidget(QLabel("🎯 Antenna Schematic:"))
-        right_layout.addWidget(QLabel(""))  # Spacer
-
-        self.svg_diagram = QWebEngineView()
-        self.svg_diagram.setStyleSheet(
-            "background-color: #1A1D22; border: 1px solid #3A4050; border-radius: 4px;"
-        )
-        self.svg_diagram.setMinimumWidth(400)
-        self.svg_diagram.setMinimumHeight(350)
-        # No max size - let it grow to fill available space
-        right_layout.addWidget(self.svg_diagram, 1)
-        top_row.addWidget(right_panel, 1)
-
-        right.addLayout(top_row, 2)
+        dim_label = QLabel("📊 Calculated Dimensions:")
+        dim_label.setStyleSheet("font-size: 12pt; font-weight: bold; color: #C8A84B;")
+        right.addWidget(dim_label)
+        right.addWidget(self.scroll_results, 2)  # Prominent - takes 2/3 space
 
         # BOTTOM: Matching Transformer
         self.match_box = QGroupBox("⚙️ Matching Transformer")
@@ -921,23 +895,23 @@ class AntennaCalculator(QDialog):
         self._update_trim_calc()
 
     def _create_result_box(self, label: str, value: float, sub: str = "") -> QGroupBox:
-        """Create result display box."""
+        """Create result display box - clear and readable."""
         box = QGroupBox(label)
-        box.setMaximumHeight(100)  # Limit height
+        # NO max-height - let content breathe
         layout = QVBoxLayout(box)
-        layout.setContentsMargins(4, 4, 4, 4)  # Compact margins
-        layout.setSpacing(2)  # Tight spacing
+        layout.setContentsMargins(6, 6, 6, 6)  # More space
+        layout.setSpacing(3)
 
         val_text = self._format_value(value)
         val_label = QLabel(val_text)
-        val_label.setWordWrap(True)  # Allow text wrapping
-        val_label.setStyleSheet("font-size: 11pt; font-weight: bold; color: #C8A84B;")  # Smaller, amber
+        val_label.setWordWrap(True)
+        val_label.setStyleSheet("font-size: 13pt; font-weight: bold; color: #00FF41;")  # Bright green, bigger
         layout.addWidget(val_label)
 
         if sub:
             sub_label = QLabel(sub)
             sub_label.setWordWrap(True)
-            sub_label.setStyleSheet("font-size: 8px; color: #888;")
+            sub_label.setStyleSheet("font-size: 10px; color: #BBB;")  # Larger, lighter
             layout.addWidget(sub_label)
 
         return box
