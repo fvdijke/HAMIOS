@@ -9,7 +9,7 @@ import os
 # Add parent dir to path
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from hamios5.muf_model import MUFModel, get_muf_status
+from modules.muf_model import MUFModel, get_muf_status
 
 
 class TestMUFModel(unittest.TestCase):

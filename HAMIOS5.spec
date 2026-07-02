@@ -1,5 +1,5 @@
 # -*- mode: python ; coding: utf-8 -*-
-# PyInstaller spec for HAMIOS v5.4 (PySide6)
+# PyInstaller spec for HAMIOS v5.5 (PySide6)
 
 import os
 
@@ -15,6 +15,7 @@ a = Analysis(
         ('hamios.ico',                   '.'),
         ('config',                       'config'),
         ('modules',                      'modules'),
+        ('tools',                        'tools'),
     ],
     hiddenimports=[
         'PySide6.QtCore',

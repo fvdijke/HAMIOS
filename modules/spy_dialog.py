@@ -3,12 +3,12 @@
 import json
 import os
 
-from PySide6.QtCore import Qt, QSortFilterProxyModel, QTimer
-from PySide6.QtGui import QFont, QColor, QStandardItemModel, QStandardItem
+from PySide6.QtCore import Qt, QTimer
+from PySide6.QtGui import QFont, QColor
 from PySide6.QtWidgets import (
     QDialog, QVBoxLayout, QHBoxLayout, QLabel, QLineEdit,
     QComboBox, QTreeWidget, QTreeWidgetItem, QHeaderView,
-    QPushButton, QFrame, QTextEdit, QSplitter, QWidget, QScrollArea
+    QPushButton, QTextEdit, QSplitter, QWidget
 )
 
 from .theme import ACCENT, BG_PANEL, BG_SURFACE, BG_ROOT, TEXT_H1, TEXT_DIM, TEXT_BODY, BORDER

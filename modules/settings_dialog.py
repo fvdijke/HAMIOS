@@ -1,10 +1,7 @@
 """HAMIOS v5 — Instellingen-dialoog (PySide6 QDialog)"""
 
 import json
-import math
 import os
-import subprocess
-import sys
 from dataclasses import asdict
 
 # Pad naar het layouts-bestand
@@ -57,13 +54,13 @@ def _save_layouts(layouts: dict):
     except Exception:
         pass
 
-from PySide6.QtCore import Qt, Signal, QTimer
-from PySide6.QtGui import QFont, QColor
+from PySide6.QtCore import Signal, QTimer
+from PySide6.QtGui import QFont
 from PySide6.QtWidgets import (
-    QDialog, QVBoxLayout, QHBoxLayout, QGridLayout,
-    QLabel, QLineEdit, QSpinBox, QDoubleSpinBox,
-    QPushButton, QTabWidget, QWidget, QFrame,
-    QCheckBox, QComboBox, QScrollArea
+    QDialog, QVBoxLayout, QHBoxLayout, QLabel,
+    QLineEdit, QSpinBox, QDoubleSpinBox, QPushButton,
+    QTabWidget, QWidget, QFrame, QCheckBox,
+    QComboBox, QScrollArea
 )
 
 from .theme import ACCENT, BG_PANEL, BG_SURFACE, BG_ROOT, TEXT_H1, TEXT_DIM, BORDER, make_checkmark_path
@@ -595,7 +592,6 @@ class SettingsDialog(QDialog):
 
         _section(v, tr("sec.k_storm"))
 
-        h = QHBoxLayout()
         self._k_en = QCheckBox(tr("k_en_cb"))
         v.addWidget(self._k_en)
 
@@ -1352,7 +1348,7 @@ class SettingsDialog(QDialog):
                 req = urllib.request.Request(
                     "https://www.blitzortung.org/",
                     method="HEAD",
-                    headers={"User-Agent": "HAMIOS/5.4"}
+                    headers={"User-Agent": "HAMIOS/5.5"}
                 )
                 with urllib.request.urlopen(req, timeout=5) as r:
                     return r.status < 400

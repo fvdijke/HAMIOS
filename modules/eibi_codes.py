@@ -23,7 +23,7 @@ LANG = {
     "I":    "Italiaans",
     "NL":   "Nederlands",
     "NO":   "Noors",
-    "SW":   "Zweeds",
+    "SWE":  "Zweeds",
     "FI":   "Fins",
     "DA":   "Deens",
     # Aziatisch
@@ -79,7 +79,7 @@ LANG = {
     "HE":   "Hebreeuws",
     "KU":   "Koerdisch",
     # Afrikaans
-    "SW":   "Swahili",
+    "SWA":  "Swahili",
     "ZU":   "Zoeloe",
     "SO":   "Somalisch",
     "OR":   "Oromo",

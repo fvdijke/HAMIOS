@@ -20,22 +20,20 @@ if __name__ == "__main__":
 import math
 import os
 import datetime
-import threading
 
 from PySide6.QtWidgets import (
     QGraphicsView, QGraphicsScene, QGraphicsItem,
-    QGraphicsPixmapItem, QGraphicsEllipseItem,
-    QGraphicsLineItem, QWidget, QVBoxLayout, QLabel
+    QGraphicsPixmapItem, QGraphicsLineItem
 )
 from PySide6.QtCore import (
     Qt, QRectF, QPointF, QTimer, Signal, QObject, QThread
 )
 from PySide6.QtGui import (
-    QPixmap, QPainter, QColor, QPen, QBrush, QTransform,
-    QImage, QFont, QPainterPath
+    QPixmap, QPainter, QColor, QPen, QBrush, QImage,
+    QFont
 )
 
-from .theme import ACCENT, TEXT_DIM, BG_ROOT
+from .theme import ACCENT, BG_ROOT
 from . import layers as _layers
 
 # Kaartbestanden
@@ -291,7 +289,6 @@ class MoonMarkerItem(QGraphicsItem):
         painter.setOpacity(1.0)
 
         # Kleine indicator: ▲ of ▼ rechtsonder het icoon
-        elev_abs = abs(self._elevation)
         clr = QColor(180, 220, 255, 200) if above else QColor(100, 110, 130, 200)
         painter.setPen(clr)
         painter.setFont(QFont("Segoe UI", 5))
@@ -774,7 +771,7 @@ class _HiresDownloadThread(QThread):
         self._dest          = dest
         self._also_save_std = also_save_std
 
-    _UA = "HAMIOS/5.3 (HF Propagation Monitor)"
+    _UA = "HAMIOS/5.5 (HF Propagation Monitor)"
 
     def run(self):
         tmp = self._dest + ".tmp"

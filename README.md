@@ -7,7 +7,7 @@
 
 **Real-time HF propagation and DX monitor for amateur radio operators — Windows 10/11**
 
-> v5.4 · June 2026 · Frank van Dijke · *Developed with Claude AI (Anthropic)*
+> v5.5 · July 2026 · Frank van Dijke · *Developed with Claude AI (Anthropic)*
 
 [![Website](https://img.shields.io/badge/website-hamios.space-orange)](https://hamios.space)
 [![Release](https://img.shields.io/github/v/release/fvdijke/HAMIOS?label=latest)](https://github.com/fvdijke/HAMIOS/releases/latest)
@@ -201,6 +201,15 @@ All connections use standard HTTPS/WebSocket. No personal data is transmitted.
 ---
 
 ## 📋 Changelog
+
+### v5.5 — July 2026
+- **New antenna tool — HAM Antenna Designer**: the built-in antenna calculator has been replaced by the standalone HAM Antenna Designer (📡 Antenna button) — 20+ documented antenna designs (verticals, dipoles, EFHW, loops, Yagi, Moxon, quad, J-pole, SWL receive antennas), sourced formulas, build notes, schematic drawings, SWR table, Smith chart, radiation patterns and feedline-loss comparison
+- **TLE caching fixed**: satellite TLE data is no longer re-downloaded at every startup — an existing cache is now detected correctly and only downloaded once when missing
+- **TLE age display**: splash screen and Satellite window now show how old the cached TLE data is (e.g. "34 KB · 3 d"); manual refresh via ↻ button unchanged
+- **Faster startup**: main window is no longer built twice when the splash screen is enabled — roughly halves startup time and removes duplicate background connections (Blitzortung WebSocket, timers)
+- **EiBi language codes corrected**: `SWA` (Swahili) and `SWE` (Swedish) now translate correctly (previously dead `SW` entries)
+- **Translation fix**: missing Dutch text for satellite cache status ("{n} satellieten uit cache")
+- **Code quality**: large cleanup pass — unused imports, dead code and duplicate definitions removed across all modules; unit test suite repaired (39 tests green)
 
 ### v5.4 — June 2026
 - **Resources Manager Tab**: New Settings tab to manage all online resource URLs (9 categories: Solar, Satellites, WSPR, DX, Lightning, Schedules, Map)

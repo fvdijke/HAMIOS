@@ -8,7 +8,7 @@ Bewaart complete user "workspaces": alle instellingen + panel-layout + window-ge
 import json
 import os
 from datetime import datetime
-from dataclasses import dataclass, asdict
+from dataclasses import dataclass
 from typing import Dict, Tuple, Optional
 
 from ._appdir import APP_DIR as _HERE

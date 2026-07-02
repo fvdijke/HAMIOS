@@ -6,14 +6,14 @@ Ze bewegen mee met het hoofdvenster en kunnen gesleept/vergroot worden.
 """
 
 from PySide6.QtWidgets import (
-    QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton, QFrame
+    QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton
 )
 from PySide6.QtCore import Qt, QPoint
-from PySide6.QtGui import QPainter, QColor, QPen
+from PySide6.QtGui import QPainter, QColor
 
 from . import theme as _theme
 from .theme import (
-    ACCENT, BG_PANEL, BG_ROOT, TEXT_H1, TITLE_H, BG_SURFACE
+    ACCENT, BG_PANEL, TITLE_H
 )
 
 

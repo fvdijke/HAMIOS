@@ -26,8 +26,8 @@ class TestProfielManager(unittest.TestCase):
 
     def test_empty_profiles_on_missing_file(self):
         """Ontbrekend profielbestand geeft lege dict."""
-        with patch("hamios5.profiel_manager._PROFILES_FILE", self.test_file):
-            from hamios5.profiel_manager import ProfileManager
+        with patch("modules.profiel_manager._PROFILES_FILE", self.test_file):
+            from modules.profiel_manager import ProfileManager
             profiles = ProfileManager._load_profiles()
             self.assertEqual(profiles, {})
 
@@ -47,8 +47,8 @@ class TestProfielManager(unittest.TestCase):
         }
         self._write_test_profiles(test_data)
 
-        with patch("hamios5.profiel_manager._PROFILES_FILE", self.test_file):
-            from hamios5.profiel_manager import ProfileManager
+        with patch("modules.profiel_manager._PROFILES_FILE", self.test_file):
+            from modules.profiel_manager import ProfileManager
             profiles = ProfileManager.get_all_profiles()
             self.assertEqual(len(profiles), 2)
             self.assertIn("__default__", profiles)
@@ -57,8 +57,8 @@ class TestProfielManager(unittest.TestCase):
 
     def test_save_new_profile(self):
         """Sla nieuw profiel op."""
-        with patch("hamios5.profiel_manager._PROFILES_FILE", self.test_file):
-            from hamios5.profiel_manager import ProfileManager
+        with patch("modules.profiel_manager._PROFILES_FILE", self.test_file):
+            from modules.profiel_manager import ProfileManager
 
             config = {"callsign": "N0CALL", "mode": "SSB"}
             layout = {"__window__": [100, 100, 900, 700]}
@@ -73,8 +73,8 @@ class TestProfielManager(unittest.TestCase):
 
     def test_cannot_save_reserved_names(self):
         """Kan niet opslaan met '__' voornaam."""
-        with patch("hamios5.profiel_manager._PROFILES_FILE", self.test_file):
-            from hamios5.profiel_manager import ProfileManager
+        with patch("modules.profiel_manager._PROFILES_FILE", self.test_file):
+            from modules.profiel_manager import ProfileManager
 
             result = ProfileManager.save_profile("__forbidden__", {}, {})
             self.assertFalse(result)
@@ -82,8 +82,8 @@ class TestProfielManager(unittest.TestCase):
     def test_update_profile(self):
         """Overschrijf bestaand profiel."""
         # Maak eerst profiel
-        with patch("hamios5.profiel_manager._PROFILES_FILE", self.test_file):
-            from hamios5.profiel_manager import ProfileManager
+        with patch("modules.profiel_manager._PROFILES_FILE", self.test_file):
+            from modules.profiel_manager import ProfileManager
 
             ProfileManager.save_profile("Test", {"mode": "SSB"}, {})
 
@@ -97,8 +97,8 @@ class TestProfielManager(unittest.TestCase):
 
     def test_delete_profile(self):
         """Verwijder profiel."""
-        with patch("hamios5.profiel_manager._PROFILES_FILE", self.test_file):
-            from hamios5.profiel_manager import ProfileManager
+        with patch("modules.profiel_manager._PROFILES_FILE", self.test_file):
+            from modules.profiel_manager import ProfileManager
 
             ProfileManager.save_profile("ToDelete", {}, {})
             self.assertIn("ToDelete", ProfileManager.get_all_profiles())
@@ -109,16 +109,16 @@ class TestProfielManager(unittest.TestCase):
 
     def test_cannot_delete_reserved_names(self):
         """Kan niet '__default__' verwijderen."""
-        with patch("hamios5.profiel_manager._PROFILES_FILE", self.test_file):
-            from hamios5.profiel_manager import ProfileManager
+        with patch("modules.profiel_manager._PROFILES_FILE", self.test_file):
+            from modules.profiel_manager import ProfileManager
 
             result = ProfileManager.delete_profile("__default__")
             self.assertFalse(result)
 
     def test_set_default_profile(self):
         """Stel default-profiel in."""
-        with patch("hamios5.profiel_manager._PROFILES_FILE", self.test_file):
-            from hamios5.profiel_manager import ProfileManager
+        with patch("modules.profiel_manager._PROFILES_FILE", self.test_file):
+            from modules.profiel_manager import ProfileManager
 
             config = {"callsign": "DEFAULT"}
             layout = {"__window__": [0, 0, 1024, 768]}
@@ -140,8 +140,8 @@ class TestProfielManager(unittest.TestCase):
         }
         self._write_test_profiles(test_data)
 
-        with patch("hamios5.profiel_manager._PROFILES_FILE", self.test_file):
-            from hamios5.profiel_manager import ProfileManager
+        with patch("modules.profiel_manager._PROFILES_FILE", self.test_file):
+            from modules.profiel_manager import ProfileManager
 
             profile = ProfileManager.get_default_profile()
             self.assertIsNotNone(profile)
@@ -156,8 +156,8 @@ class TestProfielManager(unittest.TestCase):
         }
         self._write_test_profiles(test_data)
 
-        with patch("hamios5.profiel_manager._PROFILES_FILE", self.test_file):
-            from hamios5.profiel_manager import ProfileManager
+        with patch("modules.profiel_manager._PROFILES_FILE", self.test_file):
+            from modules.profiel_manager import ProfileManager
 
             named = ProfileManager.list_named_profiles()
             self.assertEqual(named, ["Profile1", "Profile2"])
@@ -174,8 +174,8 @@ class TestProfielManager(unittest.TestCase):
         }
         self._write_test_profiles(test_data)
 
-        with patch("hamios5.profiel_manager._PROFILES_FILE", self.test_file):
-            from hamios5.profiel_manager import ProfileManager
+        with patch("modules.profiel_manager._PROFILES_FILE", self.test_file):
+            from modules.profiel_manager import ProfileManager
 
             result = ProfileManager.reset_to_default()
             self.assertIsNotNone(result)
@@ -185,8 +185,8 @@ class TestProfielManager(unittest.TestCase):
 
     def test_has_profiles(self):
         """Check of er named profielen zijn."""
-        with patch("hamios5.profiel_manager._PROFILES_FILE", self.test_file):
-            from hamios5.profiel_manager import ProfileManager
+        with patch("modules.profiel_manager._PROFILES_FILE", self.test_file):
+            from modules.profiel_manager import ProfileManager
 
             # Geen profielen
             self.assertFalse(ProfileManager.has_profiles())

@@ -15,17 +15,16 @@ PropAdvWidget    — Propagatie-advies tekst
 
 import datetime as _dt
 import math
-import time as _time
 
-from PySide6.QtCore import Qt, QTimer, QPointF, QRectF, Signal
+from PySide6.QtCore import Qt, QTimer, QPointF, Signal
 from PySide6.QtGui import (
     QPainter, QColor, QPen, QBrush, QFont, QPainterPath
 )
 from PySide6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QGridLayout,
     QLabel, QFrame, QScrollArea, QTableWidget, QTableWidgetItem,
-    QHeaderView, QSpinBox, QSizePolicy, QAbstractItemView,
-    QCheckBox, QComboBox, QPushButton, QStackedWidget
+    QHeaderView, QAbstractItemView, QCheckBox, QComboBox,
+    QPushButton, QStackedWidget
 )
 
 
@@ -44,12 +43,10 @@ from .theme import (
     ACCENT, BG_PANEL, BG_SURFACE, BG_ROOT,
     TEXT_H1, TEXT_BODY, TEXT_DIM, BORDER
 )
-from .charts import history as _hist
 from . import history as _hist_csv
 from .i18n import tr, language_changed
 
 
-from .sound import play_sat_ping
 
 # ── Propagatie-model ──────────────────────────────────────────────────────────
 
@@ -390,8 +387,6 @@ class BandRelWidget(QWidget):
         v = QVBoxLayout(self)
         v.setContentsMargins(6, 4, 6, 4)
         v.setSpacing(3)
-
-        f8 = QFont("Segoe UI", 8)
 
         # ── Info-rij (MUF / LUF / SNR) ────────────────────────────────────
         info = QHBoxLayout()
@@ -806,11 +801,6 @@ class BandSchedWidget(QWidget):
         if self._cat_lbl.isVisible():
             self._cat_lbl.move(self.width() - self._cat_lbl.width() - 4,
                                self.height() - self._cat_lbl.height() - 2)
-
-    def set_cfg(self, cfg):
-        self._cfg = cfg
-        self._recalc()
-        self.update()
 
     def set_cfg(self, cfg):
         self._cfg = cfg
@@ -1412,8 +1402,7 @@ class LightningPanel(QWidget):
     _QRN_RADIUS_KM = 2000
 
     def _update_count(self):
-        import time, math
-        now = time.monotonic()
+        import math
         with self._layer._lock:
             strikes = list(self._layer._strikes)
 
@@ -1434,11 +1423,8 @@ class LightningPanel(QWidget):
                 if km <= self._QRN_RADIUS_KM:
                     local.append((x_px, y_px, t))
             n = len(local)
-            # Gebruik lokale lijst ook voor dichtste inslag
-            strikes_for_near = local
         else:
             n = len(strikes)
-            strikes_for_near = strikes
         self._count_lbl.setText(str(n))
         # Toon de periode (fade-duur) naast het getal
         secs = int(self._layer.fade_seconds)
@@ -1557,7 +1543,6 @@ class AlertsWidget(QWidget):
     def set_data(self, alerts: list):
         """NOAA alerts — worden NIET meer getoond (raw NOAA tekst ongewenst)."""
         # Bewaar voor eventueel intern gebruik maar toon niet
-        pass
 
     def set_solar_data(self, solar: dict):
         """Solar data bijwerken — alleen echte drempel-alerts tonen."""
@@ -1966,7 +1951,6 @@ class DXSpotsTable(QWidget):
         if not freq_khz:
             return
         hz   = int(freq_khz * 1000)
-        band = spot.get("band", _freq_to_band(freq_khz))
         # Bepaal modus op basis van band (SSB standaard voor DX)
         mode = "SSB"
         ok, msg = _cat_send(hz, mode)
@@ -2232,7 +2216,6 @@ class PropAdvWidget(QWidget):
         xray   = str(data.get("xray",     ""))
         sw_spd = str(data.get("sw_speed", "—"))
         sw_bz  = str(data.get("sw_bz",    "—"))
-        sw_den = str(data.get("sw_density","—"))
 
         import datetime as _dt
         now_utc = _dt.datetime.now(_dt.timezone.utc)
@@ -2388,7 +2371,6 @@ class PropAdvWidget(QWidget):
                    else tr("band.fair") if score >= 2 else tr("band.poor"))
         overall_clr = ("#4CAF50" if score >= 6 else "#8BC34A" if score >= 4
                        else "#FFC107" if score >= 2 else "#F44336")
-        lat_s = f"{self._cfg.qth_lat:.1f}" if self._cfg else "?"
         tips.append(("📊",
             tr("prop.adv.overall", overall=overall) + f"  (SFI {s_i} · K {k_i} · {len(hf_open)})",
             overall_clr))
@@ -2573,7 +2555,7 @@ class MUFWidget(QWidget):
 
     def mouseMoveEvent(self, event):
         """Show MUF tooltip on hover."""
-        W, H = self.width(), self.height()
+        W = self.width()
         N_H = 24
         PL = 70  # Must match paintEvent layout
         cell_w = max(1, (W - PL - 8) // N_H)

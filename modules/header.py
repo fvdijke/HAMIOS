@@ -2,11 +2,11 @@
 import datetime
 
 from PySide6.QtWidgets import QWidget, QHBoxLayout, QLabel, QPushButton, QFrame, QSpinBox
-from PySide6.QtCore import Qt, QTimer, Signal
-from PySide6.QtGui import QFont, QColor, QPalette
+from PySide6.QtCore import QTimer, Signal
+from PySide6.QtGui import QColor, QPalette
 
-from .theme import ACCENT, BG_PANEL, TEXT_H1, TEXT_DIM, HDR_H, BG_ROOT, BG_SURFACE, BORDER
-from .i18n import tr, language_changed
+from .theme import ACCENT, BG_PANEL, TEXT_H1, TEXT_DIM, HDR_H, BG_SURFACE, BORDER
+from .i18n import tr
 
 
 class HeaderBar(QWidget):
@@ -67,7 +67,7 @@ class HeaderBar(QWidget):
         self._btn_panels = self._btn(tr("hdr.panels"),       amber=True)
         self._btn_panels.setToolTip(tr("hdr.panels"))
         self._btn_tools = self._btn("📡 Antenna", amber=True)
-        self._btn_tools.setToolTip("Antenna Calculator & Tools")
+        self._btn_tools.setToolTip("HAM Antenna Designer")
         self._btn_exit     = self._btn(tr("app.close"), bg="#5A1010", hover="#8B1A1A")
         self._btn_settings = self._btn(tr("hdr.settings"), amber=True)
 

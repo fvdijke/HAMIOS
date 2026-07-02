@@ -10,8 +10,8 @@ from PySide6.QtCore import Qt, Signal, QSortFilterProxyModel, QTimer
 from PySide6.QtGui import QFont, QColor, QStandardItemModel, QStandardItem
 from PySide6.QtWidgets import (
     QDialog, QVBoxLayout, QHBoxLayout, QLabel, QLineEdit,
-    QPushButton, QTableView, QHeaderView, QFrame,
-    QComboBox, QCheckBox, QWidget
+    QPushButton, QTableView, QHeaderView, QComboBox,
+    QCheckBox
 )
 
 from .theme import ACCENT, BG_PANEL, BG_SURFACE, BG_ROOT, TEXT_H1, TEXT_DIM, TEXT_BODY, BORDER

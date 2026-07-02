@@ -4,8 +4,8 @@ Doorzoekbare help met categorieën die uitleggen wat het programma doet
 en hoe het werkt.
 """
 
-from PySide6.QtCore import Qt, QTimer
-from PySide6.QtGui import QFont, QColor, QPixmap, QPainter
+from PySide6.QtCore import Qt
+from PySide6.QtGui import QFont, QColor
 from PySide6.QtWidgets import (
     QDialog, QVBoxLayout, QHBoxLayout, QSplitter,
     QLabel, QLineEdit, QPushButton, QListWidget, QListWidgetItem,

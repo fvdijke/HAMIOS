@@ -10,7 +10,7 @@ from datetime import datetime, timezone
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from hamios5.wspr_feed import WSPRFeed, _mock_wspr_data
+from modules.wspr_feed import WSPRFeed, _mock_wspr_data
 
 
 class TestWSPRFeedMock(unittest.TestCase):

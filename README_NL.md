@@ -6,7 +6,7 @@
 
 **Real-time HF-voortplanting en DX-monitor voor radioamateurs — Windows 10/11**
 
-> v5.4 · Juni 2026 · Frank van Dijke · *Ontwikkeld met Claude AI (Anthropic)*
+> v5.5 · Juli 2026 · Frank van Dijke · *Ontwikkeld met Claude AI (Anthropic)*
 
 [![Website](https://img.shields.io/badge/website-hamios.space-orange)](https://hamios.space)
 [![Release](https://img.shields.io/github/v/release/fvdijke/HAMIOS?label=latest)](https://github.com/fvdijke/HAMIOS/releases/latest)
@@ -199,6 +199,15 @@ Alle verbindingen gebruiken standaard HTTPS/WebSocket. Geen persoonlijke gegeven
 ---
 
 ## 📋 Changelog
+
+### v5.5 — Juli 2026
+- **Nieuwe antennetool — HAM Antenna Designer**: de ingebouwde antennecalculator is vervangen door de zelfstandige HAM Antenna Designer (📡 Antenna-knop) — 20+ gedocumenteerde antenneontwerpen (verticals, dipolen, EFHW, loops, Yagi, Moxon, quad, J-pole, SWL-ontvangstantennes), onderbouwde formules, bouwadvies, schematische tekeningen, SWR-tabel, Smith-diagram, stralingspatronen en voedingslijnverlies-vergelijking
+- **TLE-caching gerepareerd**: satelliet-TLE-data wordt niet meer bij elke start opnieuw gedownload — een bestaande cache wordt nu correct herkend en alleen bij ontbreken eenmalig gedownload
+- **TLE-leeftijd zichtbaar**: splash-scherm en Satellietvenster tonen nu hoe oud de gecachte TLE-data is (bijv. "34 KB · 3 d"); handmatig verversen via ↻-knop ongewijzigd
+- **Snellere start**: hoofdvenster wordt niet meer twee keer opgebouwd bij ingeschakeld splash-scherm — halveert de opstarttijd en verwijdert dubbele achtergrondverbindingen (Blitzortung WebSocket, timers)
+- **EiBi-taalcodes gecorrigeerd**: `SWA` (Swahili) en `SWE` (Zweeds) vertalen nu correct (voorheen dode `SW`-entries)
+- **Vertaalfix**: ontbrekende Nederlandse tekst voor satelliet-cachestatus ("{n} satellieten uit cache")
+- **Codekwaliteit**: grote opschoonronde — ongebruikte imports, dode code en dubbele definities verwijderd in alle modules; unittest-suite gerepareerd (39 tests groen)
 
 ### v5.4 — Juni 2026
 - **Profielbeheer**: Volledige werkruimten opslaan/laden (config + paneellay-out + venstergeometrie) als benoemde profielen of standaard backup

@@ -20,15 +20,15 @@ import time
 import urllib.request
 import xml.etree.ElementTree as ET
 
-from PySide6.QtCore import Qt, QTimer, QThread, Signal, QObject, QPointF, QRectF
+from PySide6.QtCore import Qt, QTimer, QThread, Signal, QObject, QPointF
 from PySide6.QtGui import (
-    QPainter, QColor, QPen, QBrush, QFont, QPolygonF, QPainterPath
+    QPainter, QColor, QPen, QBrush, QFont, QPolygonF
 )
 from PySide6.QtWidgets import (
-    QWidget, QVBoxLayout, QHBoxLayout, QGridLayout, QLabel, QFrame
+    QWidget, QGridLayout, QLabel
 )
 
-from .theme import BG_SURFACE, BG_PANEL, TEXT_DIM, TEXT_H1, TEXT_BODY, ACCENT, BORDER, BG_ROOT
+from .theme import BG_SURFACE, TEXT_DIM, TEXT_H1, BORDER
 from .i18n import tr
 
 # ── NOAA / HamQSL endpoints ───────────────────────────────────────────────────
@@ -43,7 +43,7 @@ _XRAY_URL   = "https://services.swpc.noaa.gov/json/goes/primary/xrays-1-day.json
 _STORM_URL  = "https://services.swpc.noaa.gov/text/3-day-geomag-forecast.txt"
 _ALERTS_URL = "https://services.swpc.noaa.gov/products/alerts.json"
 
-_UA = {"User-Agent": "HAMIOS/5.0"}
+_UA = {"User-Agent": "HAMIOS/5.5"}
 
 
 def _get_json(url: str):

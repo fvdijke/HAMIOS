@@ -8,7 +8,7 @@ import os
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from hamios5.es_forecast import ESForecast, get_es_alert
+from modules.es_forecast import ESForecast, get_es_alert
 
 
 class TestESForecast(unittest.TestCase):

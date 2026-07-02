@@ -10,7 +10,7 @@ Usage:
 
 import math
 import datetime as dt
-from typing import Dict, Tuple
+from typing import Dict
 
 
 class MUFModel:
@@ -61,8 +61,6 @@ class MUFModel:
             Dict: {hour: {'foF2': MHz, 'muf': MHz, 'luf': MHz, 'quality': 'good'|'fair'|'poor'}}
         """
         result = {}
-        now_utc = dt.datetime.now(dt.timezone.utc)
-
         for hour in range(24):
             local_hour = (hour + self._utc_offset_hours()) % 24
             foF2 = self._calc_foF2(sfi, ssn, k_index, local_hour)

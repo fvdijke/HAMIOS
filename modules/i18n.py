@@ -45,7 +45,7 @@ _S: dict[str, dict[str, str]] = {
 
 # ── App / algemeen ────────────────────────────────────────────────────────────
 "app.name":           "HF Propagation & Atmosphere Monitor",
-"app.version":        "v5.4",
+"app.version":        "v5.5",
 "app.close":          "Afsluiten",
 "app.ok":             "OK",
 "app.cancel":         "Annuleren",
@@ -341,6 +341,8 @@ _S: dict[str, dict[str, str]] = {
 "sat.fwd":            "Toekomst (u):",
 "sat.tle_refresh":    "↻ TLE vernieuwen",
 "sat.tle_loading":    "TLE laden…",
+"sat.cache_loaded":   "{n} satellieten uit cache",
+"sat.tle_age":        "data {age} oud",
 "sat.tle_ok":         "TLE bijgewerkt",
 "sat.tle_fail":       "TLE download mislukt",
 
@@ -730,7 +732,7 @@ _S: dict[str, dict[str, str]] = {
 
 # ── App / general ─────────────────────────────────────────────────────────────
 "app.name":           "HF Propagation & Atmosphere Monitor",
-"app.version":        "v5.4",
+"app.version":        "v5.5",
 "app.close":          "Exit",
 "app.ok":             "OK",
 "app.cancel":         "Cancel",
@@ -1027,6 +1029,7 @@ _S: dict[str, dict[str, str]] = {
 "sat.tle_refresh":    "↻ Refresh TLE",
 "sat.tle_loading":    "Loading TLE…",
 "sat.cache_loaded":   "{n} satellites loaded from cache",
+"sat.tle_age":        "data {age} old",
 "sat.tle_ok":         "TLE updated",
 "sat.tle_fail":       "TLE download failed",
 

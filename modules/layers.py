@@ -24,7 +24,7 @@ from PySide6.QtWidgets import QGraphicsItem
 MAP_W, MAP_H = 4096, 2048
 
 
-from .sound import play_tick, play_sat_enter, play_sat_exit, play_beep
+from .sound import play_beep
 
 
 class _SatSignaller(QObject):
@@ -78,10 +78,28 @@ def save_tle_cache(data: dict):
         pass
 
 
+def tle_cache_age_seconds() -> float | None:
+    """Leeftijd van de TLE-cache in seconden, of None als er geen cache is."""
+    try:
+        return max(0.0, time.time() - os.path.getmtime(_TLE_CACHE))
+    except OSError:
+        return None
+
+
+def format_tle_age(secs: float) -> str:
+    """Compacte leeftijd-notatie: '<1 h', '5 h', '3 d'."""
+    hours = secs / 3600
+    if hours < 1:
+        return "<1 h"
+    if hours < 48:
+        return f"{int(hours)} h"
+    return f"{int(hours // 24)} d"
+
+
 def fetch_tle_group(url: str) -> list[tuple[str, str, str]]:
     """Fetch TLE group from URL."""
     try:
-        req = urllib.request.Request(url, headers={"User-Agent": "HAMIOS/5.4"})
+        req = urllib.request.Request(url, headers={"User-Agent": "HAMIOS/5.5"})
         with urllib.request.urlopen(req, timeout=15) as r:
             return parse_tle_text(r.read().decode("utf-8", errors="replace"))
     except Exception:
@@ -830,7 +848,6 @@ def _draw_footprint(painter: QPainter, sat_lat: float, sat_lon: float,
     # ── v4.0.2-formules voor polaire kap ──────────────────────────────────────
     dist_north = 90.0 - sat_lat   # hoekafstand naar noordpool
     dist_south = 90.0 + sat_lat   # hoekafstand naar zuidpool
-    has_polar  = False
 
     # ── Polygoon — azimuth-parameterisatie (normaal geval) ───────────────────
     N = 72
@@ -868,7 +885,6 @@ def _draw_footprint(painter: QPainter, sat_lat: float, sat_lon: float,
         # De kaplijn wordt 8 px extra uitgebreid zodat punten net onder lat_full
         # (met iets afwijkende lengtegraad) volledig worden bedekt.
         north_pole = (dist_north < rho_deg)
-        has_polar  = True
 
         if north_pole:
             lat_full = 180.0 - rho_deg - sat_lat
@@ -1090,7 +1106,6 @@ _DXCC: dict[str, tuple[float, float]] = {
     "5R":  (-20.0,  47.0), "FR":  (-21.1,  55.5),
     "3B8": (-20.2,  57.5), "3B6": (-10.4,  40.0), "3B7": ( -9.8,  50.7),
     "3B9": (-19.7,  63.4),
-    "VQ9": ( -7.3,  72.4),
     "9J":  (-15.0,  30.0), "9I":  (-15.0,  30.0),
     "ZD7": (-15.9,  -5.7), "ZD8": ( -7.9, -14.4), "ZD9": (-37.1, -12.3),
     "9L":  (  8.5, -13.3), "9G":  (  7.9,  -1.1),
@@ -1139,7 +1154,7 @@ class _DXFetchThread(QThread):
         try:
             import html as _html
             req = urllib.request.Request(
-                self._URL, headers={"User-Agent": "HAMIOS/5.0"})
+                self._URL, headers={"User-Agent": "HAMIOS/5.5"})
             with urllib.request.urlopen(req, timeout=12) as r:
                 raw = json.loads(r.read().decode("utf-8", errors="replace"))
 
@@ -1410,7 +1425,7 @@ class _PSKFetchThread(QThread):
     def run(self):
         try:
             req = urllib.request.Request(
-                self._URL, headers={"User-Agent": "HAMIOS/5.0"})
+                self._URL, headers={"User-Agent": "HAMIOS/5.5"})
             with urllib.request.urlopen(req, timeout=20) as r:
                 raw = r.read().decode("utf-8", errors="replace")
 

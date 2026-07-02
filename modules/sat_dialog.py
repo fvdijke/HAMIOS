@@ -4,16 +4,14 @@ Kolommen: Satelliet | Positie | Pad | Footprint
 Categorie-filter, uren-knoppen, Clear all, TLE vernieuwen.
 """
 
-import threading
 
-from PySide6.QtCore import Qt, Signal, QThread
+from PySide6.QtCore import Qt, Signal
 from PySide6.QtGui import QFont, QColor
 from PySide6.QtWidgets import (
-    QDialog, QVBoxLayout, QHBoxLayout, QGridLayout,
-    QLabel, QPushButton, QTreeWidget, QTreeWidgetItem,
-    QHeaderView, QProgressBar, QWidget, QFrame,
-    QButtonGroup, QRadioButton, QCheckBox, QSpinBox, QSizePolicy,
-    QAbstractItemView
+    QDialog, QVBoxLayout, QHBoxLayout, QLabel,
+    QPushButton, QTreeWidget, QTreeWidgetItem, QHeaderView,
+    QProgressBar, QFrame, QButtonGroup, QRadioButton,
+    QCheckBox, QSpinBox
 )
 
 from .theme import (
@@ -21,7 +19,8 @@ from .theme import (
     TEXT_BODY, BORDER
 )
 from .geometry import save_geom, restore_geom
-from .layers import TLE_GROUPS, fetch_tle_group, load_tle_cache, save_tle_cache, TleFetchThread
+from .layers import (TLE_GROUPS, load_tle_cache, TleFetchThread, tle_cache_age_seconds,
+                     format_tle_age)
 from .i18n import tr
 
 _QSS = f"""
@@ -257,7 +256,11 @@ class SatelliteDialog(QDialog):
             self._tle_data = cache
             self._populate_tree()
             n = sum(len(v) for v in cache.values())
-            self._status_lbl.setText(tr("sat.cache_loaded", n=n))
+            txt = tr("sat.cache_loaded", n=n)
+            age = tle_cache_age_seconds()
+            if age is not None:
+                txt += f"  ·  {tr('sat.tle_age', age=format_tle_age(age))}"
+            self._status_lbl.setText(txt)
         else:
             self._status_lbl.setText(tr("sat.tle_loading"))
 

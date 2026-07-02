@@ -1,14 +1,11 @@
 """HAMIOS - Simple Resource Manager Tab for Settings"""
 
-from PySide6.QtCore import Qt
 from PySide6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QScrollArea,
     QLabel, QLineEdit, QPushButton
 )
-from PySide6.QtGui import QFont
 
 from .resources_config import ResourceConfig, DEFAULT_RESOURCES
-from .i18n import tr
 from .theme import BG_PANEL, BG_SURFACE, TEXT_H1, TEXT_BODY, TEXT_DIM, BORDER
 
 

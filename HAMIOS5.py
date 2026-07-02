@@ -1,5 +1,5 @@
 """
-HAMIOS v5.4 — PySide6 versie
+HAMIOS v5.5 — PySide6 versie
 Developed with Claude AI
 
 """
@@ -19,7 +19,7 @@ from PySide6.QtWidgets import (QApplication, QMessageBox, QDialog,
                                QVBoxLayout, QHBoxLayout, QGridLayout,
                                QPushButton, QLabel, QFrame, QWidget)
 from PySide6.QtCore import Qt, QRectF, QPointF, QThread, Signal
-from PySide6.QtGui import QPixmap, QPainter, QColor, QFont, QPen, QPainterPath, QBrush
+from PySide6.QtGui import QPixmap, QPainter, QColor, QFont, QPen, QBrush
 
 from modules.mainwindow import HAMIOSMainWindow
 from modules.resources_config import DEFAULT_RESOURCES, ResourceConfig
@@ -124,7 +124,7 @@ def _make_header_pixmap() -> QPixmap:
 
     p.setFont(QFont("Segoe UI", 10))
     p.setPen(QColor(200, 168, 75, 130))
-    p.drawText(TX + 124, 8, 50, 44, Qt.AlignLeft | Qt.AlignVCenter, "v5.4")
+    p.drawText(TX + 124, 8, 50, 44, Qt.AlignLeft | Qt.AlignVCenter, "v5.5")
 
     p.setFont(QFont("Segoe UI", 8))
     p.setPen(LIGHT)
@@ -216,7 +216,7 @@ class _InetCheckThread(QThread):
         import urllib.request as _urlreq
         try:
             req = _urlreq.Request(self._URL, method="HEAD",
-                                  headers={"User-Agent": "HAMIOS/5.4"})
+                                  headers={"User-Agent": "HAMIOS/5.5"})
             with _urlreq.urlopen(req, timeout=6) as r:
                 self.result.emit(r.status < 400, f"HTTP {r.status}")
         except Exception as e:
@@ -233,7 +233,7 @@ class _OnlineResourceCheckThread(QThread):
         super().__init__()
         # Build resource dict from DEFAULT_RESOURCES for testing
         self._RESOURCES = {
-            key: (res["url"], {"User-Agent": "HAMIOS/5.4"})
+            key: (res["url"], {"User-Agent": "HAMIOS/5.5"})
             for key, res in DEFAULT_RESOURCES.items()
         }
 
@@ -474,7 +474,7 @@ def main():
 
     app = QApplication(sys.argv)
     app.setApplicationName("HAMIOS")
-    app.setApplicationVersion("5.4")
+    app.setApplicationVersion("5.5")
     app.setOrganizationName("")
 
     # Global window reference for cleanup
@@ -505,6 +505,7 @@ def main():
     from modules.config import load_config as _load_cfg
     _boot_cfg = _load_cfg()
 
+    window = None
     if _boot_cfg.show_splash:
         # Taal instellen vóór UI-opbouw
         from modules.i18n import set_language as _set_lang, tr as _tr
@@ -540,8 +541,7 @@ def main():
         _err_str  = _tr("splash.error")
 
         # ── Maprechten test ───────────────────────────────────────────────────
-        import sys as _sys
-        _APP_DIR   = (os.path.dirname(_sys.executable) if getattr(_sys, "frozen", False)
+        _APP_DIR   = (os.path.dirname(sys.executable) if getattr(sys, "frozen", False)
                       else os.path.dirname(os.path.abspath(__file__)))
         _test_path = os.path.join(_APP_DIR, "_hamios_fs_test_.tmp")
         _ok_create = _ok_write = _ok_read = _ok_delete = False
@@ -593,9 +593,8 @@ def main():
                 splash.set_check(key, "warn", _dl_str)
 
         # 4K kaart: apart checken (niet in startup file_status)
-        import os as _os
-        if _os.path.exists(_HIRES_FILE):
-            sz = round(_os.path.getsize(_HIRES_FILE) / 1024, 0)
+        if os.path.exists(_HIRES_FILE):
+            sz = round(os.path.getsize(_HIRES_FILE) / 1024, 0)
             splash.set_check("hires", "ok", f"{int(sz)} KB")
         else:
             splash.set_check("hires", "loading", _dl_str)
@@ -649,13 +648,23 @@ def main():
         except Exception:
             pass
 
-        # ── TLE downloaden als cache ontbreekt ────────────────────────────────
+        # ── TLE: alléén downloaden als er nog geen cache is ──────────────────
+        # Bestaande cache wordt nooit automatisch ververst; dat kan handmatig
+        # via het satellietvenster (↻ TLE vernieuwen). Wel de leeftijd tonen.
+        from modules.layers import tle_cache_age_seconds as _tle_age_s, \
+            format_tle_age as _fmt_tle_age
         _tle_thread = None
-        if not os.path.exists(os.path.join(_APP_DIR, "hamios_tle.json")):
+        _tle_age = _tle_age_s()
+        if _tle_age is None:
             from modules.layers import TleFetchThread as _TleFetchThread  # noqa: PLC0415
             _tle_thread = _TleFetchThread()
             splash.connect_tle_download("tle", _tle_thread)
             _tle_thread.start()
+        else:
+            _tle_info = _fmap.get("config/hamios_tle.json")
+            _tle_kb = (f"{_tle_info['size_kb']} KB · "
+                       if _tle_info and _tle_info["size_kb"] >= 1 else "")
+            splash.set_check("tle", "ok", f"{_tle_kb}{_fmt_tle_age(_tle_age)}")
 
         # ── Online resources controleren ──────────────────────────────────────
         _online_thread = _OnlineResourceCheckThread()
@@ -689,15 +698,17 @@ def main():
         except Exception:
             pass
 
-    # ── Maak mainwindow aan (altijd, niet alleen als geen splash) ────────────────
-    try:
-        window = HAMIOSMainWindow()
-        _main_window[0] = window  # Register for cleanup
-    except Exception:
-        msg = traceback.format_exc()
-        print(msg, file=sys.stderr)
-        _show_error("HAMIOS — Startfout", msg)
-        sys.exit(1)
+    # ── Mainwindow: hergebruik het venster uit de splash-fase, of maak het nu ──
+    # (voorheen werd het venster bij een splash-start tweemaal opgebouwd)
+    if window is None:
+        try:
+            window = HAMIOSMainWindow()
+        except Exception:
+            msg = traceback.format_exc()
+            print(msg, file=sys.stderr)
+            _show_error("HAMIOS — Startfout", msg)
+            sys.exit(1)
+    _main_window[0] = window  # Register for cleanup
 
     window.show()
     sys.exit(app.exec())

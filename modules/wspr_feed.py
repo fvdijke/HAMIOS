@@ -15,7 +15,7 @@ import threading
 import time
 import json
 from datetime import datetime, timedelta, timezone
-from typing import List, Dict, Optional
+from typing import List, Dict
 from PySide6.QtCore import QThread, Signal
 
 
@@ -100,7 +100,7 @@ class WSPRFeed(QThread):
             # Note: This API may be offline; if so, exception is caught and mock data is used
             url = "https://wsprnet.org/drupal/wsprnet/api/v2/spots"
             headers = {
-                "User-Agent": "HAMIOS/5.3 (WSPR Monitor)",
+                "User-Agent": "HAMIOS/5.5 (WSPR Monitor)",
                 "Accept": "application/json",
             }
 

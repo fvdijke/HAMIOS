@@ -3,24 +3,22 @@ HAMIOS v5 — QMainWindow (PySide6)
 
 Sprint 1: fundament, header, desktop-canvas, floating panels.
 """
-import sys
 import json
 import os
 
 from PySide6.QtWidgets import (
-    QMainWindow, QWidget, QVBoxLayout, QApplication
+    QMainWindow, QWidget, QVBoxLayout, QApplication, QDialog
 )
-from PySide6.QtCore import Qt, QRect, QSize, QTimer, QObject, Signal
-from PySide6.QtGui import QColor, QPalette
+from PySide6.QtCore import Qt, QTimer, QObject, Signal
 
 
 class _FreqBridge(QObject):
     """Thread-safe brug: achtergrond-poll → GUI-signaal."""
     freq_changed = Signal(object)   # int (Hz) of None
 
-from .theme import BG_ROOT, BG_PANEL, QSS
+from .theme import BG_ROOT, QSS
 from . import theme as _theme
-from .i18n import tr, set_language, get_language, language_changed
+from .i18n import tr, set_language, get_language
 from .header import HeaderBar
 from .panel import FloatingPanel
 from .mapview import MapView
@@ -39,7 +37,6 @@ from .spy_dialog import SpyStationsDialog
 from .eibi_dialog import EibiDialog
 from .ft8_dialog import Ft8Dialog
 from .help_dialog import HelpDialog
-from .antenna_calculator.antenna_calculator import AntennaCalculator
 from . import cat_interface as _cat_mod
 
 # Pad naar layouts-bestand (gedeeld met v4)
@@ -330,7 +327,7 @@ class HAMIOSMainWindow(QMainWindow):
         self._header.btn_ft8.clicked.connect(self._open_ft8_dialog)
         self._header.btn_overlay.clicked.connect(self._open_overlay_menu)
         self._header.btn_panels.clicked.connect(self._open_panel_chooser)
-        self._header.btn_tools.clicked.connect(self._open_antenna_calculator_dialog)
+        self._header.btn_tools.clicked.connect(self._open_antenna_designer)
         self._header.btn_help.clicked.connect(self._open_help)
         self._header.btn_settings.clicked.connect(self._open_settings)
 
@@ -567,7 +564,6 @@ class HAMIOSMainWindow(QMainWindow):
             self._cat._cfg = cfg
             self._cat._freq_callback = self._freq_bridge.freq_changed.emit
             _cat_mod.set_instance(self._cat)
-            was_connected = self._cat.connected
             if getattr(cfg, "cat_enabled", False) and not self._cat.connected:
                 self._cat.connect()
             elif not getattr(cfg, "cat_enabled", False) and self._cat.connected:
@@ -742,10 +738,21 @@ class HAMIOSMainWindow(QMainWindow):
     def _open_ft8_dialog(self):
         self._show_dialog("ft8", Ft8Dialog(self))
 
-    def _open_antenna_calculator_dialog(self):
-        """Open the antenna calculator."""
-        calculator = AntennaCalculator(self)
-        calculator.exec()
+    def _open_antenna_designer(self):
+        """Start de HAM Antenna Designer (extern Tkinter-programma, eigen venster)."""
+        import sys
+        import subprocess
+        proc = getattr(self, "_antenna_proc", None)
+        if proc is not None and proc.poll() is None:
+            return   # draait al — designer heeft een eigen venster
+        base = getattr(sys, "_MEIPASS", _HERE)
+        exe  = os.path.join(base, "tools", "HAM_Antenna_Designer.exe")
+        try:
+            self._antenna_proc = subprocess.Popen([exe], cwd=os.path.dirname(exe))
+        except OSError as e:
+            from PySide6.QtWidgets import QMessageBox
+            QMessageBox.warning(self, "HAM Antenna Designer",
+                                f"Kan de Antenna Designer niet starten:\n{exe}\n\n{e}")
 
     def _open_overlay_menu(self):
         """Modeless overlay selection panel (multiple toggles, stays open)."""
@@ -999,7 +1006,7 @@ class HAMIOSMainWindow(QMainWindow):
         """Check welke satellieten zichtbaar zijn van het QTH, speel ping bij overgang."""
         if not hasattr(self, "_alerts_widget"):
             return
-        import math, time as _time
+        import math
         from .layers import _qth_in_footprint
         from .sound import play_sat_enter, play_sat_exit
         import threading as _th
@@ -1016,7 +1023,6 @@ class HAMIOSMainWindow(QMainWindow):
             self._sat_zone_prev: dict[str, bool] = {}
 
         visible = []
-        now = _time.monotonic()
         for name, (lat, lon, alt) in pos.items():
             if alt <= 0:
                 continue
@@ -1186,29 +1192,6 @@ class HAMIOSMainWindow(QMainWindow):
         self._map_view.set_satellite_paths(set(path))
         self._map_view.set_satellite_footprints(set(fp))
         self._map_view.set_satellite_hours(back_h, fwd_h)
-
-    # ── TLE laden ─────────────────────────────────────────────────────────────
-    def _ensure_tle_loaded(self):
-        """Fetch TLE in background if not yet cached."""
-        from .layers import TLE_GROUPS, fetch_tle_group, parse_tle_text, save_tle_cache, load_tle_cache
-        import threading
-
-        def _fetch():
-            cache = load_tle_cache()
-            if not cache:
-                for group, url in TLE_GROUPS.items():
-                    sats = fetch_tle_group(url)
-                    if sats:
-                        cache[group] = [[n, l1, l2] for n, l1, l2 in sats]
-                save_tle_cache(cache)
-            tle = {}
-            for sats in cache.values():
-                for row in sats:
-                    tle[row[0]] = (row[1], row[2])
-            if hasattr(self, "_map_view"):
-                self._map_view.update_tle(tle)
-
-        threading.Thread(target=_fetch, daemon=True).start()
 
     # ── Publieke interface ────────────────────────────────────────────────────
     def download_missing_maps(self) -> list:

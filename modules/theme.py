@@ -43,7 +43,7 @@ def create_checkbox(text: str) -> object:
 
 def make_checkmark_path() -> str:
     """Generate amber checkmark indicator (14x14). Returns file path."""
-    from PySide6.QtGui import QPixmap, QPainter, QPen, QColor, QFont
+    from PySide6.QtGui import QPixmap, QPainter, QColor, QFont
     from PySide6.QtCore import Qt
 
     # Create 14x14 transparent pixmap

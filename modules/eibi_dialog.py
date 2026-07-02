@@ -12,7 +12,6 @@ import datetime
 import io
 import json
 import os
-import threading
 import urllib.request
 
 from PySide6.QtCore import Qt, QThread, Signal, QSortFilterProxyModel, QTimer, QModelIndex
@@ -20,11 +19,11 @@ from PySide6.QtGui import QFont, QColor, QStandardItemModel, QStandardItem
 from PySide6.QtWidgets import (
     QDialog, QVBoxLayout, QHBoxLayout, QLabel, QLineEdit,
     QPushButton, QTableView, QHeaderView, QProgressBar,
-    QFrame, QComboBox, QCheckBox, QWidget
+    QComboBox, QCheckBox
 )
 
 from .theme import ACCENT, BG_PANEL, BG_SURFACE, BG_ROOT, TEXT_H1, TEXT_DIM, TEXT_BODY, BORDER
-from .eibi_codes import translate_lang, translate_target, translate_itu, enrich_row
+from .eibi_codes import enrich_row
 from .geometry import save_geom, restore_geom
 from .i18n import tr
 from .resources_config import get_eibi_url
@@ -77,7 +76,7 @@ class _EibiDownloadThread(QThread):
         try:
             url = get_eibi_url()
             self.progress.emit(f"Downloaden: {url} …")
-            req = urllib.request.Request(url, headers={"User-Agent": "HAMIOS/5.0"})
+            req = urllib.request.Request(url, headers={"User-Agent": "HAMIOS/5.5"})
             with urllib.request.urlopen(req, timeout=30) as r:
                 raw = r.read().decode("latin-1", errors="replace")
             self.progress.emit("Verwerken …")
@@ -368,9 +367,6 @@ class EibiDialog(QDialog):
             fields = (row + [""] * 8)[:8]
             kHz_str = fields[0].strip()
             time_str = fields[1].strip()    # "0600-0800"
-            station  = fields[4].strip().lower()
-            language = fields[5].strip().lower()
-            country  = fields[3].strip().lower()
 
             # Band-filter
             if freq_range:
