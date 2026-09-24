@@ -29,16 +29,39 @@ from .sound import play_beep
 
 class _SatSignaller(QObject):
     zone_changed = Signal(str, bool)   # (naam, in_zone)
+    repaint      = Signal()            # vanuit rekenthread → update() in GUI-thread
+
+    def __init__(self, on_repaint=None):
+        super().__init__()
+        self._on_repaint = on_repaint
+        # Slot is een methode van dit QObject (GUI-thread) → queued vanuit threads
+        self.repaint.connect(self._do_repaint)
+
+    def _do_repaint(self):
+        if self._on_repaint:
+            self._on_repaint()
 
 from ._appdir import APP_DIR as _HERE
 _TLE_CACHE = os.path.join(_HERE, "config", "hamios_tle.json")
 
-TLE_GROUPS = {
-    "Amateur": "https://celestrak.org/NORAD/elements/gp.php?GROUP=amateur&FORMAT=tle",
-    "ISS":     "https://celestrak.org/NORAD/elements/gp.php?CATNR=25544&FORMAT=tle",
-    "Weather": "https://celestrak.org/NORAD/elements/gp.php?GROUP=weather&FORMAT=tle",
-    "CubeSat": "https://celestrak.org/NORAD/elements/gp.php?GROUP=cubesat&FORMAT=tle",
-}
+from . import tle_sources as _tle_src
+
+# Groepsnamen (categorie-knoppen); bronnen en rate-limits: zie tle_sources.py
+TLE_GROUPS = _tle_src.CELESTRAK_GROUPS
+
+
+def _on_screen(item: QGraphicsItem) -> bool:
+    """True als het item zichtbaar is in een getoond, niet-geminimaliseerd venster.
+    Animatietimers slaan hertekenen over als dat niet zo is (scheelt CPU)."""
+    if not item.isVisible():
+        return False
+    scene = item.scene()
+    if scene is None:
+        return False
+    for view in scene.views():
+        if view.isVisible() and not view.window().isMinimized():
+            return True
+    return False
 
 
 def _xy(lat: float, lon: float) -> QPointF:
@@ -47,17 +70,7 @@ def _xy(lat: float, lon: float) -> QPointF:
 
 # ── TLE hulpfuncties ──────────────────────────────────────────────────────────
 
-def parse_tle_text(text: str) -> list[tuple[str, str, str]]:
-    lines = [l.strip() for l in text.splitlines() if l.strip()]
-    sats, i = [], 0
-    while i + 2 < len(lines):
-        name, l1, l2 = lines[i], lines[i+1], lines[i+2]
-        if l1.startswith("1 ") and l2.startswith("2 "):
-            sats.append((name, l1, l2))
-            i += 3
-        else:
-            i += 1
-    return sats
+parse_tle_text = _tle_src.parse_tle_text
 
 
 def load_tle_cache() -> dict:
@@ -71,9 +84,12 @@ def load_tle_cache() -> dict:
 
 
 def save_tle_cache(data: dict):
+    """Atomisch schrijven — een afgebroken schrijfactie laat de oude cache heel."""
     try:
-        with open(_TLE_CACHE, "w", encoding="utf-8") as f:
+        tmp = _TLE_CACHE + ".tmp"
+        with open(tmp, "w", encoding="utf-8") as f:
             json.dump(data, f, ensure_ascii=False)
+        os.replace(tmp, _TLE_CACHE)
     except Exception:
         pass
 
@@ -96,40 +112,19 @@ def format_tle_age(secs: float) -> str:
     return f"{int(hours // 24)} d"
 
 
-def fetch_tle_group(url: str) -> list[tuple[str, str, str]]:
-    """Fetch TLE group from URL."""
-    try:
-        req = urllib.request.Request(url, headers={"User-Agent": "HAMIOS/5.5"})
-        with urllib.request.urlopen(req, timeout=15) as r:
-            return parse_tle_text(r.read().decode("utf-8", errors="replace"))
-    except Exception:
-        return []
-
-
 class TleFetchThread(QThread):
-    """Download alle TLE-groepen van CelesTrak en sla op als cache."""
-    progress = Signal(str)   # groepsnaam die nu geladen wordt
+    """Ververs TLE-data via tle_sources (SatNOGS/AMSAT, rate-limited).
+    Groepen die niet bijgewerkt konden worden behouden hun oude data."""
+    progress = Signal(str)   # bron die nu geladen wordt
+    report   = Signal(dict)  # per bron: ok / fail / wait (zie tle_sources.refresh)
     done     = Signal(dict)  # volledige cache na afronden
 
     def run(self):
-        cache = {}
-        for group, url in TLE_GROUPS.items():
-            # Check for interruption request
-            if self.isInterruptionRequested():
-                return
-
-            self.progress.emit(group)
-            sats = fetch_tle_group(url)
-            if sats:
-                cache[group] = [[n, l1, l2] for n, l1, l2 in sats]
-
-        # If any data was fetched, save it
-        if cache:
+        old = load_tle_cache()
+        cache, rep = _tle_src.refresh(old, progress=self.progress.emit)
+        if cache is not old and cache != old:
             save_tle_cache(cache)
-        else:
-            # If all fetches failed, load cached data
-            cache = load_tle_cache()
-
+        self.report.emit(rep)
         self.done.emit(cache)
 
 
@@ -433,18 +428,23 @@ class LightningLayer(QGraphicsItem):
         now = time.monotonic()
         with self._lock:
             has_flashes = bool(self._flashes) and (now - self._flashes[-1][2] < 10)
-        if has_flashes:
+        if has_flashes and _on_screen(self):
             self.update()
 
     def _tick(self):
         """Opruim-timer: verwijdert verouderde inslagen + traag fade-update."""
         now = time.monotonic()
         with self._lock:
+            n_before = len(self._strikes) + len(self._flashes)
             self._strikes = [(x, y, t) for x, y, t in self._strikes
                              if now - t < self.fade_seconds]
             self._flashes = [(x, y, t) for x, y, t in self._flashes
                              if now - t < 4.0]
-        self.update()
+            changed = (bool(self._strikes)
+                       or len(self._strikes) + len(self._flashes) != n_before)
+        # Alleen hertekenen als er iets te faden of te verwijderen viel
+        if changed:
+            self.update()
 
     def boundingRect(self) -> QRectF:
         return QRectF(0, 0, MAP_W, MAP_H)
@@ -620,7 +620,7 @@ class SatelliteLayer(QGraphicsItem):
         self._positions: dict[str, tuple] = {}
         self._paths:     dict[str, tuple] = {}
         self._ping_enabled: bool = True
-        self._sig = _SatSignaller()
+        self._sig = _SatSignaller(self.update)
         self._lock      = threading.Lock()
         self._calc_lock = threading.Lock()
 
@@ -696,7 +696,7 @@ class SatelliteLayer(QGraphicsItem):
                         pos[name] = r
             with self._lock:
                 self._positions = pos
-            self.update()
+            self._sig.repaint.emit()
         finally:
             self._calc_lock.release()
 
@@ -709,13 +709,15 @@ class SatelliteLayer(QGraphicsItem):
         paths = {}
         for name in sel:
             if name in tle:
-                paths[name] = _calc_sat_path(
+                past, fwd = _calc_sat_path(
                     *tle[name],
                     back_min=back_h * 60,   # 0 = geen verleden-pad
                     fwd_min=fwd_h  * 60)    # 0 = geen toekomst-pad
+                # Eenmalig omzetten naar polylines — paint() tekent ze direct
+                paths[name] = (_path_polylines(past), _path_polylines(fwd))
         with self._lock:
             self._paths = paths
-        self.update()
+        self._sig.repaint.emit()
 
     def boundingRect(self) -> QRectF:
         return QRectF(0, 0, MAP_W, MAP_H)
@@ -923,18 +925,27 @@ def _draw_footprint(painter: QPainter, sat_lat: float, sat_lon: float,
 
 
 
-def _draw_path(painter: QPainter, pts: list, pen: QPen):
-    painter.setPen(pen)
-    painter.setBrush(Qt.NoBrush)
-    prev = None
+def _path_polylines(pts: list) -> list:
+    """(lat, lon)-punten met None-breuken → lijst van QPolygonF-segmenten."""
+    from PySide6.QtGui import QPolygonF
+    polys, cur = [], []
     for pt in pts:
         if pt is None:
-            prev = None
+            if len(cur) > 1:
+                polys.append(QPolygonF(cur))
+            cur = []
             continue
-        cur = _xy(*pt)
-        if prev is not None:
-            painter.drawLine(prev, cur)
-        prev = cur
+        cur.append(_xy(*pt))
+    if len(cur) > 1:
+        polys.append(QPolygonF(cur))
+    return polys
+
+
+def _draw_path(painter: QPainter, polys: list, pen: QPen):
+    painter.setPen(pen)
+    painter.setBrush(Qt.NoBrush)
+    for poly in polys:
+        painter.drawPolyline(poly)
 
 
 # ── DX Spots Layer ────────────────────────────────────────────────────────────
@@ -1154,7 +1165,7 @@ class _DXFetchThread(QThread):
         try:
             import html as _html
             req = urllib.request.Request(
-                self._URL, headers={"User-Agent": "HAMIOS/5.5"})
+                self._URL, headers={"User-Agent": "HAMIOS/5.6"})
             with urllib.request.urlopen(req, timeout=12) as r:
                 raw = json.loads(r.read().decode("utf-8", errors="replace"))
 
@@ -1237,7 +1248,7 @@ class DXSpotsLayer(QGraphicsItem):
         self._anim_phase = (self._anim_phase + 1.2) % 18.0
         with self._lock:
             has_spots = bool(self._spots)
-        if has_spots:
+        if has_spots and _on_screen(self):
             self.update()
 
     def set_label_font_size(self, size: int):
@@ -1425,7 +1436,7 @@ class _PSKFetchThread(QThread):
     def run(self):
         try:
             req = urllib.request.Request(
-                self._URL, headers={"User-Agent": "HAMIOS/5.5"})
+                self._URL, headers={"User-Agent": "HAMIOS/5.6"})
             with urllib.request.urlopen(req, timeout=20) as r:
                 raw = r.read().decode("utf-8", errors="replace")
 

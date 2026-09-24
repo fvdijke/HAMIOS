@@ -110,7 +110,12 @@ _FREQS = [
 ]
 
 # Kolomkoppen
-_COLS = ["kHz", "Mode", "Band", "Regio", "Opmerkingen"]
+_COLS = ["MHz", "Mode", "Band", "Regio", "Opmerkingen"]
+
+
+def _fmt_mhz(khz: float) -> str:
+    """kHz → MHz met 4 decimalen, Nederlandse notatie (1.296,1000 / 14,0740)."""
+    return f"{khz / 1000:,.4f}".replace(',', 'X').replace('.', ',').replace('X', '.')
 
 # Kleurcodering per mode
 _MODE_COLORS = {
@@ -226,7 +231,7 @@ class Ft8Dialog(QDialog):
         # ── Tabel ─────────────────────────────────────────────────────────────
         self._model = QStandardItemModel(0, len(_COLS))
         self._model.setHorizontalHeaderLabels([
-            tr("ft8.col.freq"), tr("ft8.col.mode"), tr("ft8.col.band"),
+            tr("ft8.col.freq") + " (MHz)", tr("ft8.col.mode"), tr("ft8.col.band"),
             "Regio", tr("ft8.col.note"),
         ])
 
@@ -234,6 +239,8 @@ class Ft8Dialog(QDialog):
         self._proxy.setSourceModel(self._model)
         self._proxy.setFilterCaseSensitivity(Qt.CaseInsensitive)
         self._proxy.setFilterKeyColumn(-1)
+        # Sorteer op UserRole (numeriek voor frequentie/band), niet op de getoonde tekst
+        self._proxy.setSortRole(Qt.UserRole)
 
         self._table = QTableView()
         self._table.setModel(self._proxy)
@@ -293,24 +300,30 @@ class Ft8Dialog(QDialog):
             if mode != "Alle" and m != mode:
                 continue
             if q:
-                haystack = f"{khz} {m} {b} {reg} {note}".lower()
+                # Zoeken werkt op kHz én MHz (14074, 14.074, 14,074)
+                haystack = f"{khz} {khz / 1000} {_fmt_mhz(khz)} {m} {b} {reg} {note}".lower()
                 if q not in haystack:
                     continue
 
             color = QColor(_MODE_COLORS.get(m, TEXT_BODY))
 
-            # kHz met 3 decimalen (Dutch: period=thousands, comma=decimal)
-            khz_str = f"{khz:,.3f}".replace(',', 'X').replace('.', ',').replace('X', '.')
+            mhz_str = _fmt_mhz(khz)
 
             items = [
-                QStandardItem(khz_str),
+                QStandardItem(mhz_str),
                 QStandardItem(m),
                 QStandardItem(b),
                 QStandardItem(reg),
                 QStandardItem(note),
             ]
             items[0].setFont(f_mono)
-            items[0].setData(khz, Qt.UserRole)   # numerieke waarde voor sorteren
+            # Sorteersleutels: frequentie numeriek; band op frequentie (10m ná 160m…);
+            # overige kolommen op tekst
+            items[0].setData(khz, Qt.UserRole)   # CAT leest deze ook uit
+            items[1].setData(m.lower(),    Qt.UserRole)
+            items[2].setData(khz,          Qt.UserRole)
+            items[3].setData(reg.lower(),  Qt.UserRole)
+            items[4].setData(note.lower(), Qt.UserRole)
             for it in items:
                 it.setFont(f8 if it != items[0] else f_mono)
                 it.setForeground(color)
@@ -347,7 +360,7 @@ class Ft8Dialog(QDialog):
         ok, msg = cat.set_freq_hz(hz)
         if not ok:
             if "geweigerd" in msg or "?" in msg:
-                self._cat_status(f"📟  {khz:.0f} kHz geweigerd (buiten HAM-band?)", "#FFA726")
+                self._cat_status(f"📟  {_fmt_mhz(khz)} MHz geweigerd (buiten HAM-band?)", "#FFA726")
             else:
                 self._cat_status(f"📟  {msg}", "#EF5350")
             QTimer.singleShot(4000, self._reset_cat_lbl)
@@ -359,8 +372,7 @@ class Ft8Dialog(QDialog):
             m_ok, m_msg = cat.set_mode("USB")
             mode_note = "  USB ✔" if m_ok else f"  (modus: {m_msg})"
 
-        khz_str = f"{khz:,.3f}".replace(',', 'X').replace('.', ',').replace('X', '.')
-        self._cat_status(f"📟  CAT → {khz_str} kHz{mode_note}", "#4CAF50")
+        self._cat_status(f"📟  CAT → {_fmt_mhz(khz)} MHz{mode_note}", "#4CAF50")
         QTimer.singleShot(4000, self._reset_cat_lbl)
 
     def _cat_status(self, txt: str, color: str):

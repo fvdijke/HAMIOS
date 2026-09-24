@@ -43,7 +43,7 @@ _XRAY_URL   = "https://services.swpc.noaa.gov/json/goes/primary/xrays-1-day.json
 _STORM_URL  = "https://services.swpc.noaa.gov/text/3-day-geomag-forecast.txt"
 _ALERTS_URL = "https://services.swpc.noaa.gov/products/alerts.json"
 
-_UA = {"User-Agent": "HAMIOS/5.5"}
+_UA = {"User-Agent": "HAMIOS/5.6"}
 
 
 def _get_json(url: str):

@@ -30,7 +30,7 @@ from PySide6.QtCore import (
 )
 from PySide6.QtGui import (
     QPixmap, QPainter, QColor, QPen, QBrush, QImage,
-    QFont
+    QFont, QPixmapCache
 )
 
 from .theme import ACCENT, BG_ROOT
@@ -177,13 +177,135 @@ class MaidenheadItem(QGraphicsItem):
                     Qt.AlignCenter, lbl)
 
 
-class GraylineItem(QGraphicsItem):
-    """Graylijn-band (~1000 km schemering). z=2"""
+# Maidenhead-veld (20°×10°) en square (2°×1°) in scene-pixels
+_MH_FW, _MH_FH = MAP_W / 18, MAP_H / 18
+_MH_SW, _MH_SH = _MH_FW / 10, _MH_FH / 10
+
+
+def maidenhead_at(lat: float, lon: float) -> tuple | None:
+    """(veld_lon, veld_lat, sq_lon, sq_lat, sub_lon, sub_lat)-indices, of None."""
+    if not (-90 <= lat < 90 and -180 <= lon < 180):
+        return None
+    x, y = lon + 180, lat + 90
+    return (int(x // 20), int(y // 10),
+            int(x % 20 // 2), int(y % 10),
+            min(23, int(x % 2 * 12)), min(23, int(y % 1 * 24)))
+
+
+def maidenhead_label(idx: tuple) -> str:
+    fi, fj, si, sj, ui, uj = idx
+    return (chr(ord('A') + fi) + chr(ord('A') + fj) + f"{si}{sj}"
+            + chr(ord('a') + ui) + chr(ord('a') + uj))
+
+
+class MaidenheadHoverItem(QGraphicsItem):
+    """Squares (00–99) van het Maidenhead-veld onder de muis. z=3.96
+    Apart van MaidenheadItem zodat het gecachte hoofdraster niet hertekend hoeft."""
+
+    _FILL = QColor(200, 168, 75, 45)
+    _LINE = QColor(80, 120, 170, 120)
+    _LBL  = QColor(170, 190, 215, 210)
+    _HOT  = QColor(200, 168, 75, 240)
+
+    def __init__(self):
+        super().__init__()
+        self.setZValue(3.96)
+        self._field:  tuple | None = None   # (fi, fj)
+        self._square: tuple | None = None   # (si, sj)
+        self._font_size = 8
+
+    def set_font_size(self, size: int):
+        self._font_size = max(6, size)
+        self.update()
+
+    def set_hover(self, idx: tuple | None):
+        field  = idx[:2]  if idx else None
+        square = idx[2:4] if idx else None
+        if field == self._field and square == self._square:
+            return
+        if field != self._field:
+            self.prepareGeometryChange()
+        self._field, self._square = field, square
+        self.update()
+
+    def _field_origin(self) -> tuple[float, float]:
+        fi, fj = self._field
+        return fi * _MH_FW, (17 - fj) * _MH_FH
+
+    def boundingRect(self) -> QRectF:
+        if self._field is None:
+            return QRectF()
+        x0, y0 = self._field_origin()
+        return QRectF(x0 - 1, y0 - 1, _MH_FW + 2, _MH_FH + 2)
+
+    def paint(self, painter: QPainter, option, widget=None):
+        if self._field is None:
+            return
+        x0, y0 = self._field_origin()
+
+        # Square onder de muis markeren
+        if self._square is not None:
+            si, sj = self._square
+            painter.fillRect(QRectF(x0 + si * _MH_SW, y0 + (9 - sj) * _MH_SH,
+                                    _MH_SW, _MH_SH), self._FILL)
+
+        # Subraster: cosmetische pen (1 device-px, ongeacht zoom)
+        pen = QPen(self._LINE, 0, Qt.DotLine)
+        painter.setPen(pen)
+        for k in range(1, 10):
+            x = x0 + k * _MH_SW
+            y = y0 + k * _MH_SH
+            painter.drawLine(QPointF(x, y0), QPointF(x, y0 + _MH_FH))
+            painter.drawLine(QPointF(x0, y), QPointF(x0 + _MH_FW, y))
+
+        # Labels in device-coördinaten, zodat ze bij elke zoom scherp zijn;
+        # alleen tekenen als ze in een square passen
+        t     = painter.worldTransform()
+        scale = abs(t.m11()) or 1.0
+        px    = min(self._font_size * 1.35, _MH_SH * scale * 0.8)
+        if px < 6:
+            return
+        f = QFont("Segoe UI")
+        f.setPixelSize(int(px))
+        painter.save()
+        painter.resetTransform()
+        painter.setFont(f)
+        if painter.fontMetrics().horizontalAdvance("00") + 2 > _MH_SW * scale:
+            painter.restore()
+            return
+        for si in range(10):
+            for sj in range(10):
+                r = t.mapRect(QRectF(x0 + si * _MH_SW, y0 + (9 - sj) * _MH_SH,
+                                     _MH_SW, _MH_SH))
+                painter.setPen(self._HOT if (si, sj) == self._square else self._LBL)
+                painter.drawText(r, Qt.AlignCenter, f"{si}{sj}")
+        painter.restore()
+
+
+class _CompositedOverlay:
+    """Mixin voor overlays die in de basiskaart worden ingebakken.
+    Het item tekent zichzelf niet (ItemHasNoContents); MapView combineert
+    _image met de kaart. Zichtbaarheidswijzigingen melden via _on_change."""
+
+    def _init_composited(self):
+        self._on_change = None
+        self.setFlag(QGraphicsItem.ItemHasNoContents, True)
+
+    def itemChange(self, change, value):
+        if (change == QGraphicsItem.ItemVisibleHasChanged
+                and getattr(self, "_on_change", None)):
+            self._on_change()
+        return super().itemChange(change, value)
+
+
+class GraylineItem(_CompositedOverlay, QGraphicsItem):
+    """Graylijn-band (~1000 km schemering). z=2 — ingebakken in basiskaart."""
 
     def __init__(self):
         super().__init__()
         self.setZValue(2)
         self._image: QImage | None = None
+        self._init_composited()
 
     def boundingRect(self) -> QRectF:
         return QRectF(0, 0, MAP_W, MAP_H)
@@ -361,14 +483,15 @@ class AuroraItem(QGraphicsItem):
                 prev = pt
 
 
-class NightOverlayItem(QGraphicsItem):
-    """Dag/nacht terminator als semi-transparant overlay."""
+class NightOverlayItem(_CompositedOverlay, QGraphicsItem):
+    """Dag/nacht terminator als semi-transparant overlay — ingebakken in basiskaart."""
 
     def __init__(self):
         super().__init__()
         self.setZValue(1)
         self._image: QImage | None = None
         self.setFlag(QGraphicsItem.ItemIgnoresTransformations, False)
+        self._init_composited()
 
     def boundingRect(self) -> QRectF:
         return QRectF(0, 0, MAP_W, MAP_H)
@@ -721,26 +844,51 @@ class NightRenderWorker(QObject):
 
 # ── Kaart herinkleuring (v4-stijl) ───────────────────────────────────────────
 
+# Cache van de ingekleurde kaart — inkleuren kost seconden, laden milliseconden
+_COLORED_CACHE = os.path.join(_HERE, "config", "worldmap_colored.png")
+_COLORED_KEY   = "hamios_src"
+_COLORED_VER   = "v1"   # verhogen als het inkleur-algoritme verandert
+
+
+def _colorize_key(src: str) -> str:
+    """Sleutel die verandert zodra het bronbestand verandert."""
+    st = os.stat(src)
+    return (f"{_COLORED_VER}|{os.path.basename(src)}|{int(st.st_mtime)}"
+            f"|{st.st_size}|{MAP_W}x{MAP_H}")
+
+
+def _load_colorized_cache(key: str) -> QImage | None:
+    if not os.path.exists(_COLORED_CACHE):
+        return None
+    img = QImage(_COLORED_CACHE)
+    if (img.isNull() or img.text(_COLORED_KEY) != key
+            or img.width() != MAP_W or img.height() != MAP_H):
+        return None
+    return img
+
+
 class _MapColorizeThread(QThread):
     """Herinkleurt de NASA kaart naar v4-stijl (oceaan/land donkerblauw).
-    Verwerkt altijd op 2048×1024 voor snelheid, schaalt resultaat naar volledige grootte."""
-    done = Signal(QPixmap)
+    Verwerkt altijd op 2048×1024 voor snelheid, schaalt resultaat naar volledige grootte.
+    Werkt met QImage (thread-safe) en schrijft het resultaat naar de schijfcache."""
+    done = Signal(QImage)
 
     _OCEAN = (27,  58,  92)
     _LAND  = (45,  96, 128)
     _PROC_W, _PROC_H = 2048, 1024   # vaste verwerkingsresolutie
 
-    def __init__(self, source: QPixmap):
+    def __init__(self, source: QImage, cache_key: str = ""):
         super().__init__()
-        self._pix    = source
+        self._img    = source
         self._out_w  = source.width()
         self._out_h  = source.height()
+        self._key    = cache_key
 
     def run(self):
         # Verklein naar verwerkingsresolutie voor snelheid
-        small  = self._pix.scaled(self._PROC_W, self._PROC_H,
+        small  = self._img.scaled(self._PROC_W, self._PROC_H,
                                   Qt.IgnoreAspectRatio, Qt.SmoothTransformation)
-        img    = small.toImage().convertToFormat(QImage.Format_RGB32)
+        img    = small.convertToFormat(QImage.Format_RGB32)
         W, H   = img.width(), img.height()
         ptr    = img.bits()
         data   = bytearray(ptr)
@@ -752,10 +900,20 @@ class _MapColorizeThread(QThread):
                 data[i], data[i+1], data[i+2] = OB, OG, OR
             else:
                 data[i], data[i+1], data[i+2] = LB, LG, LR
-        result_small = QImage(bytes(data), W, H, W * 4, QImage.Format_RGB32)
-        # Schaal terug naar de originele bronresolutie
-        result_full  = QPixmap.fromImage(result_small).scaled(
+        buf          = bytes(data)
+        result_small = QImage(buf, W, H, W * 4, QImage.Format_RGB32)
+        # Schaal terug naar de originele bronresolutie (scaled() maakt een kopie)
+        result_full  = result_small.scaled(
             self._out_w, self._out_h, Qt.IgnoreAspectRatio, Qt.SmoothTransformation)
+        if self._key:
+            try:
+                os.makedirs(os.path.dirname(_COLORED_CACHE), exist_ok=True)
+                result_full.setText(_COLORED_KEY, self._key)
+                tmp = _COLORED_CACHE + ".tmp"
+                if result_full.save(tmp, "PNG"):
+                    os.replace(tmp, _COLORED_CACHE)
+            except OSError:
+                pass
         self.done.emit(result_full)
 
 
@@ -771,31 +929,65 @@ class _HiresDownloadThread(QThread):
         self._dest          = dest
         self._also_save_std = also_save_std
 
-    _UA = "HAMIOS/5.5 (HF Propagation Monitor)"
+    _UA = "HAMIOS/5.6 (HF Propagation Monitor)"
 
-    def run(self):
-        tmp = self._dest + ".tmp"
+    def _fetch(self, url: str, dest: str) -> bool:
+        """Download url naar dest. Probeert eerst normale SSL, dan zonder verificatie.
+        Geeft True terug bij succes."""
+        import urllib.request
+        import ssl
+        tmp = dest + ".tmp"
         try:
-            import urllib.request
-            # Ensure destination directory exists
-            dest_dir = os.path.dirname(self._dest)
+            dest_dir = os.path.dirname(dest)
             if dest_dir:
                 os.makedirs(dest_dir, exist_ok=True)
+            req = urllib.request.Request(url, headers={"User-Agent": self._UA})
+            for attempt in range(2):
+                try:
+                    ctx = None
+                    if attempt == 1:
+                        ctx = ssl.create_default_context()
+                        ctx.check_hostname = False
+                        ctx.verify_mode    = ssl.CERT_NONE
+                    kwargs = {"timeout": 30}
+                    if ctx is not None:
+                        kwargs["context"] = ctx
+                    with urllib.request.urlopen(req, **kwargs) as resp:
+                        total    = int(resp.headers.get("Content-Length", -1))
+                        received = 0
+                        with open(tmp, "wb") as f:
+                            while True:
+                                chunk = resp.read(65536)
+                                if not chunk:
+                                    break
+                                f.write(chunk)
+                                received += len(chunk)
+                                self.progress.emit(received, total)
+                    os.replace(tmp, dest)
+                    return True
+                except ssl.SSLError:
+                    if attempt == 0:
+                        continue
+                    raise
+        except Exception as e:
+            import sys as _sys, traceback as _tb
+            print(f"Map download failed ({url}): {e}", file=_sys.stderr)
+            _tb.print_exc(file=_sys.stderr)
+            try:
+                os.remove(tmp)
+            except OSError:
+                pass
+        return False
 
-            req = urllib.request.Request(self._url, headers={"User-Agent": self._UA})
-            with urllib.request.urlopen(req, timeout=30) as resp:
-                total     = int(resp.headers.get("Content-Length", -1))
-                received  = 0
-                with open(tmp, "wb") as f:
-                    while True:
-                        chunk = resp.read(65536)   # 64 KB blokken
-                        if not chunk:
-                            break
-                        f.write(chunk)
-                        received += len(chunk)
-                        self.progress.emit(received, total)
-            os.replace(tmp, self._dest)
+    def run(self):
+        # Stap 1: probeer de primaire URL
+        ok = self._fetch(self._url, self._dest)
 
+        # Stap 2: als hires mislukt, probeer de standaard-resolutie URL als fallback
+        if not ok and self._url == _HIRES_URL:
+            ok = self._fetch(_STD_URL, self._dest)
+
+        if ok:
             # Sla ook standaard 2K versie op als die ontbreekt
             if self._also_save_std and not os.path.exists(MAP_FILE):
                 try:
@@ -806,14 +998,7 @@ class _HiresDownloadThread(QThread):
                 except Exception:
                     pass
             self.done.emit()
-        except Exception as e:
-            import traceback
-            print(f"Map download failed: {e}", file=__import__('sys').stderr)
-            traceback.print_exc(file=__import__('sys').stderr)
-            try:
-                os.remove(tmp)
-            except OSError:
-                pass
+        else:
             self.failed.emit()
 
 
@@ -863,6 +1048,9 @@ class MapView(QGraphicsView):
         self._maidenhead.setVisible(False)   # standaard uit
         self._scene.addItem(self._maidenhead)
 
+        self._mh_hover = MaidenheadHoverItem()
+        self._scene.addItem(self._mh_hover)
+
         self._graticule = GraticuleItem()
         self._scene.addItem(self._graticule)
 
@@ -906,12 +1094,32 @@ class MapView(QGraphicsView):
         self._callsign_overlay = DXCCOverlayItem()
         self._scene.addItem(self._callsign_overlay)
 
+        # ── Rendering-cache ───────────────────────────────────────────────────
+        # Nacht + grayline worden in de basiskaart ingebakken (zie _compose_base);
+        # lagen die zelden veranderen worden in device-coördinaten gecachet, zodat
+        # de 20 fps animaties (DX-spots, bliksem) ze niet elk frame hertekenen.
+        self._base_src: QPixmap | None = None
+        self._night._on_change    = self._compose_base
+        self._grayline._on_change = self._compose_base
+        QPixmapCache.setCacheLimit(max(QPixmapCache.cacheLimit(), 128 * 1024))
+        for item in (self._base_map, self._graticule, self._maidenhead,
+                     self._callsign_overlay, self._sat_layer,
+                     self._lightning_radius, self._lightning_beep_radius):
+            item.setCacheMode(QGraphicsItem.DeviceCoordinateCache)
+
         # TLE laden vanuit cache bij opstart
         QTimer.singleShot(500, self._load_tle_cache)
 
         # GC-pad
         self._gc_line: QGraphicsLineItem | None = None
         self._spot_popup = None
+
+        # Hover: callsign-popup en Maidenhead-locatorlabel
+        self._call_popup = None
+        self._call_entry = None
+        self._mh_label   = None
+        self.setMouseTracking(True)
+        self.viewport().setMouseTracking(True)
 
         # Pan-state
         self._pan_start: QPointF | None = None
@@ -935,16 +1143,28 @@ class MapView(QGraphicsView):
         """Laad bestaande kaart. Geen download hier — zie download_missing_maps()."""
         src = _HIRES_FILE if os.path.exists(_HIRES_FILE) else (
               MAP_FILE    if os.path.exists(MAP_FILE)    else None)
-        if src:
-            pix = QPixmap(src).scaled(
-                MAP_W, MAP_H, Qt.IgnoreAspectRatio, Qt.SmoothTransformation)
-        else:
+        if not src:
             pix = QPixmap(MAP_W, MAP_H)
             pix.fill(QColor(27, 58, 92))   # oceaan-placeholder
-        self._base_map.setPixmap(pix)
-        if src:
-            t = _MapColorizeThread(pix)
-            t.done.connect(self._base_map.setPixmap)
+            self._set_base(pix)
+            return
+
+        # Ingekleurde versie uit cache — geen herinkleuring nodig
+        try:
+            key = _colorize_key(src)
+        except OSError:
+            key = ""
+        cached = _load_colorized_cache(key) if key else None
+        if cached is not None:
+            self._set_base(QPixmap.fromImage(cached))
+            return
+
+        img = QImage(src).scaled(
+            MAP_W, MAP_H, Qt.IgnoreAspectRatio, Qt.SmoothTransformation)
+        self._set_base(QPixmap.fromImage(img))
+        if not img.isNull():
+            t = _MapColorizeThread(img, key)
+            t.done.connect(self._on_colorized)
             t.finished.connect(t.deleteLater)                  # cleanup NA run()
             t.finished.connect(lambda th=t: self._threads.discard(th))
             self._threads.add(t)
@@ -976,6 +1196,36 @@ class MapView(QGraphicsView):
             self._threads.add(t)
             threads.append(("worldmap", t))
         return threads
+
+    def _on_colorized(self, img: QImage):
+        self._set_base(QPixmap.fromImage(img))
+
+    # ── Basiskaart + ingebakken overlays ──────────────────────────────────────
+    def _set_base(self, pix: QPixmap):
+        """Nieuwe (ingekleurde) kaart zonder overlays; overlays erop combineren."""
+        self._base_src = pix
+        self._compose_base()
+
+    def _compose_base(self):
+        """Combineer kaart + nacht + grayline tot één pixmap (z 0–2).
+        Draait alleen bij kaartwissel, nacht-refresh (30 s) of zichtbaarheidswissel,
+        in plaats van drie volle-kaart-blends per frame."""
+        src = self._base_src
+        if src is None:
+            return
+        night = self._night._image    if self._night.isVisible()    else None
+        gray  = self._grayline._image if self._grayline.isVisible() else None
+        if night is None and gray is None:
+            self._base_map.setPixmap(src)
+            return
+        comp = QPixmap(src)          # impliciet gedeeld; tekenen maakt een kopie
+        p = QPainter(comp)
+        if night is not None:
+            p.drawImage(0, 0, night)
+        if gray is not None:
+            p.drawImage(0, 0, gray)
+        p.end()
+        self._base_map.setPixmap(comp)
 
     # ── Nacht-overlay ─────────────────────────────────────────────────────────
     def _refresh_night(self):
@@ -1013,9 +1263,8 @@ class MapView(QGraphicsView):
         gray_full  = gray.scaled( MAP_W, MAP_H, Qt.IgnoreAspectRatio, tf)
 
         self._night._image    = night_full
-        self._night.update()
         self._grayline._image = gray_full
-        self._grayline.update()
+        self._compose_base()
         self._sun_marker._update_position()
         self._sun_marker.update()
         self._moon_marker._update_position()
@@ -1068,6 +1317,10 @@ class MapView(QGraphicsView):
         self._pan_moved  = False
 
     def mouseMoveEvent(self, event):
+        if event.buttons() == Qt.NoButton:
+            self._update_hover(event.position())
+        elif self._pan_moved:
+            self._clear_hover()
         if self._pan_start is not None and event.buttons() & Qt.LeftButton:
             delta = event.position() - self._pan_start
             if not self._pan_moved:
@@ -1092,18 +1345,6 @@ class MapView(QGraphicsView):
                 scene_pt = self.mapToScene(event.position().toPoint())
                 zoom = self.transform().m11()
                 radius_scene = max(12.0, 18.0 / zoom)
-
-                # ── Callsign country-code klik ───────────────────────────────
-                if self._callsign_overlay.isVisible():
-                    entry = self._callsign_overlay.find_entry_near(
-                        scene_pt.x(), scene_pt.y(), radius_scene * 3)
-                    if entry:
-                        self._show_callsign_popup(entry, event.position().toPoint())
-                        self._pan_start = None
-                        self._pan_moved = False
-                        self.setCursor(Qt.ArrowCursor)
-                        super().mouseReleaseEvent(event)
-                        return
 
                 # ── PSKReporter klik ──────────────────────────────────────────
                 if self._psk.isVisible():
@@ -1142,18 +1383,87 @@ class MapView(QGraphicsView):
             self.setCursor(Qt.ArrowCursor)
         super().mouseReleaseEvent(event)
 
-    def _show_callsign_popup(self, entry: tuple, viewport_pos):
-        """Popup met alle DXCC prefixen voor het geklikte land."""
-        from PySide6.QtWidgets import QLabel, QVBoxLayout, QFrame
-        from PySide6.QtCore import QTimer
+    # ── Hover ─────────────────────────────────────────────────────────────────
+    def _update_hover(self, vp_pos: QPointF):
+        """Callsign-popup en Maidenhead-subraster volgen de muis."""
+        scene_pt = self.mapToScene(vp_pos.toPoint())
+        zoom     = self.transform().m11() or 1.0
 
-        if self._spot_popup is not None:
+        # Callsign country codes
+        entry = None
+        if self._callsign_overlay.isVisible():
+            radius = max(12.0, 18.0 / zoom) * 3
+            entry  = self._callsign_overlay.find_entry_near(
+                scene_pt.x(), scene_pt.y(), radius)
+        if entry is None:
+            self._hide_callsign_popup()
+        elif entry != self._call_entry:
+            self._show_callsign_popup(entry, vp_pos.toPoint())
+        else:
+            self._place_callsign_popup(vp_pos.toPoint())   # volgt de muis
+
+        # Maidenhead squares
+        idx = None
+        if self._maidenhead.isVisible():
+            lat, lon = scene_to_latlon(scene_pt.x(), scene_pt.y())
+            idx = maidenhead_at(lat, lon)
+        self._mh_hover.set_hover(idx)
+        self._show_mh_label(idx, vp_pos.toPoint())
+
+    def _clear_hover(self):
+        self._hide_callsign_popup()
+        self._mh_hover.set_hover(None)
+        self._show_mh_label(None, None)
+
+    def leaveEvent(self, event):
+        self._clear_hover()
+        super().leaveEvent(event)
+
+    def _show_mh_label(self, idx, vp_pos):
+        """Klein label met de 6-tekens locator onder de muis (boven de cursor)."""
+        if idx is None:
+            if self._mh_label is not None:
+                self._mh_label.hide()
+            return
+        from PySide6.QtWidgets import QLabel
+        lbl = self._mh_label
+        if lbl is None:
+            lbl = QLabel(self.viewport())
+            lbl.setAttribute(Qt.WA_TransparentForMouseEvents, True)
+            lbl.setTextFormat(Qt.RichText)
+            lbl.setStyleSheet(
+                "QLabel { background:#1A1D22; border:1px solid #3A4A60;"
+                " border-radius:4px; padding:2px 6px; font-size:9pt; }")
+            self._mh_label = lbl
+        loc = maidenhead_label(idx)
+        lbl.setText(f"<b style='color:#C8A84B;'>{loc[:4]}</b>"
+                    f"<span style='color:#90A0B8;'>{loc[4:]}</span>")
+        lbl.adjustSize()
+        vp = self.viewport()
+        px = min(vp_pos.x() + 14, vp.width() - lbl.width() - 4)
+        py = vp_pos.y() - lbl.height() - 10
+        if py < 4:
+            py = vp_pos.y() + 22
+        lbl.move(max(4, px), max(4, py))
+        lbl.show()
+        lbl.raise_()
+
+    def _hide_callsign_popup(self):
+        self._call_entry = None
+        popup, self._call_popup = self._call_popup, None
+        if popup is not None:
             try:
-                self._spot_popup.hide()
-                self._spot_popup.deleteLater()
+                popup.hide()
+                popup.deleteLater()
             except RuntimeError:
                 pass
-            self._spot_popup = None
+
+    def _show_callsign_popup(self, entry: tuple, viewport_pos):
+        """Hover-popup met alle DXCC prefixen voor het land onder de muis."""
+        from PySide6.QtWidgets import QLabel, QVBoxLayout, QFrame
+
+        self._hide_callsign_popup()
+        self._call_entry = entry
 
         prefix, country, lat, lon = entry
 
@@ -1167,6 +1477,7 @@ class MapView(QGraphicsView):
             all_pfx = [prefix]
 
         popup = QFrame(self.viewport())
+        popup.setAttribute(Qt.WA_TransparentForMouseEvents, True)
         popup.setObjectName("callpopup")
         popup.setStyleSheet(
             "QFrame#callpopup { background:#1A1D22; border:1px solid #C8A84B;"
@@ -1225,27 +1536,20 @@ class MapView(QGraphicsView):
             vlay.addWidget(count_lbl)
 
         popup.adjustSize()
+        self._call_popup = popup   # sluit bij verlaten (zie _update_hover)
+        self._place_callsign_popup(viewport_pos)
+        popup.show()
+        popup.raise_()
+
+    def _place_callsign_popup(self, viewport_pos):
+        """Popup rechtsonder de cursor, binnen de viewport gehouden."""
+        popup = self._call_popup
+        if popup is None:
+            return
         vp = self.viewport()
         px = min(viewport_pos.x() + 14, vp.width()  - popup.width()  - 4)
         py = min(viewport_pos.y() + 14, vp.height() - popup.height() - 4)
         popup.move(max(4, px), max(4, py))
-        popup.show()
-        popup.raise_()
-        self._spot_popup = popup
-
-        def _close():
-            if self._spot_popup is popup:
-                self._spot_popup = None
-            try:
-                popup.hide()
-                popup.deleteLater()
-            except RuntimeError:
-                pass
-
-        t = QTimer(self)
-        t.setSingleShot(True)
-        t.timeout.connect(_close)
-        t.start(6000)
 
     def _show_dx_spot_tooltip(self, spot: dict, viewport_pos):
         """Toon een floating info-kaart nabij het klikpunt (auto-sluit na 4s)."""
@@ -1450,6 +1754,9 @@ class MapView(QGraphicsView):
 
     def set_locator_visible(self, on: bool):
         self._maidenhead.setVisible(on)
+        if not on:
+            self._mh_hover.set_hover(None)
+            self._show_mh_label(None, None)
 
     def set_aurora_visible(self, on: bool):
         self._aurora.setVisible(on)
@@ -1465,6 +1772,8 @@ class MapView(QGraphicsView):
 
     def set_callsign_overlay_visible(self, on: bool):
         self._callsign_overlay.setVisible(on)
+        if not on:
+            self._hide_callsign_popup()
 
     def set_callsign_overlay_font_size(self, size: int):
         self._callsign_overlay.set_font_size(size)
@@ -1477,6 +1786,7 @@ class MapView(QGraphicsView):
 
     def set_maidenhead_font_size(self, size: int):
         self._maidenhead.set_font_size(size)
+        self._mh_hover.set_font_size(size)
 
     def set_grat_step(self, step: int):
         self._graticule.set_step(step)

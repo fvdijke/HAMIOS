@@ -45,7 +45,7 @@ _S: dict[str, dict[str, str]] = {
 
 # ── App / algemeen ────────────────────────────────────────────────────────────
 "app.name":           "HF Propagation & Atmosphere Monitor",
-"app.version":        "v5.5",
+"app.version":        "v5.6",
 "app.close":          "Afsluiten",
 "app.ok":             "OK",
 "app.cancel":         "Annuleren",
@@ -345,6 +345,10 @@ _S: dict[str, dict[str, str]] = {
 "sat.tle_age":        "data {age} oud",
 "sat.tle_ok":         "TLE bijgewerkt",
 "sat.tle_fail":       "TLE download mislukt",
+"sat.tle_next":       "TLE is actueel (data {age} oud) — volgende update mogelijk over {wait}",
+"sat.tle_busy":       "TLE-update loopt al…",
+"sat.tle_kept":       "bestaande data behouden",
+"sat.tle_retry":      "nieuwe poging over {wait}",
 
 # ── SpyStations dialog ────────────────────────────────────────────────────────
 "spy.title":          "🕵  SpyStations — HF Propagation & Atmosphere Monitor",
@@ -400,7 +404,7 @@ _S: dict[str, dict[str, str]] = {
 "splash.detail.fs_write":  "bestand beschrijven",
 "splash.detail.fs_read":   "bestand lezen",
 "splash.detail.fs_delete":   "bestand verwijderen",
-"splash.detail.fs_internet": "worldmap bereikbaar",
+"splash.detail.fs_internet": "internet bereikbaar",
 "splash.section.files": "Bestanden",
 "splash.section.deps":  "Afhankelijkheden",
 "splash.loading":       "Laden…",
@@ -426,6 +430,7 @@ _S: dict[str, dict[str, str]] = {
 "splash.done":            "klaar",
 "splash.failed":          "mislukt",
 "splash.manual":          "handmatig",
+"splash.tle_na":          "niet aanwezig",
 
 # ── Alert messages ───────────────────────────────────────────────────────────
 "alert.k_status":       "K-index: {k}  ·  X-straling: {xray}",
@@ -732,7 +737,7 @@ _S: dict[str, dict[str, str]] = {
 
 # ── App / general ─────────────────────────────────────────────────────────────
 "app.name":           "HF Propagation & Atmosphere Monitor",
-"app.version":        "v5.5",
+"app.version":        "v5.6",
 "app.close":          "Exit",
 "app.ok":             "OK",
 "app.cancel":         "Cancel",
@@ -1032,6 +1037,10 @@ _S: dict[str, dict[str, str]] = {
 "sat.tle_age":        "data {age} old",
 "sat.tle_ok":         "TLE updated",
 "sat.tle_fail":       "TLE download failed",
+"sat.tle_next":       "TLE is up to date (data {age} old) — next update possible in {wait}",
+"sat.tle_busy":       "TLE update already running…",
+"sat.tle_kept":       "existing data kept",
+"sat.tle_retry":      "retry in {wait}",
 
 # ── SpyStations dialog ────────────────────────────────────────────────────────
 "spy.title":          "🕵  SpyStations — HF Propagation & Atmosphere Monitor",
@@ -1087,7 +1096,7 @@ _S: dict[str, dict[str, str]] = {
 "splash.detail.fs_write":  "write file",
 "splash.detail.fs_read":   "read file",
 "splash.detail.fs_delete":   "delete file",
-"splash.detail.fs_internet": "worldmap reachable",
+"splash.detail.fs_internet": "internet reachable",
 "splash.section.files": "Files",
 "splash.section.deps":  "Dependencies",
 "splash.loading":       "Loading…",
@@ -1113,6 +1122,7 @@ _S: dict[str, dict[str, str]] = {
 "splash.done":            "done",
 "splash.failed":          "failed",
 "splash.manual":          "manual",
+"splash.tle_na":          "not available",
 
 # ── Remaining UI strings ─────────────────────────────────────────────────────
 "cat.terminal_cb":      "Show serial terminal",

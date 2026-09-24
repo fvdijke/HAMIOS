@@ -100,7 +100,7 @@ class WSPRFeed(QThread):
             # Note: This API may be offline; if so, exception is caught and mock data is used
             url = "https://wsprnet.org/drupal/wsprnet/api/v2/spots"
             headers = {
-                "User-Agent": "HAMIOS/5.5 (WSPR Monitor)",
+                "User-Agent": "HAMIOS/5.6 (WSPR Monitor)",
                 "Accept": "application/json",
             }
 

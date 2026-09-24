@@ -76,7 +76,7 @@ class _EibiDownloadThread(QThread):
         try:
             url = get_eibi_url()
             self.progress.emit(f"Downloaden: {url} …")
-            req = urllib.request.Request(url, headers={"User-Agent": "HAMIOS/5.5"})
+            req = urllib.request.Request(url, headers={"User-Agent": "HAMIOS/5.6"})
             with urllib.request.urlopen(req, timeout=30) as r:
                 raw = r.read().decode("latin-1", errors="replace")
             self.progress.emit("Verwerken …")

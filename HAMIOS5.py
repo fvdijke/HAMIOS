@@ -1,5 +1,5 @@
 """
-HAMIOS v5.5 — PySide6 versie
+HAMIOS v5.6 — PySide6 versie
 Developed with Claude AI
 
 """
@@ -124,7 +124,7 @@ def _make_header_pixmap() -> QPixmap:
 
     p.setFont(QFont("Segoe UI", 10))
     p.setPen(QColor(200, 168, 75, 130))
-    p.drawText(TX + 124, 8, 50, 44, Qt.AlignLeft | Qt.AlignVCenter, "v5.5")
+    p.drawText(TX + 124, 8, 50, 44, Qt.AlignLeft | Qt.AlignVCenter, "v5.6")
 
     p.setFont(QFont("Segoe UI", 8))
     p.setPen(LIGHT)
@@ -176,8 +176,6 @@ def _make_checks():
         # Solar & Ionosphere
         ("web_noaa_swpc",     "NOAA SWPC",          "Solar/Geomag Data"),
         ("web_hamqsl",        "HamQSL",             "Solar Index"),
-        # Satellites
-        ("web_celestrak",     "CelesTrak",          "TLE Data"),
         # Weak Signal
         ("web_wsprnet",       "WSPRnet",            "WSPR QSOs"),
         # Spotting
@@ -205,22 +203,44 @@ _STATE = {
 # ── Internet check thread ─────────────────────────────────────────────────────
 
 class _InetCheckThread(QThread):
-    """Voert internetbereikbaarheidscheck uit in een aparte thread."""
+    """Voert internetbereikbaarheidscheck uit in een aparte thread.
+
+    Probeert meerdere lichtgewicht endpoints; eerste succes = online.
+    Fallback naar SSL-verificatie uitgeschakeld bij certificaatfouten.
+    """
     result = Signal(bool, str)   # (bereikbaar, detail)
 
-    _URL = ("https://upload.wikimedia.org/wikipedia/commons/thumb/8/8f/"
-            "Whole_world_-_land_and_oceans_12000.jpg/"
-            "1920px-Whole_world_-_land_and_oceans_12000.jpg")
+    # Lichtgewicht connectivity-check URLs (geen data gedownload)
+    _URLS = [
+        "https://clients3.google.com/generate_204",      # Google → HTTP 204
+        "https://www.msftconnecttest.com/connecttest.txt",  # Microsoft → HTTP 200
+        "https://www.cloudflare.com/cdn-cgi/trace",      # Cloudflare → HTTP 200
+    ]
 
     def run(self):
         import urllib.request as _urlreq
-        try:
-            req = _urlreq.Request(self._URL, method="HEAD",
-                                  headers={"User-Agent": "HAMIOS/5.5"})
-            with _urlreq.urlopen(req, timeout=6) as r:
-                self.result.emit(r.status < 400, f"HTTP {r.status}")
-        except Exception as e:
-            self.result.emit(False, str(e)[:30])
+        import ssl as _ssl
+        for url in self._URLS:
+            for use_ssl_verify in (True, False):
+                try:
+                    req = _urlreq.Request(url, method="HEAD",
+                                          headers={"User-Agent": "HAMIOS/5.6"})
+                    kwargs: dict = {"timeout": 6}
+                    if not use_ssl_verify:
+                        ctx = _ssl.create_default_context()
+                        ctx.check_hostname = False
+                        ctx.verify_mode    = _ssl.CERT_NONE
+                        kwargs["context"]  = ctx
+                    with _urlreq.urlopen(req, **kwargs) as r:
+                        self.result.emit(r.status < 400, f"HTTP {r.status}")
+                        return
+                except _ssl.SSLError:
+                    if use_ssl_verify:
+                        continue   # probeer zonder verificatie
+                    break          # beide SSL-varianten mislukt; volgende URL
+                except Exception:
+                    break          # netwerk/HTTP-fout; volgende URL
+        self.result.emit(False, "geen verbinding")
 
 
 # ── Online resource check thread ──────────────────────────────────────────────
@@ -231,10 +251,13 @@ class _OnlineResourceCheckThread(QThread):
 
     def __init__(self):
         super().__init__()
-        # Build resource dict from DEFAULT_RESOURCES for testing
+        # Build resource dict from DEFAULT_RESOURCES for testing.
+        # CelesTrak is excluded: TLE is handled via file-age check at startup,
+        # not as an online connectivity probe.
         self._RESOURCES = {
-            key: (res["url"], {"User-Agent": "HAMIOS/5.5"})
+            key: (res["url"], {"User-Agent": "HAMIOS/5.6"})
             for key, res in DEFAULT_RESOURCES.items()
+            if key != "web_celestrak"
         }
 
     def run(self):
@@ -275,6 +298,7 @@ class SplashDialog(QDialog):
         self.setAttribute(Qt.WA_TranslucentBackground, False)
         self.setModal(True)
         self.setFixedWidth(_SW)
+        self._active = True   # False na detach(): late thread-signalen negeren
 
         # Bouw check-lijsten in de actieve taal
         from modules.i18n import tr as _tr
@@ -385,7 +409,7 @@ class SplashDialog(QDialog):
     # ── interne helper ────────────────────────────────────────────────────────
 
     def _apply(self, key: str, state: str, detail: str):
-        if key not in self._rows:
+        if not self._active or key not in self._rows:
             return
         clr, sym = _STATE.get(state, _STATE["pending"])
         icon_name, det, label = self._rows[key]
@@ -399,8 +423,15 @@ class SplashDialog(QDialog):
     # ── publiek ───────────────────────────────────────────────────────────────
 
     def set_check(self, key: str, state: str, detail: str = ""):
+        if not self._active:
+            return
         self._apply(key, state, detail)
         QApplication.processEvents()
+
+    def detach(self):
+        """Splash is gesloten: negeer verdere updates van achtergrondthreads
+        (geen processEvents() meer vanuit signaal-handlers in de hoofdloop)."""
+        self._active = False
 
     def connect_tle_download(self, key: str, thread):
         """Verbind TleFetchThread signals voor voortgang en voltooiing."""
@@ -424,6 +455,8 @@ class SplashDialog(QDialog):
             lambda k=key: self._apply(k, "error", _tr("splash.failed")))
 
     def _on_progress(self, key: str, received: int, total: int):
+        if not self._active:
+            return
         if total > 0:
             pct = min(99, int(received * 100 / total))
             self._apply(key, "loading", f"{pct}%")
@@ -474,15 +507,20 @@ def main():
 
     app = QApplication(sys.argv)
     app.setApplicationName("HAMIOS")
-    app.setApplicationVersion("5.5")
+    app.setApplicationVersion("5.6")
     app.setOrganizationName("")
 
     # Global window reference for cleanup
     _main_window = [None]  # Use list to allow setting in nested scope
+    _bg_threads: list = []  # splash-checkthreads die nog kunnen lopen
     def _cleanup_on_quit():
         """Ensure main window closes before app destroys threads."""
         if _main_window[0] and _main_window[0].isVisible():
             _main_window[0].close()
+        # Pas bij afsluiten wachten (voorkomt 'QThread destroyed while running')
+        for th in _bg_threads:
+            if th.isRunning():
+                th.wait(2000)
     app.aboutToQuit.connect(_cleanup_on_quit)
 
     # Opstartcontrole
@@ -518,17 +556,15 @@ def main():
         # ── Bestand-checks ────────────────────────────────────────────────────
         from modules.startup import file_status as _file_status
         _fmap = {f["name"]: f for f in _file_status()}
-        # worldmap_eq.jpg is niet meer verplicht — wordt automatisch gedownload
-        _req    = {"config/hamios_config.json"}
-        # TLE wordt niet automatisch gedownload — via satelliet-dialog
-        _manual = {"config/hamios_tle.json"}
+        # worldmap_eq.jpg is niet verplicht — wordt automatisch gedownload
+        # config is verplicht — fout als ontbrekend
+        _req = {"config/hamios_config.json"}
 
         from modules.mapview import _HIRES_FILE
         _file_keys = {
             "worldmap":  "worldmap_eq.jpg",
             "config":    "config/hamios_config.json",
             "history":   "config/HAMIOS_history.csv",
-            "tle":       "config/hamios_tle.json",
             "spy":       "config/hamios_spy_stations.json",
         }
 
@@ -587,8 +623,6 @@ def main():
                 splash.set_check(key, "ok", detail)
             elif fname in _req:
                 splash.set_check(key, "error", _miss_str)
-            elif fname in _manual:
-                splash.set_check(key, "warn", _tr("splash.manual"))
             else:
                 splash.set_check(key, "warn", _dl_str)
 
@@ -648,23 +682,19 @@ def main():
         except Exception:
             pass
 
-        # ── TLE: alléén downloaden als er nog geen cache is ──────────────────
-        # Bestaande cache wordt nooit automatisch ververst; dat kan handmatig
-        # via het satellietvenster (↻ TLE vernieuwen). Wel de leeftijd tonen.
-        from modules.layers import tle_cache_age_seconds as _tle_age_s, \
-            format_tle_age as _fmt_tle_age
-        _tle_thread = None
-        _tle_age = _tle_age_s()
-        if _tle_age is None:
-            from modules.layers import TleFetchThread as _TleFetchThread  # noqa: PLC0415
-            _tle_thread = _TleFetchThread()
-            splash.connect_tle_download("tle", _tle_thread)
-            _tle_thread.start()
-        else:
-            _tle_info = _fmap.get("config/hamios_tle.json")
-            _tle_kb = (f"{_tle_info['size_kb']} KB · "
-                       if _tle_info and _tle_info["size_kb"] >= 1 else "")
-            splash.set_check("tle", "ok", f"{_tle_kb}{_fmt_tle_age(_tle_age)}")
+        # ── TLE: alleen datum tonen — nooit automatisch downloaden ───────────
+        # Download uitsluitend via ↻ TLE vernieuwen in het satellietvenster.
+        import datetime as _dt
+        _tle_path = os.path.join(_APP_DIR, "config", "hamios_tle.json")
+        try:
+            _tle_mtime  = os.path.getmtime(_tle_path)
+            _date_str   = _dt.datetime.fromtimestamp(_tle_mtime).strftime("%Y-%m-%d")
+            _tle_info   = _fmap.get("config/hamios_tle.json")
+            _tle_kb     = (f"{_tle_info['size_kb']} KB · "
+                           if _tle_info and _tle_info["size_kb"] >= 1 else "")
+            splash.set_check("tle", "ok", f"{_tle_kb}{_date_str}")
+        except OSError:
+            splash.set_check("tle", "warn", _tr("splash.tle_na"))
 
         # ── Online resources controleren ──────────────────────────────────────
         _online_thread = _OnlineResourceCheckThread()
@@ -675,28 +705,16 @@ def main():
 
         splash.enable_button()
         splash.exec()
+        splash.detach()
         splash.close()
 
-        # ── Stop all background threads immediately (don't wait) ──────────────────
-        try:
-            _inet_thread.quit()
-            _online_thread.quit()
-            if _tle_thread is not None:
-                _tle_thread.quit()
-            for thread in _dl_threads:
-                if thread and thread.isRunning():
-                    thread.quit()
-
-            # Wait with timeout (max 2 seconds per thread)
-            _inet_thread.wait(2000)
-            _online_thread.wait(2000)
-            if _tle_thread is not None:
-                _tle_thread.wait(2000)
-            for thread in _dl_threads:
-                if thread and thread.isRunning():
-                    thread.wait(2000)
-        except Exception:
-            pass
+        # ── Achtergrondthreads: niet blokkerend afronden ──────────────────────
+        # quit() doet niets bij threads zonder event loop en wait() bevroor de
+        # UI tot ~6 s. De online-check stopt na de lopende request; de
+        # internetcheck loopt vanzelf af. Kaartdownloads lopen bewust door —
+        # MapView houdt ze vast en laadt de kaart bij 'done'.
+        _online_thread.requestInterruption()
+        _bg_threads.extend([_inet_thread, _online_thread])
 
     # ── Mainwindow: hergebruik het venster uit de splash-fase, of maak het nu ──
     # (voorheen werd het venster bij een splash-start tweemaal opgebouwd)

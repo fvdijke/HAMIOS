@@ -44,3 +44,8 @@ spy_stations.json
 .claude/
 Thumbs.db
 Desktop.ini
+
+# Runtime caches (v5.6)
+worldmap_colored.png
+hamios_tle_meta.json
+*.tmp

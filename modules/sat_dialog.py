@@ -21,6 +21,7 @@ from .theme import (
 from .geometry import save_geom, restore_geom
 from .layers import (TLE_GROUPS, load_tle_cache, TleFetchThread, tle_cache_age_seconds,
                      format_tle_age)
+from .tle_sources import SOURCE_NAMES, migrate_names
 from .i18n import tr
 
 _QSS = f"""
@@ -94,6 +95,13 @@ QProgressBar {{
 QProgressBar::chunk {{ background: {ACCENT}; border-radius: 3px; }}
 """
 
+def _fmt_wait(secs: float) -> str:
+    """Wachttijd compact: '12 min', '5 h', '2 d'."""
+    if secs < 3600:
+        return f"{max(1, int(secs // 60))} min"
+    return format_tle_age(secs)
+
+
 _COL_NAME = 0
 _COL_POS  = 1
 _COL_PATH = 2
@@ -111,6 +119,7 @@ class SatelliteDialog(QDialog):
     live_pos_changed  = Signal(set)            # geselecteerde posities
     live_path_changed = Signal(set)            # geselecteerde paden
     live_fp_changed   = Signal(set)            # geselecteerde footprints
+    tle_updated       = Signal()               # nieuwe TLE-data → kaart bijwerken
 
     def __init__(self, sat_selected: list, sat_path: list,
                  sat_fp: list = None, back_h: int = 1, fwd_h: int = 1,
@@ -123,6 +132,7 @@ class SatelliteDialog(QDialog):
         self._fwd_h    = fwd_h
         self._cfg      = cfg          # voor auto-save bij sluiten
         self._tle_data: dict = {}
+        self._tle_report: dict = {}
         self._cat_filter = tr("sat.filter.all")
         self.setWindowTitle(tr("sat.title"))
         self.setMinimumSize(580, 600)
@@ -254,6 +264,7 @@ class SatelliteDialog(QDialog):
         cache = load_tle_cache()
         if cache:
             self._tle_data = cache
+            self._migrate_selection(cache, None)
             self._populate_tree()
             n = sum(len(v) for v in cache.values())
             txt = tr("sat.cache_loaded", n=n)
@@ -268,18 +279,65 @@ class SatelliteDialog(QDialog):
         self._refresh_btn.setEnabled(False)
         self._progress.show()
         t = TleFetchThread(self)
-        t.progress.connect(self._status_lbl.setText)
+        t.progress.connect(lambda src: self._status_lbl.setText(f"{src}…"))
+        t.report.connect(self._on_tle_report)
         t.done.connect(self._on_tle_done)
         t.finished.connect(t.deleteLater)
         t.start()
 
+    def _on_tle_report(self, report: dict):
+        self._tle_report = report
+
     def _on_tle_done(self, cache: dict):
+        old = self._tle_data
         self._tle_data = cache
+        self._migrate_selection(cache, old)
         self._populate_tree()
         self._progress.hide()
         self._refresh_btn.setEnabled(True)
+        self._status_lbl.setText(self._tle_status_text(cache, self._tle_report))
+        if cache is not old:
+            self.tle_updated.emit()
+
+    def _migrate_selection(self, cache: dict, old: dict | None):
+        """Selecties meenemen als een satelliet in de nieuwe bron anders heet."""
+        sel  = set(migrate_names(sorted(self._selected), cache, old))
+        path = set(migrate_names(sorted(self._path),     cache, old))
+        fp   = set(migrate_names(sorted(self._fp),       cache, old))
+        if (sel, path, fp) != (self._selected, self._path, self._fp):
+            self._selected, self._path, self._fp = sel, path, fp
+            self.live_pos_changed.emit(set(sel))
+            self.live_path_changed.emit(set(path))
+            self.live_fp_changed.emit(set(fp))
+
+    def _tle_status_text(self, cache: dict, report: dict) -> str:
+        """Statusregel na een refresh: welke bronnen, of wanneer het weer mag."""
+        if report.get("_busy"):
+            return tr("sat.tle_busy")
         n = sum(len(v) for v in cache.values())
-        self._status_lbl.setText(f"{n} {tr('sat.tle_ok')}")
+        srcs = {k: r for k, r in report.items()
+                if isinstance(r, dict) and k in SOURCE_NAMES}
+        ok    = [SOURCE_NAMES[k] for k, r in srcs.items() if r.get("status") == "ok"]
+        fail  = {k: r for k, r in srcs.items() if r.get("status") == "fail"}
+        waits = [r.get("wait", 0) for k, r in srcs.items()
+                 if k != "celestrak" and r.get("status") in ("wait", "fail")]
+        wait  = _fmt_wait(min(waits)) if waits else ""
+
+        if ok:
+            txt = f"{n} {tr('sat.tle_ok')} ({', '.join(ok)})"
+            if fail:
+                txt += f"  ·  {tr('sat.tle_fail')}: " + ", ".join(
+                    SOURCE_NAMES[k] for k in fail)
+            return txt
+        if not fail:   # alle bronnen nog binnen hun wachttijd
+            age = tle_cache_age_seconds() or 0
+            return tr("sat.tle_next", age=format_tle_age(age), wait=wait)
+        errs = "; ".join(f"{SOURCE_NAMES[k]}: {r.get('error', '')}"
+                         for k, r in fail.items())
+        txt = f"{tr('sat.tle_fail')} ({errs})  ·  {tr('sat.tle_kept')}"
+        if wait:
+            txt += f"  ·  {tr('sat.tle_retry', wait=wait)}"
+        return txt
 
     # ── Boom bouwen ───────────────────────────────────────────────────────────
     def _on_sel_toggle(self, on: bool):

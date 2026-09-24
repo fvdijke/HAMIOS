@@ -677,6 +677,7 @@ class HAMIOSMainWindow(QMainWindow):
             getattr(c, "sat_back_h", 1),
             getattr(c, "sat_fwd_h",  12))
         self._map_view.set_satellite_visible(getattr(c, "sat_visible", False))
+        self._migrate_sat_names(c)
         if c.sat_selected:
             self._map_view.set_satellite_selection(set(c.sat_selected))
             self._map_view.set_satellite_paths(set(c.sat_path))
@@ -1173,8 +1174,27 @@ class HAMIOSMainWindow(QMainWindow):
         from PySide6.QtCore import QTimer as _QT
         _QT.singleShot(200, _load_tle_now)
         dlg.accepted.connect(_load_tle_now)
+        dlg.tle_updated.connect(_load_tle_now)   # na ↻ direct op de kaart
 
         self._show_dialog("sat", dlg)
+
+    def _migrate_sat_names(self, c: AppConfig):
+        """Opgeslagen satellietnamen vertalen naar de namen in de huidige
+        TLE-cache (bijv. na bronwissel CelesTrak → SatNOGS/AMSAT)."""
+        from .layers import load_tle_cache
+        from .tle_sources import migrate_names
+        cache = load_tle_cache()
+        if not cache:
+            return
+        changed = False
+        for attr in ("sat_selected", "sat_path", "sat_fp"):
+            old = list(getattr(c, attr, []) or [])
+            new = migrate_names(old, cache)
+            if new != old:
+                setattr(c, attr, new)
+                changed = True
+        if changed:
+            save_config(c)
 
     def _on_sat_selection(self, selected: list, path: list,
                           fp: list, back_h: int, fwd_h: int):
