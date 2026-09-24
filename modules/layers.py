@@ -102,6 +102,13 @@ def tle_cache_age_seconds() -> float | None:
         return None
 
 
+def tle_cache_is_stale() -> bool:
+    """True als de TLE-cache ouder is dan tle_sources.STALE_DAYS.
+    Alleen voor een waarschuwing — er wordt nooit automatisch gedownload."""
+    age = tle_cache_age_seconds()
+    return age is not None and age > _tle_src.STALE_DAYS * 86400
+
+
 def format_tle_age(secs: float) -> str:
     """Compacte leeftijd-notatie: '<1 h', '5 h', '3 d'."""
     hours = secs / 3600

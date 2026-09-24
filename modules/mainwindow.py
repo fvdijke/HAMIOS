@@ -256,6 +256,9 @@ class HAMIOSMainWindow(QMainWindow):
         # Config toepassen na layout laden
         QTimer.singleShot(200, self._apply_config)
 
+        # Verouderde TLE-data: eenmalige melding (geen automatische download)
+        QTimer.singleShot(6000, self._check_tle_age)
+
         # Ensure config directories exist after initialization
         save_config(self._cfg)
 
@@ -1177,6 +1180,18 @@ class HAMIOSMainWindow(QMainWindow):
         dlg.tle_updated.connect(_load_tle_now)   # na ↻ direct op de kaart
 
         self._show_dialog("sat", dlg)
+
+    def _check_tle_age(self):
+        """Meld verouderde TLE-data in het meldingenpaneel — alleen als er
+        satellieten geselecteerd zijn. Vernieuwen blijft handmatig (↻)."""
+        from .layers import tle_cache_is_stale, tle_cache_age_seconds, format_tle_age
+        if not getattr(self._cfg, "sat_selected", None) or not tle_cache_is_stale():
+            return
+        if hasattr(self, "_alerts_widget"):
+            age = format_tle_age(tle_cache_age_seconds() or 0)
+            self._alerts_widget.add_alert(
+                "🛰", tr("alert.tle_stale", age=age), "#FFA726",
+                tr("alert.tle_stale_detail"))
 
     def _migrate_sat_names(self, c: AppConfig):
         """Opgeslagen satellietnamen vertalen naar de namen in de huidige

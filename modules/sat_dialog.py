@@ -20,7 +20,7 @@ from .theme import (
 )
 from .geometry import save_geom, restore_geom
 from .layers import (TLE_GROUPS, load_tle_cache, TleFetchThread, tle_cache_age_seconds,
-                     format_tle_age)
+                     format_tle_age, tle_cache_is_stale)
 from .tle_sources import SOURCE_NAMES, migrate_names
 from .i18n import tr
 
@@ -271,6 +271,9 @@ class SatelliteDialog(QDialog):
             age = tle_cache_age_seconds()
             if age is not None:
                 txt += f"  ·  {tr('sat.tle_age', age=format_tle_age(age))}"
+            if tle_cache_is_stale():
+                txt += f"  ·  ⚠ {tr('sat.tle_stale_hint')}"
+                self._status_lbl.setStyleSheet("color: #FFA726;")
             self._status_lbl.setText(txt)
         else:
             self._status_lbl.setText(tr("sat.tle_loading"))
@@ -295,6 +298,8 @@ class SatelliteDialog(QDialog):
         self._populate_tree()
         self._progress.hide()
         self._refresh_btn.setEnabled(True)
+        self._status_lbl.setStyleSheet(
+            "color: #FFA726;" if tle_cache_is_stale() else "")
         self._status_lbl.setText(self._tle_status_text(cache, self._tle_report))
         if cache is not old:
             self.tle_updated.emit()

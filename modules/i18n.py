@@ -349,6 +349,9 @@ _S: dict[str, dict[str, str]] = {
 "sat.tle_busy":       "TLE-update loopt al…",
 "sat.tle_kept":       "bestaande data behouden",
 "sat.tle_retry":      "nieuwe poging over {wait}",
+"sat.tle_stale_hint": "verouderd — klik ↻ TLE vernieuwen",
+"alert.tle_stale":    "TLE-data is {age} oud",
+"alert.tle_stale_detail": "Satellietposities kunnen afwijken — vernieuw via ↻ TLE vernieuwen in het satellietvenster",
 
 # ── SpyStations dialog ────────────────────────────────────────────────────────
 "spy.title":          "🕵  SpyStations — HF Propagation & Atmosphere Monitor",
@@ -431,6 +434,7 @@ _S: dict[str, dict[str, str]] = {
 "splash.failed":          "mislukt",
 "splash.manual":          "handmatig",
 "splash.tle_na":          "niet aanwezig",
+"splash.tle_stale_tip":   "TLE-data is {age} oud — vernieuw via ↻ TLE vernieuwen in het satellietvenster",
 
 # ── Alert messages ───────────────────────────────────────────────────────────
 "alert.k_status":       "K-index: {k}  ·  X-straling: {xray}",
@@ -1041,6 +1045,9 @@ _S: dict[str, dict[str, str]] = {
 "sat.tle_busy":       "TLE update already running…",
 "sat.tle_kept":       "existing data kept",
 "sat.tle_retry":      "retry in {wait}",
+"sat.tle_stale_hint": "outdated — click ↻ Refresh TLE",
+"alert.tle_stale":    "TLE data is {age} old",
+"alert.tle_stale_detail": "Satellite positions may be inaccurate — refresh via ↻ Refresh TLE in the Satellite window",
 
 # ── SpyStations dialog ────────────────────────────────────────────────────────
 "spy.title":          "🕵  SpyStations — HF Propagation & Atmosphere Monitor",
@@ -1123,6 +1130,7 @@ _S: dict[str, dict[str, str]] = {
 "splash.failed":          "failed",
 "splash.manual":          "manual",
 "splash.tle_na":          "not available",
+"splash.tle_stale_tip":   "TLE data is {age} old — refresh via ↻ Refresh TLE in the Satellite window",
 
 # ── Remaining UI strings ─────────────────────────────────────────────────────
 "cat.terminal_cb":      "Show serial terminal",

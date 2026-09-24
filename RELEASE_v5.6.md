@@ -30,6 +30,9 @@ download too often, after which every request times out.
 - The status line shows which source succeeded or failed and when a retry is possible
 - The map updates immediately after a refresh
 - Still no automatic downloads — only via ↻ Refresh TLE in the Satellite window
+- **Outdated-data warning**: when TLE data is older than 14 days, HAMIOS warns
+  (without downloading) in the splash screen, once in the Alerts panel when
+  satellites are selected, and in the Satellite window status line
 
 ### 2. **Faster Map Rendering** ⚡
 - Night overlay and grayline are baked into the base map (every 30 s) instead of

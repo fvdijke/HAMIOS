@@ -692,7 +692,15 @@ def main():
             _tle_info   = _fmap.get("config/hamios_tle.json")
             _tle_kb     = (f"{_tle_info['size_kb']} KB · "
                            if _tle_info and _tle_info["size_kb"] >= 1 else "")
-            splash.set_check("tle", "ok", f"{_tle_kb}{_date_str}")
+            from modules.layers import tle_cache_is_stale, tle_cache_age_seconds, format_tle_age
+            if tle_cache_is_stale():
+                # Te oud: alleen waarschuwen, niet downloaden
+                _age = format_tle_age(tle_cache_age_seconds() or 0)
+                splash.set_check("tle", "warn", f"{_tle_kb}{_date_str}")
+                splash._rows["tle"][1].setToolTip(_tr("splash.tle_stale_tip", age=_age))
+                splash._rows["tle"][0].setToolTip(_tr("splash.tle_stale_tip", age=_age))
+            else:
+                splash.set_check("tle", "ok", f"{_tle_kb}{_date_str}")
         except OSError:
             splash.set_check("tle", "warn", _tr("splash.tle_na"))
 

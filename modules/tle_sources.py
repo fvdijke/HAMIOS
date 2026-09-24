@@ -56,6 +56,9 @@ _HARD_BLOCK_WAIT = 24 * _H      # 403/429/time-out
 _MAX_WAIT        = 30 * 24 * _H # bovengrens (ook voor Retry-After)
 _MAX_TLE_AGE_DAYS = 30          # oudere SatNOGS-TLE's = satelliet niet meer actief
 _ISS_NORAD = 25544
+
+# TLE-data ouder dan dit → waarschuwing tonen (nooit automatisch downloaden)
+STALE_DAYS = 14
 _WEATHER_RE = re.compile(
     r"^(NOAA[ -]?\d+|METEOR[ -]?M|METOP|FENGYUN|FY-?\d|GOES|ELEKTRO|ARKTIKA)", re.I)
 
