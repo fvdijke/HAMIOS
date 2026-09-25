@@ -55,7 +55,7 @@ _XRAY_URL   = "https://services.swpc.noaa.gov/json/goes/primary/xrays-1-day.json
 _STORM_URL  = "https://services.swpc.noaa.gov/text/3-day-geomag-forecast.txt"
 _ALERTS_URL = "https://services.swpc.noaa.gov/products/alerts.json"
 
-_UA = {"User-Agent": "HAMIOS/5.7", "Accept-Encoding": "gzip"}
+_UA = {"User-Agent": "HAMIOS/5.8", "Accept-Encoding": "gzip"}
 
 # ── Minimale leeftijd per bron ────────────────────────────────────────────────
 # Niet elke bron verandert even vaak. Een verversingsronde (standaard elke

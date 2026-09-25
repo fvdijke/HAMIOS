@@ -1,5 +1,5 @@
 """
-HAMIOS v5.7 — PySide6 versie
+HAMIOS v5.8 — PySide6 versie
 Developed with Claude AI
 
 """
@@ -124,7 +124,7 @@ def _make_header_pixmap() -> QPixmap:
 
     p.setFont(QFont("Segoe UI", 10))
     p.setPen(QColor(200, 168, 75, 130))
-    p.drawText(TX + 124, 8, 50, 44, Qt.AlignLeft | Qt.AlignVCenter, "v5.7")
+    p.drawText(TX + 124, 8, 50, 44, Qt.AlignLeft | Qt.AlignVCenter, "v5.8")
 
     p.setFont(QFont("Segoe UI", 8))
     p.setPen(LIGHT)
@@ -224,7 +224,7 @@ class _InetCheckThread(QThread):
             for use_ssl_verify in (True, False):
                 try:
                     req = _urlreq.Request(url, method="HEAD",
-                                          headers={"User-Agent": "HAMIOS/5.7"})
+                                          headers={"User-Agent": "HAMIOS/5.8"})
                     kwargs: dict = {"timeout": 6}
                     if not use_ssl_verify:
                         ctx = _ssl.create_default_context()
@@ -256,7 +256,7 @@ class _OnlineResourceCheckThread(QThread):
         # Satellite (TLE) sources are excluded: TLE is only fetched manually and
         # rate-limited (tle_sources.py), never as a startup connectivity probe.
         self._RESOURCES = {
-            key: (res["url"], {"User-Agent": "HAMIOS/5.7"})
+            key: (res["url"], {"User-Agent": "HAMIOS/5.8"})
             for key, res in DEFAULT_RESOURCES.items()
             if res.get("category") != "Satellites"
         }
@@ -508,7 +508,7 @@ def main():
 
     app = QApplication(sys.argv)
     app.setApplicationName("HAMIOS")
-    app.setApplicationVersion("5.7")
+    app.setApplicationVersion("5.8")
     app.setOrganizationName("")
 
     # Global window reference for cleanup

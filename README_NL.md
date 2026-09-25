@@ -6,7 +6,7 @@
 
 **Real-time HF-voortplanting en DX-monitor voor radioamateurs — Windows 10/11**
 
-> v5.7 · September 2026 · Frank van Dijke · *Ontwikkeld met Claude AI (Anthropic)*
+> v5.8 · September 2026 · Frank van Dijke · *Ontwikkeld met Claude AI (Anthropic)*
 
 [![Website](https://img.shields.io/badge/website-hamios.space-orange)](https://hamios.space)
 [![Release](https://img.shields.io/github/v/release/fvdijke/HAMIOS?label=latest)](https://github.com/fvdijke/HAMIOS/releases/latest)
@@ -201,6 +201,17 @@ Alle verbindingen gebruiken standaard HTTPS/WebSocket. Geen persoonlijke gegeven
 ---
 
 ## 📋 Changelog
+
+### v5.8 — September 2026
+- **HAM Antenna Designer v3.0.1** (📐-knop), volledig herzien:
+  - **Juiste draadlengtes**: isolatie wordt relatief aan blanke draad toegepast; eerdere versies knipten draadantennes 2–5 % te kort
+  - **Bandplan** van IARU-regio 1 of 2, 60 m toegevoegd
+  - **SWR** uit de complexe impedantie, gemeten achter de balun/unun
+  - **Aanpasnetwerken** voor reële en complexe belastingen, elk gecontroleerd, met E12-waarden
+  - **Kabelverlies** voor alle 44 kabels, inclusief het extra verlies door SWR op de kabel
+  - **SWR-sweep** van de antenne zoals gebouwd, en **stralingspatronen** berekend uit de geometrie boven echte bodem
+- **Nieuwe antennetekeningen**: straler, counterpoise, voedingslijn, balun/unun en aardpunt duidelijk aangegeven, zonder tekst over de tekening; dag/nacht-thema, 2D/3D, printbare SVG-export
+- **Nieuw Smith-kaartlogo** voor de antenne-designer
 
 ### v5.7 — September 2026
 - **Eén propagatiemodel, gekalibreerd op de echte ionosfeer**: dichtstbijzijnde ionosonde (KC2G/GIRO) en NOAA D-RAP-absorptie; dode zone op korte paden; dag/nacht volgens de echte zon op je QTH

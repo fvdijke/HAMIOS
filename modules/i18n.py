@@ -45,7 +45,7 @@ _S: dict[str, dict[str, str]] = {
 
 # ── App / algemeen ────────────────────────────────────────────────────────────
 "app.name":           "HF Propagation & Atmosphere Monitor",
-"app.version":        "v5.7",
+"app.version":        "v5.8",
 "app.close":          "Afsluiten",
 "app.ok":             "OK",
 "app.cancel":         "Annuleren",
@@ -1032,7 +1032,7 @@ _S: dict[str, dict[str, str]] = {
 
 # ── App / general ─────────────────────────────────────────────────────────────
 "app.name":           "HF Propagation & Atmosphere Monitor",
-"app.version":        "v5.7",
+"app.version":        "v5.8",
 "app.close":          "Exit",
 "app.ok":             "OK",
 "app.cancel":         "Cancel",

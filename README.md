@@ -7,7 +7,7 @@
 
 **Real-time HF propagation and DX monitor for amateur radio operators — Windows 10/11**
 
-> v5.7 · September 2026 · Frank van Dijke · *Developed with Claude AI (Anthropic)*
+> v5.8 · September 2026 · Frank van Dijke · *Developed with Claude AI (Anthropic)*
 
 [![Website](https://img.shields.io/badge/website-hamios.space-orange)](https://hamios.space)
 [![Release](https://img.shields.io/github/v/release/fvdijke/HAMIOS?label=latest)](https://github.com/fvdijke/HAMIOS/releases/latest)
@@ -48,7 +48,7 @@ HF Propagation & Atmosphere Monitor gives amateur radio operators real-time insi
 | 🔔 **Alerts** | Solar, propagation, weather and satellite alerts |
 | 📻 **EIBI / FT8 / SpyStations** | Shortwave schedule, digital-mode reference, numbers stations — all with CAT tuning |
 | 📟 **CAT Interface** | Yaesu, Kenwood/Elecraft, Icom CI-V — live frequency in the header |
-| 📐 **HAM Antenna Designer** | Bundled antenna calculator, follows the HAMIOS language |
+| 📐 **HAM Antenna Designer** | Bundled antenna designer v3.0.1: lengths, matching, cable loss, SWR sweep, radiation patterns and schematic drawings; follows the HAMIOS language |
 | 💾 **Profiles** | Save complete workspaces (settings + layout + window geometry) |
 | 🌐 **Bilingual** | English / Dutch, switch via Settings → About |
 
@@ -202,6 +202,17 @@ All connections use standard HTTPS/WebSocket. No personal data is transmitted.
 ---
 
 ## 📋 Changelog
+
+### v5.8 — September 2026
+- **HAM Antenna Designer v3.0.1** (📐 button), fully reviewed:
+  - **Correct wire lengths**: insulation is applied relative to bare wire; earlier versions cut wire antennas 2–5 % too short
+  - **IARU Region 1 or 2** band plan, 60 m added
+  - **SWR** from the complex impedance, taken behind the balun/unun
+  - **Matching networks** for real and complex loads, each verified, with E12 values
+  - **Cable loss** for all 44 cables, including the extra loss from SWR on the line
+  - **SWR sweep** of the antenna as built, and **radiation patterns** computed from the geometry over real ground
+- **New antenna drawings**: radiator, counterpoise, feed line, balun/unun and ground point clearly marked, with no text over the drawing; day/night theme, 2D/3D, printable SVG export
+- **New Smith-chart logo** for the antenna designer
 
 ### v5.7 — September 2026
 - **One propagation model, calibrated on the real ionosphere**: nearest ionosonde (KC2G/GIRO) and NOAA D-RAP absorption; skip zone on short paths; day/night from the real sun at your QTH

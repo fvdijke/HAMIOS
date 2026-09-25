@@ -48,7 +48,7 @@ IONO_POLL_S     = 15 * 60          # KC2G ververst ~elke 15 min
 IONO_MAX_AGE_S  = 90 * 60
 IONO_MAX_DIST   = 2000.0           # km
 CAL_HALF_LIFE_H = 8.0
-_UA = "HAMIOS/5.7 (+https://hamios.space; propagation monitor)"
+_UA = "HAMIOS/5.8 (+https://hamios.space; propagation monitor)"
 
 
 # ── Zonsstand ─────────────────────────────────────────────────────────────────

@@ -1165,7 +1165,7 @@ class _DXFetchThread(QThread):
         try:
             import html as _html
             req = urllib.request.Request(
-                self._URL, headers={"User-Agent": "HAMIOS/5.7"})
+                self._URL, headers={"User-Agent": "HAMIOS/5.8"})
             with urllib.request.urlopen(req, timeout=12) as r:
                 raw = json.loads(r.read().decode("utf-8", errors="replace"))
 
@@ -1470,7 +1470,7 @@ class _PSKFetchThread(QThread):
     def run(self):
         try:
             req = urllib.request.Request(
-                self._URL, headers={"User-Agent": "HAMIOS/5.7"})
+                self._URL, headers={"User-Agent": "HAMIOS/5.8"})
             with urllib.request.urlopen(req, timeout=20) as r:
                 raw = r.read().decode("utf-8", errors="replace")
 

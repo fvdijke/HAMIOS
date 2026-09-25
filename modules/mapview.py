@@ -942,7 +942,7 @@ class _HiresDownloadThread(QThread):
         self._dest          = dest
         self._also_save_std = also_save_std
 
-    _UA = "HAMIOS/5.7 (HF Propagation Monitor)"
+    _UA = "HAMIOS/5.8 (HF Propagation Monitor)"
 
     def _fetch(self, url: str, dest: str) -> bool:
         """Download url naar dest. Probeert eerst normale SSL, dan zonder verificatie.
