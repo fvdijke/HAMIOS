@@ -63,22 +63,35 @@ class TestParsers(unittest.TestCase):
         self.assertEqual(rows, [(dt.date(2026, 9, 21), 105, 5, 2),
                                 (dt.date(2026, 9, 22), 110, 20, 5)])
 
-    def test_ovation_rgba(self):
+    def test_ovation_grid(self):
         data = {"coordinates": [[0, 90, 0], [180, 60, 80], [359, -90, 10]]}
-        rgba = C.ovation_rgba(data)
-        self.assertEqual(len(rgba), 360 * 181 * 4)
-        # lon 180 → kolom 0 (−180°), lat 60 → rij 30; kans 80 → rood, zichtbaar
-        i = (30 * 360 + 0) * 4
-        self.assertEqual(rgba[i:i + 3], bytes((240, 80, 40)))
-        self.assertGreater(rgba[i + 3], 0)
-        # kans 0 → volledig doorzichtig
-        self.assertEqual(rgba[(0 * 360 + 180) * 4 + 3], 0)
+        grid = C.ovation_grid(data)
+        self.assertEqual(len(grid), 360 * 181)
+        # lon 180 → kolom 0 (−180°), lat 60 → rij 30: piek blijft daar, na vervagen
+        # lager dan 80 % maar duidelijk zichtbaar
+        peak = grid[30 * 360 + 0]
+        self.assertGreater(peak, 0)
+        self.assertEqual(peak, max(grid))
+        # vervaging loopt rond over de datumgrens (kolom 359 = +179°)
+        self.assertGreater(grid[30 * 360 + 359], 0)
+        # ver weg: niets
+        self.assertEqual(grid[100 * 360 + 180], 0)
 
     def test_ovation_equator_seam_ignored(self):
         """OVATION heeft op 0° een naad met kans 4 % — mag niet als lijn verschijnen."""
-        rgba = C.ovation_rgba({"coordinates": [[10, 0, 4], [10, 20, 30]]})
-        self.assertEqual(rgba[(90 * 360 + 190) * 4 + 3], 0)
-        self.assertEqual(rgba[(70 * 360 + 190) * 4 + 3], 0)
+        grid = C.ovation_grid({"coordinates": [[10, 0, 4], [10, 20, 30]]})
+        self.assertEqual(max(grid), 0)
+
+    def test_aurora_colour_hamios_scale(self):
+        """HAMIOS-kleuren (groen → geel → rood), vloeiend en met zachte rand."""
+        self.assertEqual(C.aurora_colour(1)[3], 0)
+        self.assertEqual(C.aurora_colour(15)[:3], (60, 220, 90))
+        self.assertEqual(C.aurora_colour(45)[:3], (230, 220, 60))
+        self.assertEqual(C.aurora_colour(80)[:3], (240, 80, 40))
+        mid = C.aurora_colour(30)[:3]           # overgang groen → geel
+        self.assertTrue(60 < mid[0] < 230)
+        alphas = [C.aurora_colour(p)[3] for p in range(2, 101)]
+        self.assertEqual(alphas, sorted(alphas))  # alpha loopt monotoon op
 
 
 class TestAbsorptionInModel(unittest.TestCase):

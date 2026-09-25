@@ -31,7 +31,7 @@ from PySide6.QtCore import (
 )
 from PySide6.QtGui import (
     QPixmap, QPainter, QColor, QPen, QBrush, QImage,
-    QFont, QPixmapCache, QPainterPath
+    QFont, QPixmapCache, QPainterPath, qRgba
 )
 
 from .theme import ACCENT, BG_ROOT
@@ -420,6 +420,61 @@ class MoonMarkerItem(QGraphicsItem):
                          Qt.AlignCenter, arrow)
 
 
+def grid_to_image(grid: bytes, w: int, h: int, colour, up: int = 4) -> QImage:
+    """Grijswaardenraster (w × h, celmiddens, rij 0 = noord, kolom 0 = −180°) →
+    gekleurd kaartbeeld MAP_W × MAP_H. Eerst de waarden vloeiend opschalen, dán
+    kleuren via een kleurentabel (colour: bytewaarde 0–255 → (r, g, b, a)) —
+    zo ontstaan geen blokjes of harde kleurgrenzen."""
+    small = QImage(grid, w, h, w, QImage.Format_Grayscale8).copy()
+    mid = small.scaled(w * up, h * up, Qt.IgnoreAspectRatio, Qt.SmoothTransformation)
+    idx = QImage(mid.constBits(), mid.width(), mid.height(), mid.bytesPerLine(),
+                 QImage.Format_Indexed8).copy()
+    idx.setColorTable([qRgba(*colour(v)) for v in range(256)])
+    return idx.convertToFormat(QImage.Format_ARGB32_Premultiplied).scaled(
+        MAP_W, MAP_H, Qt.IgnoreAspectRatio, Qt.SmoothTransformation)
+
+
+class RasterOverlayItem(_CompositedOverlay, QGraphicsItem):
+    """Kaartbrede rasterlaag (D-RAP, propagatiekaart) — ingebakken in de basiskaart."""
+
+    def __init__(self, z: float):
+        super().__init__()
+        self.setZValue(z)
+        self._image: QImage | None = None
+        self._init_composited()
+
+    def boundingRect(self) -> QRectF:
+        return QRectF(0, 0, MAP_W, MAP_H)
+
+    def paint(self, painter: QPainter, option, widget=None):
+        pass
+
+    def set_image(self, img: QImage | None):
+        self._image = img
+        if self._on_change:
+            self._on_change()
+
+
+class _PropMapThread(QThread):
+    """Propagatiekaart voor één band berekenen (~0,5–1 s) buiten de GUI-thread."""
+    done = Signal(object, str)          # QImage, band
+
+    def __init__(self, lat, lon, band, snr_db, parent=None):
+        super().__init__(parent)
+        self._args = (lat, lon, band, snr_db)
+
+    def run(self):
+        from .propagation import ENGINE
+        from .charts import propmap_colour
+        lat, lon, band, snr = self._args
+        try:
+            grid, w, h = ENGINE.band_map(lat, lon, band, snr_db=snr)
+            img = grid_to_image(grid, w, h, lambda v: propmap_colour(v / 2.55))
+        except Exception:
+            img = None
+        self.done.emit(img, band)
+
+
 class AuroraItem(QGraphicsItem):
     """Aurora. z=3
     Met NOAA OVATION-data: kans op aurora per graad als gekleurd beeld, ingebakken
@@ -436,11 +491,13 @@ class AuroraItem(QGraphicsItem):
         self._ovation: QImage | None = None      # MAP_W × MAP_H, voor de basiskaart
         self._on_change = None
 
-    def set_ovation(self, rgba: bytes, obs_time: str = ""):
-        """OVATION-raster (360×181 RGBA, zie charts.ovation_rgba) → kaartbeeld."""
-        small = QImage(rgba, 360, 181, 360 * 4, QImage.Format_RGBA8888).copy()
-        self._ovation = small.scaled(MAP_W, MAP_H, Qt.IgnoreAspectRatio,
-                                     Qt.SmoothTransformation)
+    def set_ovation(self, grid: bytes, obs_time: str = ""):
+        """OVATION-kansraster (360×181 grijswaarden, zie charts.ovation_grid) →
+        kaartbeeld. Eerst de kans vloeiend opschalen, dán kleuren via een
+        kleurentabel: zo ontstaan geen blokjes of harde kleurgrenzen."""
+        from .charts import OVATION_W, OVATION_H, aurora_colour
+        self._ovation = grid_to_image(grid, OVATION_W, OVATION_H,
+                                      lambda v: aurora_colour(v / 2.55))
         self._obs_time = obs_time
         self.update()
         if self._on_change:
@@ -525,35 +582,6 @@ class NightOverlayItem(_CompositedOverlay, QGraphicsItem):
     def paint(self, painter: QPainter, option, widget=None):
         if self._image:
             painter.drawImage(0, 0, self._image)
-
-    def update_night(self):
-        """Herteken de nacht-overlay op basis van huidige zonpositie."""
-        sun_lat, sun_lon = _subsolar_point()
-        img = QImage(MAP_W, MAP_H, QImage.Format_ARGB32)
-        img.fill(Qt.transparent)
-
-        sun_lat_r = math.radians(sun_lat)
-        for ix in range(0, MAP_W, 2):   # stap 2 voor snelheid
-            lon = ix / MAP_W * 360 - 180
-            dlon = math.radians(lon - sun_lon)
-            for iy in range(0, MAP_H, 2):
-                lat = 90 - iy / MAP_H * 180
-                lat_r = math.radians(lat)
-                cos_a = (math.sin(lat_r) * math.sin(sun_lat_r) +
-                         math.cos(lat_r) * math.cos(sun_lat_r) * math.cos(dlon))
-                if cos_a < 0:
-                    depth = min(1.0, -cos_a * 3)
-                    alpha = int(140 * depth)
-                    img.setPixelColor(ix, iy, QColor(0, 8, 20, alpha))
-                    if ix + 1 < MAP_W:
-                        img.setPixelColor(ix + 1, iy, QColor(0, 8, 20, alpha))
-                    if iy + 1 < MAP_H:
-                        img.setPixelColor(ix, iy + 1, QColor(0, 8, 20, alpha))
-                    if ix + 1 < MAP_W and iy + 1 < MAP_H:
-                        img.setPixelColor(ix + 1, iy + 1, QColor(0, 8, 20, alpha))
-
-        self._image = img
-        self.update()
 
 
 class QTHMarkerItem(QGraphicsItem):
@@ -822,52 +850,6 @@ class DXCCOverlayItem(QGraphicsItem):
 
 # ── Achtergrond render thread (bewaard als referentie, niet meer gebruikt) ─────
 
-class NightRenderWorker(QObject):
-    finished = Signal(QImage, QImage)
-
-    def run(self):
-        sun_lat, sun_lon = _subsolar_point()
-        # 64×32 = 2048 pixels — snel, gladde upscale via SmoothTransformation
-        W, H = 64, 32
-
-        night = QImage(W, H, QImage.Format_ARGB32)
-        night.fill(Qt.transparent)
-        gray  = QImage(W, H, QImage.Format_ARGB32)
-        gray.fill(Qt.transparent)
-
-        sun_lat_r = math.radians(sun_lat)
-        cos_sun   = math.cos(sun_lat_r)
-        sin_sun   = math.sin(sun_lat_r)
-        GRAY_HALF = 0.155
-
-        # setPixelColor met QColor is type-safe (vermijdt signed/unsigned overflow)
-        for ix in range(W):
-            lon      = ix / W * 360 - 180
-            cos_dlon = math.cos(math.radians(lon - sun_lon))
-            for iy in range(H):
-                lat_r = math.radians(90 - iy / H * 180)
-                cos_a = (math.sin(lat_r) * sin_sun +
-                         math.cos(lat_r) * cos_sun * cos_dlon)
-
-                if cos_a < 0:
-                    # Nacht: donkerblauw, hoog genoeg alpha om zichtbaar te zijn op donkere kaart
-                    depth = min(1.0, -cos_a * 2.5)
-                    alpha = int(200 * depth)
-                    night.setPixelColor(ix, iy, QColor(0, 10, 50, alpha))
-
-                ca = abs(cos_a)
-                if ca < GRAY_HALF:
-                    # Grayline: goudgeel, duidelijk zichtbaar
-                    a = int(130 * (1 - ca / GRAY_HALF))
-                    gray.setPixelColor(ix, iy, QColor(200, 170, 50, a))
-
-        tf = Qt.SmoothTransformation
-        self.finished.emit(
-            night.scaled(MAP_W, MAP_H, Qt.IgnoreAspectRatio, tf),
-            gray.scaled( MAP_W, MAP_H, Qt.IgnoreAspectRatio, tf)
-        )
-
-
 # ── Kaart herinkleuring (v4-stijl) ───────────────────────────────────────────
 
 # Cache van de ingekleurde kaart — inkleuren kost seconden, laden milliseconden
@@ -1069,6 +1051,14 @@ class MapView(QGraphicsView):
 
         self._grayline = GraylineItem()
         self._scene.addItem(self._grayline)
+        self._propmap = RasterOverlayItem(2.2)       # propagatiekaart vanaf de QTH
+        self._propmap.setVisible(False)
+        self._scene.addItem(self._propmap)
+        self._drap = RasterOverlayItem(2.4)          # NOAA D-RAP HF-absorptie
+        self._drap.setVisible(False)
+        self._scene.addItem(self._drap)
+        self._propmap_thread = None
+        self._propmap_pending = None
 
         self._maidenhead = MaidenheadItem()
         self._maidenhead.setVisible(False)   # standaard uit
@@ -1128,6 +1118,8 @@ class MapView(QGraphicsView):
         self._night._on_change    = self._compose_base
         self._grayline._on_change = self._compose_base
         self._aurora._on_change   = self._compose_base
+        self._propmap._on_change  = self._compose_base
+        self._drap._on_change     = self._compose_base
         QPixmapCache.setCacheLimit(max(QPixmapCache.cacheLimit(), 128 * 1024))
         for item in (self._base_map, self._graticule, self._maidenhead,
                      self._callsign_overlay, self._sat_layer,
@@ -1244,7 +1236,9 @@ class MapView(QGraphicsView):
         night = self._night._image    if self._night.isVisible()    else None
         gray  = self._grayline._image if self._grayline.isVisible() else None
         aur   = self._aurora.ovation_image() if self._aurora.isVisible() else None
-        if night is None and gray is None and aur is None:
+        prop  = self._propmap._image if self._propmap.isVisible() else None
+        drap  = self._drap._image    if self._drap.isVisible()    else None
+        if night is None and gray is None and aur is None and prop is None and drap is None:
             self._base_map.setPixmap(src)
             return
         comp = QPixmap(src)          # impliciet gedeeld; tekenen maakt een kopie
@@ -1253,6 +1247,10 @@ class MapView(QGraphicsView):
             p.drawImage(0, 0, night)
         if gray is not None:
             p.drawImage(0, 0, gray)
+        if prop is not None:
+            p.drawImage(0, 0, prop)
+        if drap is not None:
+            p.drawImage(0, 0, drap)
         if aur is not None:
             p.drawImage(0, 0, aur)   # z 3: boven nacht en grayline
         p.end()
@@ -1260,39 +1258,8 @@ class MapView(QGraphicsView):
 
     # ── Nacht-overlay ─────────────────────────────────────────────────────────
     def _refresh_night(self):
-        """Rendert nacht + grayline direct in hoofdthread (64×32 = <5ms)."""
-        sun_lat, sun_lon = _subsolar_point()
-        W, H = 64, 32
-
-        night = QImage(W, H, QImage.Format_ARGB32)
-        night.fill(Qt.transparent)
-        gray  = QImage(W, H, QImage.Format_ARGB32)
-        gray.fill(Qt.transparent)
-
-        sun_lat_r = math.radians(sun_lat)
-        cos_sun   = math.cos(sun_lat_r)
-        sin_sun   = math.sin(sun_lat_r)
-        GRAY_HALF = 0.155
-
-        for ix in range(W):
-            cos_dlon = math.cos(math.radians(ix / W * 360 - 180 - sun_lon))
-            for iy in range(H):
-                lat_r = math.radians(90 - iy / H * 180)
-                cos_a = math.sin(lat_r)*sin_sun + math.cos(lat_r)*cos_sun*cos_dlon
-
-                if cos_a < 0:
-                    depth = min(1.0, -cos_a * 2.5)
-                    night.setPixelColor(ix, iy, QColor(0, 10, 50, int(200*depth)))
-
-                ca = abs(cos_a)
-                if ca < GRAY_HALF:
-                    a = int(130 * (1 - ca / GRAY_HALF))
-                    gray.setPixelColor(ix, iy, QColor(200, 170, 50, a))
-
-        tf = Qt.SmoothTransformation
-        night_full = night.scaled(MAP_W, MAP_H, Qt.IgnoreAspectRatio, tf)
-        gray_full  = gray.scaled( MAP_W, MAP_H, Qt.IgnoreAspectRatio, tf)
-
+        """Nacht + grayline opnieuw berekenen (2°-raster, ~50 ms incl. opschalen) en inbakken."""
+        night_full, gray_full = render_night_gray(*_subsolar_point())
         self._night._image    = night_full
         self._grayline._image = gray_full
         self._compose_base()
@@ -1836,6 +1803,41 @@ class MapView(QGraphicsView):
         self._lightning_radius.set_font_size(size)
         self._lightning_beep_radius.set_font_size(size)
 
+    def set_drap(self, drap: dict):
+        """NOAA D-RAP (charts.parse_drap) → absorptielaag."""
+        from .charts import drap_grid, drap_colour, DRAP_MAX_MHZ
+        g = drap_grid(drap)
+        if g:
+            grid, w, h = g
+            self._drap.set_image(grid_to_image(
+                grid, w, h, lambda v: drap_colour(v * DRAP_MAX_MHZ / 255), up=8))
+
+    def set_drap_visible(self, on: bool):
+        self._drap.setVisible(on)
+
+    def set_propmap_visible(self, on: bool):
+        self._propmap.setVisible(on)
+
+    def update_propmap(self, band: str, snr_db: float = 0.0):
+        """Propagatiekaart voor band herberekenen (achtergrond); laatste verzoek wint."""
+        req = (self._qth[0], self._qth[1], band, snr_db)
+        if self._propmap_thread is not None:
+            self._propmap_pending = req
+            return
+        th = _PropMapThread(*req, parent=self)
+        th.done.connect(self._on_propmap)
+        th.finished.connect(th.deleteLater)
+        self._propmap_thread = th
+        th.start()
+
+    def _on_propmap(self, img, band: str):
+        self._propmap_thread = None
+        if img is not None:
+            self._propmap.set_image(img)
+        if self._propmap_pending is not None:
+            req, self._propmap_pending = self._propmap_pending, None
+            self.update_propmap(req[2], req[3])
+
     def set_grayline_visible(self, on: bool):
         self._grayline.setVisible(on)
 
@@ -1869,7 +1871,7 @@ class MapView(QGraphicsView):
         self._aurora.set_k_index(k)
 
     def set_ovation(self, payload):
-        """(rgba-bytes, waarnemingstijd) van charts.aurora_ready."""
+        """(kansraster, waarnemingstijd) van charts.aurora_ready."""
         rgba, obs = payload
         self._aurora.set_ovation(rgba, obs)
 
@@ -1935,14 +1937,46 @@ class MapView(QGraphicsView):
 # ── Hulpfuncties (gedeeld met v4) ─────────────────────────────────────────────
 
 def _subsolar_point() -> tuple[float, float]:
-    """Geocentrische positie van de zon (vereenvoudigd)."""
-    now = datetime.datetime.now(datetime.timezone.utc)
-    doy = now.timetuple().tm_yday
-    decl = -23.45 * math.cos(math.radians(360 / 365 * (doy + 10)))
-    ut = now.hour + now.minute / 60 + now.second / 3600
-    lon = -(ut - 12) * 15
-    lon = ((lon + 180) % 360) - 180
+    """Subsolair punt (breedte = declinatie, lengte) — NOAA-zonnecalculator,
+    dezelfde als het propagatiemodel (incl. tijdvereffening)."""
+    from .propagation import sun_position
+    decl, lon, _ = sun_position()
     return decl, lon
+
+
+# Horizon incl. refractie (zon-middelpunt −0,83°): zelfde grens als propagation.is_day
+_SIN_HORIZON = math.sin(math.radians(-0.833))
+_GRAY_HALF   = 0.155            # grayline: zonnehoogte ±~9° rond de horizon
+
+
+def render_night_gray(sun_lat: float, sun_lon: float,
+                      w: int = 180, h: int = 90) -> tuple[QImage, QImage]:
+    """Nacht- en grayline-beeld (MAP_W × MAP_H) voor de gegeven zonpositie.
+    Raster van 2°, bemonsterd in het midden van elke cel (zo valt de lijn na het
+    opschalen op de juiste plek) en daarna vloeiend opgeschaald."""
+    sin_s, cos_s = math.sin(math.radians(sun_lat)), math.cos(math.radians(sun_lat))
+    cos_dlon = [math.cos(math.radians(-180 + (ix + 0.5) * 360 / w - sun_lon))
+                for ix in range(w)]
+    night = bytearray(w * h * 4)
+    gray  = bytearray(w * h * 4)
+    for iy in range(h):
+        lat = math.radians(90 - (iy + 0.5) * 180 / h)
+        a_, b_ = math.sin(lat) * sin_s, math.cos(lat) * cos_s
+        base = iy * w * 4
+        for ix in range(w):
+            d = a_ + b_ * cos_dlon[ix] - _SIN_HORIZON     # 0 = op de terminator
+            i = base + ix * 4
+            if d < 0:
+                night[i:i + 4] = bytes((0, 10, 50, int(200 * min(1.0, -d * 2.5))))
+            ad = -d if d < 0 else d
+            if ad < _GRAY_HALF:
+                gray[i:i + 4] = bytes((200, 170, 50, int(130 * (1 - ad / _GRAY_HALF))))
+    tf = Qt.SmoothTransformation
+    out = []
+    for buf in (night, gray):
+        img = QImage(bytes(buf), w, h, w * 4, QImage.Format_RGBA8888).copy()
+        out.append(img.scaled(MAP_W, MAP_H, Qt.IgnoreAspectRatio, tf))
+    return out[0], out[1]
 
 
 def _submoon_point() -> tuple[float, float]:

@@ -14,7 +14,7 @@ from PySide6.QtWidgets import (
     QCheckBox, QSpinBox
 )
 
-from .theme import (
+from .theme import (check_indicator_qss,
     ACCENT, BG_PANEL, BG_SURFACE, BG_ROOT, TEXT_H1, TEXT_DIM,
     TEXT_BODY, BORDER
 )
@@ -61,24 +61,7 @@ QRadioButton::indicator:checked:hover {{
     height: 11px;
     background: {ACCENT};
 }}
-QTreeWidget::indicator {{
-    width: 14px;
-    height: 14px;
-    background: #000000;
-    border: 1px solid #666666;
-    border-radius: 1px;
-}}
-QTreeWidget::indicator:checked {{
-    background: #C8A84B;
-    border: 1px solid #A88A3A;
-}}
-QTreeWidget::indicator:hover {{
-    border: 1px solid #888888;
-}}
-QTreeWidget::indicator:indeterminate {{
-    background: {BG_SURFACE};
-    border: 1px solid {BORDER};
-}}
+{check_indicator_qss("QTreeWidget")}
 QLabel       {{ color: {TEXT_DIM}; font-size: 8pt; }}
 QPushButton  {{
     background: {BG_SURFACE}; color: {TEXT_H1};

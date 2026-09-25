@@ -214,37 +214,148 @@ def parse_outlook(text: str) -> list:
     return out
 
 
-def ovation_rgba(data) -> bytes | None:
-    """OVATION-coördinaten [lon 0–359, lat −90–90, kans %] → RGBA-bytes voor een
-    360×181-beeld (kolom 0 = −180°, rij 0 = +90°). Groen → geel → rood, doorzichtig
-    onder 4 %."""
+OVATION_W, OVATION_H = 360, 181
+
+
+def ovation_grid(data) -> bytes | None:
+    """OVATION-coördinaten [lon 0–359, lat −90–90, kans %] → kansraster als
+    grijswaardebytes 360×181 (kolom 0 = −180°, rij 0 = +90°; waarde = kans × 2,55).
+    Licht vervaagd (binomiaal 5-tap, lengte loopt rond) zodat de 1°-blokjes na
+    het opschalen vloeiende overgangen worden; kleur komt pas daarna
+    (zie aurora_colour) — dan blijven de kleurovergangen ook vloeiend."""
     try:
         coords = data["coordinates"]
     except (KeyError, TypeError):
         return None
-    W, H = 360, 181
-    buf = bytearray(W * H * 4)
+    W, H = OVATION_W, OVATION_H
+    g = [0.0] * (W * H)
     for lon, lat, prob in coords:
         # |lat| < 25°: geen aurora — en de OVATION-data bevat op 0° een naad
         # (rij met kans 4 % waar de halfronden samenkomen) die anders als lijn
         # over de evenaar zichtbaar is
-        if prob < 4 or abs(lat) < 25:
+        if prob < 3 or abs(lat) < 25:
             continue
-        x = (int(lon) + 180) % 360
         y = 90 - int(lat)
-        if not (0 <= y < H):
+        if 0 <= y < H:
+            g[y * W + (int(lon) + 180) % W] = min(100.0, float(prob))
+
+    k = (1 / 16, 4 / 16, 6 / 16, 4 / 16, 1 / 16)
+    h = [0.0] * (W * H)
+    for y in range(H):
+        row = g[y * W:(y + 1) * W]
+        if not any(row):
             continue
-        p = min(100, int(prob))
-        if p < 30:
-            r, g, b = 60, 220, 90
-        elif p < 60:
-            r, g, b = 230, 220, 60
-        else:
-            r, g, b = 240, 80, 40
-        a = min(190, 40 + p * 3)
-        i = (y * W + x) * 4
-        buf[i:i + 4] = bytes((r, g, b, a))
-    return bytes(buf)
+        base = y * W
+        for x in range(W):
+            h[base + x] = (k[0] * row[x - 2] + k[1] * row[x - 1] + k[2] * row[x]
+                           + k[3] * row[(x + 1) % W] + k[4] * row[(x + 2) % W])
+    out = bytearray(W * H)
+    for y in range(H):
+        rows = [min(H - 1, max(0, y + d)) * W for d in (-2, -1, 0, 1, 2)]
+        base = y * W
+        for x in range(W):
+            v = (k[0] * h[rows[0] + x] + k[1] * h[rows[1] + x] + k[2] * h[rows[2] + x]
+                 + k[3] * h[rows[3] + x] + k[4] * h[rows[4] + x])
+            if v > 0.4:
+                out[base + x] = min(255, int(v * 2.55 + 0.5))
+    return bytes(out)
+
+
+DRAP_MAX_MHZ = 35.0
+
+
+def drap_grid(drap: dict) -> tuple[bytes, int, int] | None:
+    """D-RAP (parse_drap) → grijswaardenraster (waarde = MHz × 255/35), rij 0 =
+    noordelijkste breedte, kolom 0 = westelijkste lengte (celmiddens)."""
+    try:
+        grid, lats, lons = drap["grid"], drap["lats"], drap["lons"]
+    except (KeyError, TypeError):
+        return None
+    h, w = len(lats), len(lons)
+    if not h or not w:
+        return None
+    rows = range(h) if lats[0] > lats[-1] else range(h - 1, -1, -1)
+    cols = sorted(range(w), key=lambda j: lons[j])
+    g = [0.0] * (w * h)
+    for y, i in enumerate(rows):
+        row = grid[i]
+        for x, j in enumerate(cols):
+            v = row[j] if j < len(row) else 0.0
+            if v > 0:
+                g[y * w + x] = float(v)
+    # Grof raster (2° × 4°): binomiaal vervagen (1-2-1, twee keer) zodat de
+    # absorptievlekken na het opschalen vloeiend verlopen
+    g = _blur121(_blur121(g, w, h), w, h)
+    out = bytearray(w * h)
+    for k, v in enumerate(g):
+        if v > 0.05:
+            out[k] = min(255, int(v * 255 / DRAP_MAX_MHZ + 0.5))
+    return bytes(out), w, h
+
+
+def _blur121(g: list, w: int, h: int) -> list:
+    """1-2-1-vervaging horizontaal (lengte loopt rond) en verticaal."""
+    tmp = [0.0] * (w * h)
+    for y in range(h):
+        b = y * w
+        for x in range(w):
+            tmp[b + x] = (g[b + (x - 1) % w] + 2 * g[b + x] + g[b + (x + 1) % w]) / 4
+    out = [0.0] * (w * h)
+    for y in range(h):
+        up, dn = max(0, y - 1) * w, min(h - 1, y + 1) * w
+        b = y * w
+        for x in range(w):
+            out[b + x] = (tmp[up + x] + 2 * tmp[b + x] + tmp[dn + x]) / 4
+    return out
+
+
+def _ramp(stops, v):
+    for (v0, c0), (v1, c1) in zip(stops, stops[1:]):
+        if v <= v1:
+            s = (v - v0) / (v1 - v0) if v1 > v0 else 1.0
+            return tuple(int(c0[i] + (c1[i] - c0[i]) * s) for i in range(4))
+    return stops[-1][1]
+
+
+# D-RAP: hoogste door absorptie verzwakte frequentie (MHz) → geel … magenta
+_DRAP_STOPS = ((0.0, (255, 235, 59, 0)), (0.7, (255, 235, 59, 0)), (2.0, (255, 235, 59, 90)),
+               (6.0, (255, 152, 0, 140)), (12.0, (244, 67, 54, 165)),
+               (22.0, (216, 27, 96, 180)), (35.0, (216, 27, 96, 190)))
+
+
+def drap_colour(mhz: float) -> tuple[int, int, int, int]:
+    return _ramp(_DRAP_STOPS, max(0.0, mhz))
+
+
+# Propagatiekaart: kans (%) dat de band het pad QTH → cel draagt
+_PROPMAP_STOPS = ((0, (239, 83, 80, 0)), (8, (239, 83, 80, 0)), (18, (239, 83, 80, 70)),
+                  (45, (255, 167, 38, 90)), (75, (102, 187, 106, 100)),
+                  (100, (102, 187, 106, 110)))
+
+
+def propmap_colour(pct: float) -> tuple[int, int, int, int]:
+    return _ramp(_PROPMAP_STOPS, max(0.0, pct))
+
+
+# HAMIOS-aurorakleuren: groen (< 30 %) → geel (30–60 %) → rood (≥ 60 %)
+_AURORA_STOPS = ((0, (60, 220, 90)), (22, (60, 220, 90)), (38, (230, 220, 60)),
+                 (52, (230, 220, 60)), (68, (240, 80, 40)), (100, (240, 80, 40)))
+
+
+def aurora_colour(p: float) -> tuple[int, int, int, int]:
+    """Kans (%) → (r, g, b, alpha) in de HAMIOS-kleuren, met vloeiende overgangen
+    tussen groen, geel en rood en een zachte buitenrand (alpha loopt op vanaf 2 %)."""
+    if p < 2:
+        return 0, 0, 0, 0
+    p = min(100.0, p)
+    for (p0, c0), (p1, c1) in zip(_AURORA_STOPS, _AURORA_STOPS[1:]):
+        if p <= p1:
+            s = (p - p0) / (p1 - p0)
+            r, g, b = (c0[i] + (c1[i] - c0[i]) * s for i in range(3))
+            break
+    edge = min(1.0, (p - 2) / 6)            # zachte buitenrand
+    a = edge * min(190, 40 + p * 3)
+    return int(r), int(g), int(b), int(a)
 
 
 def parse_scales(data) -> dict:
@@ -288,7 +399,7 @@ class _FetchThread(QThread):
     storm_ready  = Signal(dict)   # {day0..2: {active, minor, mod, sev, extreme}}
     alerts_ready = Signal(list)   # [{severity, message, issued}, ...]
     drap_ready    = Signal(dict)    # parse_drap()
-    aurora_ready  = Signal(object)  # (rgba-bytes 360×181, waarnemingstijd-str)
+    aurora_ready  = Signal(object)  # (kansraster 360×181 grijswaarden, waarnemingstijd-str)
     outlook_ready = Signal(list)    # parse_outlook()
 
     def run(self):
@@ -312,9 +423,9 @@ class _FetchThread(QThread):
 
     def _fetch_ovation(self):
         data = _get_json(_OVATION_URL, timeout=20)
-        rgba = ovation_rgba(data) if isinstance(data, dict) else None
-        if rgba:
-            self.aurora_ready.emit((rgba, str(data.get("Observation Time", ""))))
+        grid = ovation_grid(data) if isinstance(data, dict) else None
+        if grid:
+            self.aurora_ready.emit((grid, str(data.get("Observation Time", ""))))
 
     def _fetch_outlook(self):
         raw = _get_raw(_OUTLOOK_URL)
@@ -948,44 +1059,44 @@ class SolarParamsWidget(QWidget):
     # (label, data_key, eenheid, volledige_naam, tooltip, hint_fn)
     _ROWS = [
         ("SFI",        "sfi",        "SFU",    tr("solar.sfi.full"),
-         "Solar Flux Index — maat voor ionisatie. Hoog = betere HF-condities.",
+         tr("solar.tip.sfi"),
          lambda v: (tr("solar.hint.low"),   "#4FC3F7") if v < 100 else
                    (tr("solar.hint.fair"),  "#FFF176") if v < 150 else
                    (tr("solar.hint.high"),  "#FFA726") if v < 200 else
                    (tr("solar.hint.high"),  "#EF5350")),
         ("SSN",        "ssn",        "",       tr("solar.ssn.full"),
-         "Zonnevlek-getal (Sunspot Number).",
+         tr("solar.tip.ssn"),
          lambda v: ("min.",              TEXT_DIM)  if v < 20  else
                    (tr("solar.hint.low"),  "#4FC3F7") if v < 80  else
                    (tr("solar.hint.fair"), "#FFF176") if v < 150 else
                    (tr("solar.hint.high"), "#FFA726")),
         ("K-index",    "k_index",    "(0–9)",  tr("solar.k.full"),
-         "Planetaire K-index — geomagnetische activiteit.",
+         tr("solar.tip.k"),
          lambda v: (tr("solar.hint.calm"),   "#4FC3F7") if v < 3 else
                    (tr("solar.hint.active"), "#FFF176") if v < 5 else
                    (tr("solar.hint.storm"),  "#FFA726") if v < 7 else
                    (tr("solar.hint.severe"), "#EF5350")),
         ("A-index",    "a_index",    "",       tr("solar.a.full"),
-         "Dagelijks geomagnetisch gemiddelde.",
+         tr("solar.tip.a"),
          lambda v: (tr("solar.hint.calm"),    "#4FC3F7") if v < 15 else
                    (tr("solar.hint.active"),  "#FFF176") if v < 30 else
                    (tr("solar.hint.stormig"), "#FFA726") if v < 50 else
                    (tr("solar.hint.ernstig"), "#EF5350")),
-        ("X-straling", "xray",       "",       tr("solar.xray.full"),
-         "GOES X-ray klasse. M/X = zonnevlam.",
+        (tr("solar.lbl.xray"), "xray",       "",       tr("solar.xray.full"),
+         tr("solar.tip.xray"),
          None),
-        ("SW snelheid","sw_speed",   "km/s",   tr("solar.vsw.full"),
-         "Snelheid van de zonnewind.",
-         lambda v: ("normaal","#4FC3F7") if v < 500 else
-                   ("verhoogd","#FFA726") if v < 700 else
-                   ("snel",   "#EF5350")),
-        ("SW dichth.", "sw_density", "p/cm³",  tr("solar.nsw.full"),
-         "Dichtheid van de zonnewind (protonen/cm3).",
+        (tr("solar.lbl.vsw"), "sw_speed",   "km/s",   tr("solar.vsw.full"),
+         tr("solar.tip.vsw"),
+         lambda v: (tr("solar.hint.normal"),   "#4FC3F7") if v < 500 else
+                   (tr("solar.hint.elevated"), "#FFA726") if v < 700 else
+                   (tr("solar.hint.fast"),     "#EF5350")),
+        (tr("solar.lbl.nsw"), "sw_density", "p/cm³",  tr("solar.nsw.full"),
+         tr("solar.tip.nsw"),
          lambda v: (tr("solar.hint.low"),   "#4FC3F7") if v < 5  else
-                   ("normaal","TEXT_H1") if v < 15 else
+                   (tr("solar.hint.normal"), "TEXT_H1") if v < 15 else
                    (tr("solar.hint.high"),  "#FFA726")),
         ("Bz (GSM)",   "sw_bz",      "nT",     tr("solar.bz.full"),
-         "IMF Bz-component. Negatief = verhoogd stormsrisico.",
+         tr("solar.tip.bz"),
          lambda v: (tr("solar.hint.pos"),      "#4FC3F7") if v >= 0 else
                    (tr("solar.hint.neg"),      "#FF8A65") if v > -10 else
                    (tr("solar.hint.storm_ex"), "#EF5350")),

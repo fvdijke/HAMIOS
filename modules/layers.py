@@ -139,54 +139,13 @@ class TleFetchThread(QThread):
 
 def _sgp4_latlon(line1: str, line2: str,
                  offset_min: float = 0.0) -> tuple[float, float, float] | None:
-    """Vereenvoudigde TLE-propagator. Nauwkeurigheid ~50 km (voldoende voor kaart)."""
+    """Subsatellietpunt (lat, lon, hoogte km) nu + offset_min. Kepler + J2
+    (zie sat_passes): ~10 km t.o.v. SGP4 binnen een dag."""
+    from .sat_passes import subpoint
     try:
-        ep  = line1[18:32].strip()
-        yr2 = int(ep[:2])
-        yr  = 2000 + yr2 if yr2 < 57 else 1900 + yr2
-        epoch = (datetime.datetime(yr, 1, 1, tzinfo=datetime.timezone.utc)
-                 + datetime.timedelta(days=float(ep[2:]) - 1))
-
-        incl = math.radians(float(line2[8:16]))
-        raan = math.radians(float(line2[17:25]))
-        ecc  = float("0." + line2[26:33])
-        argp = math.radians(float(line2[34:42]))
-        M0   = math.radians(float(line2[43:51]))
-        n    = float(line2[52:63])          # omwentelingen/dag
-
-        now   = datetime.datetime.now(datetime.timezone.utc)
-        t_min = (now - epoch).total_seconds() / 60.0 + offset_min
-        n_rm  = n * 2 * math.pi / (24 * 60)
-        n_rs  = n * 2 * math.pi / 86400
-        a     = (398600.4418 / n_rs**2) ** (1/3)
-        M     = (M0 + n_rm * t_min) % (2 * math.pi)
-
-        E = M
-        for _ in range(10):
-            E = M + ecc * math.sin(E)
-
-        cosE = math.cos(E)
-        nu   = math.atan2(math.sqrt(1 - ecc**2) * math.sin(E), cosE - ecc)
-        r    = a * (1 - ecc * cosE)
-        xp, yp = r * math.cos(nu), r * math.sin(nu)
-
-        cr, sr = math.cos(raan), math.sin(raan)
-        co, so = math.cos(argp), math.sin(argp)
-        ci, si = math.cos(incl), math.sin(incl)
-        x_eci = (cr*co - sr*so*ci)*xp + (-cr*so - sr*co*ci)*yp
-        y_eci = (sr*co + cr*so*ci)*xp + (-sr*so + cr*co*ci)*yp
-        z_eci =          si*so    *xp +          si*co    *yp
-
-        J2000 = datetime.datetime(2000, 1, 1, 12, tzinfo=datetime.timezone.utc)
-        jd    = (now - J2000).total_seconds() / 86400 + offset_min / 1440.0
-        g     = math.radians((280.46061837 + 360.98564736629 * jd) % 360)
-        xe    =  x_eci * math.cos(g) + y_eci * math.sin(g)
-        ye    = -x_eci * math.sin(g) + y_eci * math.cos(g)
-        ze    =  z_eci
-
-        lat = math.degrees(math.asin(max(-1.0, min(1.0, ze / r))))
-        lon = math.degrees(math.atan2(ye, xe))
-        return lat, lon, r - 6371.0
+        t = (datetime.datetime.now(datetime.timezone.utc)
+             + datetime.timedelta(minutes=offset_min))
+        return subpoint(line1, line2, t)
     except Exception:
         return None
 

@@ -122,7 +122,13 @@ _PANEL_TITLE_KEYS = {
     "alerts":     "panel.alerts",
     "dx_spots":   "panel.dx_spots",
     "prop_adv":   "panel.prop_adv",
+    "ionosondes": "panel.ionosondes",
+    "sat_passes": "panel.sat_passes",
 }
+
+# Panelen die na een update nieuw zijn: in een bestaande indeling als tabblad
+# bij deze buur plaatsen (in plaats van een extra kolom rechts)
+_NEW_PANEL_HOSTS = {"ionosondes": "dx_spots", "sat_passes": "dx_spots"}
 
 def _panel_titles():
     from .i18n import tr as _tr
@@ -146,18 +152,13 @@ def _clamp_window(win, wx: int, wy: int, ww: int, wh: int):
 
 def _sat_elevation(sat_lat: float, sat_lon: float, alt_km: float,
                    qth_lat: float, qth_lon: float, R: float = 6371.0) -> float:
-    """Bereken elevatiehoek (graden) van satelliet gezien vanuit QTH (v4-formule)."""
+    """Elevatiehoek (graden) van de satelliet gezien vanaf de QTH (topocentrisch)."""
     import math
-    sl = math.radians(sat_lat); ql = math.radians(qth_lat)
-    dlon = math.radians(sat_lon - qth_lon)
-    cos_d = math.sin(sl)*math.sin(ql) + math.cos(sl)*math.cos(ql)*math.cos(dlon)
-    dist  = math.acos(max(-1.0, min(1.0, cos_d)))
-    rho   = math.acos(min(1.0, R / (R + alt_km)))
-    if math.sin(rho) < 1e-9:
-        return 90.0
-    return math.degrees(math.asin(min(1.0,
-        (math.cos(dist) - R / (R + alt_km)) / math.sin(rho))))
-
+    from .sat_passes import look_angles
+    r = R + alt_km
+    la, lo = math.radians(sat_lat), math.radians(sat_lon)
+    ecef = (r * math.cos(la) * math.cos(lo), r * math.cos(la) * math.sin(lo), r * math.sin(la))
+    return look_angles(ecef, qth_lat, qth_lon)[1]
 
 class DesktopCanvas(QWidget):
     """Achtergrond-canvas waarop alle panels als child-widgets leven."""
@@ -230,6 +231,12 @@ class HAMIOSMainWindow(QMainWindow):
         self._data_mgr.solar_ready.connect(_PROP.set_solar)
         # Gemeten HF-absorptie (NOAA D-RAP) → LUF in het model
         self._data_mgr.drap_ready.connect(_PROP.set_drap)
+        self._data_mgr.drap_ready.connect(
+            lambda d: self._map_view.set_drap(d) if hasattr(self, "_map_view") else None)
+        # Propagatiekaart: elke 10 min opnieuw (de zon schuift op)
+        self._propmap_timer = QTimer(self)
+        self._propmap_timer.timeout.connect(self._refresh_propmap)
+        self._propmap_timer.start(10 * 60_000)
         self._data_mgr.solar_ready.connect(self._on_solar_for_history)
         # Gemeten ionosfeer (KC2G/GIRO) — kalibreert het model elke 15 min
         self._iono_feed = IonosondeFeed(self)
@@ -325,6 +332,10 @@ class HAMIOSMainWindow(QMainWindow):
                 self._build_dx_spots_panel(p)
             elif pid == "prop_adv":
                 self._build_prop_adv_panel(p)
+            elif pid == "ionosondes":
+                self._build_ionosondes_panel(p)
+            elif pid == "sat_passes":
+                self._build_sat_passes_panel(p)
             else:
                 self._build_placeholder(p, pid)
 
@@ -493,6 +504,38 @@ class HAMIOSMainWindow(QMainWindow):
         # Initieel filter toepassen
         self._sync_dx_map_filter()
 
+    def _build_ionosondes_panel(self, panel):
+        from .extra_panels import IonosondeWidget
+        w = IonosondeWidget(cfg=self._cfg)
+        self._sprint5_layout(panel).addWidget(w)
+        self._iono_widget = w
+
+    def _build_sat_passes_panel(self, panel):
+        from .extra_panels import SatPassesWidget
+        w = SatPassesWidget(cfg=self._cfg)
+        self._sprint5_layout(panel).addWidget(w)
+        w.set_source(self._sat_pass_source)
+        w.pass_soon.connect(self._on_sat_pass_soon)
+        self._sat_passes_widget = w
+
+    def _sat_pass_source(self):
+        """(TLE's van de gevolgde satellieten, QTH) voor het overkomstenpaneel."""
+        sat = self._map_view._sat_layer
+        with sat._lock:
+            tles = {n: sat._tle[n] for n in sat._selected if n in sat._tle}
+        return tles, self._cfg.qth_lat, self._cfg.qth_lon
+
+    def _on_sat_pass_soon(self, name: str, minutes: int, max_el: float, direction: str):
+        if hasattr(self, "_alerts_widget"):
+            self._alerts_widget.add_alert(
+                "🛰", tr("alerts.sat.pass", name=name, n=minutes,
+                         el=f"{max_el:.0f}", dir=direction),
+                "#4FC3F7", tr("alert.sat_pass"))
+        if getattr(self._cfg, "sat_zone_ping", True):
+            import threading as _th
+            from .sound import play_sat_enter
+            _th.Thread(target=play_sat_enter, daemon=True).start()
+
     def _build_prop_adv_panel(self, panel):
         w = PropAdvWidget(cfg=self._cfg)
         self._sprint5_layout(panel).addWidget(w)
@@ -566,6 +609,9 @@ class HAMIOSMainWindow(QMainWindow):
         self._map_view.set_locator_visible(getattr(cfg, "show_locator", False))
         self._map_view._psk.setVisible(getattr(cfg, "show_psk", False))
         self._map_view.set_callsign_overlay_visible(getattr(cfg, "show_callsign_overlay", False))
+        self._map_view.set_drap_visible(getattr(cfg, "show_drap", False))
+        self._map_view.set_propmap_visible(getattr(cfg, "show_propmap", False))
+        self._refresh_propmap()
         self._map_view.set_callsign_overlay_font_size(getattr(cfg, "callsign_overlay_font_size", 7))
         self._map_view.set_overlay_font_size(cfg.overlay_font_size)
         self._map_view.set_maidenhead_font_size(getattr(cfg, "maidenhead_font_size", 8))
@@ -580,7 +626,7 @@ class HAMIOSMainWindow(QMainWindow):
         _panel_widgets = [
             "_prop_adv_widget", "_band_rel_widget",
             "_dx_spots_widget", "_lightning_panel_widget", "_band_sched_widget",
-            "_alerts_widget",
+            "_alerts_widget", "_iono_widget", "_sat_passes_widget",
         ]
         for attr in _panel_widgets:
             w = getattr(self, attr, None)
@@ -648,7 +694,9 @@ class HAMIOSMainWindow(QMainWindow):
         for pid in self._panels:
             v = layout.get(pid)
             if not (isinstance(v, (list, tuple)) and len(v) >= 5):
-                v = _PANEL_DEFAULTS.get(pid, (0, 0, 300, 200, True))
+                if pid not in _PANEL_DEFAULTS:
+                    continue            # nieuw paneel: zie _add_new_panels
+                v = _PANEL_DEFAULTS[pid]
             rects[pid] = tuple(int(n) for n in v[:4])
             visible[pid] = bool(v[4])
 
@@ -660,7 +708,24 @@ class HAMIOSMainWindow(QMainWindow):
             return
         if tree is None:
             tree = layout_from_rects(rects, visible)
+        tree = self._add_new_panels(tree, layout, visible)
         self._tiles.apply(tree, visible)
+
+    def _add_new_panels(self, tree: dict, layout: dict, visible: dict) -> dict:
+        """Panelen die nog niet in de opgeslagen indeling staan (nieuw sinds een
+        update) als tabblad bij hun buur zetten; zonder buur: verborgen."""
+        from .tiling import insert_panel, _leaves
+        leaves = set(_leaves(tree))
+        for pid, host in _NEW_PANEL_HOSTS.items():
+            if pid in leaves or pid not in self._panels:
+                continue
+            if host in leaves:
+                tree = insert_panel(tree, pid, host, "center")
+                leaves.add(pid)
+                visible[pid] = True
+            else:
+                visible[pid] = False
+        return tree
 
     def apply_preset(self, name: str):
         """Standaardindeling toepassen (alle panelen zichtbaar; kaart ~2:1
@@ -668,7 +733,15 @@ class HAMIOSMainWindow(QMainWindow):
         d = self._desktop
         w = d.width() if d.width() > 200 else self.width()
         h = d.height() if d.height() > 200 else self.height() - 40
-        self._tiles.apply(preset_tree(name, w, h), {pid: True for pid in self._panels})
+        visible = {pid: True for pid in self._panels}
+        if name == "default":
+            # Klassieke fabrieksindeling (verhoudingen uit _PANEL_DEFAULTS)
+            rects = {pid: tuple(_PANEL_DEFAULTS[pid][:4])
+                     for pid in self._panels if pid in _PANEL_DEFAULTS}
+            tree = layout_from_rects(rects, visible)
+            self._tiles.apply(self._add_new_panels(tree, {}, visible), visible)
+            return
+        self._tiles.apply(preset_tree(name, w, h), visible)
 
     def set_layout_locked(self, locked: bool):
         self._cfg.layout_locked = bool(locked)
@@ -751,6 +824,9 @@ class HAMIOSMainWindow(QMainWindow):
         self._map_view.set_locator_visible(getattr(c, "show_locator", False))
         self._map_view._psk.setVisible(getattr(c, "show_psk", False))
         self._map_view.set_callsign_overlay_visible(getattr(c, "show_callsign_overlay", False))
+        self._map_view.set_drap_visible(getattr(c, "show_drap", False))
+        self._map_view.set_propmap_visible(getattr(c, "show_propmap", False))
+        self._refresh_propmap()
         self._map_view.set_callsign_overlay_font_size(getattr(c, "callsign_overlay_font_size", 7))
 
     # ── Retranslate ───────────────────────────────────────────────────────────
@@ -876,6 +952,7 @@ class HAMIOSMainWindow(QMainWindow):
             (tr("ov.psk"),       "show_psk",      lambda v: self._map_view._psk.setVisible(v)),
             (tr("ov.callsign"),  "show_callsign_overlay",
              lambda v: self._map_view.set_callsign_overlay_visible(v)),
+            (tr("ov.drap"),      "show_drap",     lambda v: self._map_view.set_drap_visible(v)),
         ]
 
         for label, attr, fn in overlays:
@@ -885,6 +962,39 @@ class HAMIOSMainWindow(QMainWindow):
                 lambda v, a=attr, f=fn: (setattr(self._cfg, a, v), f(v),
                                          save_config(self._cfg)))
             vlay.addWidget(cb)
+            if attr == "show_drap":
+                cb.setToolTip(tr("ov.drap.tip"))
+
+        # Propagatiekaart vanaf de QTH, met bandkeuze
+        from PySide6.QtWidgets import QComboBox
+        from .propagation import BANDS as _BANDS
+        prow = QHBoxLayout()
+        prow.setSpacing(6)
+        pcb = QCheckBox(tr("ov.propmap"))
+        pcb.setToolTip(tr("ov.propmap.tip"))
+        pcb.setChecked(bool(getattr(self._cfg, "show_propmap", False)))
+        band_cb = QComboBox()
+        band_cb.addItems([b for b, _ in _BANDS])
+        band_cb.setCurrentText(getattr(self._cfg, "propmap_band", "20m"))
+        band_cb.setToolTip(tr("ov.propmap.tip"))
+
+        def _prop_toggled(v):
+            self._cfg.show_propmap = v
+            self._map_view.set_propmap_visible(v)
+            self._refresh_propmap()
+            save_config(self._cfg)
+
+        def _band_changed(b):
+            self._cfg.propmap_band = b
+            self._refresh_propmap()
+            save_config(self._cfg)
+
+        pcb.toggled.connect(_prop_toggled)
+        band_cb.currentTextChanged.connect(_band_changed)
+        prow.addWidget(pcb)
+        prow.addWidget(band_cb)
+        prow.addStretch()
+        vlay.addLayout(prow)
 
         vlay.addSpacing(6)
 
@@ -951,7 +1061,7 @@ class HAMIOSMainWindow(QMainWindow):
         vlay.addWidget(lay_lbl)
         preset_row = QHBoxLayout()
         preset_row.setSpacing(4)
-        for key in ("central", "operating", "analysis"):
+        for key in ("central", "operating", "analysis", "default"):
             b = QPushButton(tr(f"layout.preset.{key}"))
             b.setToolTip(tr(f"layout.preset.{key}.tip"))
             b.clicked.connect(lambda _=False, k=key: (self.apply_preset(k),
@@ -974,6 +1084,7 @@ class HAMIOSMainWindow(QMainWindow):
             "worldmap", "solar", "band_rel", "storm_fc",
             "band_sched", "band_hist", "solar_hist", "kp_48h", "bz_24h",
             "xray_24h", "lightning", "alerts", "dx_spots", "wspr_feed", "prop_adv",
+            "ionosondes", "sat_passes",
         ]
 
         for pid in _PANEL_KEYS:
@@ -1074,8 +1185,16 @@ class HAMIOSMainWindow(QMainWindow):
         _thr.Thread(target=_history.append,
                     args=(band_pct, solar), daemon=True).start()
 
+    def _refresh_propmap(self):
+        """Propagatiekaart (band uit de instellingen) herberekenen als hij aan staat."""
+        c = self._cfg
+        if hasattr(self, "_map_view") and getattr(c, "show_propmap", False):
+            from .panels5 import _station_snr
+            self._map_view.update_propmap(getattr(c, "propmap_band", "20m"), _station_snr(c))
+
     def _on_propagation_updated(self):
         """Nieuwe ionosonde-meting of zonnedata: propagatiepanelen herberekenen."""
+        self._refresh_propmap()
         for attr, method in (("_band_rel_widget", "_recalc"),
                              ("_band_sched_widget", "_recalc"),
                              ("_prop_adv_widget", "_rebuild")):
@@ -1302,6 +1421,8 @@ class HAMIOSMainWindow(QMainWindow):
             self._header.set_qth(lat, lon)
         if hasattr(self, "_wspr_feed"):
             self._wspr_feed.set_qth(lat, lon)
+        if hasattr(self, "_cfg"):
+            QTimer.singleShot(0, self._refresh_propmap)
 
     # ── Overige ───────────────────────────────────────────────────────────────
     def _toggle_fullscreen(self):

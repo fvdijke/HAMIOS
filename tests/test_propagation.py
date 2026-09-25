@@ -45,6 +45,18 @@ class TestSunGeometry(unittest.TestCase):
         self.assertFalse(P.is_day(52, 5, night))
         self.assertLessEqual(abs((noon - T_NOON).total_seconds()), 12 * 3600)
 
+    def test_sun_position_matches_almanac(self):
+        """NOAA/Meeus-waarden (almanak, ±0,05°): declinatie, tijdvereffening en
+        subsolaire lengte incl. tijdvereffening (grayline op de juiste plek)."""
+        utc = dt.timezone.utc
+        dec, lon, eot = P.sun_position(dt.datetime(2026, 6, 21, 12, 0, tzinfo=utc))
+        self.assertAlmostEqual(dec, 23.44, delta=0.05)
+        dec, lon, eot = P.sun_position(dt.datetime(2026, 11, 3, 12, 0, tzinfo=utc))
+        self.assertAlmostEqual(eot, 16.4, delta=0.2)
+        self.assertAlmostEqual(lon, -eot / 4, delta=0.01)   # zon ~4° oostelijker dan 12 UTC
+        dec, lon, eot = P.sun_position(dt.datetime(2026, 3, 20, 14, 46, tzinfo=utc))
+        self.assertAlmostEqual(dec, 0.0, delta=0.05)          # equinox 20-3-2026 14:46 UTC
+
 
 class TestModel(unittest.TestCase):
 

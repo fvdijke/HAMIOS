@@ -30,28 +30,27 @@ HF Propagation & Atmosphere Monitor gives amateur radio operators real-time insi
 
 | Category | Description |
 |---|---|
-| ☀ **Solar / Ionosphere** | SFI, SSN, Kp, A-index, Bz, solar wind, X-ray class — colour-coded with full parameter names |
-| 📶 **HF Band Reliability** | Signal quality bars for 11 HF bands (160m–6m), MUF/LUF, click to tune via CAT |
-| 📻 **Band Conditions** | Day/night conditions per band, 24h opening schedule heatmap |
-| 🌩 **Storm Forecast** | NOAA 3-day geomagnetic storm probability (G1–G4+) with HAM radio impact tooltips |
-| 📈 **Band / Solar History** | 90-day CSV archive, interactive 24h/7d/30d/1y range selector, K-index overlay |
-| 📈 **MUF/LUF Forecast** | **NEW**: 24-hour Maximum/Minimum Usable Frequency with band-zone visualization, gridlines, real-time indicator |
-| 🛰 **WSPR Live Feed** | **NEW**: Real-time WSPR QSO table with sortable columns (call, grid, distance, time, SNR) |
-| 📡 **Live DX Spots** | Real-time DX cluster from DXWatch.com (100 spots), band/continent filter, heatmap, click for info |
-| 📡 **PSKReporter** | Real-time FT8/FT4 propagation paths from PSKReporter.info — thousands of paths with SNR |
-| 💡 **Propagation Advice** | AI-style analysis cards per band with real-time solar data analysis |
-| 🌍 **World Map** | 4096×2048 map with overlays — world map auto-downloaded at first start |
-| 🌐 **Bilingual** | Full English / Dutch interface — switch instantly via Settings → About |
-| 🛰 **Satellite Tracking** | TLE from CelesTrak, real-time position, orbit paths, footprint, QTH zone ping |
-| ⚡ **Lightning Detection** | Live Blitzortung.org feed, animated ripple rings, QRN advice, proximity alert |
-| 🔔 **Alerts** | Aggregated solar / propagation / weather / satellite alerts |
-| 📻 **EIBI Shortwave** | Searchable schedule, auto AM-mode CAT tuning |
-| 📡 **FT8 / Digital** | Reference table for FT8/FT4/WSPR/JS8Call and more |
-| 🕵 **SpyStations** | Numbers stations database with CAT tuning |
-| 📟 **CAT Interface** | Yaesu, Kenwood/Elecraft, Icom CI-V — live frequency display in header |
-| 💾 **Profile Management** | **NEW**: Save complete workspaces (all settings + layout + window geometry) as named profiles or default backup |
-| 🌐 **Resources Manager** | **NEW**: Manage online resource URLs, test connectivity per endpoint, investigate alternatives (failover/mirror servers) |
-| 🪟 **Panel Visibility** | **NEW**: Quick header button to show/hide panels without reopening settings |
+| 💡 **Propagation Advice** | Verdict with evidence and up to five recommendations (band → mode + frequency → direction → time window), confirmed by real WSPR, DX-cluster and PSKReporter spots; events (NOAA R/S/G, shock, Bz, sporadic-E, meteor showers), coming hours, explanatory tooltips; click → great-circle path on the map and CAT tuning |
+| 📡 **Measured propagation** | One central model calibrated on the nearest ionosonde (KC2G/GIRO) and NOAA D-RAP absorption, with skip zone, day/night from the real sun at your QTH |
+| 📶 **Bands now** | Probability per band (160m–6m) right now, day/night rating and trend, MUF/LUF, click to tune via CAT |
+| 🗓 **Next 24 hours** | Rolling band heatmap from now with the MUF/LUF curve on the same time axis |
+| 📡 **Ionosondes** | Measured ionosphere near your QTH: foF2 → highest NVIS band, MUF(3000) → highest DX band, measured vs model, 12 nearest stations |
+| 🛰 **Satellite Passes** | Passes of your tracked satellites for the next 24 h (rise, duration, max elevation, direction) with an alert 5 minutes before each pass |
+| ☀ **Solar / Ionosphere** | SFI, SSN, K/A index, X-ray class, real-time solar wind (speed, density, Bz) |
+| 🌩 **Storm Forecast** | NOAA 3-day geomagnetic storm probability (G1–G4+) and the 27-day outlook |
+| 📈 **Charts** | Kp 48 h, Bz 24 h, GOES X-ray 24 h, solar and band history (24h/7d/30d/1y) |
+| 🛰 **WSPR Live** | Real WSPR spots around your QTH via wspr.live (→ your region heard elsewhere, ← distant stations heard in your region) |
+| 📡 **Live DX Spots** | DX cluster, band/continent filter, heatmap, click to tune |
+| 📡 **PSKReporter** | FT8/FT4 reception reports as paths on the map |
+| 🌍 **World Map** | 4096×2048 map with overlays (see below) |
+| 🪟 **Tiled layout** | Panels always fit together; four layouts (Map centre, Operating, Analysis, Default), drag to rearrange, layout lock |
+| ⚡ **Lightning** | Live Blitzortung.org feed, QRN advice, proximity alert |
+| 🔔 **Alerts** | Solar, propagation, weather and satellite alerts |
+| 📻 **EIBI / FT8 / SpyStations** | Shortwave schedule, digital-mode reference, numbers stations — all with CAT tuning |
+| 📟 **CAT Interface** | Yaesu, Kenwood/Elecraft, Icom CI-V — live frequency in the header |
+| 📐 **HAM Antenna Designer** | Bundled antenna calculator, follows the HAMIOS language |
+| 💾 **Profiles** | Save complete workspaces (settings + layout + window geometry) |
+| 🌐 **Bilingual** | English / Dutch, switch via Settings → About |
 
 ---
 
@@ -59,17 +58,18 @@ HF Propagation & Atmosphere Monitor gives amateur radio operators real-time insi
 
 Toggleable via the **🗺 Overlays** button in the header:
 
-- Day/night terminator with grayline band
-- Aurora oval (IGRF-2025 geomagnetic dipole model, K-index based)
+- Day/night terminator and grey line (NOAA solar calculator, incl. refraction — within ~1°)
+- **Aurora** — NOAA OVATION measured probability, smooth green → yellow → red
+- **Propagation map** — probability that the chosen band carries the path from your QTH to every point on Earth (same model as the advice, incl. skip zone)
+- **HF absorption** — NOAA D-RAP: where HF is absorbed after a flare or proton event
 - Sun and Moon position with live phase icon and QTH horizon indicator (▲/▼)
-- Maidenhead locator grid (configurable font size)
-- Graticule (configurable 10° / 20° / 30° step)
-- Live DX spots with callsign labels and animated connection lines (click for info)
-- **PSKReporter** — real-time FT8/FT4 propagation paths coloured by band (click for info)
-- **DXCC callsign country codes (extended)** — prefix + country name labels at ~150 DXCC entity positions; click any label for a popup listing all prefixes for that country (configurable font size)
+- Maidenhead locator grid — hover shows the sub-squares and the 6-character locator
+- **DXCC callsign country codes** — hover a country for all its prefixes
+- Graticule (10° / 20° / 30° step)
+- Live DX spots and **PSKReporter** paths coloured by band
 - Satellite positions, orbit paths, footprints
-- Lightning strikes with animated ripple rings
-- Alert radius circles (warning + beep threshold)
+- Lightning strikes with ripple rings and alert radius circles
+- Great-circle path from your QTH (click the map or a recommendation)
 
 ---
 
@@ -129,11 +129,12 @@ Live frequency displayed in the header bar. Click any frequency in the DX, EIBI,
 
 ## 🛰️ Satellite Tracking
 
-- TLE data from CelesTrak (Amateur, ISS, Weather, CubeSat)
-- Real-time position, configurable past/future orbit paths
-- Footprint: yellow (QTH outside range) / green (QTH in range)
-- **Selection filter** — show only your selected satellites
-- **Zone ping** — ascending tone when a satellite enters your QTH zone, descending tone on exit
+- TLE data from SatNOGS DB and AMSAT (Amateur, ISS, Weather, CubeSat), with protection against download blocks and a warning when the data is outdated
+- Orbit model: Kepler + J2 perturbation — within ~10 km of SGP4 over a day
+- Real-time position, configurable past/future orbit paths, footprint
+- **Satellite Passes panel** — next 24 hours: rise time, countdown, duration, max elevation, direction
+- **Pass alert** — 5 minutes before a pass (on/off and minimum elevation in Settings → Alerts)
+- **Zone ping** — tone when a satellite rises above / sets below your horizon
 
 ---
 
@@ -201,6 +202,20 @@ All connections use standard HTTPS/WebSocket. No personal data is transmitted.
 ---
 
 ## 📋 Changelog
+
+### v5.7 — September 2026
+- **One propagation model, calibrated on the real ionosphere**: nearest ionosonde (KC2G/GIRO) and NOAA D-RAP absorption; skip zone on short paths; day/night from the real sun at your QTH
+- **Smart propagation advice**: recommendations confirmed by real WSPR, DX-cluster and PSKReporter spots, events, coming hours, explanatory tooltips, path on the map
+- **Tiled panel layout**: four layouts (Map centre, Operating, Analysis, Default) and a layout lock
+- **New panels**: Ionosondes (measured ionosphere) and Satellite Passes with an alert before each pass
+- **New map layers**: propagation map from your QTH per band and NOAA D-RAP HF absorption; smooth OVATION aurora
+- **Accuracy**: grey line and day/night terminator were up to ~6° (≈25 min) too far east — now within ~1°; satellite positions were hundreds of km off — now ~10 km
+- **Data**: real WSPR spots via wspr.live, real-time solar wind (Bz), 27-day outlook; NOAA data only downloaded when it can have changed
+- **UI**: checkboxes with an amber tick, dropdown arrows, remaining Dutch texts translated, HAM Antenna Designer follows the HAMIOS language
+
+### v5.6 — September 2026
+- Satellite TLE data from SatNOGS and AMSAT with protection against download blocks and a warning when outdated
+- Map renders about twice as fast; mouse-over for DXCC prefixes and Maidenhead squares; FT8 frequencies in MHz
 
 ### v5.5 — July 2026
 - **New antenna tool — HAM Antenna Designer**: the built-in antenna calculator has been replaced by the standalone HAM Antenna Designer (📡 Antenna button) — 20+ documented antenna designs (verticals, dipoles, EFHW, loops, Yagi, Moxon, quad, J-pole, SWL receive antennas), sourced formulas, build notes, schematic drawings, SWR table, Smith chart, radiation patterns and feedline-loss comparison

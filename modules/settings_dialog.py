@@ -134,6 +134,7 @@ QLineEdit, QSpinBox, QDoubleSpinBox, QComboBox {{
     background: {BG_ROOT}; color: {TEXT_H1};
     border: 1px solid {BORDER}; padding: 3px 6px;
 }}
+QComboBox {{ padding-right: 24px; }}
 QLineEdit:focus, QSpinBox:focus, QDoubleSpinBox:focus, QComboBox:focus {{
     border: 1px solid {ACCENT};
 }}
@@ -306,15 +307,15 @@ class SettingsDialog(QDialog):
 
         self._mode_cb = QComboBox()
         self._mode_cb.addItems(_MODES)
-        row("Modus:", self._mode_cb)
+        row(tr("set.station.mode"), self._mode_cb)
 
         self._power_cb = QComboBox()
         self._power_cb.addItems(_POWERS)
-        row("Vermogen:", self._power_cb)
+        row(tr("set.station.power"), self._power_cb)
 
         self._ant_cb = QComboBox()
         self._ant_cb.addItems(_ANTENNAS)
-        row("Antenne:", self._ant_cb)
+        row(tr("set.station.antenna"), self._ant_cb)
 
         self._day_auto_cb = QCheckBox(tr("day_auto_cb"))
         self._day_auto_cb.setToolTip(tr("tip.day_auto"))
@@ -642,6 +643,22 @@ class SettingsDialog(QDialog):
         self._sat_ping_cb = QCheckBox(tr("set.alerts.sat_ping_en"))
         self._sat_ping_cb.setToolTip(tr("tip.sat.ping"))
         v.addWidget(self._sat_ping_cb)
+
+        hp = QHBoxLayout()
+        self._sat_pass_cb = QCheckBox(tr("set.alerts.sat_pass_en"))
+        self._sat_pass_cb.setToolTip(tr("tip.sat.pass"))
+        hp.addWidget(self._sat_pass_cb)
+        hp.addSpacing(8)
+        hp.addWidget(QLabel(tr("set.alerts.sat_pass_min")))
+        self._sat_pass_el_spin = QSpinBox()
+        self._sat_pass_el_spin.setRange(0, 80)
+        self._sat_pass_el_spin.setSuffix("°")
+        self._sat_pass_el_spin.setFixedWidth(70)
+        self._sat_pass_el_spin.setToolTip(tr("tip.sat.pass"))
+        hp.addWidget(self._sat_pass_el_spin)
+        hp.addStretch()
+        v.addLayout(hp)
+        self._sat_pass_cb.toggled.connect(self._sat_pass_el_spin.setEnabled)
 
         v.addStretch()
         return w
@@ -1299,6 +1316,8 @@ class SettingsDialog(QDialog):
         self._band_spin.setValue(int(get_val("band_alert", 40)))
         self._alert_max_spin.setValue(int(get_val("alert_max", 50)))
         self._sat_ping_cb.setChecked(get_val("sat_zone_ping", True))
+        self._sat_pass_cb.setChecked(get_val("sat_pass_alert", True))
+        self._sat_pass_el_spin.setValue(int(get_val("sat_pass_min_el", 10)))
 
         # Splash & taal
         self._splash_about.setChecked(get_val("show_splash", True))
@@ -1435,6 +1454,9 @@ class SettingsDialog(QDialog):
         self._band_spin.setValue(c.band_alert)
         self._alert_max_spin.setValue(getattr(c, "alert_max", 50))
         self._sat_ping_cb.setChecked(getattr(c, "sat_zone_ping", True))
+        self._sat_pass_cb.setChecked(getattr(c, "sat_pass_alert", True))
+        self._sat_pass_el_spin.setValue(int(getattr(c, "sat_pass_min_el", 10)))
+        self._sat_pass_el_spin.setEnabled(self._sat_pass_cb.isChecked())
 
         # Splash screen — alleen in About tab
         self._splash_about.setChecked(c.show_splash)
@@ -1518,6 +1540,8 @@ class SettingsDialog(QDialog):
             band_alert_en     = self._band_en.isChecked(),
             alert_max         = self._alert_max_spin.value(),
             sat_zone_ping     = self._sat_ping_cb.isChecked(),
+            sat_pass_alert    = self._sat_pass_cb.isChecked(),
+            sat_pass_min_el   = self._sat_pass_el_spin.value(),
             cat_enabled       = self._cat_en.isChecked(),
             cat_port          = _get_cat_port(self._cat_port),
             cat_baud          = self._cat_baud.currentData() or 4800,
@@ -1599,7 +1623,8 @@ class SettingsDialog(QDialog):
                    self._xflare_en, self._band_en,
                    self._day_auto_cb,
                    self._cat_en, self._cat_rtscts, self._cat_dtr, self._cat_rts,
-                   self._cb_lightn_en, self._lightn_beep_cb, self._sat_ping_cb]:
+                   self._cb_lightn_en, self._lightn_beep_cb, self._sat_ping_cb,
+                   self._sat_pass_cb]:
             cb.toggled.connect(lambda: self._live(0))
         # Synchroniseer de twee bliksem-checkboxes (Kaart ↔ Bliksem tab)
         self._cb_lightn.toggled.connect(
@@ -1621,7 +1646,7 @@ class SettingsDialog(QDialog):
             self._cat_port.lineEdit().editingFinished.connect(lambda: self._live(0))
         self._cat_port.currentIndexChanged.connect(lambda: self._live(0))
         # Spinboxen: 400ms debounce
-        for spin in [self._lat_spin, self._lon_spin, self._k_spin,
+        for spin in [self._lat_spin, self._lon_spin, self._k_spin, self._sat_pass_el_spin,
                      self._band_spin, self._alert_max_spin, self._fade_spin,
                      self._lightn_radius_spin, self._lightn_rate_spin,
                      self._lightn_anim_scale_spin,

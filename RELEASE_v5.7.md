@@ -1,6 +1,6 @@
 # HAMIOS v5.7 — Measured Propagation, Smart Advice & Tiled Layout
 
-**Release Date:** September 24, 2026
+**Release Date:** September 25, 2026
 **Build:** PyInstaller 6.x | Python 3.10
 
 ---
@@ -61,7 +61,31 @@ reality (one afternoon they gave MUF 29 / – / 9.5 MHz while 21 MHz was measure
 - NOAA data is only downloaded when it can have changed (per-source refresh
   interval) and gzip-compressed: after the first round 3 small downloads instead of 11
 
-### 6. **Other** ✨
+### 6. **New Panels & Map Layers** 🛰
+- **Propagation map** (Overlays): probability that the chosen band carries the path from
+  your QTH to every point on Earth — same calibrated model as the advice, including the
+  **skip zone** on short paths (also used by the advice now)
+- **HF absorption** (Overlays): NOAA D-RAP — where HF is absorbed after a flare or proton event
+- **Ionosondes panel**: your measured ionosphere — foF2 → highest NVIS band, MUF(3000) →
+  highest DX band, measured vs model, the 12 nearest stations (★ = used for calibration)
+- **Satellite Passes panel**: next 24 hours of your tracked satellites (rise, countdown,
+  duration, max elevation, direction) and an **alert 5 minutes before a pass**
+  (on/off and minimum elevation in Settings → Alerts)
+- **Default** layout button: the classic HAMIOS arrangement, next to the three new layouts
+- New panels appear automatically as tabs in your existing layout
+
+### 7. **Accuracy Fixes** 🎯
+- **Grey line and day/night terminator** were up to ~6° (≈25 min) too far east (no equation
+  of time, coarse drawing grid) — now within ~1° of the NOAA solar calculator, including
+  refraction; the map and the propagation model use the same sun position
+- **Satellite positions** were 340–1000 km off (no J2 perturbation) — now within ~10 km of
+  SGP4 over a day; elevation for the QTH-zone ping corrected
+- **Aurora** drawn smoothly (no 1° blocks), in the HAMIOS green → yellow → red colours
+
+### 8. **Other** ✨
+- Checkboxes with an amber tick instead of a filled box; dropdowns show an arrow again
+- Remaining Dutch texts in the English interface translated (Solar panel, Alerts, Settings);
+  WSPR table columns fit their content
 - Clicking the map now draws the great-circle path from your QTH with the distance
 - FT8/digital CAT tuning uses a selectable data mode (USB or PKT-U/DATA-U)
 - One storm threshold (your K setting) for advice and alerts — no duplicate alerts
@@ -77,7 +101,7 @@ reality (one afternoon they gave MUF 29 / – / 9.5 MHz while 21 MHz was measure
 - Removed panels "Band conditions" and "MUF forecast" (merged); saved layouts adapt
 - The "snap grid" setting is no longer shown (tiles always fit together)
 - All user-agent strings unified to `HAMIOS/5.7`
-- Verified: full compile, 98 unit tests, full application start-up with live data
+- Verified: full compile, 106 unit tests, full application start-up with live data; orbit model checked against SGP4
 
 ---
 

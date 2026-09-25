@@ -1497,7 +1497,7 @@ class AlertsWidget(QWidget):
         # Wis-knop
         f8 = QFont("Segoe UI", 8)
         top = QHBoxLayout()
-        self._count_lbl = QLabel("0 meldingen")
+        self._count_lbl = QLabel(tr("alerts.count", n=0))
         self._count_lbl.setFont(f8)
         self._count_lbl.setStyleSheet(f"color: {TEXT_DIM};")
         top.addWidget(self._count_lbl)
@@ -1686,7 +1686,7 @@ class AlertsWidget(QWidget):
         vbox.addStretch()
         self._scroll.setWidget(container)
         n = len(items)
-        self._count_lbl.setText(f"{n} melding{'en' if n != 1 else ''}")
+        self._count_lbl.setText(tr("alerts.count1" if n == 1 else "alerts.count", n=n))
 
 
 # ── DXSpotsTable ──────────────────────────────────────────────────────────────
@@ -2093,7 +2093,7 @@ class WSPRTableWidget(QWidget):
 
         # Table with sortable columns
         self._table = QTableWidget()
-        self._table.setColumnCount(8)
+        self._table.setColumnCount(7)
         self._table.setHorizontalHeaderLabels([
             tr("wspr.call"),
             tr("wspr.grid"),
@@ -2113,13 +2113,10 @@ class WSPRTableWidget(QWidget):
         )
         self._table.setSelectionBehavior(QAbstractItemView.SelectRows)
         self._table.setSelectionMode(QAbstractItemView.SingleSelection)
-        self._table.setColumnWidth(0, 80)
-        self._table.setColumnWidth(1, 70)
-        self._table.setColumnWidth(2, 70)
-        self._table.setColumnWidth(3, 50)
-        self._table.setColumnWidth(4, 70)
-        self._table.setColumnWidth(5, 60)
-        self._table.setColumnWidth(6, 80)
+        # Eén regel per spot; kolommen passen zich aan de inhoud aan
+        self._table.setWordWrap(False)
+        self._table.horizontalHeader().setStretchLastSection(True)
+        self._table.resizeColumnsToContents()
         self._table.verticalHeader().setVisible(False)
         # Set header alignment to left
         self._table.horizontalHeader().setDefaultAlignment(Qt.AlignLeft | Qt.AlignVCenter)
@@ -2221,6 +2218,7 @@ class WSPRTableWidget(QWidget):
             self._table.setItem(row, 6, time_item)
 
         self._table.setSortingEnabled(True)
+        self._table.resizeColumnsToContents()
         self._table.resizeRowsToContents()
 
     def set_font_size(self, pt: int) -> None:
@@ -2245,11 +2243,5 @@ class WSPRTableWidget(QWidget):
         # Ensure header alignment is preserved (left-aligned)
         self._table.horizontalHeader().setDefaultAlignment(Qt.AlignLeft | Qt.AlignVCenter)
 
-        # Adjust column widths based on font size
-        # Baseline widths at 9pt: call (40), grid (40), freq (60), snr (45), distance (65), azimuth (50), time (70)
-        col_widths = [40, 40, 60, 45, 65, 50, 70]
-        scale = pt / 9.0  # Scale relative to default 9pt
-        for col, base_width in enumerate(col_widths):
-            self._table.setColumnWidth(col, int(base_width * scale))
-
+        self._table.resizeColumnsToContents()
         self._table.resizeRowsToContents()

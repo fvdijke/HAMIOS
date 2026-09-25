@@ -58,15 +58,39 @@ def _utc(t: _dt.datetime | None) -> _dt.datetime:
     return t if t.tzinfo else t.replace(tzinfo=_dt.timezone.utc)
 
 
+def sun_position(t: _dt.datetime | None = None) -> tuple[float, float, float]:
+    """Zonpositie volgens de NOAA-zonnecalculator (Meeus; ~0,01°):
+    (declinatie °, lengte van het subsolaire punt °, tijdvereffening min).
+    Eén bron voor kaart (nacht, grayline, zonmarker) en propagatiemodel."""
+    t = _utc(t)
+    T = (t.timestamp() / 86400 + 2440587.5 - 2451545.0) / 36525
+    L0 = (280.46646 + T * (36000.76983 + 0.0003032 * T)) % 360
+    M = math.radians(357.52911 + T * (35999.05029 - 0.0001537 * T))
+    e = 0.016708634 - T * (0.000042037 + 0.0000001267 * T)
+    C = (math.sin(M) * (1.914602 - T * (0.004817 + 0.000014 * T))
+         + math.sin(2 * M) * (0.019993 - 0.000101 * T) + math.sin(3 * M) * 0.000289)
+    omega = math.radians(125.04 - 1934.136 * T)
+    lam = math.radians(L0 + C - 0.00569 - 0.00478 * math.sin(omega))
+    eps = math.radians(23 + (26 + (21.448 - T * (46.815 + T * (0.00059 - T * 0.001813))) / 60) / 60
+                       + 0.00256 * math.cos(omega))
+    decl = math.degrees(math.asin(math.sin(eps) * math.sin(lam)))
+    y = math.tan(eps / 2) ** 2
+    l0 = math.radians(L0)
+    eot = 4 * math.degrees(y * math.sin(2 * l0) - 2 * e * math.sin(M)
+                           + 4 * e * y * math.sin(M) * math.cos(2 * l0)
+                           - 0.5 * y * y * math.sin(4 * l0) - 1.25 * e * e * math.sin(2 * M))
+    ut_h = t.hour + t.minute / 60 + (t.second + t.microsecond / 1e6) / 3600
+    lon = -15 * (ut_h - 12 + eot / 60)
+    return decl, ((lon + 180) % 360) - 180, eot
+
+
 def sun_declination(t: _dt.datetime) -> float:
-    doy = _utc(t).timetuple().tm_yday
-    return -23.44 * math.cos(math.radians(360 / 365 * (doy + 10)))
+    return sun_position(t)[0]
 
 
 def _eot_minutes(t: _dt.datetime) -> float:
     """Tijdvereffening (minuten): verschil zonnetijd en middelbare tijd."""
-    b = math.radians(360 / 365 * (_utc(t).timetuple().tm_yday - 81))
-    return 9.87 * math.sin(2 * b) - 7.53 * math.cos(b) - 1.5 * math.sin(b)
+    return sun_position(t)[2]
 
 
 def representative_time(lat: float, lon: float, day: bool,
@@ -86,11 +110,9 @@ def representative_time(lat: float, lon: float, day: bool,
 
 def cos_zenith(lat: float, lon: float, t: _dt.datetime | None = None) -> float:
     """Cosinus van de zenithoek van de zon (1 = zon recht boven, <0 = onder)."""
-    t = _utc(t)
-    ut_h = t.hour + t.minute / 60 + t.second / 3600
-    solar_time = ut_h + lon / 15 + _eot_minutes(t) / 60
-    ha = math.radians((solar_time - 12) * 15)
-    dec = math.radians(sun_declination(t))
+    dec_d, sub_lon, _ = sun_position(t)
+    ha = math.radians(lon - sub_lon)
+    dec = math.radians(dec_d)
     la = math.radians(lat)
     return math.sin(la) * math.sin(dec) + math.cos(la) * math.cos(dec) * math.cos(ha)
 
@@ -364,6 +386,14 @@ class PropagationEngine(QObject):
         for fr in fracs:
             plat, plon = gc_point(lat1, lon1, lat2, lon2, fr)
             c = self.conditions(plat, plon, t, snr_db)
+            if d < 3000:
+                # Korte sprong: steilere invalshoek → lagere MUF (dode zone).
+                # MUF(d) ≈ foF2 · √(1 + (d / 2h)²), h ≈ 300 km, begrensd op MUF(3000)
+                muf_d = min(c.muf, c.fof2 * math.sqrt(1 + (d / 600.0) ** 2))
+                if muf_d < c.muf:
+                    c.muf = round(muf_d, 1)
+                    c.band_pct = {name: int(round(100 * band_probability(f, muf_d, c.luf)))
+                                  for name, f in BANDS}
             points.append(c)
             pct = c.band_pct
             result = pct if result is None else {b: min(v, pct[b]) for b, v in result.items()}
@@ -375,6 +405,33 @@ class PropagationEngine(QObject):
                       snr_db: float = 0.0) -> dict:
         """Kans per band op het pad QTH → doel (zie path_detail)."""
         return self.path_detail(lat1, lon1, lat2, lon2, t, snr_db)["pct"]
+
+    def band_map(self, lat: float, lon: float, band: str, t: _dt.datetime | None = None,
+                 snr_db: float = 0.0, step: int = 3) -> tuple[bytes, int, int]:
+        """Propagatiekaart: kans (%) per cel van step° dat `band` het pad QTH → cel
+        draagt, als grijswaarden (pct × 2,55; rij 0 = noord, kolom 0 = −180°,
+        celmiddens). Zelfde padmodel als de aanbevelingen (path_detail); licht
+        vervaagd (1-2-1) zodat de overgangen na het opschalen vloeiend zijn."""
+        w, h = 360 // step, 180 // step
+        g = [0.0] * (w * h)
+        for y in range(h):
+            clat = 90 - (y + 0.5) * step
+            for x in range(w):
+                clon = -180 + (x + 0.5) * step
+                g[y * w + x] = self.path_band_pct(lat, lon, clat, clon, t, snr_db).get(band, 0)
+        tmp = [0.0] * (w * h)
+        for y in range(h):
+            b = y * w
+            for x in range(w):
+                tmp[b + x] = (g[b + x - 1 if x else b + w - 1] + 2 * g[b + x]
+                              + g[b + (x + 1) % w]) / 4
+        out = bytearray(w * h)
+        for y in range(h):
+            up, dn = max(0, y - 1) * w, min(h - 1, y + 1) * w
+            for x in range(w):
+                v = (tmp[up + x] + 2 * tmp[y * w + x] + tmp[dn + x]) / 4
+                out[y * w + x] = min(255, int(v * 2.55 + 0.5))
+        return bytes(out), w, h
 
     def dx_routes(self, lat: float, lon: float, snr_db: float = 0.0,
                   t: _dt.datetime | None = None, min_pct: int = 50,

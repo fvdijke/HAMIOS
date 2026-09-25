@@ -262,7 +262,7 @@ QTabBar {{ background: {BG_PANEL}; }}
 QTabBar::tab {{
     background: {BG_SURFACE}; color: {TEXT_DIM};
     border: 1px solid {ACCENT}; border-bottom: none;
-    padding: 3px 8px; margin-right: 2px; font-size: 8pt; font-weight: bold;
+    padding: 3px 6px; margin-right: 1px; font-size: 8pt; font-weight: bold;
     border-top-left-radius: 3px; border-top-right-radius: 3px;
 }}
 QTabBar::tab:selected {{ background: {BG_PANEL}; color: {ACCENT}; }}

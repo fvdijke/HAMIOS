@@ -107,6 +107,100 @@ TEXT_BODY  = "#B0B8C4"
 TEXT_DIM   = "#606870"
 BORDER     = "#383E47"
 
+# ── Checkbox-vakjes: zwart vakje, amber rand + amber V als aangevinkt ────────
+# Als PNG's getekend (4× resolutie → scherp bij elke schermschaal); QSS verwijst
+# ernaar. Tekenen op een QImage werkt al vóór de QApplication bestaat.
+_CHECK_DIR = _os.path.join(_tmp.gettempdir(), "hamios_ui")
+
+
+def _make_check_images() -> dict:
+    from PySide6.QtCore import QPointF, QRectF, Qt
+    from PySide6.QtGui import QColor, QImage, QPainter, QPainterPath, QPen
+
+    S = 56
+    os_ok = True
+    try:
+        _os.makedirs(_CHECK_DIR, exist_ok=True)
+    except OSError:
+        os_ok = False
+
+    def draw(name, border, mark=None, mark_color=ACCENT):
+        img = QImage(S, S, QImage.Format_ARGB32_Premultiplied)
+        img.fill(Qt.transparent)
+        p = QPainter(img)
+        p.setRenderHint(QPainter.Antialiasing)
+        bw = S * 0.07
+        p.setPen(QPen(QColor(border), bw))
+        p.setBrush(QColor("#000000"))
+        p.drawRoundedRect(QRectF(bw / 2, bw / 2, S - bw, S - bw), S * 0.08, S * 0.08)
+        if mark:
+            p.setPen(QPen(QColor(mark_color), S * 0.13, Qt.SolidLine, Qt.RoundCap, Qt.RoundJoin))
+            p.setBrush(Qt.NoBrush)
+            path = QPainterPath()
+            if mark == "v":
+                path.moveTo(QPointF(S * .22, S * .52))
+                path.lineTo(QPointF(S * .42, S * .72))
+                path.lineTo(QPointF(S * .78, S * .28))
+            else:   # "-" : deels aangevinkt
+                path.moveTo(QPointF(S * .28, S * .50))
+                path.lineTo(QPointF(S * .72, S * .50))
+            p.drawPath(path)
+        p.end()
+        path = _os.path.join(_CHECK_DIR, f"check_{name}.png")
+        if os_ok:
+            img.save(path, "PNG")
+        return path.replace("\\", "/")
+
+    def chevron(name, colour):
+        img = QImage(S, S, QImage.Format_ARGB32_Premultiplied)
+        img.fill(Qt.transparent)
+        p = QPainter(img)
+        p.setRenderHint(QPainter.Antialiasing)
+        p.setPen(QPen(QColor(colour), S * 0.13, Qt.SolidLine, Qt.RoundCap, Qt.RoundJoin))
+        path = QPainterPath()
+        path.moveTo(QPointF(S * .18, S * .36))
+        path.lineTo(QPointF(S * .50, S * .66))
+        path.lineTo(QPointF(S * .82, S * .36))
+        p.drawPath(path)
+        p.end()
+        path_s = _os.path.join(_CHECK_DIR, f"chevron_{name}.png")
+        if os_ok:
+            img.save(path_s, "PNG")
+        return path_s.replace("\\", "/")
+
+    return {
+        "arrow":      chevron("down", "#C8C8D0"),
+        "arrow_on":   chevron("down_on", ACCENT),
+        "arrow_dis":  chevron("down_dis", "#555555"),
+        "off":       draw("off",       "#666666"),
+        "off_hover": draw("off_hover", ACCENT),
+        "on":        draw("on",        ACCENT, "v"),
+        "part":      draw("part",      ACCENT, "-"),
+        "off_dis":   draw("off_dis",   "#3A3A3A"),
+        "on_dis":    draw("on_dis",    "#4A4A4A", "v", "#6A6A6A"),
+    }
+
+
+try:
+    CHECK_IMG = _make_check_images()
+except Exception:   # zonder Qt-GUI (bv. tests): QSS verwijst naar niet-bestaande bestanden
+    CHECK_IMG = {k: "" for k in ("off", "off_hover", "on", "part", "off_dis", "on_dis",
+                                 "arrow", "arrow_on", "arrow_dis")}
+
+
+def check_indicator_qss(selector: str) -> str:
+    """QSS voor de ::indicator van een checkbox-achtige widget (stijl 3)."""
+    i = CHECK_IMG
+    return f"""
+{selector}::indicator {{ width: 14px; height: 14px; border: none; background: transparent; image: url("{i['off']}"); }}
+{selector}::indicator:hover {{ image: url("{i['off_hover']}"); }}
+{selector}::indicator:checked {{ image: url("{i['on']}"); }}
+{selector}::indicator:indeterminate {{ image: url("{i['part']}"); }}
+{selector}::indicator:disabled {{ image: url("{i['off_dis']}"); }}
+{selector}::indicator:checked:disabled {{ image: url("{i['on_dis']}"); }}
+"""
+
+
 # Afmetingen
 HDR_H      = 42     # header hoogte in pixels
 PANEL_GRID = 10     # snap-raster
@@ -232,7 +326,10 @@ QComboBox::drop-down {{
     border-top-right-radius: 2px;
     border-bottom-right-radius: 2px;
 }}
-/* QComboBox::down-arrow: Use platform default */
+QComboBox::down-arrow {{ image: url("{CHECK_IMG['arrow']}"); width: 10px; height: 10px; }}
+QComboBox::down-arrow:on {{ image: url("{CHECK_IMG['arrow_on']}"); }}
+QComboBox::down-arrow:disabled {{ image: url("{CHECK_IMG['arrow_dis']}"); }}
+QComboBox:hover {{ border: 1px solid {ACCENT}; }}
 QLineEdit {{
     background: {BG_ROOT};
     color: {TEXT_H1};
@@ -245,26 +342,6 @@ QCheckBox {{
     color: {TEXT_H1};
     spacing: 6px;
 }}
-QCheckBox::indicator {{
-    width: 14px;
-    height: 14px;
-    background: #000000;
-    border: 1px solid #666666;
-    border-radius: 1px;
-}}
-QCheckBox::indicator:hover {{
-    border: 2px solid {ACCENT};
-    width: 13px;
-    height: 13px;
-}}
-QCheckBox::indicator:checked {{
-    background: {ACCENT};
-    border: 1px solid #A88A3A;
-}}
-QCheckBox::indicator:checked:hover {{
-    border: 2px solid {ACCENT};
-    width: 13px;
-    height: 13px;
-    background: {ACCENT};
-}}
+{check_indicator_qss("QCheckBox")}
+{check_indicator_qss("QAbstractItemView")}
 """

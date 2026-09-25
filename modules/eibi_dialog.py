@@ -140,6 +140,7 @@ QLineEdit, QComboBox {{
     background: {BG_ROOT}; color: {TEXT_H1};
     border: 1px solid {BORDER}; padding: 3px 6px; border-radius: 2px;
 }}
+QComboBox {{ padding-right: 24px; }}
 QLineEdit:focus, QComboBox:focus {{ border-color: {ACCENT}; }}
 QCheckBox {{ color: {TEXT_H1}; spacing: 4px; }}
 QLabel    {{ color: {TEXT_DIM}; font-size: 8pt; }}

@@ -208,6 +208,7 @@ QLineEdit, QComboBox {{
     background: {BG_ROOT}; color: {TEXT_H1};
     border: 1px solid {BORDER}; padding: 3px 6px; border-radius: 2px;
 }}
+QComboBox {{ padding-right: 24px; }}
 QTextEdit {{
     background: {BG_SURFACE}; color: {TEXT_BODY};
     border: 1px solid {BORDER}; font-size: 8pt;

@@ -28,45 +28,46 @@ HF Voortplanting & Atmosfeer Monitor geeft radioamateurs real-time inzicht in HF
 
 | Categorie | Beschrijving |
 |---|---|
-| ☀ **Zon / Ionosfeer** | SFI, SSN, Kp, A-index, Bz, zonnebries, X-straalklasse — kleurcodes met volledige parameternamen |
-| 📶 **HF-Bandbetrouwbaarheid** | Signaalkwaliteitsstaven voor 11 HF-banden (160m–6m), MUF/LUF, klik om af te stemmen via CAT |
-| 📻 **Bandvoorwaarden** | Dag/nacht-voorwaarden per band, 24h open-planning heatmap |
-| 🌩 **Storm Forecast** | NOAA 3-daagse geomagnetische stormkans (G1–G4+) met tips voor radioamateurs |
-| 📈 **Band- / Zonne-geschiedenis** | 90-daagse CSV-archief, interactieve 24u/7d/30d/1j-bereikkiezer, K-indexoverlapping |
-| 📈 **MUF/LUF Prognose** | **NIEUW**: 24-uur Maximaal/Minimaal Bruikbare Frequentie met bandzonevisualisatie, rasterlijnen, real-time indicator |
-| 🛰 **WSPR Live Feed** | **NIEUW**: Real-time WSPR QSO-tabel met sorteerbare kolommen (roepnaam, grid, afstand, tijd, SNR) |
-| 📡 **Live DX Spots** | Real-time DX-cluster van DXWatch.com (100 spots), band-/continentfilter, heatmap, klik voor info |
-| 📡 **PSKReporter** | Real-time FT8/FT4-voortplantingspaden van PSKReporter.info — duizenden paden met SNR |
-| 💡 **Voortplantingsadvies** | AI-stijlanalysekaarten per band met real-time zonne-gegevensanalyse |
-| 🌍 **Wereldkaart** | 4096×2048 kaart met overlays — wereldkaart automatisch gedownload bij eerste start |
-| 🌐 **Tweetalig** | Volledige Engels/Nederlands-interface — direct omschakelen via Instellingen → Over |
-| 🛰 **Satelliettracking** | TLE van CelesTrak, real-time positie, baanpaden, voetafdruk, QTH-zone ping |
-| ⚡ **Bliksemdetectie** | Live Blitzortung.org-feed, geanimeerde ripple-ringen, QRN-advies, nabijheidswaarschuwing |
-| 🔔 **Meldingen** | Geaggregeerde zonne-/voortplantings-/weer-/satellietmeldingen |
-| 📻 **EIBI Korte Golf** | Doorzoekbaar schema, auto AM-mode CAT-afstemming |
-| 📡 **FT8 / Digitaal** | Naslagtabel voor FT8/FT4/WSPR/JS8Call en meer |
-| 🕵 **SpyStations** | Nummerstationsdatabase met CAT-afstemming |
-| 📟 **CAT Interface** | Yaesu, Kenwood/Elecraft, Icom CI-V — live frequentiescherm in header |
-| 💾 **Profielbeheer** | **NIEUW**: Volledige werkruimten opslaan (alle instellingen + layout + venstergeometrie) als benoemde profielen of standaard backup |
-| 🪟 **Paneel-zichtbaarheid** | **NIEUW**: Snelle header-knop om panelen te tonen/verbergen zonder instellingen opnieuw te openen |
+| 💡 **Propagatie-advies** | Oordeel met onderbouwing en tot vijf aanbevelingen (band → mode + frequentie → richting → tijdvenster), bevestigd door echte WSPR-, DX-cluster- en PSKReporter-spots; gebeurtenissen (NOAA R/S/G, schokgolf, Bz, sporadic-E, meteorenzwermen), komende uren, uitleg in tooltips; klik → grootcirkelpad op de kaart en CAT-afstemming |
+| 📡 **Gemeten propagatie** | Eén centraal model, gekalibreerd op de dichtstbijzijnde ionosonde (KC2G/GIRO) en NOAA D-RAP-absorptie, met dode zone; dag/nacht volgens de echte zon op je QTH |
+| 📶 **Banden nu** | Kans per band (160m–6m) op dit moment, dag/nacht-oordeel en trend, MUF/LUF, klik om af te stemmen via CAT |
+| 🗓 **Komende 24 uur** | Rollende bandheatmap vanaf nu met de MUF/LUF-curve op dezelfde tijdas |
+| 📡 **Ionosondes** | Gemeten ionosfeer rond je QTH: foF2 → hoogste NVIS-band, MUF(3000) → hoogste DX-band, gemeten t.o.v. model, 12 dichtstbijzijnde stations |
+| 🛰 **Satellietovergangen** | Overkomsten van je gevolgde satellieten voor de komende 24 uur (opkomst, duur, max. elevatie, richting) met een melding 5 minuten vooraf |
+| ☀ **Zon / Ionosfeer** | SFI, SSN, K/A-index, röntgenklasse, realtime zonnewind (snelheid, dichtheid, Bz) |
+| 🌩 **Stormprognose** | NOAA 3-daagse kans op geomagnetische storm (G1–G4+) en de 27-daagse vooruitblik |
+| 📈 **Grafieken** | Kp 48 u, Bz 24 u, GOES-röntgen 24 u, zonne- en bandhistorie (24u/7d/30d/1j) |
+| 🛰 **WSPR Live** | Echte WSPR-spots rond je QTH via wspr.live (→ jouw regio elders gehoord, ← verre stations gehoord in jouw regio) |
+| 📡 **Live DX Spots** | DX-cluster, band-/continentfilter, heatmap, klik om af te stemmen |
+| 📡 **PSKReporter** | FT8/FT4-ontvangstrapporten als paden op de kaart |
+| 🌍 **Wereldkaart** | 4096×2048 kaart met overlays (zie hieronder) |
+| 🪟 **Getegelde indeling** | Panelen sluiten altijd op elkaar aan; vier indelingen (Kaart centraal, Operating, Analyse, Standaard), verslepen om te herschikken, indeling vastzetten |
+| ⚡ **Bliksem** | Live Blitzortung.org-feed, QRN-advies, nabijheidswaarschuwing |
+| 🔔 **Meldingen** | Zon-, propagatie-, weer- en satellietmeldingen |
+| 📻 **EIBI / FT8 / SpyStations** | Kortegolfschema, naslag digitale modes, nummerstations — alle met CAT-afstemming |
+| 📟 **CAT-interface** | Yaesu, Kenwood/Elecraft, Icom CI-V — live frequentie in de header |
+| 📐 **HAM Antenna Designer** | Meegeleverde antennecalculator, volgt de taal van HAMIOS |
+| 💾 **Profielen** | Volledige werkruimten opslaan (instellingen + indeling + venstergeometrie) |
+| 🌐 **Tweetalig** | Engels / Nederlands, omschakelen via Instellingen → Over |
 
 ---
 
 ## 🗺️ Kaart Overlays
 
-Aan/uit-schakelbaar via de **🗺 Overlays** knop in de header:
+Aan/uit via de **🗺 Overlays**-knop in de header:
 
-- Dag/nacht-scheiding met grayline-band
-- Aurora-ovaal (IGRF-2025 geomagnetisch dipoolmodel, op basis van K-index)
-- Zon- en maanpositie met live fasepictogram en QTH-horizonIndicator (▲/▼)
-- Maidenhead-locatorschema (aanpasbare lettergrootte)
-- Graticule (aanpasbare 10° / 20° / 30° stap)
-- Live DX-spots met roepnaamlabels en geanimeerde verbindingslijnen (klik voor info)
-- **PSKReporter** — real-time FT8/FT4-voortplantingspaden gekleurd per band (klik voor info)
-- **DXCC roepnaamland codes (uitgebreid)** — voorvoegsel + landnaam-labels op ~150 DXCC-entiteitposities; klik op elk label voor een popup met alle voorvoegsels voor dat land (aanpasbare lettergrootte)
-- Satellietposities, baanpaden, voetafdrukken
-- Blikseminslagen met geanimeerde ripple-ringen
-- Waarschuwingsradiuscirkels (waarschuwing + piepdrempel)
+- Dag/nacht-grens en grayline (NOAA-zonnecalculator, incl. refractie — binnen ~1°)
+- **Aurora** — gemeten kans volgens NOAA OVATION, vloeiend groen → geel → rood
+- **Propagatiekaart** — kans dat de gekozen band het pad van je QTH naar elk punt op aarde draagt (zelfde model als het advies, incl. dode zone)
+- **HF-absorptie** — NOAA D-RAP: waar HF na een zonnevlam of protonen-event wordt geabsorbeerd
+- Zon- en maanpositie met live fasepictogram en QTH-horizonindicator (▲/▼)
+- Maidenhead-locatorraster — met de muis zie je de subsquares en de 6-tekens locator
+- **DXCC-landcodes** — muis op een land toont alle prefixen
+- Graticule (10° / 20° / 30° stap)
+- Live DX-spots en **PSKReporter**-paden gekleurd per band
+- Satellietposities, baanpaden, footprints
+- Blikseminslagen met ripple-ringen en waarschuwingscirkels
+- Grootcirkelpad vanaf je QTH (klik op de kaart of op een aanbeveling)
 
 ---
 
@@ -126,11 +127,12 @@ Live frequentie weergegeven in de headerbalk. Klik op elke frequentie in het DX-
 
 ## 🛰️ Satelliettracking
 
-- TLE-gegevens van CelesTrak (Amateur, ISS, Weather, CubeSat)
-- Real-time positie, aanpasbare voor-/achterwaartse baanpaden
-- Voetafdruk: geel (QTH buiten bereik) / groen (QTH in bereik)
-- **Selectiefilter** — toon alleen uw geselecteerde satellieten
-- **Zone ping** — stijgende toon wanneer een satelliet uw QTH-zone binnenkomt, dalende toon bij vertrek
+- TLE-gegevens van SatNOGS DB en AMSAT (Amateur, ISS, Weer, CubeSat), met bescherming tegen downloadblokkades en een waarschuwing bij verouderde data
+- Baanmodel: Kepler + J2-storing — binnen ~10 km van SGP4 over een dag
+- Realtime positie, instelbare baanpaden terug/vooruit, footprint
+- **Paneel Satellietovergangen** — komende 24 uur: opkomst, aftelling, duur, max. elevatie, richting
+- **Overkomstmelding** — 5 minuten vóór een overkomst (aan/uit en minimale elevatie in Instellingen → Meldingen)
+- **Zone-ping** — toon wanneer een satelliet boven je horizon komt / eronder zakt
 
 ---
 
@@ -199,6 +201,20 @@ Alle verbindingen gebruiken standaard HTTPS/WebSocket. Geen persoonlijke gegeven
 ---
 
 ## 📋 Changelog
+
+### v5.7 — September 2026
+- **Eén propagatiemodel, gekalibreerd op de echte ionosfeer**: dichtstbijzijnde ionosonde (KC2G/GIRO) en NOAA D-RAP-absorptie; dode zone op korte paden; dag/nacht volgens de echte zon op je QTH
+- **Slim propagatie-advies**: aanbevelingen bevestigd door echte WSPR-, DX-cluster- en PSKReporter-spots, gebeurtenissen, komende uren, uitleg in tooltips, pad op de kaart
+- **Getegelde paneelindeling**: vier indelingen (Kaart centraal, Operating, Analyse, Standaard) en indeling vastzetten
+- **Nieuwe panelen**: Ionosondes (gemeten ionosfeer) en Satellietovergangen met een melding vooraf
+- **Nieuwe kaartlagen**: propagatiekaart vanaf je QTH per band en NOAA D-RAP HF-absorptie; vloeiende OVATION-aurora
+- **Nauwkeurigheid**: grayline en dag/nacht-grens lagen tot ~6° (≈25 min) te ver naar het oosten — nu binnen ~1°; satellietposities zaten honderden km ernaast — nu ~10 km
+- **Data**: echte WSPR-spots via wspr.live, realtime zonnewind (Bz), 27-daagse vooruitblik; NOAA-data alleen downloaden als die veranderd kan zijn
+- **Bediening**: vinkjes met een amberkleurige V, uitklappijltjes, resterende Nederlandse teksten vertaald, HAM Antenna Designer volgt de taal van HAMIOS
+
+### v5.6 — September 2026
+- Satelliet-TLE-data van SatNOGS en AMSAT met bescherming tegen downloadblokkades en een waarschuwing bij verouderde data
+- Kaart tekent circa twee keer zo snel; mouse-over voor DXCC-prefixen en Maidenhead-squares; FT8-frequenties in MHz
 
 ### v5.5 — Juli 2026
 - **Nieuwe antennetool — HAM Antenna Designer**: de ingebouwde antennecalculator is vervangen door de zelfstandige HAM Antenna Designer (📡 Antenna-knop) — 20+ gedocumenteerde antenneontwerpen (verticals, dipolen, EFHW, loops, Yagi, Moxon, quad, J-pole, SWL-ontvangstantennes), onderbouwde formules, bouwadvies, schematische tekeningen, SWR-tabel, Smith-diagram, stralingspatronen en voedingslijnverlies-vergelijking

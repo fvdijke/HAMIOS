@@ -30,6 +30,9 @@ class AppConfig:
     show_locator:          bool  = False
     show_psk:              bool  = False    # PSKReporter digitale propagatiepaden
     show_callsign_overlay:        bool  = False    # DXCC callsign prefix + country overlay
+    show_drap:             bool  = False    # NOAA D-RAP HF-absorptie als kaartlaag
+    show_propmap:          bool  = False    # propagatiekaart vanaf de QTH
+    propmap_band:          str   = "20m"    # band van de propagatiekaart
     callsign_overlay_font_size:   int   = 7        # lettergrootte DXCC overlay (pt)
     wspr_font_size:     int   = 9        # WSPR Live panel font size (pt)
     map_overlay:    bool  = True    # header-knop staat
@@ -84,6 +87,8 @@ class AppConfig:
     sat_path_width: float = 1.2
     sat_filter_sel: bool  = False  # "Geselecteerd"-filter actief bij openen
     sat_zone_ping:  bool  = True   # ping-geluid als satelliet QTH-zone binnenkomt
+    sat_pass_alert: bool  = True   # melding 5 min vóór een overkomst
+    sat_pass_min_el: int  = 10     # alleen overkomsten met max. elevatie ≥ (°)
 
     # ── Meldingen ─────────────────────────────────────────────────────────────
     k_alert:        int   = 4       # K-index drempel (0–9)
