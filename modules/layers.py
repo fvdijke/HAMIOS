@@ -312,6 +312,8 @@ class LightningLayer(QGraphicsItem):
         super().__init__()
         self.setZValue(5)
         self._strikes: list = []   # (x, y, t_mono)
+        self._km_cache: dict = {}  # (x, y, t_mono) → km tot QTH (één keer berekend)
+        self._km_qth = None        # QTH waarvoor de cache geldt
         self._flashes: list  = []  # (x, y, t_mono)  korte ring
         self._lock = threading.Lock()
         self.fade_seconds = 600
@@ -430,6 +432,35 @@ class LightningLayer(QGraphicsItem):
             except Exception:
                 return
 
+    def _dist_to_qth(self, x: float, y: float) -> float | None:
+        cfg = self._cfg
+        if not cfg:
+            return None
+        slat = math.radians(90 - y / MAP_H * 180)
+        slon = math.radians(x / MAP_W * 360 - 180)
+        qlat, qlon = math.radians(cfg.qth_lat), math.radians(cfg.qth_lon)
+        a = (math.sin((slat - qlat) / 2) ** 2 +
+             math.cos(qlat) * math.cos(slat) * math.sin((slon - qlon) / 2) ** 2)
+        return 2 * 6371.0 * math.asin(min(1.0, math.sqrt(a)))
+
+    def strikes_km(self) -> list:
+        """[(x, y, t_mono, km tot QTH)] — de afstand wordt per inslag maar één
+        keer berekend (gedeeld door QRN-teller en nabijheidsmelding)."""
+        cfg = self._cfg
+        qth = (cfg.qth_lat, cfg.qth_lon) if cfg else None
+        with self._lock:
+            strikes = list(self._strikes)
+        if qth != self._km_qth:
+            self._km_cache = {}
+            self._km_qth = qth
+        out = []
+        for s in strikes:
+            km = self._km_cache.get(s)
+            if km is None and qth is not None:
+                km = self._km_cache[s] = self._dist_to_qth(s[0], s[1])
+            out.append((s[0], s[1], s[2], km))
+        return out
+
     def _anim_tick(self):
         """20 fps tick — alleen actief redraw als er verse ringen zijn."""
         now = time.monotonic()
@@ -449,6 +480,9 @@ class LightningLayer(QGraphicsItem):
                              if now - t < 4.0]
             changed = (bool(self._strikes)
                        or len(self._strikes) + len(self._flashes) != n_before)
+            if len(self._km_cache) > len(self._strikes):
+                live = set(self._strikes)
+                self._km_cache = {s: km for s, km in self._km_cache.items() if s in live}
         # Alleen hertekenen als er iets te faden of te verwijderen viel
         if changed:
             self.update()
@@ -1172,7 +1206,7 @@ class _DXFetchThread(QThread):
         try:
             import html as _html
             req = urllib.request.Request(
-                self._URL, headers={"User-Agent": "HAMIOS/5.6"})
+                self._URL, headers={"User-Agent": "HAMIOS/5.7"})
             with urllib.request.urlopen(req, timeout=12) as r:
                 raw = json.loads(r.read().decode("utf-8", errors="replace"))
 
@@ -1443,7 +1477,7 @@ class _PSKFetchThread(QThread):
     def run(self):
         try:
             req = urllib.request.Request(
-                self._URL, headers={"User-Agent": "HAMIOS/5.6"})
+                self._URL, headers={"User-Agent": "HAMIOS/5.7"})
             with urllib.request.urlopen(req, timeout=20) as r:
                 raw = r.read().decode("utf-8", errors="replace")
 
@@ -1483,11 +1517,17 @@ class _PSKFetchThread(QThread):
             self.ready.emit([])
 
 
+class _PSKSignals(QObject):
+    reports_updated = Signal(list)   # [(tx_loc, rx_loc, freq_khz, snr, mode, tx, rx)]
+
+
 class PSKReporterLayer(QGraphicsItem):
     """PSKReporter ontvangst-lijnen — toont actuele digitale propagatiepaden."""
 
     def __init__(self):
         super().__init__()
+        self._signals = _PSKSignals()
+        self.reports_updated = self._signals.reports_updated
         self.setZValue(5.5)   # tussen DX spots (6) en lightning (5)
         self._reports: list = []
         self._lock = threading.Lock()
@@ -1512,6 +1552,7 @@ class PSKReporterLayer(QGraphicsItem):
         with self._lock:
             self._reports = reports
         self.update()
+        self._signals.reports_updated.emit(list(reports))
 
     def find_report_near(self, scene_x: float, scene_y: float,
                          radius: float = 14.0) -> dict | None:

@@ -738,6 +738,13 @@ class SettingsDialog(QDialog):
         self._cat_civ.setToolTip(tr("tip.civ"))
         row(tr("cat.civ_lbl"), self._cat_civ)
 
+        # Radiomode voor digitale modes (FT8/FT4/WSPR) bij afstemmen via CAT
+        self._cat_data = QComboBox()
+        self._cat_data.addItem("USB", "USB")
+        self._cat_data.addItem("PKT-U (DATA-U)", "PKT-U")
+        self._cat_data.setToolTip(tr("tip.cat_data_mode"))
+        row(tr("cat.data_mode_lbl"), self._cat_data)
+
         def _update_civ_vis():
             show = "Icom" in self._cat_type.currentText()
             self._cat_civ.setEnabled(show)
@@ -971,21 +978,12 @@ class SettingsDialog(QDialog):
         v.setSpacing(6)
         f8 = QFont("Segoe UI", 8)
 
-        # ── Snap-raster ───────────────────────────────────────────────────
-        _section(v, tr("sec.raster"))
-
-        snap_row = QHBoxLayout()
-        snap_lbl = QLabel(tr("set.layout.snap"))
-        snap_lbl.setFont(f8)
-        snap_lbl.setFixedWidth(160)
-        self._snap_cb = QComboBox()
-        self._snap_cb.setFont(f8)
+        # Snap-raster: niet meer zichtbaar — de tegelindeling sluit panelen altijd
+        # aan. De waarde wordt nog bewaard voor compatibiliteit met oude profielen.
+        self._snap_cb = QComboBox(w)
         for val in _GRIDS:
             self._snap_cb.addItem(f"{val} px", val)
-        snap_row.addWidget(snap_lbl)
-        snap_row.addWidget(self._snap_cb)
-        snap_row.addStretch()
-        v.addLayout(snap_row)
+        self._snap_cb.hide()
 
         # ── Standaard layout ──────────────────────────────────────────────
         _section(v, tr("sec.default_layout"))
@@ -1101,7 +1099,9 @@ class SettingsDialog(QDialog):
         return asdict(self._cfg)
 
     def _get_current_layout_dict(self) -> dict:
-        """Lees huidge panel-geometrie + zichtbaarheid."""
+        """Lees huidige layout (tegelboom + geometrie) via het hoofdvenster."""
+        if self._mainwin is not None and hasattr(self._mainwin, "current_layout_dict"):
+            return self._mainwin.current_layout_dict()
         layout = {}
         for pid, p in self._panels.items():
             g = p.geometry()
@@ -1121,6 +1121,9 @@ class SettingsDialog(QDialog):
 
     def _apply_layout_dict(self, layout: dict):
         """Pas een opgeslagen layout toe op panelen én venster."""
+        if self._mainwin is not None and hasattr(self._mainwin, "apply_layout_dict"):
+            self._mainwin.apply_layout_dict(layout)
+            return
         # Venstergrootte herstellen
         if "__window__" in layout and self._mainwin and len(layout["__window__"]) >= 4:
             wx, wy, ww, wh = layout["__window__"][:4]
@@ -1317,6 +1320,7 @@ class SettingsDialog(QDialog):
             saved_type = CatInterface.RADIO_TYPES[0]
         _set_combo(self._cat_type, saved_type, CatInterface.RADIO_TYPES[0])
         self._cat_civ.setValue(int(get_val("cat_civ_addr", 0x58)))
+        _set_combo_data(self._cat_data, get_val("cat_data_mode", "USB"), "USB")
 
         self._loading = False
         # Verbind alle controls na laden
@@ -1348,7 +1352,7 @@ class SettingsDialog(QDialog):
                 req = urllib.request.Request(
                     "https://www.blitzortung.org/",
                     method="HEAD",
-                    headers={"User-Agent": "HAMIOS/5.6"}
+                    headers={"User-Agent": "HAMIOS/5.7"}
                 )
                 with urllib.request.urlopen(req, timeout=5) as r:
                     return r.status < 400
@@ -1453,6 +1457,7 @@ class SettingsDialog(QDialog):
             saved_type = CatInterface.RADIO_TYPES[0]
         _set_combo(self._cat_type, saved_type, CatInterface.RADIO_TYPES[0])
         self._cat_civ.setValue(int(getattr(c, "cat_civ_addr", 0x58)))
+        _set_combo_data(self._cat_data, getattr(c, "cat_data_mode", "USB"), "USB")
 
         self._loading = False
         # Verbind alle controls na laden (voorkomt trigger tijdens init)
@@ -1524,6 +1529,7 @@ class SettingsDialog(QDialog):
             cat_rts           = self._cat_rts.isChecked(),
             cat_radio_type    = self._cat_type.currentText(),
             cat_civ_addr      = self._cat_civ.value(),
+            cat_data_mode     = self._cat_data.currentData() or "USB",
         )
         # Velden die via panel-signals bewaard worden (niet hier overschrijven):
         # dx_own_continent, dx_heatmap, band_mode, band_power, band_day_auto,
@@ -1605,7 +1611,7 @@ class SettingsDialog(QDialog):
         # Panel checkboxes moved to header panel chooser dialog
         for combo in [self._mode_cb, self._power_cb, self._ant_cb, self._snap_cb,
                       self._cat_baud, self._cat_bits, self._cat_parity,
-                      self._cat_stop, self._cat_type]:
+                      self._cat_stop, self._cat_type, self._cat_data]:
             combo.currentIndexChanged.connect(lambda: self._live(0))
         # Tekstvelden: bij verlaten
         for le in [self._call_edit, self._loc_edit]:

@@ -10,11 +10,10 @@ SolarHistChart   — Solar historiek SFI + Kp (QPainter)
 LightningPanel   — Bliksemstatus + fade-instelling
 AlertsWidget     — NOAA ruimteweer-meldingen
 DXSpotsTable     — Live DX spots tabel
-PropAdvWidget    — Propagatie-advies tekst
+(PropAdvWidget   — zie advice_panel.py)
 """
 
 import datetime as _dt
-import math
 
 from PySide6.QtCore import Qt, QTimer, QPointF, Signal
 from PySide6.QtGui import (
@@ -45,25 +44,14 @@ from .theme import (
 )
 from . import history as _hist_csv
 from .i18n import tr, language_changed
+from .propagation import (ENGINE as _PROP, is_day as _prop_is_day,
+                          representative_time as _prop_rep_time)
 
 
 
 # ── Propagatie-model ──────────────────────────────────────────────────────────
 
 # ── Bandtabellen (v4-equivalent) ──────────────────────────────────────────────
-
-_BANDS = [
-    ("160m",  1.8,  50,   60),
-    ("80m",   3.5,  50,   50),
-    ("40m",   7.0,  60,   55),
-    ("30m",  10.1,  65,   70),
-    ("20m",  14.0,  70,   80),
-    ("17m",  18.1,  85,  100),
-    ("15m",  21.0, 100,  120),
-    ("12m",  24.9, 125,  150),
-    ("10m",  28.0, 145,  170),
-    ("6m",   50.0, 185,  220),
-]
 
 _BANDS_HF = [
     ("160m",  1.810), ("80m",  3.500), ("60m",  5.352),
@@ -115,6 +103,22 @@ def _cat_check() -> tuple:
     return cat, None
 
 
+_CAT_DIGITAL = {"FT8", "FT4", "WSPR", "JS8", "JS8CALL", "PSK31", "DATA", "DIGI"}
+
+
+def _cat_mode_for(mode: str | None, hz: int, cfg) -> str | None:
+    """Werkmode (FT8, SSB, CW …) → radiomode (USB, LSB, CW, PKT-U …).
+    Digitaal → de datamode uit de instellingen; SSB → LSB onder 10 MHz."""
+    if not mode:
+        return None
+    m = mode.upper()
+    if m in _CAT_DIGITAL:
+        return (getattr(cfg, "cat_data_mode", "USB") or "USB").upper()
+    if m == "SSB":
+        return "LSB" if hz < 10_000_000 else "USB"
+    return m
+
+
 def _cat_send(hz: int, mode: str | None = None) -> tuple[bool, str]:
     """Stuur frequentie (en optioneel modus) naar radio via CAT."""
     cat, err = _cat_check()
@@ -123,9 +127,11 @@ def _cat_send(hz: int, mode: str | None = None) -> tuple[bool, str]:
     ok, msg = cat.set_freq_hz(hz)
     if not ok:
         return False, msg
-    if mode:
-        cat.set_mode(mode)
-    return True, f"{hz/1000:.3f} kHz  {mode or ''}".strip()
+    radio_mode = _cat_mode_for(mode, hz, getattr(cat, "_cfg", None))
+    if radio_mode:
+        cat.set_mode(radio_mode)
+    shown = f"{mode} ({radio_mode})" if mode and radio_mode and radio_mode != mode.upper() else (mode or "")
+    return True, f"{hz/1000:.3f} kHz  {shown}".strip()
 
 
 def _show_band_freq_menu(band: str, widget, callback) -> None:
@@ -188,48 +194,42 @@ _BAND_MODES_TBL = {
 }
 
 
-def _calc_propagation_v4(sfi: float, ssn: float, k_index: float,
-                          qth_lat: float = 52.0, snr_db: float = 0.0,
-                          daytime: bool = True) -> tuple:
-    """Port van v4 propagatiemodel. Geeft (band_pct, muf, luf)."""
-    foF2 = 4.0 + (sfi - 70) * 0.065 + ssn * 0.012
-    lat_fac = 1.0 - max(0.0, (abs(qth_lat) - 25) / 65) * 0.30
-    foF2 *= lat_fac
-    if not daytime:
-        foF2 *= 0.55
-    foF2 = max(1.5, min(foF2, 16.0))
-    muf = foF2 * 3.8
+# ── Propagatie: één centraal model (propagation.py) ──────────────────────────
+# Alle panelen en het advies gebruiken dezelfde cijfers, gekalibreerd op de
+# dichtstbijzijnde gemeten ionosonde. (Vervangt _calc_propagation_v4 en
+# _reliability, die elkaar en de werkelijkheid tegenspraken.)
 
-    base_luf = 3.5 + k_index * 0.8
-    if abs(qth_lat) > 45:
-        base_luf *= 1.0 + (abs(qth_lat) - 45) / 25 * k_index * 0.20
-    if not daytime:
-        base_luf = max(0.5, base_luf * 0.4)
-    luf = max(0.5, base_luf / (10 ** (snr_db / 20.0)))
-
-    band_pct = []
-    for name, freq in _BANDS_HF:
-        if freq > muf:
-            pct = 0
-        elif freq < luf:
-            pct = max(0, int(30 * freq / luf))
-        else:
-            ratio = (freq - luf) / max(0.1, muf - luf)
-            peak  = 1.0 - abs(ratio - 0.55) * 1.4
-            pct   = max(5, min(100, int(peak * 100)))
-        band_pct.append((name, freq, pct))
-
-    return band_pct, round(muf, 1), round(luf, 1)
+def _station_snr(cfg) -> int:
+    """Station-marge in dB t.o.v. SSB/100 W/isotroop (mode + vermogen + antenne)."""
+    if not cfg:
+        return 0
+    return (_MODE_DB.get(cfg.mode, 0) + _POWER_DB.get(cfg.power, 0) +
+            _ANT_DB.get(getattr(cfg, "antenna", ""), 0))
 
 
-def _reliability(sfi: float, k_index: float, day: bool = True) -> list[float]:
-    """Eenvoudige 0–1 betrouwbaarheid per band (voor BandSchedWidget e.d.)."""
-    k_factor = max(0.0, 1.0 - k_index * 0.11)
-    result = []
-    for _, _, sfi_day, sfi_ngt in _BANDS:
-        threshold = sfi_day if day else sfi_ngt
-        result.append(min(1.0, max(0.0, (sfi - threshold + 30) / 60)) * k_factor)
-    return result
+def _qth(cfg) -> tuple[float, float]:
+    return (cfg.qth_lat, cfg.qth_lon) if cfg else (52.0, 5.0)
+
+
+def _prop_now(cfg, t=None, day: bool | None = None):
+    """Propagatie op de QTH. day=True/False → representatief dag-/nachtmoment."""
+    lat, lon = _qth(cfg)
+    if day is not None:
+        t = _prop_rep_time(lat, lon, day)
+    return _PROP.conditions(lat, lon, t, _station_snr(cfg))
+
+
+def _band_pct_list(c) -> list:
+    """Conditions → [(band, MHz, pct)] voor de grafieken."""
+    return [(n, f, c.band_pct.get(n, 0)) for n, f in _BANDS_HF]
+
+
+def _prop_source_tip(c) -> str:
+    """Tooltip: waar komen MUF/LUF vandaan (gemeten ionosonde of model)."""
+    if c.measured is not None and c.cal_weight > 0.05:
+        return tr("prop.src.measured", name=c.measured.name,
+                  age=int(c.measured.age_s() // 60), w=int(round(c.cal_weight * 100)))
+    return tr("prop.src.model")
 
 
 
@@ -243,22 +243,27 @@ def _rel_color(rel: float) -> QColor:
 # ── BandRelWidget ─────────────────────────────────────────────────────────────
 
 class _BandChart(QWidget):
-    """QPainter-gebaseerde bandbetrouwbaarheid balk (v4 stijl)."""
+    """Bandbalken voor 'Banden nu': kans nu (balk + %), beoordeling overdag en
+    's nachts, trend komend uur, frequentie/mode/FT8. Op een smal paneel vallen
+    de minst belangrijke kolommen weg (eerst FT8, dan MHz, dan mode)."""
 
     BAR_H   = 22
     BAR_PAD = 4
     HDR_H   = 16
     LBL_W   = 46
-    PCT_W   = 36
-    FREQ_W  = 52
-    MODE_W  = 72
-    FT8_W   = 50
+    MIN_BAR = 90
+    # (sleutel, breedte) — volgorde op het scherm
+    _COLS = [("pct", 36), ("day", 48), ("night", 48), ("trend", 16),
+             ("freq", 52), ("mode", 72), ("ft8", 50)]
+    _DROP = ("ft8", "freq", "mode", "trend")        # wegvallen bij krapte
 
     def __init__(self, parent=None):
         super().__init__(parent)
         self._band_pct: list = []
+        self._extra: dict = {}           # band → (dag %, nacht %, trend −1/0/1)
         self.setAttribute(Qt.WA_OpaquePaintEvent)
         self.setCursor(Qt.PointingHandCursor)
+        self.setMouseTracking(True)
         self._band_click_cb = None   # callback(band_name)
         n = len(_BANDS_HF)
         self.setMinimumHeight(self.HDR_H + n * (self.BAR_H + self.BAR_PAD) + self.BAR_PAD)
@@ -266,19 +271,50 @@ class _BandChart(QWidget):
     def set_band_click_callback(self, cb):
         self._band_click_cb = cb
 
+    def _row_at(self, y: float) -> int:
+        return int((y - self.HDR_H) / (self.BAR_H + self.BAR_PAD))
+
     def mousePressEvent(self, event):
         if not self._band_pct or not self._band_click_cb:
             return
-        y = event.position().y()
-        row = int((y - self.HDR_H) / (self.BAR_H + self.BAR_PAD))
+        row = self._row_at(event.position().y())
         if 0 <= row < len(self._band_pct):
-            band_name = self._band_pct[row][0]
-            self._band_click_cb(band_name)
+            self._band_click_cb(self._band_pct[row][0])
         super().mousePressEvent(event)
 
-    def set_data(self, band_pct: list):
+    def mouseMoveEvent(self, event):
+        from PySide6.QtWidgets import QToolTip
+        row = self._row_at(event.position().y())
+        if not (0 <= row < len(self._band_pct)):
+            QToolTip.hideText()
+            return
+        name, freq, pct = self._band_pct[row]
+        d, n, t = self._extra.get(name, (None, None, 0))
+        info = _BAND_INFO.get(name, ("", ""))
+        lines = [f"<b>{name}</b> — {info[0]}", info[1], "",
+                 tr("bandnow.tip.now", pct=pct)]
+        if d is not None:
+            lines.append(tr("bandnow.tip.daynight", day=_pct_to_cond(d)[0], dp=d,
+                            night=_pct_to_cond(n)[0], np=n))
+        lines.append(tr({1: "bandnow.tip.up", -1: "bandnow.tip.down"}.get(t, "bandnow.tip.flat")))
+        lines += ["", f"<i>{tr('bandnow.tip.click')}</i>"]
+        QToolTip.showText(event.globalPosition().toPoint(), "<br>".join(lines), self)
+
+    def set_data(self, band_pct: list, extra: dict | None = None):
         self._band_pct = band_pct
+        if extra is not None:
+            self._extra = extra
         self.update()
+
+    def _layout(self, W: int) -> tuple[list, int]:
+        """Zichtbare kolommen en balkbreedte voor paneelbreedte W."""
+        cols = list(self._COLS)
+        for key in self._DROP:
+            if W - self.LBL_W - 12 - sum(w for _, w in cols) >= self.MIN_BAR:
+                break
+            cols = [c for c in cols if c[0] != key]
+        bar_max = max(40, W - self.LBL_W - 12 - sum(w for _, w in cols))
+        return cols, bar_max
 
     def paintEvent(self, event):
         p = QPainter(self)
@@ -289,24 +325,24 @@ class _BandChart(QWidget):
         if not self._band_pct:
             return
 
-        fixed = self.PCT_W + self.FREQ_W + self.MODE_W + self.FT8_W
-        bar_max = max(40, W - self.LBL_W - fixed - 12)
-        bar_x   = self.LBL_W + 4
+        cols, bar_max = self._layout(W)
+        bar_x = self.LBL_W + 4
+        xs, x = {}, bar_x + bar_max
+        for key, w in cols:
+            xs[key] = (x, w)
+            x += w
 
         f7b = QFont("Segoe UI", 7); f7b.setBold(True)
         f7  = QFont("Segoe UI", 7)
         f8b = QFont("Segoe UI", 8); f8b.setBold(True)
 
         # Kolomhoofden
+        heads = {"pct": "%", "day": tr("band.day"), "night": tr("band.night"),
+                 "trend": "", "freq": "MHz", "mode": tr("bandnow.col.mode"), "ft8": "FT8"}
         p.setFont(f7b)
-        for x, w, txt in [
-            (bar_x + bar_max,                    self.PCT_W,  "%"),
-            (bar_x + bar_max + self.PCT_W,        self.FREQ_W, "MHz"),
-            (bar_x + bar_max + self.PCT_W + self.FREQ_W,        self.MODE_W, "Modus"),
-            (bar_x + bar_max + self.PCT_W + self.FREQ_W + self.MODE_W, self.FT8_W,  "FT8"),
-        ]:
-            p.setPen(QColor(ACCENT))
-            p.drawText(x, 0, w, self.HDR_H, Qt.AlignCenter, txt)
+        p.setPen(QColor(ACCENT))
+        for key, (cx, cw) in xs.items():
+            p.drawText(cx, 0, cw, self.HDR_H, Qt.AlignCenter, heads[key])
 
         for i, (name, freq, pct) in enumerate(self._band_pct):
             y   = self.HDR_H + self.BAR_PAD + i * (self.BAR_H + self.BAR_PAD)
@@ -328,47 +364,46 @@ class _BandChart(QWidget):
                 p.setPen(QColor(TEXT_DIM))
                 p.drawText(bar_x, y + 1, bar_max, self.BAR_H - 2,
                            Qt.AlignCenter, tr("band.closed"))
-                p.setFont(f7b)
-                p.drawText(bar_x + bar_max, y, self.PCT_W, self.BAR_H,
-                           Qt.AlignCenter, "0%")
             else:
                 fill_w = max(2, int((bar_max - 2) * pct / 100))
-                # Gradient balk
                 r, g, b = clr.red(), clr.green(), clr.blue()
                 slices = min(self.BAR_H - 4, 6)
-                for s in range(slices):
-                    fac = 1.0 - (s / slices) * 0.50
+                for sl in range(slices):
+                    fac = 1.0 - (sl / slices) * 0.50
                     sc  = QColor(min(255, int(r*fac)), min(255, int(g*fac)), min(255, int(b*fac)))
-                    sy1 = y + 2 + s * (self.BAR_H - 4) // slices
-                    sy2 = y + 2 + (s + 1) * (self.BAR_H - 4) // slices
+                    sy1 = y + 2 + sl * (self.BAR_H - 4) // slices
+                    sy2 = y + 2 + (sl + 1) * (self.BAR_H - 4) // slices
                     p.setPen(Qt.NoPen)
                     p.setBrush(QBrush(sc))
                     p.drawRect(bar_x + 1, sy1, fill_w, sy2 - sy1)
-                # Glans-lijn
                 hl = QColor(min(255, int(r*1.5)), min(255, int(g*1.5)), min(255, int(b*1.5)))
                 p.setPen(QPen(hl, 1))
                 p.drawLine(bar_x + 2, y + 2, bar_x + fill_w, y + 2)
 
-                p.setFont(f7b)
-                p.setPen(QColor(TEXT_H1))
-                p.drawText(bar_x + bar_max, y, self.PCT_W, self.BAR_H,
-                           Qt.AlignCenter, f"{pct}%")
-
-            # Freq
-            p.setFont(f7)
-            p.setPen(QColor(TEXT_DIM))
-            p.drawText(bar_x + bar_max + self.PCT_W, y, self.FREQ_W, self.BAR_H,
-                       Qt.AlignCenter, f"{freq:.3f}")
-
-            # Modus
-            p.drawText(bar_x + bar_max + self.PCT_W + self.FREQ_W, y,
-                       self.MODE_W, self.BAR_H,
-                       Qt.AlignCenter, _BAND_MODES_TBL.get(name, ""))
-
-            # FT8
-            p.drawText(bar_x + bar_max + self.PCT_W + self.FREQ_W + self.MODE_W, y,
-                       self.FT8_W, self.BAR_H,
-                       Qt.AlignCenter, _BAND_FT8_FREQ.get(name, "—"))
+            d, n, t = self._extra.get(name, (None, None, 0))
+            for key, (cx, cw) in xs.items():
+                if key == "pct":
+                    p.setFont(f7b); p.setPen(QColor(TEXT_H1 if pct else TEXT_DIM))
+                    p.drawText(cx, y, cw, self.BAR_H, Qt.AlignCenter, f"{pct}%")
+                elif key in ("day", "night"):
+                    v = d if key == "day" else n
+                    if v is not None:
+                        txt, c = _pct_to_cond(v)
+                        p.setFont(f7b); p.setPen(QColor(c))
+                        p.drawText(cx, y, cw, self.BAR_H, Qt.AlignCenter, txt)
+                elif key == "trend" and t:
+                    p.setFont(f7b)
+                    p.setPen(QColor("#4CAF50" if t > 0 else "#EF5350"))
+                    p.drawText(cx, y, cw, self.BAR_H, Qt.AlignCenter, "▲" if t > 0 else "▼")
+                elif key == "freq":
+                    p.setFont(f7); p.setPen(QColor(TEXT_DIM))
+                    p.drawText(cx, y, cw, self.BAR_H, Qt.AlignCenter, f"{freq:.3f}")
+                elif key == "mode":
+                    p.setFont(f7); p.setPen(QColor(TEXT_DIM))
+                    p.drawText(cx, y, cw, self.BAR_H, Qt.AlignCenter, _BAND_MODES_TBL.get(name, ""))
+                elif key == "ft8":
+                    p.setFont(f7); p.setPen(QColor(TEXT_DIM))
+                    p.drawText(cx, y, cw, self.BAR_H, Qt.AlignCenter, _BAND_FT8_FREQ.get(name, "—"))
 
 
 class BandRelWidget(QWidget):
@@ -429,20 +464,8 @@ class BandRelWidget(QWidget):
 
     @staticmethod
     def _is_day_at_qth(qth_lat: float, qth_lon: float) -> bool:
-        """Bepaal dag/nacht via werkelijke zonpositie (zelfde als BandSchedWidget)."""
-        import datetime as _dt, math as _m
-        now = _dt.datetime.now(_dt.timezone.utc)
-        doy  = now.timetuple().tm_yday
-        decl = -23.45 * _m.cos(_m.radians(360 / 365 * (doy + 10)))
-        ut   = now.hour + now.minute / 60 + now.second / 3600
-        sun_lon = -(ut - 12) * 15
-        sun_lon = ((sun_lon + 180) % 360) - 180
-        lat_r  = _m.radians(qth_lat)
-        slat_r = _m.radians(decl)
-        dlon_r = _m.radians(qth_lon - sun_lon)
-        cos_a  = (_m.sin(lat_r) * _m.sin(slat_r) +
-                  _m.cos(lat_r) * _m.cos(slat_r) * _m.cos(dlon_r))
-        return cos_a > 0
+        """Dag/nacht via werkelijke zonsstand op de QTH (centraal model)."""
+        return _prop_is_day(qth_lat, qth_lon)
 
 
     def set_data(self, solar: dict):
@@ -455,21 +478,28 @@ class BandRelWidget(QWidget):
         self._recalc()
 
     def _recalc(self):
-        qth_lat = self._cfg.qth_lat if self._cfg else 52.0
-        qth_lon = self._cfg.qth_lon if self._cfg else 5.0
         day_auto = getattr(self._cfg, "band_day_auto", True) if self._cfg else True
+        # Automatisch: nu. Handmatig dag/nacht: representatief moment daarvan.
+        c = _prop_now(self._cfg) if day_auto else _prop_now(self._cfg, day=self._day)
         if day_auto:
-            self._day = self._is_day_at_qth(qth_lat, qth_lon)
-        mode    = self._cfg.mode    if self._cfg else "SSB"
-        power   = self._cfg.power   if self._cfg else "100W"
-        antenna = getattr(self._cfg, "antenna", "Dipole ~2dBi") if self._cfg else "Dipole ~2dBi"
-        snr = (_MODE_DB.get(mode, 0) + _POWER_DB.get(power, 0) + _ANT_DB.get(antenna, 0))
-        lat = self._cfg.qth_lat if self._cfg else 52.0
-        band_pct, muf, luf = _calc_propagation_v4(
-            self._sfi, self._ssn, self._k, lat, snr, self._day)
-        self._chart.set_data(band_pct)
-        self._muf_lbl.setText(f"MUF: {muf} MHz")
-        self._luf_lbl.setText(f"LUF: {luf} MHz")
+            self._day = c.is_day
+        snr = _station_snr(self._cfg)
+        # Samengevoegd uit het oude paneel 'Bandcondities': beoordeling overdag
+        # en 's nachts, plus de trend voor het komende uur
+        pd = _prop_now(self._cfg, day=True).band_pct
+        pn = _prop_now(self._cfg, day=False).band_pct
+        lat, lon = _qth(self._cfg)
+        nxt = _PROP.conditions(lat, lon, c.time + _dt.timedelta(hours=1), snr).band_pct
+        extra = {}
+        for b, _f in _BANDS_HF:
+            dlt = nxt.get(b, 0) - c.band_pct.get(b, 0)
+            extra[b] = (pd.get(b, 0), pn.get(b, 0), 1 if dlt >= 10 else (-1 if dlt <= -10 else 0))
+        self._chart.set_data(_band_pct_list(c), extra)
+        self._muf_lbl.setText(f"MUF: {c.muf} MHz")
+        self._luf_lbl.setText(f"LUF: {c.luf} MHz")
+        tip = _prop_source_tip(c)
+        self._muf_lbl.setToolTip(tip)
+        self._luf_lbl.setToolTip(tip)
         dn = tr("band.day") if self._day else tr("band.night")
         self._snr_lbl.setText(f"{snr:+d} dB  ·  {dn}")
 
@@ -501,122 +531,79 @@ def _pct_to_cond(pct: int) -> tuple[str, str]:
 _BAND_INFO = _band_info()
 
 
-class BandCondWidget(QWidget):
-    """Dag/nacht bandcondities — v4 stijl met propagatiemodel per band."""
-
-    def __init__(self, cfg=None, parent=None):
-        super().__init__(parent)
-        self._cfg   = cfg
-        self._solar: dict = {}
-        self._day_lbls: dict[str, QLabel] = {}
-        self._ngt_lbls: dict[str, QLabel] = {}
-        self._build_ui()
-
-    def set_cfg(self, cfg):
-        self._cfg = cfg
-        self._recalc()
-
-    def _send_band(self, hz: int, mode: str):
-        ok, msg = _cat_send(hz, mode)
-        self._cat_bar.show_msg(
-            f"📟  {hz/1e6:.4f} MHz  {mode}" if ok else f"📟  {msg}", ok)
-
-    def _build_ui(self):
-        outer = QVBoxLayout(self)
-        outer.setContentsMargins(0, 0, 0, 0)
-        outer.setSpacing(0)
-        inner = QWidget()
-        grid = QGridLayout(inner)
-        grid.setContentsMargins(8, 6, 8, 4)
-        grid.setSpacing(2)
-        outer.addWidget(inner, 1)
-        self._cat_bar = _CatBar()
-        outer.addWidget(self._cat_bar)
-
-        f8b = QFont("Segoe UI", 8); f8b.setBold(True)
-
-        for col, txt in enumerate(["Band  ⬡", tr("band.day"), tr("band.night")]):
-            lbl = QLabel(txt)
-            lbl.setFont(f8b)
-            lbl.setStyleSheet(f"color: {ACCENT};")
-            lbl.setAlignment(Qt.AlignCenter if col > 0 else Qt.AlignLeft)
-            grid.addWidget(lbl, 0, col)
-
-        for row, (bname, _) in enumerate(_BANDS_HF, start=1):
-            name_lbl = QLabel(bname)
-            name_lbl.setFont(f8b)
-            clr = _BAND_COLORS_HF.get(bname, TEXT_DIM)
-            name_lbl.setStyleSheet(f"color: {clr};")
-            name_lbl.setCursor(Qt.PointingHandCursor)
-            info = _band_info()
-            if bname in info:
-                title, body = info[bname]
-                name_lbl.setToolTip(
-                    f"<b>{title}</b><br>{body.replace(chr(10), '<br>')}<br>"
-                    f"<i>Klik om naar CAT te sturen</i>")
-            # Klik-handler via lambda
-            name_lbl.mousePressEvent = (
-                lambda e, b=bname: _show_band_freq_menu(b, self, self._send_band))
-            grid.addWidget(name_lbl, row, 0)
-
-            day_lbl = QLabel("—")
-            day_lbl.setFont(f8b)
-            day_lbl.setAlignment(Qt.AlignCenter)
-            grid.addWidget(day_lbl, row, 1)
-            self._day_lbls[bname] = day_lbl
-
-            ngt_lbl = QLabel("—")
-            ngt_lbl.setFont(f8b)
-            ngt_lbl.setAlignment(Qt.AlignCenter)
-            grid.addWidget(ngt_lbl, row, 2)
-            self._ngt_lbls[bname] = ngt_lbl
-
-        grid.setColumnStretch(1, 1)
-        grid.setColumnStretch(2, 1)
-
-    def set_data(self, solar: dict):
-        self._solar = solar
-        self._recalc()
-
-    def _recalc(self):
-        data = self._solar
-        try:
-            sfi = float(str(data.get("sfi", "90")).replace("—", "90") or "90")
-            ssn = float(str(data.get("ssn", "50")).replace("—", "50") or "50")
-            k   = float(str(data.get("k_index", "2")).replace("—", "2")  or "2")
-        except (ValueError, TypeError):
-            sfi, ssn, k = 90.0, 50.0, 2.0
-
-        snr     = 0
-        qth_lat = 52.0
-        if self._cfg:
-            snr     = (_MODE_DB.get(self._cfg.mode,    0) +
-                       _POWER_DB.get(self._cfg.power,  0) +
-                       _ANT_DB.get(self._cfg.antenna,  0))
-            qth_lat = self._cfg.qth_lat
-
-        bpd, _, _ = _calc_propagation_v4(sfi, ssn, k, qth_lat, snr, True)
-        bpn, _, _ = _calc_propagation_v4(sfi, ssn, k, qth_lat, snr, False)
-        pct_day   = {n: p for n, _, p in bpd}
-        pct_ngt   = {n: p for n, _, p in bpn}
-
-        for bname, _ in _BANDS_HF:
-            dt, dc = _pct_to_cond(pct_day.get(bname, 0))
-            nt, nc = _pct_to_cond(pct_ngt.get(bname, 0))
-            if bname in self._day_lbls:
-                self._day_lbls[bname].setText(dt)
-                self._day_lbls[bname].setStyleSheet(
-                    f"color: {dc}; font-weight: bold; font-size: 8pt;")
-            if bname in self._ngt_lbls:
-                self._ngt_lbls[bname].setText(nt)
-                self._ngt_lbls[bname].setStyleSheet(
-                    f"color: {nc}; font-weight: bold; font-size: 8pt;")
-
-
 # ── StormFcWidget ─────────────────────────────────────────────────────────────
 
+class _OutlookStrip(QWidget):
+    """27-dagen-vooruitzicht (NOAA): per dag max Kp (kleur) + zonneflux (balkje).
+    Vandaag omkaderd; tooltip per dag. Voor het plannen van contests/DX."""
+
+    def __init__(self):
+        super().__init__()
+        self._rows: list = []            # [(date, flux, A, Kp), …]
+        self.setMinimumHeight(46)
+        self.setMouseTracking(True)
+
+    def set_rows(self, rows: list):
+        self._rows = list(rows)
+        self.setToolTip(self._summary())
+        self.update()
+
+    def _summary(self) -> str:
+        if not self._rows:
+            return ""
+        calm = [r for r in self._rows if r[3] <= 2]
+        best = sorted(calm, key=lambda r: -r[1])[:3]
+        days = ", ".join(f"{r[0].day}-{r[0].month}" for r in sorted(best))
+        return tr("outlook.tip", days=days or "—")
+
+    def _geom(self):
+        n = max(1, len(self._rows))
+        cw = max(3, (self.width() - 4) // n)
+        return n, cw
+
+    def paintEvent(self, event):
+        p = QPainter(self)
+        W, H = self.width(), self.height()
+        p.fillRect(0, 0, W, H, QColor(BG_PANEL))
+        if not self._rows:
+            return
+        n, cw = self._geom()
+        lab_h, kp_h = 11, 12
+        bar_top, bar_bot = lab_h + kp_h + 3, H - 1
+        fmin = min(r[1] for r in self._rows) - 5
+        fmax = max(r[1] for r in self._rows) + 5
+        today = _dt.date.today()
+        p.setFont(QFont("Segoe UI", 6))
+        for i, (d, flux, a, kp) in enumerate(self._rows):
+            x = 2 + i * cw
+            c = ("#EF5350" if kp >= 6 else "#FFA726" if kp == 5
+                 else "#FFF176" if kp == 4 else "#2E7D32")
+            p.fillRect(x, lab_h, cw - 1, kp_h, QColor(c))
+            h = int((bar_bot - bar_top) * (flux - fmin) / max(1, fmax - fmin))
+            p.fillRect(x, bar_bot - h, cw - 1, h, QColor(ACCENT).darker(130))
+            if d.weekday() == 0 or i == 0:
+                p.setPen(QColor(TEXT_DIM))
+                p.drawText(x, 0, 30, lab_h, Qt.AlignLeft | Qt.AlignVCenter, f"{d.day}-{d.month}")
+            if d == today:
+                p.setPen(QPen(QColor(ACCENT), 1))
+                p.setBrush(Qt.NoBrush)
+                p.drawRect(x - 1, lab_h - 1, cw, H - lab_h)
+
+    def mouseMoveEvent(self, event):
+        from PySide6.QtWidgets import QToolTip
+        if not self._rows:
+            return
+        n, cw = self._geom()
+        i = int((event.position().x() - 2) // cw)
+        if 0 <= i < n:
+            d, flux, a, kp = self._rows[i]
+            QToolTip.showText(event.globalPosition().toPoint(),
+                              tr("outlook.day", date=f"{d.day}-{d.month}-{d.year}",
+                                 flux=flux, a=a, kp=kp) + "<br><br>" + self._summary(), self)
+
+
 class StormFcWidget(QWidget):
-    """3-daagse NOAA stormprognose."""
+    """3-daagse NOAA stormprognose + 27-dagen-vooruitzicht."""
 
     # (tr-key, data-key, Kp-bereik, tooltip)
     _LEVELS = [
@@ -663,6 +650,9 @@ class StormFcWidget(QWidget):
     def retranslate(self, _=None):
         """Update alle labels na taalwisseling."""
         self._sub_lbl.setText(tr("storm.subtitle"))
+        if hasattr(self, "_outlook_lbl"):
+            self._outlook_lbl.setText(tr("outlook.title"))
+            self._outlook.set_rows(self._outlook._rows)
         for i, key in enumerate(["storm.col.act","storm.col.d1","storm.col.d2","storm.col.d3"]):
             self._hdr_lbls[i].setText(tr(key))
         for i, (trkey, _key, kp, _tip) in enumerate(self._LEVELS):
@@ -729,8 +719,19 @@ class StormFcWidget(QWidget):
         self._legend_lbl.setAlignment(Qt.AlignCenter)
         self._legend_lbl.setStyleSheet("background: transparent;")
         grid.addWidget(self._legend_lbl, legend_row, 0, 1, 4)
+
+        # 27-dagen-vooruitzicht
+        self._outlook_lbl = QLabel(tr("outlook.title"))
+        self._outlook_lbl.setFont(QFont("Segoe UI", 7, QFont.Bold))
+        self._outlook_lbl.setStyleSheet(f"color: {ACCENT}; background: transparent;")
+        outer.addWidget(self._outlook_lbl)
+        self._outlook = _OutlookStrip()
+        outer.addWidget(self._outlook)
         # Vul initieel via retranslate
         self.retranslate()
+
+    def set_outlook(self, rows: list):
+        self._outlook.set_rows(rows)
 
     def set_data(self, storm: dict):
         for _trkey, key, _kp, _tip in self._LEVELS:
@@ -748,18 +749,6 @@ class StormFcWidget(QWidget):
 
 
 # ── BandSchedWidget ───────────────────────────────────────────────────────────
-
-def _subsolar_h(offset_h: float) -> tuple[float, float]:
-    """Gecorrigeerde zonpositie voor offset_h uur ten opzichte van nu."""
-    import datetime as _dt
-    now = _dt.datetime.now(_dt.timezone.utc)
-    doy  = now.timetuple().tm_yday
-    decl = -23.45 * math.cos(math.radians(360 / 365 * (doy + 10)))
-    ut   = now.hour + now.minute / 60 + now.second / 3600 + offset_h
-    lon  = -(ut - 12) * 15
-    lon  = ((lon + 180) % 360) - 180
-    return decl, lon
-
 
 class BandSchedWidget(QWidget):
     """24u band-openings heatmap — v4 stijl met propagatieberekening per uur."""
@@ -813,56 +802,22 @@ class BandSchedWidget(QWidget):
         self.update()
 
     def _recalc(self):
-        import datetime as _dt
-        data = self._solar
-        try:
-            sfi = float(str(data.get("sfi", "90")).replace("—", "90") or "90")
-            ssn = float(str(data.get("ssn", "50")).replace("—", "50") or "50")
-            k   = float(str(data.get("k_index", "2")).replace("—",  "2") or "2")
-        except (ValueError, TypeError):
-            sfi, ssn, k = 90.0, 50.0, 2.0
+        """24 uur vooruit vanaf het huidige lokale uur (doorlopend), één
+        modelberekening per uur: kans per band + MUF/LUF."""
+        snr = _station_snr(self._cfg)
+        qth_lat, qth_lon = _qth(self._cfg)
+        start = _dt.datetime.now().replace(minute=0, second=0, microsecond=0)
+        self._hours = [start + _dt.timedelta(hours=h) for h in range(24)]
+        conds = [_PROP.conditions(qth_lat, qth_lon, t.astimezone(_dt.timezone.utc), snr)
+                 for t in self._hours]
+        self._grid = [[c.band_pct.get(bname, 0) for c in conds] for bname, _ in _BANDS_HF]
+        self._muf = [c.muf for c in conds]
+        self._luf = [c.luf for c in conds]
+        self._day = [c.is_day for c in conds]
+        self._now_h = 0
 
-        snr     = 0
-        qth_lat = 52.0
-        qth_lon = 5.0
-        if self._cfg:
-            snr     = (_MODE_DB.get(self._cfg.mode,    0) +
-                       _POWER_DB.get(self._cfg.power,  0) +
-                       _ANT_DB.get(self._cfg.antenna,  0))
-            qth_lat = self._cfg.qth_lat
-            qth_lon = self._cfg.qth_lon
-
-        now_utc = _dt.datetime.now(_dt.timezone.utc)
-        now_loc = _dt.datetime.now()
-        # UTC-offset (uren)
-        utc_off = round((now_loc.replace(tzinfo=None) -
-                         now_utc.replace(tzinfo=None)).total_seconds() / 3600)
-        self._now_h   = now_loc.hour
-        self._utc_off = utc_off
-
-        lat_r = math.radians(qth_lat)
-        # Huidige zonpositie
-        sun_lat, sun_lon = _subsolar_h(0)
-        sun_lat_r = math.radians(sun_lat)
-
-        self._grid = []
-        for bname, _ in _BANDS_HF:
-            row = []
-            for loc_h in range(24):
-                utc_h    = (loc_h - utc_off) % 24
-                off_h    = utc_h - now_utc.hour
-                # Corrigeer zonlongitude voor dit uur (zon beweegt 15°/uur)
-                sl_h     = sun_lon - off_h * 15
-                sl_h     = ((sl_h + 180) % 360) - 180
-                dlon_r   = math.radians(qth_lon - sl_h)
-                cos_ang  = (math.sin(lat_r) * math.sin(sun_lat_r) +
-                            math.cos(lat_r) * math.cos(sun_lat_r) * math.cos(dlon_r))
-                is_day   = cos_ang > 0
-
-                bp, _, _ = _calc_propagation_v4(sfi, ssn, k, qth_lat, snr, is_day)
-                pct      = max(0, {n: p for n, _, p in bp}.get(bname, 0))
-                row.append(pct)
-            self._grid.append(row)
+    # ── tekenen ──────────────────────────────────────────────────────────────
+    _MUF_BANDS = (("40m", 7.0), ("20m", 14.0), ("15m", 21.0), ("10m", 28.0))
 
     def paintEvent(self, event):
         p = QPainter(self)
@@ -872,57 +827,110 @@ class BandSchedWidget(QWidget):
         if not self._grid:
             p.setPen(QColor(TEXT_DIM))
             p.setFont(QFont("Segoe UI", 9))
-            p.drawText(0, 0, W, H, Qt.AlignCenter, "Wacht op solar data…")
+            p.drawText(0, 0, W, H, Qt.AlignCenter, tr("app.loading"))
             return
 
         N_H = 24
         N_B = len(_BANDS_HF)
-        PL, PR, PT, PB = 40, 4, 16, 4
+        PL, PR, PT, GAP, PB = 40, 4, 16, 8, 4
+        muf_h = max(50, int((H - PT - GAP - PB) * 0.34))
+        heat_h = H - PT - GAP - PB - muf_h
         cell_w = max(1, (W - PL - PR) // N_H)
-        cell_h = max(1, (H - PT - PB) // N_B)
+        cell_h = max(1, heat_h // N_B)
+        heat_bottom = PT + N_B * cell_h
+        muf_top = heat_bottom + GAP
+        muf_bottom = H - PB
 
         f7 = QFont("Segoe UI", 7)
         p.setFont(f7)
 
-        # Uur-labels (elke 3 uur, lokale tijd)
-        p.setPen(QColor(TEXT_DIM))
-        for h in range(0, N_H, 3):
-            lx = PL + h * cell_w + cell_w // 2
-            p.drawText(lx - 8, 0, 16, PT - 2, Qt.AlignCenter, f"{h:02d}")
+        # Uur-labels (lokale tijd; elke 3 uur) + nacht-arcering boven
+        for h in range(N_H):
+            cx = PL + h * cell_w
+            if not self._day[h]:
+                p.fillRect(cx, PT - 3, cell_w, 2, QColor(70, 90, 140))
+            if h % 3 == 0:
+                p.setPen(QColor(TEXT_DIM))
+                p.drawText(cx + cell_w // 2 - 10, 0, 20, PT - 4, Qt.AlignCenter,
+                           f"{self._hours[h].hour:02d}")
 
-        # Grid: banden × uren
+        # Heatmap: banden × uren
         for bi, (bname, _) in enumerate(_BANDS_HF):
             cy = PT + bi * cell_h
-            # Bandnaam in bandkleur
             p.setPen(QColor(_BAND_COLORS_HF.get(bname, TEXT_DIM)))
-            p.drawText(0, cy, PL - 3, cell_h,
-                       Qt.AlignRight | Qt.AlignVCenter, bname)
-
+            p.drawText(0, cy, PL - 3, cell_h, Qt.AlignRight | Qt.AlignVCenter, bname)
             for h in range(N_H):
                 pct = self._grid[bi][h]
                 if   pct >= 60: fill = QColor("#2E7D32")
                 elif pct >= 30: fill = QColor("#F9A825")
                 elif pct >= 1:  fill = QColor("#B71C1C")
                 else:           fill = QColor("#1A1C1F")
-                cx = PL + h * cell_w
-                p.fillRect(cx, cy, cell_w - 1, cell_h - 1, fill)
+                p.fillRect(PL + h * cell_w, cy, cell_w - 1, cell_h - 1, fill)
 
-        # Huidig uur — amber omkadering
-        lx = PL + self._now_h * cell_w
+        # MUF/LUF-curve op dezelfde uuras
+        ymax = max(30.0, max(self._muf) + 2)
+        ymax = float(int((ymax + 4.99) // 5) * 5)
+
+        def yv(mhz):
+            return muf_bottom - (muf_bottom - muf_top) * min(1.0, mhz / ymax)
+
+        p.fillRect(PL, muf_top, N_H * cell_w, muf_bottom - muf_top, QColor(BG_SURFACE))
+        p.setPen(QPen(QColor(BORDER), 1, Qt.DotLine))
+        for bname, mhz in self._MUF_BANDS:
+            if mhz < ymax:
+                y = int(yv(mhz))
+                p.setPen(QPen(QColor(_BAND_COLORS_HF.get(bname, TEXT_DIM)).darker(160), 1, Qt.DotLine))
+                p.drawLine(PL, y, PL + N_H * cell_w, y)
+                p.setPen(QColor(_BAND_COLORS_HF.get(bname, TEXT_DIM)))
+                p.drawText(0, y - 6, PL - 3, 12, Qt.AlignRight | Qt.AlignVCenter, bname)
+        p.setPen(QColor(TEXT_DIM))
+        p.drawText(0, muf_top, PL - 3, 12, Qt.AlignRight | Qt.AlignTop, f"{ymax:.0f}")
+        muf_pts = [QPointF(PL + h * cell_w + cell_w / 2, yv(self._muf[h])) for h in range(N_H)]
+        luf_pts = [QPointF(PL + h * cell_w + cell_w / 2, yv(self._luf[h])) for h in range(N_H)]
+        band = QPainterPath(muf_pts[0])
+        for pt in muf_pts[1:]:
+            band.lineTo(pt)
+        for pt in reversed(luf_pts):
+            band.lineTo(pt)
+        band.closeSubpath()
+        p.setRenderHint(QPainter.Antialiasing, True)
+        p.fillPath(band, QColor(200, 168, 75, 40))
+        p.setPen(QPen(QColor(ACCENT), 2))
+        p.drawPolyline(muf_pts)
+        p.setPen(QPen(QColor(TEXT_DIM), 1.2, Qt.DashLine))
+        p.drawPolyline(luf_pts)
+        p.setRenderHint(QPainter.Antialiasing, False)
+        p.setPen(QColor(ACCENT))
+        p.drawText(PL + 3, muf_top + 1, 60, 12, Qt.AlignLeft | Qt.AlignTop, "MUF")
+        p.setPen(QColor(TEXT_DIM))
+        p.drawText(PL + 36, muf_top + 1, 60, 12, Qt.AlignLeft | Qt.AlignTop, "LUF")
+
+        # Huidig uur (eerste kolom) — amber omkadering over heatmap én curve
         p.setPen(QPen(QColor(ACCENT), 1))
         p.setBrush(Qt.NoBrush)
-        p.drawRect(lx, PT, cell_w - 1, N_B * cell_h - 1)
+        p.drawRect(PL, PT, cell_w - 1, muf_bottom - PT - 1)
 
-        # Sla layout op voor tooltip
-        self._layout_info = dict(pl=PL, pt=PT, cw=cell_w, ch=cell_h,
-                                 nb=N_B, nh=N_H)
+        self._layout_info = dict(pl=PL, pt=PT, cw=cell_w, ch=cell_h, nb=N_B, nh=N_H,
+                                 heat_bottom=heat_bottom, muf_top=muf_top,
+                                 muf_bottom=muf_bottom)
 
-    def mousePressEvent(self, event):
+    # ── interactie ───────────────────────────────────────────────────────────
+    def _cell(self, pos):
         lay = self._layout_info
         if not lay or not self._grid:
-            return
-        row = (event.position().toPoint().y() - lay["pt"]) // lay["ch"]
-        if 0 <= row < lay["nb"]:
+            return None, None, None
+        col = (pos.x() - lay["pl"]) // lay["cw"]
+        if not (0 <= col < lay["nh"]):
+            return None, None, None
+        if lay["pt"] <= pos.y() < lay["heat_bottom"]:
+            return "heat", col, (pos.y() - lay["pt"]) // lay["ch"]
+        if lay["muf_top"] <= pos.y() <= lay["muf_bottom"]:
+            return "muf", col, None
+        return None, None, None
+
+    def mousePressEvent(self, event):
+        area, col, row = self._cell(event.position().toPoint())
+        if area == "heat" and 0 <= row < len(_BANDS_HF):
             bname = _BANDS_HF[row][0]
             _show_band_freq_menu(bname, self,
                 lambda hz, mode: self._send_to_cat(hz, mode))
@@ -934,26 +942,24 @@ class BandSchedWidget(QWidget):
             f"📟  {hz/1e6:.4f} MHz  {mode}" if ok else f"📟  {msg}", ok)
 
     def mouseMoveEvent(self, event):
-        lay = self._layout_info
-        if not lay or not self._grid:
-            return
-        col = (event.position().toPoint().x() - lay["pl"]) // lay["cw"]
-        row = (event.position().toPoint().y() - lay["pt"]) // lay["ch"]
-        if 0 <= col < lay["nh"] and 0 <= row < lay["nb"]:
-            bname, bfreq = _BANDS_HF[row]
-            pct  = self._grid[row][col]
-            kwal = (tr("band.good") if pct >= 60 else tr("band.fair") if pct >= 30
-                    else tr("band.poor") if pct >= 1 else tr("band.closed"))
-            tip  = (f"{bname}  —  {col:02d}:00–{(col+1)%24:02d}:00 lokaal\n"
-                    f"Betrouwbaarheid: {pct}%  ({kwal})\n"
-                    f"Frequentie: {bfreq:.3f} MHz\n"
-                    f"Modus: {_BAND_MODES_TBL.get(bname, '—')}\n"
-                    f"FT8: {_BAND_FT8_FREQ.get(bname, '—')} MHz")
-            from PySide6.QtWidgets import QToolTip
-            QToolTip.showText(event.globalPosition().toPoint(), tip, self)
-        else:
-            from PySide6.QtWidgets import QToolTip
+        from PySide6.QtWidgets import QToolTip
+        area, col, row = self._cell(event.position().toPoint())
+        if area is None:
             QToolTip.hideText()
+            return
+        t0 = self._hours[col]
+        span = f"{t0:%H:%M}–{(t0 + _dt.timedelta(hours=1)):%H:%M}"
+        dn = tr("band.day") if self._day[col] else tr("band.night")
+        if area == "heat" and 0 <= row < len(_BANDS_HF):
+            bname, bfreq = _BANDS_HF[row]
+            pct = self._grid[row][col]
+            kwal = _pct_to_cond(pct)[0]
+            tip = tr("sched.tip.heat", band=bname, span=span, dn=dn, pct=pct, cond=kwal,
+                     mhz=f"{bfreq:.3f}", mode=_BAND_MODES_TBL.get(bname, "—"),
+                     ft8=_BAND_FT8_FREQ.get(bname, "—"))
+        else:
+            tip = tr("sched.tip.muf", span=span, dn=dn, muf=self._muf[col], luf=self._luf[col])
+        QToolTip.showText(event.globalPosition().toPoint(), tip, self)
 
 
 # ── Historiek-grafieken ───────────────────────────────────────────────────────
@@ -1402,27 +1408,11 @@ class LightningPanel(QWidget):
     _QRN_RADIUS_KM = 2000
 
     def _update_count(self):
-        import math
-        with self._layer._lock:
-            strikes = list(self._layer._strikes)
-
-        # Filter naar inslagen nabij QTH (QRN is lokaal fenomeen)
-        cfg = self._cfg
-        if cfg:
-            from .layers import MAP_W, MAP_H
-            qlat = math.radians(cfg.qth_lat)
-            qlon = math.radians(cfg.qth_lon)
-            R    = 6371.0
-            local = []
-            for x_px, y_px, t in strikes:
-                slat = math.radians(90 - y_px / MAP_H * 180)
-                slon = math.radians(x_px / MAP_W * 360 - 180)
-                dlat = slat - qlat; dlon = slon - qlon
-                a  = math.sin(dlat/2)**2 + math.cos(qlat)*math.cos(slat)*math.sin(dlon/2)**2
-                km = 2 * R * math.asin(min(1.0, math.sqrt(a)))
-                if km <= self._QRN_RADIUS_KM:
-                    local.append((x_px, y_px, t))
-            n = len(local)
+        # Filter naar inslagen nabij QTH (QRN is lokaal fenomeen); afstanden
+        # komen uit de cache van de bliksemlaag (per inslag één keer berekend)
+        strikes = self._layer.strikes_km()
+        if self._cfg:
+            n = sum(1 for *_, km in strikes if km is not None and km <= self._QRN_RADIUS_KM)
         else:
             n = len(strikes)
         self._count_lbl.setText(str(n))
@@ -1456,23 +1446,11 @@ class LightningPanel(QWidget):
             self.qrn_alert.emit("⚡", f"QRN: {qrn}", qrn_clr)
         self._qrn_level = lvl
 
-        # Dichtstbijzijnde inslag (gebruik volledige set voor absolute minimum)
-        if cfg and strikes:
+        # Dichtstbijzijnde inslag (volledige set; afstanden uit de cache)
+        kms = [km for *_, km in strikes if km is not None]
+        if self._cfg and kms:
             try:
-                qlat = math.radians(cfg.qth_lat)
-                qlon = math.radians(cfg.qth_lon)
-                R    = 6371.0
-                from .layers import MAP_W, MAP_H
-                min_km = None
-                for x_px, y_px, _ in strikes:
-                    slat = math.radians(90 - y_px / MAP_H * 180)
-                    slon = math.radians(x_px / MAP_W * 360 - 180)
-                    dlat = slat - qlat; dlon = slon - qlon
-                    a  = (math.sin(dlat/2)**2 +
-                          math.cos(qlat)*math.cos(slat)*math.sin(dlon/2)**2)
-                    km = 2 * R * math.asin(min(1.0, math.sqrt(a)))
-                    if min_km is None or km < min_km:
-                        min_km = km
+                min_km = min(kms)
                 if min_km is not None:
                     self._near_lbl.setText(f"{tr('lightn.nearest')}: {min_km:.0f} {tr('lightn.km')}")
                     clr = "#EF5350" if min_km < 100 else "#FFA726" if min_km < 300 else TEXT_DIM
@@ -1556,8 +1534,10 @@ class AlertsWidget(QWidget):
             k_en = getattr(cfg, "k_alert_en", True) if cfg else True
             if k_en and k >= threshold:
                 # Alleen resetten als K waarde veranderd is t.o.v. vorige
+                # Hele K-stappen vergelijken: de NOAA-waarde verandert per
+                # minuut; kleine schommelingen mogen een gewiste melding niet terugzetten
                 prev_k = float(str(self._solar_data.get("k_index", "0")).replace("—","0") or "0")
-                if k != prev_k:
+                if round(k) != round(prev_k):
                     new_k_alert = True
         except (ValueError, TypeError):
             pass
@@ -2088,499 +2068,11 @@ def _set_cb_text(cb: "QComboBox", text: str):
     cb.setCurrentIndex(idx if idx >= 0 else 0)
 
 
-class _PulseDot(QLabel):
-    """Pulserende gele stip (●) — fadeert in en uit via QTimer."""
-    _ALPHAS = [255, 200, 130, 70, 40, 70, 130, 200]
+# PropAdvWidget is verhuisd naar advice_panel.py (P2: advies op basis van
+# centraal model + waarnemingen + ruimteweer-gebeurtenissen).
 
-    def __init__(self, parent=None):
-        super().__init__("●", parent)
-        self.setFont(QFont("Segoe UI", 8))
-        self.setAlignment(Qt.AlignTop | Qt.AlignRight)
-        self.setFixedWidth(12)
-        self._phase = 0
-        self._timer = QTimer(self)
-        self._timer.timeout.connect(self._tick)
-        self._timer.start(150)
-        self._tick()
 
-    def _tick(self):
-        a = self._ALPHAS[self._phase % len(self._ALPHAS)]
-        self.setStyleSheet(
-            f"color: rgba(255,204,0,{a}); background: transparent;")
-        self._phase += 1
-
-
-class PropAdvWidget(QWidget):
-    """Propagatie-advies in kaartjes — v4 stijl."""
-
-    COLS   = 3
-    CARD_H = 72
-
-    analysis_changed = Signal(list)
-
-    def __init__(self, cfg=None, parent=None):
-        super().__init__(parent)
-        self._cfg    = cfg
-        self._solar: dict = {}
-        self._hashes: dict = {}
-        self._dots:   list = []    # refs naar pulserende stippen bewaren
-        v = QVBoxLayout(self)
-        v.setContentsMargins(4, 4, 4, 4)
-        v.setSpacing(4)
-
-        self._cards_widget = QWidget()
-        self._cards_widget.setStyleSheet(f"background: {BG_PANEL};")
-        self._grid = QGridLayout(self._cards_widget)
-        self._grid.setSpacing(4)
-        v.addWidget(self._cards_widget)
-        v.addStretch()
-
-    def set_cfg(self, cfg):
-        self._cfg = cfg
-
-    def set_data(self, solar: dict):
-        self._solar = solar
-        self._rebuild()
-
-    # ── Kaarten opbouwen ─────────────────────────────────────────────────────
-    def _rebuild(self):
-        tips = self._build_tips()
-        # Stop en wis oude pulserende stippen
-        for dot in self._dots:
-            dot._timer.stop()
-        self._dots.clear()
-        while self._grid.count():
-            item = self._grid.takeAt(0)
-            if item.widget():
-                item.widget().deleteLater()
-        new_hashes: dict = {}
-        changed_tips: list = []
-        for i, (icon, text, color) in enumerate(tips):
-            col     = i % self.COLS
-            row     = i // self.COLS
-            changed = (self._hashes.get(i) != hash((icon, text)))
-            if changed and self._hashes:
-                changed_tips.append((icon, text, color))
-            card, dot = self._make_card(icon, text, color, changed)
-            if dot:
-                self._dots.append(dot)
-            self._grid.addWidget(card, row, col)
-            new_hashes[i] = hash((icon, text))
-        for c in range(self.COLS):
-            self._grid.setColumnStretch(c, 1)
-        self._hashes = new_hashes
-        if changed_tips:
-            self.analysis_changed.emit(changed_tips)
-
-    def _make_card(self, icon: str, text: str,
-                   color: str, changed: bool):
-        """Geeft (QFrame, _PulseDot|None) terug."""
-        frame = QFrame()
-        frame.setMinimumHeight(self.CARD_H)
-        frame.setStyleSheet(
-            f"QFrame {{ background: {BG_SURFACE}; border-radius: 2px; }}")
-        fl = QVBoxLayout(frame)
-        fl.setContentsMargins(6, 4, 6, 4)
-        fl.setSpacing(0)
-
-        top = QHBoxLayout()
-        top.setSpacing(2)
-        lbl = QLabel(f"{icon}  {text}")
-        f8  = QFont("Segoe UI", 8)
-        lbl.setFont(f8)
-        lbl.setStyleSheet(f"color: {color}; background: transparent;")
-        lbl.setWordWrap(True)
-        top.addWidget(lbl, 1)
-
-        dot_ref = None
-        if changed:
-            dot = _PulseDot()    # pulserende stip met eigen timer
-            dot_ref = dot
-            top.addWidget(dot)
-
-        fl.addLayout(top)
-        fl.addStretch()
-        return frame, dot_ref
-
-    # ── Advies genereren ──────────────────────────────────────────────────────
-    def _build_tips(self) -> list[tuple[str, str, str]]:
-        data = self._solar
-        try:
-            sfi     = float(str(data.get("sfi",     "90")).replace("—", "90") or "90")
-            ssn     = float(str(data.get("ssn",     "50")).replace("—", "50") or "50")
-            k_index = float(str(data.get("k_index", "2" )).replace("—", "2")  or "2")
-            a_index = float(str(data.get("a_index", "5" )).replace("—", "5")  or "5")
-        except (ValueError, TypeError):
-            sfi, ssn, k_index, a_index = 90.0, 50.0, 2.0, 5.0
-
-        xray   = str(data.get("xray",     ""))
-        sw_spd = str(data.get("sw_speed", "—"))
-        sw_bz  = str(data.get("sw_bz",    "—"))
-
-        import datetime as _dt
-        now_utc = _dt.datetime.now(_dt.timezone.utc)
-        utc_h   = now_utc.hour
-        now_loc = _dt.datetime.now()
-        lok_h   = now_loc.hour
-        month   = now_loc.month
-        is_day  = 6 <= utc_h < 20
-
-        s_i, ss_i = int(sfi), int(ssn)
-        k_i, a_i  = int(k_index), int(a_index)
-
-        rels     = _reliability(sfi, k_index, is_day)
-        band_pct = {_BANDS[i][0]: int(rels[i] * 100) for i in range(len(_BANDS))}
-        hf_open  = sorted(
-            [(n, p) for n, p in band_pct.items() if p > 0],
-            key=lambda x: -x[1])
-
-        tips: list[tuple[str, str, str]] = []
-
-        # ── 1. Beste banden ──────────────────────────────────────────────────
-        if hf_open:
-            best = hf_open[:5]
-            bstr = "  ·  ".join(f"{n} {p}%" for n, p in best)
-            extra = f"  (+{len(hf_open)-5})" if len(hf_open) > 5 else ""
-            tips.append(("📡", tr("prop.adv.best", bands=bstr + extra), "#4CAF50"))
-        else:
-            tips.append(("📡", tr("prop.adv.no_data"), TEXT_DIM))
-
-        # ── 2. Geomagnetische condities ──────────────────────────────────────
-        if k_index >= 7:
-            tips.append(("🚨", tr("prop.adv.storm4", k_i=k_i, a_i=a_i), "#F44336"))
-        elif k_index >= 5:
-            tips.append(("⚠️", tr("prop.adv.storm3", k_i=k_i, a_i=a_i), "#F44336"))
-        elif k_index >= 3:
-            tips.append(("⚡", tr("prop.adv.storm2", k_i=k_i, a_i=a_i), "#FFC107"))
-        else:
-            tips.append(("✅", tr("prop.adv.storm0", k_i=k_i, a_i=a_i), "#4CAF50"))
-
-        # ── 3. Zonactiviteit ─────────────────────────────────────────────────
-        if sfi >= 200:
-            tips.append(("🌟", tr("prop.adv.sfi.exc",  s_i=s_i, ss_i=ss_i), ACCENT))
-        elif sfi >= 150:
-            tips.append(("☀️", tr("prop.adv.sfi.high", s_i=s_i, ss_i=ss_i), ACCENT))
-        elif sfi >= 100:
-            tips.append(("🌤",  tr("prop.adv.sfi.med",  s_i=s_i, ss_i=ss_i), ACCENT))
-        elif sfi >= 80:
-            tips.append(("🌥",  tr("prop.adv.sfi.low",  s_i=s_i, ss_i=ss_i), TEXT_BODY))
-        else:
-            tips.append(("🌧",  tr("prop.adv.sfi.min",  s_i=s_i, ss_i=ss_i), TEXT_DIM))
-
-        # ── 4. Solarwind en Bz ───────────────────────────────────────────────
-        try:
-            spd = float(sw_spd)
-            bz  = float(sw_bz)
-            spd_s, bz_s = str(int(spd)), f"{bz:+.1f}"
-            if spd > 700 or bz <= -20:
-                tips.append(("🌪", tr("prop.adv.sw.storm", spd_s=spd_s, bz_s=bz_s), "#F44336"))
-            elif spd > 500 or bz <= -10:
-                tips.append(("💨", tr("prop.adv.sw.high",  spd_s=spd_s, bz_s=bz_s), "#FFC107"))
-            elif bz > 5:
-                tips.append(("🛡", tr("prop.adv.sw.north", spd_s=spd_s, bz_s=bz_s), "#4CAF50"))
-            else:
-                tips.append(("💫", tr("prop.adv.sw.normal",spd_s=spd_s, bz_s=bz_s), TEXT_BODY))
-        except (ValueError, TypeError):
-            pass
-
-        # ── 5. X-straling / flares ───────────────────────────────────────────
-        xclass = xray[:1].upper() if xray else ""
-        if xclass == "X":
-            tips.append(("☢", tr("prop.adv.flare_x", xray=xray), "#F44336"))
-        elif xclass == "M":
-            tips.append(("⚡", tr("prop.adv.flare_m", xray=xray), "#FFC107"))
-
-        # ── 6. Dag/nacht en grijze lijn ──────────────────────────────────────
-        h_s = f"{lok_h:02d}"
-        if is_day:
-            if 6 <= lok_h < 10:
-                tips.append(("🌅", tr("prop.adv.day.morn", h_s=h_s), TEXT_BODY))
-            elif 10 <= lok_h < 16:
-                tips.append(("🌞", tr("prop.adv.day.noon", h_s=h_s), TEXT_BODY))
-            else:
-                tips.append(("🌇", tr("prop.adv.day.aft",  h_s=h_s), TEXT_BODY))
-        else:
-            if 22 <= lok_h or lok_h < 2:
-                tips.append(("🌃", tr("prop.adv.night.eve", h_s=h_s), TEXT_BODY))
-            elif 2 <= lok_h < 6:
-                tips.append(("🌌", tr("prop.adv.night.mid", h_s=h_s), TEXT_BODY))
-            else:
-                tips.append(("🌄", tr("prop.adv.night.pre", h_s=h_s), TEXT_BODY))
-
-        # ── 7. Modus / vermogen advies ───────────────────────────────────────
-        if self._cfg and hf_open:
-            mode  = self._cfg.mode
-            power = self._cfg.power
-            ant   = self._cfg.antenna
-            snr   = (_MODE_DB.get(mode, 0) + _POWER_DB.get(power, 0) +
-                     _ANT_DB.get(ant, 0))
-            bn0, bp0 = hf_open[0]
-            snr_s = f"{snr:+d}"
-            if bp0 < 30 and mode == "SSB":
-                tips.append(("🔧", tr("prop.adv.mode.weak", bn0=bn0, bp0=bp0, snr_s=snr_s), "#FFC107"))
-            else:
-                tips.append(("🔧", tr("prop.adv.mode.ok", mode=mode, bn0=bn0, bp0=bp0, power=power, snr_s=snr_s, ant=ant), TEXT_BODY))
-
-        # ── 8. Absorptie op hoge breedte ─────────────────────────────────────
-        if self._cfg:
-            lat = abs(self._cfg.qth_lat)
-            if lat > 50 and k_index >= 4:
-                tips.append(("🧲", tr("prop.adv.aurora.hi", k_i=k_i, lat=lat), "#FFC107"))
-            elif lat > 45 and k_index >= 3:
-                tips.append(("🧲", tr("prop.adv.aurora.lo", k_i=k_i, lat=lat), TEXT_BODY))
-
-        # ── 9. Sporadic-E ────────────────────────────────────────────────────
-        es_score = 0
-        if 5 <= month <= 8:
-            es_score = 3 if month in (6, 7) else 2
-        elif month in (12, 1):
-            es_score = 1
-        es_time = (9 <= lok_h < 14) or (17 <= lok_h < 22)
-        if es_score >= 2 and es_time:
-            tips.append(("⚡", tr("prop.adv.es.high",   month=month, h_s=h_s), "#66BB6A"))
-        elif es_score >= 2:
-            tips.append(("⚡", tr("prop.adv.es.season", month=month), TEXT_DIM))
-
-        # ── 10. DX-routes ────────────────────────────────────────────────────
-        dx_routes = []
-        if is_day:
-            if 5 <= utc_h < 10 and sfi >= 100: dx_routes.append("EU→JA (20m/17m)")
-            if 12 <= utc_h < 18 and sfi >= 80:  dx_routes.append("EU→W (20m/15m)")
-            if 8 <= utc_h < 14 and sfi >= 80:   dx_routes.append("EU→AF (20m/17m)")
-            if 14 <= utc_h < 20 and sfi >= 120: dx_routes.append("EU→OC (15m/10m)")
-        else:
-            if 22 <= utc_h or utc_h < 4: dx_routes.append("EU→W (40m/80m)")
-            if 2 <= utc_h < 8:           dx_routes.append("EU→JA (40m gray line)")
-        if dx_routes:
-            tips.append(("🌍", tr("prop.adv.dx.routes", routes="  ·  ".join(dx_routes)), "#4FC3F7"))
-
-        # ── 11. Algehele beoordeling ─────────────────────────────────────────
-        score = 0
-        if sfi >= 150: score += 3
-        elif sfi >= 100: score += 2
-        elif sfi >= 80: score += 1
-        if k_index <= 2: score += 2
-        elif k_index <= 4: score += 1
-        if hf_open and hf_open[0][1] >= 60: score += 2
-        elif hf_open: score += 1
-        try:
-            if float(sw_bz) < -10: score -= 1
-        except (ValueError, TypeError):
-            pass
-        overall = (tr("band.excellent") if score >= 6 else tr("band.good") if score >= 4
-                   else tr("band.fair") if score >= 2 else tr("band.poor"))
-        overall_clr = ("#4CAF50" if score >= 6 else "#8BC34A" if score >= 4
-                       else "#FFC107" if score >= 2 else "#F44336")
-        tips.append(("📊",
-            tr("prop.adv.overall", overall=overall) + f"  (SFI {s_i} · K {k_i} · {len(hf_open)})",
-            overall_clr))
-
-        return tips
-
-
-# ── MUF/LUF Forecast Widget ────────────────────────────────────────────────
-
-class MUFWidget(QWidget):
-    """24-hour MUF (Maximum Usable Frequency) forecast heatmap."""
-
-    def __init__(self, cfg=None, parent=None):
-        super().__init__(parent)
-        self._cfg = cfg
-        self._solar: dict = {}
-        self._muf_data: dict = {}  # {hour: {'foF2': MHz, 'muf': MHz, 'luf': MHz, 'quality': str}}
-        self.setAttribute(Qt.WA_OpaquePaintEvent)
-        self.setMinimumHeight(140)
-        self.setMouseTracking(True)
-        self.setCursor(Qt.PointingHandCursor)
-
-    def set_cfg(self, cfg):
-        self._cfg = cfg
-        self._recalc()
-        self.update()
-
-    def set_data(self, solar: dict):
-        """Update with new solar data and recalculate MUF."""
-        self._solar = solar
-        self._recalc()
-        self.update()
-
-    def _recalc(self):
-        """Recalculate MUF forecast from solar data."""
-        from .muf_model import MUFModel
-
-        try:
-            sfi = float(str(self._solar.get("sfi", "90")).replace("—", "90") or "90")
-            ssn = float(str(self._solar.get("ssn", "50")).replace("—", "50") or "50")
-            k = float(str(self._solar.get("k_index", "2")).replace("—", "2") or "2")
-        except (ValueError, TypeError):
-            sfi, ssn, k = 90.0, 50.0, 2.0
-
-        qth_lat, qth_lon = 52.0, 5.0
-        if self._cfg:
-            qth_lat, qth_lon = self._cfg.qth_lat, self._cfg.qth_lon
-
-        model = MUFModel(qth_lat, qth_lon)
-        self._muf_data = model.forecast_day(sfi, ssn, k, distance_km=5000)
-
-    def paintEvent(self, event):
-        p = QPainter(self)
-        W, H = self.width(), self.height()
-        p.fillRect(0, 0, W, H, QColor(BG_PANEL))
-
-        if not self._muf_data:
-            p.setPen(QColor(TEXT_DIM))
-            p.setFont(QFont("Segoe UI", 9))
-            p.drawText(0, 0, W, H, Qt.AlignCenter, tr("app.loading"))
-            return
-
-        # Layout: left margin for Y-axis labels, bottom margin for X-axis
-        N_H = 24
-        PL, PR, PT, PB = 70, 8, 30, 35  # More space for labels
-        cell_w = max(1, (W - PL - PR) // N_H)
-        CELL_H = H - PT - PB
-
-        # Get MUF/LUF range
-        muf_values = [self._muf_data[h]["muf"] for h in range(24) if h in self._muf_data]
-        luf_values = [self._muf_data[h]["luf"] for h in range(24) if h in self._muf_data]
-
-        muf_min, muf_max = 5.0, 30.0
-        if muf_values:
-            muf_min = min(muf_min, min(muf_values) - 2)
-            muf_max = max(muf_max, max(muf_values) + 2)
-        if luf_values:
-            muf_min = min(muf_min, min(luf_values) - 2)
-
-        muf_min = max(0, int(muf_min / 5) * 5)  # Round to 5 MHz
-        muf_max = int((muf_max + 4) / 5) * 5
-        muf_range = max(1.0, muf_max - muf_min)
-
-        # ── Background gridlines & band-zones ──
-        p.setPen(QPen(QColor(TEXT_DIM), 1, Qt.DotLine))
-
-        # Vertical hour gridlines (every 3 hours)
-        for h in range(0, N_H, 3):
-            x = PL + h * cell_w
-            p.drawLine(int(x), PT, int(x), PT + CELL_H)
-
-        # Horizontal MHz gridlines
-        for mhz in range(int(muf_min), int(muf_max) + 1, 5):
-            norm = (mhz - muf_min) / muf_range
-            y = PT + CELL_H * (1.0 - norm)
-            p.drawLine(PL, int(y), PL + N_H * cell_w, int(y))
-
-        # ── Band-zone backgrounds (colored regions for common HF bands) ──
-        bands = [
-            (80, "#C62828", "80m"),   # Rood
-            (40, "#F57C00", "40m"),   # Oranje
-            (20, "#6A1B9A", "20m"),   # Paars
-            (15, "#0288D1", "15m"),   # Blauw
-            (10, "#00796B", "10m"),   # Cyaan
-        ]
-
-        for freq_mhz, color, _ in bands:
-            if muf_min < freq_mhz < muf_max:
-                norm = (freq_mhz - muf_min) / muf_range
-                y = PT + CELL_H * (1.0 - norm)
-                p.fillRect(PL, int(y) - 1, N_H * cell_w, 2, QColor(color + "30"))  # Halftransparant
-
-        # ── Hour labels (every 3 hours) ──
-        p.setFont(QFont("Segoe UI", 8))
-        p.setPen(QPen(QColor(TEXT_H1)))
-        for h in range(0, N_H, 3):
-            lx = PL + h * cell_w + cell_w // 2
-            p.drawText(int(lx) - 12, PT - 20, 24, 16, Qt.AlignCenter, f"{h:02d}Z")
-
-        # ── Draw LUF curve (onderste grens, grijs) ──
-        luf_points = []
-        for h in range(N_H):
-            if h in self._muf_data:
-                luf = self._muf_data[h]["luf"]
-                norm_luf = (luf - muf_min) / muf_range
-                y = PT + CELL_H * (1.0 - norm_luf)
-                x = PL + h * cell_w + cell_w // 2
-                luf_points.append(QPointF(x, y))
-
-        if luf_points and len(luf_points) > 1:
-            p.setPen(QPen(QColor("#808080"), 2, Qt.SolidLine, Qt.RoundCap, Qt.RoundJoin))
-            path = QPainterPath(luf_points[0])
-            for pt in luf_points[1:]:
-                path.lineTo(pt)
-            p.drawPath(path)
-
-        # ── Draw MUF curve (bovenste grens, accent) ──
-        muf_points = []
-        for h in range(N_H):
-            if h in self._muf_data:
-                muf = self._muf_data[h]["muf"]
-                norm_muf = (muf - muf_min) / muf_range
-                y = PT + CELL_H * (1.0 - norm_muf)
-                x = PL + h * cell_w + cell_w // 2
-                muf_points.append(QPointF(x, y))
-
-        if muf_points and len(muf_points) > 1:
-            p.setPen(QPen(QColor(ACCENT), 3, Qt.SolidLine, Qt.RoundCap, Qt.RoundJoin))
-            path = QPainterPath(muf_points[0])
-            for pt in muf_points[1:]:
-                path.lineTo(pt)
-            p.drawPath(path)
-
-            # Fill between MUF and LUF
-            if luf_points and len(luf_points) == len(muf_points):
-                fill_points = muf_points + list(reversed(luf_points))
-                fill_path = QPainterPath(fill_points[0])
-                for pt in fill_points[1:]:
-                    fill_path.lineTo(pt)
-                fill_path.closeSubpath()
-                p.fillPath(fill_path, QBrush(QColor(200, 168, 75, 40)))
-
-        # ── Current hour indicator (nu) ──
-        now_h = _dt.datetime.now().hour
-        if now_h in self._muf_data and muf_points:
-            muf = self._muf_data[now_h]["muf"]
-            norm_muf = (muf - muf_min) / muf_range
-            y = PT + CELL_H * (1.0 - norm_muf)
-            x = PL + now_h * cell_w + cell_w // 2
-            p.setPen(QPen(QColor("#FFFF00"), 2))
-            p.setBrush(QBrush(QColor("#FFFF0080")))
-            p.drawEllipse(QPointF(x, y), 5, 5)
-
-        # ── Y-axis MHz labels ──
-        p.setFont(QFont("Segoe UI", 9))
-        p.setPen(QPen(QColor(TEXT_H1)))
-        for mhz in range(int(muf_min), int(muf_max) + 1, 5):
-            norm = (mhz - muf_min) / muf_range if muf_range > 0 else 0.5
-            y = PT + CELL_H * (1.0 - norm)
-            p.drawText(2, int(y) - 6, PL - 6, 12, Qt.AlignRight | Qt.AlignVCenter, f"{mhz} MHz")
-
-
-    def mouseMoveEvent(self, event):
-        """Show MUF tooltip on hover."""
-        W = self.width()
-        N_H = 24
-        PL = 70  # Must match paintEvent layout
-        cell_w = max(1, (W - PL - 8) // N_H)
-
-        x = event.position().x()
-        if x >= PL:
-            h = int((x - PL) // cell_w)
-            if 0 <= h < N_H and h in self._muf_data:
-                data = self._muf_data[h]
-                quality = data["quality"]
-                quality_key = f"muf.quality.{quality}"
-                tip = (f"{h:02d}:00 UTC\n"
-                       f"foF2: {data['foF2']:.1f} MHz\n"
-                       f"MUF: {data['muf']:.1f} MHz\n"
-                       f"LUF: {data['luf']:.1f} MHz\n"
-                       f"{tr('muf.quality')}: {tr(quality_key)}")
-                from PySide6.QtWidgets import QToolTip
-                QToolTip.showText(event.globalPosition().toPoint(), tip, self)
-                return
-
-        from PySide6.QtWidgets import QToolTip
-        QToolTip.hideText()
-
-
-# ── WSPR Live Table Widget ────────────────────────────────────────────────
+# ── WSPR ──────────────────────────────────────────────────────────────────────
 
 class WSPRTableWidget(QWidget):
     """Live WSPR QSO records table with real-time updates."""
@@ -2604,7 +2096,7 @@ class WSPRTableWidget(QWidget):
         self._table.setColumnCount(8)
         self._table.setHorizontalHeaderLabels([
             tr("wspr.call"),
-            tr("wspr.tx_grid"),
+            tr("wspr.grid"),
             tr("wspr.freq"),
             tr("wspr.snr"),
             tr("wspr.distance"),
@@ -2636,37 +2128,60 @@ class WSPRTableWidget(QWidget):
     def set_wspr_feed(self, feed):
         """Connect to WSPR feed for live updates."""
         self._wspr_feed = feed
+        self._last_ok = None
         if feed:
             feed.data_updated.connect(self._on_wspr_data)
+            feed.error_occurred.connect(self._on_wspr_error)
 
     def _on_wspr_data(self, records):
         """Update table with new WSPR data."""
         self._records = records
+        self._last_ok = _dt.datetime.now()
         self._update_table()
+
+    def _on_wspr_error(self, msg: str):
+        """Storing: laatste echte data blijft staan, status meldt 'offline'."""
+        since = (f" — {tr('wspr.last_update')}: {self._last_ok.strftime('%H:%M')}"
+                 if self._last_ok else "")
+        self._status_lbl.setText(f"⚠ {tr('wspr.offline')}{since}")
+        self._status_lbl.setToolTip(msg)
+        self._status_lbl.setStyleSheet("color: #FFA726; font-size: 8pt;")
 
     def _update_table(self):
         """Populate table with WSPR records."""
+        # Sorteren uit tijdens vullen — anders husselt Qt de rijen door elkaar
+        self._table.setSortingEnabled(False)
         self._table.setRowCount(0)
+        self._status_lbl.setStyleSheet(f"color: {TEXT_DIM}; font-size: 8pt;")
+        self._status_lbl.setToolTip(tr("wspr.note"))
 
         if not self._records:
-            self._status_lbl.setText(tr("wspr.disabled"))
+            self._status_lbl.setText(tr("wspr.none_region"))
+            self._table.setSortingEnabled(True)
             return
 
+        n_out = sum(1 for r in self._records if r.get("direction") == "out")
         self._status_lbl.setText(
-            f"{len(self._records)} {tr('wspr.records')} "
+            f"{len(self._records)} {tr('wspr.records')}  ·  → {n_out}  ← "
+            f"{len(self._records) - n_out}  "
             f"({tr('wspr.last_update')}: {_dt.datetime.now().strftime('%H:%M')})"
         )
 
         for row, record in enumerate(self._records[:100]):  # Limit to 100 rows
             self._table.insertRow(row)
 
-            # Call sign
-            call_item = QTableWidgetItem(record.get("call_sign", "?"))
+            # Verre station, met richting: → eigen regio gehoord, ← gehoord in eigen regio
+            arrow = "→" if record.get("direction") == "out" else "←"
+            call_item = QTableWidgetItem(f"{arrow} {record.get('call_sign', '?')}")
             call_item.setForeground(QColor(ACCENT))
+            call_item.setToolTip(
+                f"{record.get('tx_call', '?')} ({record.get('tx_grid', '?')}) → "
+                f"{record.get('rx_call', '?')} ({record.get('rx_grid', '?')})  ·  "
+                f"{record.get('band', '')}  ·  {record.get('power', '')}")
             self._table.setItem(row, 0, call_item)
 
-            # TX Grid
-            grid_item = QTableWidgetItem(record.get("tx_grid", "?"))
+            # Locator van het verre station
+            grid_item = QTableWidgetItem(record.get("grid", "?"))
             self._table.setItem(row, 1, grid_item)
 
             # Frequency
@@ -2705,6 +2220,7 @@ class WSPRTableWidget(QWidget):
             time_item.setForeground(QColor(TEXT_DIM))
             self._table.setItem(row, 6, time_item)
 
+        self._table.setSortingEnabled(True)
         self._table.resizeRowsToContents()
 
     def set_font_size(self, pt: int) -> None:

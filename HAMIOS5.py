@@ -1,5 +1,5 @@
 """
-HAMIOS v5.6 — PySide6 versie
+HAMIOS v5.7 — PySide6 versie
 Developed with Claude AI
 
 """
@@ -124,7 +124,7 @@ def _make_header_pixmap() -> QPixmap:
 
     p.setFont(QFont("Segoe UI", 10))
     p.setPen(QColor(200, 168, 75, 130))
-    p.drawText(TX + 124, 8, 50, 44, Qt.AlignLeft | Qt.AlignVCenter, "v5.6")
+    p.drawText(TX + 124, 8, 50, 44, Qt.AlignLeft | Qt.AlignVCenter, "v5.7")
 
     p.setFont(QFont("Segoe UI", 8))
     p.setPen(LIGHT)
@@ -177,7 +177,7 @@ def _make_checks():
         ("web_noaa_swpc",     "NOAA SWPC",          "Solar/Geomag Data"),
         ("web_hamqsl",        "HamQSL",             "Solar Index"),
         # Weak Signal
-        ("web_wsprnet",       "WSPRnet",            "WSPR QSOs"),
+        ("web_wsprnet",       "wspr.live",          "WSPR spots"),
         # Spotting
         ("web_dxwatch",       "DXWatch",            "DX Spots"),
         ("web_pskreporter",   "PSK Reporter",       "Digital Mode"),
@@ -224,7 +224,7 @@ class _InetCheckThread(QThread):
             for use_ssl_verify in (True, False):
                 try:
                     req = _urlreq.Request(url, method="HEAD",
-                                          headers={"User-Agent": "HAMIOS/5.6"})
+                                          headers={"User-Agent": "HAMIOS/5.7"})
                     kwargs: dict = {"timeout": 6}
                     if not use_ssl_verify:
                         ctx = _ssl.create_default_context()
@@ -252,12 +252,12 @@ class _OnlineResourceCheckThread(QThread):
     def __init__(self):
         super().__init__()
         # Build resource dict from DEFAULT_RESOURCES for testing.
-        # CelesTrak is excluded: TLE is handled via file-age check at startup,
-        # not as an online connectivity probe.
+        # Satellite (TLE) sources are excluded: TLE is only fetched manually and
+        # rate-limited (tle_sources.py), never as a startup connectivity probe.
         self._RESOURCES = {
-            key: (res["url"], {"User-Agent": "HAMIOS/5.6"})
+            key: (res["url"], {"User-Agent": "HAMIOS/5.7"})
             for key, res in DEFAULT_RESOURCES.items()
-            if key != "web_celestrak"
+            if res.get("category") != "Satellites"
         }
 
     def run(self):
@@ -507,7 +507,7 @@ def main():
 
     app = QApplication(sys.argv)
     app.setApplicationName("HAMIOS")
-    app.setApplicationVersion("5.6")
+    app.setApplicationVersion("5.7")
     app.setOrganizationName("")
 
     # Global window reference for cleanup

@@ -1,29 +1,104 @@
 """
 WSPR (Weak Signal Propagation Reporter) Live Data Feed
 
-Fetches real-time QSO records from wsprnet.org API.
-Thread-safe caching with configurable update interval.
+Haalt echte WSPR-spots op via wspr.live (publieke ClickHouse-database met alle
+WSPRnet-spots). De oude wsprnet.org-API bestaat niet meer (HTTP 404).
+
+Alleen spots die iets zeggen over propagatie vanaf de eigen QTH:
+  → uitgaand: zender binnen RADIUS_KM van de QTH, elders gehoord
+  ← inkomend: ontvanger binnen RADIUS_KM van de QTH, hoort een verre zender
+
+Geen nepdata: bij een storing blijven de laatste echte spots staan en wordt
+een fout gemeld. Poll-interval 5 minuten (WSPR-cyclus = 2 min; server sparen).
 
 Usage:
     feed = WSPRFeed(qth_lat=52.0, qth_lon=5.0)
     feed.start()
-    records = feed.get_recent_qsos(hours=1)
     feed.stop()
 """
 
-import threading
-import time
 import json
-from datetime import datetime, timedelta, timezone
-from typing import List, Dict
+import math
+import threading
+import urllib.parse
+import urllib.request
+from datetime import datetime, timezone
+from typing import Dict, List
+
 from PySide6.QtCore import QThread, Signal
+
+WSPR_LIVE_URL   = "https://db1.wspr.live/"
+RADIUS_KM       = 300      # "eigen regio" rond de QTH
+WINDOW_MIN      = 30       # spots van de laatste N minuten
+MIN_DISTANCE_KM = 100      # lokale/zelf-spots zeggen niets over propagatie
+MAX_ROWS        = 500
+POLL_SECONDS    = 300
+_UA = "HAMIOS/5.7 (+https://hamios.space; WSPR propagation monitor)"
+
+# wspr.live 'band' (MHz, afgerond) → bandnaam
+BAND_NAMES = {
+    -1: "2200m", 0: "630m", 1: "160m", 3: "80m", 5: "60m", 7: "40m",
+    10: "30m", 14: "20m", 18: "17m", 21: "15m", 24: "12m", 28: "10m",
+    40: "8m", 50: "6m", 70: "4m", 144: "2m", 432: "70cm", 1296: "23cm",
+}
+
+
+def build_query(lat: float, lon: float) -> str:
+    """ClickHouse-query: recente spots van/naar de regio rond (lat, lon)."""
+    r_m = int(RADIUS_KM * 1000)
+    return (
+        "SELECT time, band, frequency, tx_sign, tx_loc, rx_sign, rx_loc, "
+        "snr, drift, power, distance, azimuth, rx_azimuth, "
+        f"greatCircleDistance(tx_lon, tx_lat, {lon:.4f}, {lat:.4f}) < {r_m} AS tx_near "
+        "FROM wspr.rx "
+        f"WHERE time > now() - INTERVAL {WINDOW_MIN} MINUTE "
+        f"AND distance >= {MIN_DISTANCE_KM} "
+        f"AND (greatCircleDistance(tx_lon, tx_lat, {lon:.4f}, {lat:.4f}) < {r_m} "
+        f"OR greatCircleDistance(rx_lon, rx_lat, {lon:.4f}, {lat:.4f}) < {r_m}) "
+        f"ORDER BY time DESC LIMIT {MAX_ROWS} FORMAT JSON"
+    )
+
+
+def parse_rows(rows: List[Dict]) -> List[Dict]:
+    """wspr.live-rijen → records voor de tabel (en later het propagatie-advies)."""
+    out = []
+    for r in rows:
+        try:
+            outgoing = bool(int(r.get("tx_near", 0)))
+            # Verre kant van het pad = de 'andere' station
+            remote_call = r["rx_sign"] if outgoing else r["tx_sign"]
+            remote_grid = r["rx_loc"]  if outgoing else r["tx_loc"]
+            # Peilrichting gezien vanaf de eigen regio naar het verre station
+            az = int(r["azimuth"]) if outgoing else int(r["rx_azimuth"])
+            ts = datetime.strptime(r["time"], "%Y-%m-%d %H:%M:%S").replace(tzinfo=timezone.utc)
+            band_mhz = int(r["band"])
+            out.append({
+                "direction":   "out" if outgoing else "in",
+                "call_sign":   remote_call,
+                "grid":        remote_grid,
+                "tx_call":     r["tx_sign"],
+                "tx_grid":     r["tx_loc"],
+                "rx_call":     r["rx_sign"],
+                "rx_grid":     r["rx_loc"],
+                "band":        BAND_NAMES.get(band_mhz, f"{band_mhz} MHz"),
+                "frequency":   int(r["frequency"]) / 1e6,     # MHz
+                "snr":         int(r["snr"]),
+                "drift":       int(r["drift"]),
+                "power":       f"{int(r['power'])} dBm",
+                "distance":    int(r["distance"]),
+                "azimuth":     az,
+                "time":        ts.isoformat(),
+            })
+        except (KeyError, TypeError, ValueError):
+            continue
+    return out
 
 
 class WSPRFeed(QThread):
     """WSPR live data fetcher running in background thread."""
 
-    data_updated = Signal(list)  # Emits list of QSO records
-    error_occurred = Signal(str)  # Emits error message
+    data_updated   = Signal(list)   # records (alleen echte data)
+    error_occurred = Signal(str)    # foutmelding; laatste data blijft geldig
 
     def __init__(self, qth_lat: float = 52.0, qth_lon: float = 5.0, parent=None):
         super().__init__(parent)
@@ -32,194 +107,54 @@ class WSPRFeed(QThread):
         self._running = False
         self._cache: List[Dict] = []
         self._cache_lock = threading.Lock()
-        self._update_interval = 30  # seconds
+        self._update_interval = POLL_SECONDS
+        self._wake = threading.Event()
 
     def set_update_interval(self, seconds: int):
-        """Set update interval (minimum 30s to avoid API overload)."""
-        self._update_interval = max(30, seconds)
+        """Interval in seconden (minimaal 120 s — één WSPR-cyclus is 2 min)."""
+        self._update_interval = max(120, int(seconds))
+
+    def set_qth(self, lat: float, lon: float):
+        """Nieuwe QTH → direct opnieuw ophalen."""
+        if (lat, lon) != (self.qth_lat, self.qth_lon):
+            self.qth_lat, self.qth_lon = lat, lon
+            self._wake.set()
 
     def run(self):
-        """Main thread loop: fetch WSPR data periodically."""
         self._running = True
         while self._running:
             try:
-                records = self._fetch_wspr_data()
+                records = self._fetch()
                 with self._cache_lock:
                     self._cache = records
                 self.data_updated.emit(records)
             except Exception as e:
-                # Fallback to mock data if API fails (for testing/offline mode)
-                records = _mock_wspr_data()
-                with self._cache_lock:
-                    self._cache = records
-                self.data_updated.emit(records)
-                self.error_occurred.emit(f"WSPR offline, using mock data: {str(e)}")
-
-            # Sleep in small chunks so stop() responds quickly
-            for _ in range(self._update_interval):
-                if not self._running:
-                    break
-                time.sleep(1)
+                # Géén nepdata: laatste echte data blijft staan
+                self.error_occurred.emit(str(e)[:120])
+            self._wake.clear()
+            self._wake.wait(self._update_interval)
 
     def stop(self):
-        """Stop the background thread gracefully."""
         self._running = False
-        self.wait()
+        self._wake.set()
+        self.wait(3000)
 
-    def get_recent_qsos(self, hours: int = 1) -> List[Dict]:
-        """Get cached QSO records from last N hours."""
+    def records(self) -> List[Dict]:
         with self._cache_lock:
-            cutoff = datetime.now(timezone.utc) - timedelta(hours=hours)
-            result = []
-            for record in self._cache:
-                try:
-                    ts = datetime.fromisoformat(record.get("time", "").replace("Z", "+00:00"))
-                    if ts >= cutoff:
-                        result.append(record)
-                except (ValueError, AttributeError):
-                    pass
-            return result
+            return list(self._cache)
 
-    def _fetch_wspr_data(self) -> List[Dict]:
-        """
-        Fetch latest WSPR QSO records from wsprnet.org API.
-
-        Returns: List of QSO dicts with keys:
-            - call_sign, grid, band, frequency, snr, drift, power, reporter, rg_grid,
-            - distance, azimuth, time (ISO format)
-
-        Note: If API is offline, _fetch_wspr_data() raises exception and fallback
-        to mock data is triggered automatically.
-        """
-        try:
-            import urllib.request as urlreq
-            import urllib.error as urlerror
-
-            # wsprnet.org API endpoint (public, no auth required)
-            # Returns JSON with recent QSO records
-            # Note: This API may be offline; if so, exception is caught and mock data is used
-            url = "https://wsprnet.org/drupal/wsprnet/api/v2/spots"
-            headers = {
-                "User-Agent": "HAMIOS/5.6 (WSPR Monitor)",
-                "Accept": "application/json",
-            }
-
-            req = urlreq.Request(url, headers=headers)
-
-            # Timeout after 10s
-            with urlreq.urlopen(req, timeout=10) as response:
-                data = json.loads(response.read().decode("utf-8"))
-
-                # Parse response
-                # Expected format: list of spots or {"spots": [...]}
-                spots = data if isinstance(data, list) else data.get("spots", [])
-
-                # Normalize field names and add computed fields
-                qsos = []
-                for spot in spots[:200]:  # Limit to last 200 spots
-                    qso = {
-                        "call_sign": spot.get("reporter", "?"),
-                        "grid": spot.get("reporter_grid", "?"),
-                        "band": spot.get("band", "?"),
-                        "frequency": float(spot.get("frequency", 0)),
-                        "snr": int(spot.get("snr", 0)),
-                        "drift": int(spot.get("drift", 0)),
-                        "power": spot.get("power", "?"),
-                        "tx_call": spot.get("spotting_call", "?"),
-                        "tx_grid": spot.get("spotting_grid", "?"),
-                        "distance": int(spot.get("distance", 0)),
-                        "azimuth": int(spot.get("azimuth", 0)),
-                        "time": spot.get("time", datetime.now(timezone.utc).isoformat()),
-                    }
-                    qsos.append(qso)
-
-                return qsos
-
-        except urlerror.URLError as e:
-            raise Exception(f"Network error: {e}")
-        except json.JSONDecodeError as e:
-            raise Exception(f"JSON parse error: {e}")
-        except Exception as e:
-            raise Exception(f"Unexpected error: {e}")
+    def _fetch(self) -> List[Dict]:
+        url = WSPR_LIVE_URL + "?query=" + urllib.parse.quote(
+            build_query(self.qth_lat, self.qth_lon))
+        req = urllib.request.Request(url, headers={"User-Agent": _UA})
+        with urllib.request.urlopen(req, timeout=20) as resp:
+            data = json.loads(resp.read().decode("utf-8"))
+        return parse_rows(data.get("data", []))
 
     @staticmethod
     def compute_distance(lat1: float, lon1: float, lat2: float, lon2: float) -> float:
-        """
-        Great-circle distance in km between two QTH coords.
-        (Used for filtering nearby WSPR spots)
-        """
-        import math
-
-        R = 6371  # Earth radius in km
-        lat1_rad = math.radians(lat1)
-        lat2_rad = math.radians(lat2)
-        delta_lat = math.radians(lat2 - lat1)
-        delta_lon = math.radians(lon2 - lon1)
-
-        a = (
-            math.sin(delta_lat / 2) ** 2
-            + math.cos(lat1_rad) * math.cos(lat2_rad) * math.sin(delta_lon / 2) ** 2
-        )
-        c = 2 * math.atan2(math.sqrt(a), math.sqrt(1 - a))
-        return R * c
-
-    def filter_by_distance(self, max_distance_km: int = 5000) -> List[Dict]:
-        """Filter cached QSOs within N km of QTH."""
-        with self._cache_lock:
-            result = []
-            for qso in self._cache:
-                try:
-                    # Distance is pre-computed by wsprnet API based on their QTH
-                    # but we could recompute if needed:
-                    dist = qso.get("distance", 0)
-                    if dist <= max_distance_km:
-                        result.append(qso)
-                except (ValueError, KeyError):
-                    pass
-            return result
-
-
-# ── Mock for testing (when API is unavailable) ───────────────────────────
-
-
-def _mock_wspr_data() -> List[Dict]:
-    """Generate mock WSPR data for testing (when API unavailable)."""
-    import random
-
-    calls = ["W1AW", "G4RZO", "F6FLT", "ON6YLQ", "EA1WX"]
-    bands = ["160m", "80m", "40m", "20m", "15m", "10m", "6m"]
-
-    data = []
-    for i in range(50):
-        call = random.choice(calls)
-        band = random.choice(bands)
-        freq = {
-            "160m": 1.8368,
-            "80m": 3.5686,
-            "40m": 7.0386,
-            "20m": 14.0956,
-            "15m": 21.0956,
-            "10m": 28.1246,
-            "6m": 50.2930,
-        }[band]
-
-        data.append(
-            {
-                "call_sign": call,
-                "grid": "JO20" if call.startswith("W") else "JO" + str(random.randint(10, 99)),
-                "band": band,
-                "frequency": freq + random.uniform(-0.1, 0.1),
-                "snr": random.randint(-30, 0),
-                "drift": random.randint(-5, 5),
-                "power": f"{random.choice([0.5, 1, 2, 5, 10])}W",
-                "tx_call": random.choice(["JO21AA", "JO20AA", "JN99AA"]),
-                "tx_grid": "JO21AA",
-                "distance": random.randint(500, 5000),
-                "azimuth": random.randint(0, 360),
-                "time": (
-                    datetime.now(timezone.utc) - timedelta(minutes=random.randint(0, 30))
-                ).isoformat(),
-            }
-        )
-
-    return data
+        """Great-circle distance in km."""
+        p1, p2 = math.radians(lat1), math.radians(lat2)
+        dp, dl = p2 - p1, math.radians(lon2 - lon1)
+        a = math.sin(dp / 2) ** 2 + math.cos(p1) * math.cos(p2) * math.sin(dl / 2) ** 2
+        return 6371 * 2 * math.atan2(math.sqrt(a), math.sqrt(1 - a))

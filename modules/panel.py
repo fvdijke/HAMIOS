@@ -8,8 +8,33 @@ Ze bewegen mee met het hoofdvenster en kunnen gesleept/vergroot worden.
 from PySide6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton
 )
-from PySide6.QtCore import Qt, QPoint
-from PySide6.QtGui import QPainter, QColor
+from PySide6.QtCore import Qt, QPoint, QSize, Signal, QMimeData
+from PySide6.QtGui import QPainter, QColor, QDrag
+from PySide6.QtWidgets import QApplication
+
+# MIME-type voor het verslepen van panelen binnen de tegelindeling
+PANEL_MIME = "application/x-hamios-panel"
+
+
+def start_panel_drag(source: QWidget, panel: "FloatingPanel") -> None:
+    """Start het verslepen van een paneel (titelbalk of tab). De tegelindeling
+    toont tijdens het slepen de doelzones en verwerkt de drop."""
+    area = getattr(panel, "_tile_area", None)
+    if area is None or area.is_locked():
+        return
+    mime = QMimeData()
+    mime.setData(PANEL_MIME, panel.panel_id.encode("utf-8"))
+    drag = QDrag(source)
+    drag.setMimeData(mime)
+    thumb = panel.grab()
+    if not thumb.isNull():
+        drag.setPixmap(thumb.scaledToWidth(min(220, max(80, thumb.width() // 3)),
+                                           Qt.SmoothTransformation))
+    area.begin_drag(panel.panel_id)
+    try:
+        drag.exec(Qt.MoveAction)
+    finally:
+        area.end_drag()
 
 from . import theme as _theme
 from .theme import (
@@ -123,8 +148,15 @@ class PanelTitleBar(QWidget):
         inner = self.parent()
         return inner.parent() if inner is not None else None
 
+    def _tiled(self) -> bool:
+        fp = self._floating_panel()
+        return bool(getattr(fp, "_tiled", False))
+
     def mousePressEvent(self, event):
-        if event.button() == Qt.LeftButton:
+        if event.button() == Qt.LeftButton and self._tiled():
+            # Tegelmodus: onthoud startpunt; bij genoeg beweging → paneel verslepen
+            self._tile_press = event.position().toPoint()
+        elif event.button() == Qt.LeftButton:
             self._drag_pos = event.position().toPoint()
             fp = self._floating_panel()
             if fp:
@@ -132,6 +164,14 @@ class PanelTitleBar(QWidget):
         super().mousePressEvent(event)
 
     def mouseMoveEvent(self, event):
+        press = getattr(self, "_tile_press", None)
+        if press is not None and event.buttons() & Qt.LeftButton:
+            if (event.position().toPoint() - press).manhattanLength() >=                     QApplication.startDragDistance():
+                self._tile_press = None
+                fp = self._floating_panel()
+                if fp is not None:
+                    start_panel_drag(self, fp)
+            return
         if self._drag_pos and event.buttons() == Qt.LeftButton:
             panel = self._floating_panel()
             if panel:
@@ -147,6 +187,7 @@ class PanelTitleBar(QWidget):
         super().mouseMoveEvent(event)
 
     def mouseReleaseEvent(self, event):
+        self._tile_press = None
         if event.button() == Qt.LeftButton and self._drag_pos:
             panel = self._floating_panel()
             if panel:
@@ -161,14 +202,22 @@ class PanelTitleBar(QWidget):
 
 class FloatingPanel(QWidget):
     """
-    Versleepbaar, aanpasbaar paneel als QWidget-kind van het desktop-canvas.
-    Amber 1px rand via paintEvent. Resize via custom _ResizeGrip.
+    Paneel met amber titelbalk en 1px amber rand.
+    Vrij (oud): versleepbaar via titelbalk, vergroten via _ResizeGrip.
+    Tegelmodus (set_tiled): staat in een splitsingsboom (tiling.py) — grootte
+    via de scheidingslijnen, niet vrij slepen of vergroten.
     """
+
+    visibility_changed = Signal(str, bool)   # (panel_id, zichtbaar)
+    title_changed      = Signal(str, str)    # (panel_id, titel) — voor tabbladen
 
     def __init__(self, title: str, panel_id: str = "", parent=None):
         super().__init__(parent)
         self.panel_id = panel_id
         self._visible_flag = True
+        self._tiled = False
+        self._in_tabs = False       # in een tabgroep: titel staat op de tab
+        self._tile_area = None      # TileArea (tegelmodus), voor slepen
 
         # Geen autoFillBackground — paintEvent tekent rand + achtergrond zelf
 
@@ -191,6 +240,7 @@ class FloatingPanel(QWidget):
 
         # Amber scheidingslijn onder titelbalk — QWidget geeft exact 1px
         sep = QWidget()
+        self._title_sep = sep
         sep.setFixedHeight(1)
         sep.setStyleSheet(f"background: {ACCENT};")
         inner_layout.addWidget(sep)
@@ -224,9 +274,45 @@ class FloatingPanel(QWidget):
                         self.height() - _ResizeGrip.SIZE)
         self._grip.raise_()
 
+    # Kleinste tegelgrootte: de verhoudingen van de indeling zijn leidend (zoals in
+    # de vrije modus); de inhoud wordt bij krapte afgesneden i.p.v. de indeling
+    # scheef te trekken. Nooit kleiner dan titelbalk + een strook inhoud.
+    TILE_MIN_W = 120
+    TILE_MIN_H = TITLE_H + 40
+
+    def minimumSizeHint(self) -> QSize:
+        if self._tiled:
+            return QSize(self.TILE_MIN_W, self.TILE_MIN_H)
+        return super().minimumSizeHint()
+
+    def set_tiled(self, tiled: bool, area=None):
+        """Tegelmodus: geen vrij slepen/vergroten (dat doet de splitsingsboom);
+        de titelbalk verplaatst het paneel dan naar een andere plek in de boom."""
+        self._tiled = tiled
+        self._tile_area = area if tiled else None
+        self.updateGeometry()
+        self._titlebar.setCursor(Qt.OpenHandCursor if tiled else Qt.SizeAllCursor)
+        if tiled:
+            self._grip.hide()
+
+    def set_drag_enabled(self, enabled: bool):
+        """Vergrendelde indeling: titelbalk toont geen sleep-cursor."""
+        if self._tiled:
+            self._titlebar.setCursor(Qt.OpenHandCursor if enabled else Qt.ArrowCursor)
+
+    def set_in_tabs(self, in_tabs: bool):
+        """In een tabgroep staat de titel op de tab — eigen titelbalk verbergen."""
+        self._in_tabs = in_tabs
+        self._titlebar.setVisible(not in_tabs)
+        self._title_sep.setVisible(not in_tabs)
+
+    def title(self) -> str:
+        return self._titlebar._lbl.text()
+
     def enterEvent(self, event):
-        self._grip.show()
-        self._grip.raise_()
+        if not self._tiled:
+            self._grip.show()
+            self._grip.raise_()
         super().enterEvent(event)
 
     def leaveEvent(self, event):
@@ -241,18 +327,26 @@ class FloatingPanel(QWidget):
 
     def set_title(self, title: str):
         self._titlebar.set_title(title)
+        self.title_changed.emit(self.panel_id, title)
 
     def _on_close(self):
         self.hide_panel()
 
     def hide_panel(self):
-        self.hide()
-        self._visible_flag = False
+        self.set_panel_visible(False)
 
     def show_panel(self):
-        self.show()
-        self.raise_()
-        self._visible_flag = True
+        self.set_panel_visible(True)
+
+    def set_panel_visible(self, visible: bool, notify: bool = True):
+        # In een tabgroep bepaalt de groep welke pagina zichtbaar is
+        if not self._in_tabs:
+            self.setVisible(visible)
+            if visible:
+                self.raise_()
+        self._visible_flag = visible
+        if notify:
+            self.visibility_changed.emit(self.panel_id, visible)
 
     def is_panel_visible(self) -> bool:
         return self._visible_flag

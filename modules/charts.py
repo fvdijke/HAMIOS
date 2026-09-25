@@ -12,6 +12,7 @@ Data-manager:
 """
 
 import datetime
+import gzip
 import json
 import math
 import os
@@ -36,32 +37,244 @@ from .i18n import tr
 _SOLAR_XML  = "https://www.hamqsl.com/solarxml.php"
 _SW_SPEED   = "https://services.swpc.noaa.gov/products/summary/solar-wind-speed.json"
 _SW_MAG     = "https://services.swpc.noaa.gov/products/summary/solar-wind-mag-field.json"
-_BZ_1DAY    = "https://services.swpc.noaa.gov/products/solar-wind/mag-1-day.json"
-_PLASMA_1D  = "https://services.swpc.noaa.gov/products/solar-wind/plasma-1-day.json"
+# NOAA heeft products/solar-wind/ (mag-1-day, plasma-1-day) opgeheven (HTTP 404).
+# Vervanging: real-time solar wind per minuut, 24 u (gzip ~100–160 KB).
+_RTSW_MAG   = "https://services.swpc.noaa.gov/json/rtsw/rtsw_mag_1m.json"
+_RTSW_WIND  = "https://services.swpc.noaa.gov/json/rtsw/rtsw_wind_1m.json"
+# Officiële NOAA-schalen R (radio blackout), S (stralingsstorm), G (geomagn.)
+_SCALES_URL = "https://services.swpc.noaa.gov/products/noaa-scales.json"
+# D-RAP: hoogste frequentie die door D-laag-absorptie verzwakt wordt (per lat/lon)
+_DRAP_URL    = "https://services.swpc.noaa.gov/text/drap_global_frequencies.txt"
+# OVATION: kans op aurora per graad (voor de kaart)
+_OVATION_URL = "https://services.swpc.noaa.gov/json/ovation_aurora_latest.json"
+# 27-dagen-vooruitzicht (flux, A-index, max Kp per dag)
+_OUTLOOK_URL = "https://services.swpc.noaa.gov/text/27-day-outlook.txt"
 _KP_URL     = "https://services.swpc.noaa.gov/products/noaa-planetary-k-index.json"
+_KP_1M_URL  = "https://services.swpc.noaa.gov/json/planetary_k_index_1m.json"
 _XRAY_URL   = "https://services.swpc.noaa.gov/json/goes/primary/xrays-1-day.json"
 _STORM_URL  = "https://services.swpc.noaa.gov/text/3-day-geomag-forecast.txt"
 _ALERTS_URL = "https://services.swpc.noaa.gov/products/alerts.json"
 
-_UA = {"User-Agent": "HAMIOS/5.6"}
+_UA = {"User-Agent": "HAMIOS/5.7", "Accept-Encoding": "gzip"}
+
+# ── Minimale leeftijd per bron ────────────────────────────────────────────────
+# Niet elke bron verandert even vaak. Een verversingsronde (standaard elke
+# 5 min) downloadt een bron alleen als de bewaarde versie ouder is dan hieronder;
+# anders wordt de bewaarde data opnieuw verwerkt (grafieken schuiven gewoon door).
+# Bronnen die niet in de lijst staan: elke ronde.
+_MAX_AGE_S = {
+    _SOLAR_XML:   30 * 60,      # HamQSL: SFI dagelijks, K per 3 u
+    _KP_URL:      60 * 60,      # officiële Kp per 3 u (48u-grafiek)
+    _XRAY_URL:    10 * 60,      # 24u-reeks per minuut — 10 min is ruim genoeg
+    _RTSW_MAG:    10 * 60,      # Bz 24u (per minuut, ~160 KB)
+    _RTSW_WIND:   10 * 60,      # dichtheid + snelheidssprong (~100 KB)
+    _SCALES_URL:  15 * 60,      # NOAA R/S/G — wijzigt alleen bij gebeurtenissen
+    _ALERTS_URL:  15 * 60,      # meldingen — bij uitgifte
+    _STORM_URL:   3 * 60 * 60,  # 3-daagse prognose — 2× per dag uitgegeven
+    _OVATION_URL: 15 * 60,      # aurora-kaart (~150 KB) — per ~5 min, 15 min volstaat
+    _OUTLOOK_URL: 12 * 60 * 60, # 27-dagen-vooruitzicht — 1× per week uitgegeven
+    # _DRAP_URL: 2 KB, per minuut bijgewerkt → elke ronde
+    # _KP_1M_URL, _SW_SPEED, _SW_MAG: klein en per minuut → elke ronde
+}
+_cache: dict = {}             # url → (monotonic-tijd, data)
+_cache_lock = threading.Lock()
 
 
-def _get_json(url: str):
-    try:
-        req = urllib.request.Request(url, headers=_UA)
-        with urllib.request.urlopen(req, timeout=10) as r:
-            return json.loads(r.read().decode())
-    except Exception:
+def _cached(url: str):
+    """Bewaarde data als die nog jong genoeg is, anders None."""
+    max_age = _MAX_AGE_S.get(url)
+    if not max_age:
         return None
+    with _cache_lock:
+        hit = _cache.get(url)
+    if hit and time.monotonic() - hit[0] < max_age:
+        return hit[1]
+    return None
+
+
+def _store(url: str, data):
+    if data is not None and url in _MAX_AGE_S:
+        with _cache_lock:
+            _cache[url] = (time.monotonic(), data)
+
+
+def _download(url: str, timeout: float) -> bytes:
+    req = urllib.request.Request(url, headers=_UA)
+    with urllib.request.urlopen(req, timeout=timeout) as r:
+        body = r.read()
+        if r.headers.get("Content-Encoding", "").lower() == "gzip":
+            body = gzip.decompress(body)
+        return body
+
+
+def _get_json(url: str, timeout: float = 10):
+    """JSON ophalen (gzip scheelt 5–10×); binnen de minimale leeftijd uit cache.
+    Bij een mislukte download: laatst bewaarde versie (ook als die ouder is)."""
+    hit = _cached(url)
+    if hit is not None:
+        return hit
+    try:
+        data = json.loads(_download(url, timeout).decode())
+        _store(url, data)
+        return data
+    except Exception:
+        with _cache_lock:
+            old = _cache.get(url)
+        return old[1] if old else None
+
+
+def _rtsw_active(rows) -> list:
+    """RTSW-rijen van de actieve satelliet, oud → nieuw."""
+    if not isinstance(rows, list):
+        return []
+    act = [r for r in rows if isinstance(r, dict) and r.get("active")]
+    act.sort(key=lambda r: str(r.get("time_tag", "")))
+    return act
+
+
+def _parse_ts(tag: str) -> datetime.datetime | None:
+    try:
+        return datetime.datetime.strptime(str(tag)[:19].replace("T", " "),
+                                          "%Y-%m-%d %H:%M:%S").replace(
+            tzinfo=datetime.timezone.utc)
+    except ValueError:
+        return None
+
+
+def speed_jump(rows: list) -> int:
+    """Sprong in zonnewindsnelheid (km/s): mediaan laatste 10 min minus mediaan
+    30–60 min eerder. > ~100 km/s wijst op een schokgolf (CME-aankomst)."""
+    now = datetime.datetime.now(datetime.timezone.utc)
+    recent, before = [], []
+    for r in rows:
+        v, ts = r.get("proton_speed"), _parse_ts(r.get("time_tag", ""))
+        if v is None or ts is None:
+            continue
+        age = (now - ts).total_seconds() / 60
+        if age <= 10:
+            recent.append(float(v))
+        elif 30 <= age <= 60:
+            before.append(float(v))
+    if len(recent) < 3 or len(before) < 5:
+        return 0
+    med = lambda xs: sorted(xs)[len(xs) // 2]   # noqa: E731
+    return int(round(med(recent) - med(before)))
+
+
+def parse_drap(text: str) -> dict | None:
+    """drap_global_frequencies.txt → {'lats', 'lons', 'grid' (MHz), 'valid' (UTC),
+    'xray_msg', 'proton_msg', 'recovery'} of None."""
+    lats, grid, lons = [], [], None
+    meta = {}
+    valid = None
+    for line in text.splitlines():
+        st = line.strip()
+        if st.startswith("#"):
+            body = st.lstrip("#").strip()
+            if body.startswith("Product Valid At"):
+                try:
+                    valid = datetime.datetime.strptime(
+                        body.split(":", 1)[1].strip()[:16], "%Y-%m-%d %H:%M").replace(
+                        tzinfo=datetime.timezone.utc)
+                except ValueError:
+                    pass
+            for key, name in (("X-RAY Message", "xray_msg"), ("Proton Message", "proton_msg"),
+                              ("Estimated Recovery Time", "recovery")):
+                if body.startswith(key):
+                    meta[name] = body.split(":", 1)[1].strip()
+            continue
+        if "|" in st:
+            lat_s, vals = st.split("|", 1)
+            try:
+                lats.append(float(lat_s))
+                grid.append([float(v) for v in vals.split()])
+            except ValueError:
+                continue
+        elif lons is None and st and not st.startswith("-" * 5):
+            try:
+                lons = [float(v) for v in st.split()]
+            except ValueError:
+                lons = None
+    if not lats or not lons or any(len(r) != len(lons) for r in grid):
+        return None
+    return {"lats": lats, "lons": lons, "grid": grid, "valid": valid, **meta}
+
+
+def parse_outlook(text: str) -> list:
+    """27-day-outlook.txt → [(datetime.date, flux, A, Kp_max), …]."""
+    out = []
+    for line in text.splitlines():
+        parts = line.split()
+        if len(parts) == 6 and parts[0].isdigit():
+            try:
+                d = datetime.datetime.strptime(" ".join(parts[:3]), "%Y %b %d").date()
+                out.append((d, int(parts[3]), int(parts[4]), int(parts[5])))
+            except ValueError:
+                continue
+    return out
+
+
+def ovation_rgba(data) -> bytes | None:
+    """OVATION-coördinaten [lon 0–359, lat −90–90, kans %] → RGBA-bytes voor een
+    360×181-beeld (kolom 0 = −180°, rij 0 = +90°). Groen → geel → rood, doorzichtig
+    onder 4 %."""
+    try:
+        coords = data["coordinates"]
+    except (KeyError, TypeError):
+        return None
+    W, H = 360, 181
+    buf = bytearray(W * H * 4)
+    for lon, lat, prob in coords:
+        # |lat| < 25°: geen aurora — en de OVATION-data bevat op 0° een naad
+        # (rij met kans 4 % waar de halfronden samenkomen) die anders als lijn
+        # over de evenaar zichtbaar is
+        if prob < 4 or abs(lat) < 25:
+            continue
+        x = (int(lon) + 180) % 360
+        y = 90 - int(lat)
+        if not (0 <= y < H):
+            continue
+        p = min(100, int(prob))
+        if p < 30:
+            r, g, b = 60, 220, 90
+        elif p < 60:
+            r, g, b = 230, 220, 60
+        else:
+            r, g, b = 240, 80, 40
+        a = min(190, 40 + p * 3)
+        i = (y * W + x) * 4
+        buf[i:i + 4] = bytes((r, g, b, a))
+    return bytes(buf)
+
+
+def parse_scales(data) -> dict:
+    """noaa-scales.json → {noaa_R, noaa_S, noaa_G (nu, 0–5), noaa_G_tomorrow,
+    noaa_R_minor_prob_tomorrow (%)}."""
+    out = {}
+    try:
+        now, tom = data.get("0", {}), data.get("1", {})
+        for k in ("R", "S", "G"):
+            out[f"noaa_{k}"] = int((now.get(k) or {}).get("Scale") or 0)
+        out["noaa_G_tomorrow"] = int((tom.get("G") or {}).get("Scale") or 0)
+        out["noaa_R_minor_prob_tomorrow"] = int((tom.get("R") or {}).get("MinorProb") or 0)
+    except (AttributeError, TypeError, ValueError):
+        pass
+    return out
 
 
 def _get_raw(url: str) -> bytes | None:
+    """Ruwe bytes ophalen; zelfde cache-regels als _get_json."""
+    hit = _cached(url)
+    if hit is not None:
+        return hit
     try:
-        req = urllib.request.Request(url, headers=_UA)
-        with urllib.request.urlopen(req, timeout=10) as r:
-            return r.read()
+        body = _download(url, 10)
+        _store(url, body)
+        return body
     except Exception:
-        return None
+        with _cache_lock:
+            old = _cache.get(url)
+        return old[1] if old else None
 
 
 # ── Achtergrond data-fetcher ──────────────────────────────────────────────────
@@ -74,6 +287,9 @@ class _FetchThread(QThread):
     xray_ready   = Signal(list)
     storm_ready  = Signal(dict)   # {day0..2: {active, minor, mod, sev, extreme}}
     alerts_ready = Signal(list)   # [{severity, message, issued}, ...]
+    drap_ready    = Signal(dict)    # parse_drap()
+    aurora_ready  = Signal(object)  # (rgba-bytes 360×181, waarnemingstijd-str)
+    outlook_ready = Signal(list)    # parse_outlook()
 
     def run(self):
         self._fetch_solar()
@@ -82,6 +298,30 @@ class _FetchThread(QThread):
         self._fetch_xray()
         self._fetch_storm()
         self._fetch_alerts()
+        self._fetch_drap()
+        self._fetch_ovation()
+        self._fetch_outlook()
+
+    # ── P3: absorptie, aurora, 27-dagen ──────────────────────────────────────
+    def _fetch_drap(self):
+        raw = _get_raw(_DRAP_URL)
+        if raw:
+            d = parse_drap(raw.decode("utf-8", errors="replace"))
+            if d:
+                self.drap_ready.emit(d)
+
+    def _fetch_ovation(self):
+        data = _get_json(_OVATION_URL, timeout=20)
+        rgba = ovation_rgba(data) if isinstance(data, dict) else None
+        if rgba:
+            self.aurora_ready.emit((rgba, str(data.get("Observation Time", ""))))
+
+    def _fetch_outlook(self):
+        raw = _get_raw(_OUTLOOK_URL)
+        if raw:
+            rows = parse_outlook(raw.decode("utf-8", errors="replace"))
+            if rows:
+                self.outlook_ready.emit(rows)
 
     # ── Solar params ──────────────────────────────────────────────────────────
     def _fetch_solar(self):
@@ -120,6 +360,16 @@ class _FetchThread(QThread):
             except Exception:
                 pass
 
+        # K-index: NOAA geschatte planetaire Kp (per minuut) — dezelfde bron als
+        # de Kp-grafiek en actueler dan de 3-uurswaarde van HamQSL (= terugval)
+        kp1m = _get_json(_KP_1M_URL)
+        if isinstance(kp1m, list) and kp1m:
+            try:
+                data["k_index"] = f"{float(kp1m[-1]['estimated_kp']):.1f}"
+                data["k_source"] = "NOAA"
+            except (KeyError, TypeError, ValueError):
+                pass
+
         # Solar wind speed
         sw = _get_json(_SW_SPEED)
         if isinstance(sw, list) and sw:
@@ -138,17 +388,19 @@ class _FetchThread(QThread):
         else:
             data["sw_bz"] = "—"
 
-        # Solar wind density (plasma)
-        plasma = _get_json(_PLASMA_1D)
-        if isinstance(plasma, list) and len(plasma) > 1:
-            for row in reversed(plasma[1:]):
-                if isinstance(row, list) and len(row) >= 2 and row[1] not in (None, "null", ""):
-                    data["sw_density"] = f"{float(row[1]):.1f}"
-                    break
-            else:
-                data["sw_density"] = "—"
-        else:
-            data["sw_density"] = "—"
+        # Zonnewind: dichtheid + snelheidssprong (schokgolf) uit RTSW per minuut
+        wind = _rtsw_active(_get_json(_RTSW_WIND, timeout=20))
+        data["sw_density"] = "—"
+        for row in reversed(wind):
+            if row.get("proton_density") is not None:
+                data["sw_density"] = f"{float(row['proton_density']):.1f}"
+                break
+        data["sw_speed_jump"] = speed_jump(wind)
+
+        # Officiële NOAA-schalen (R/S/G) — gebeurtenissen voor het advies
+        scales = _get_json(_SCALES_URL)
+        if isinstance(scales, dict):
+            data.update(parse_scales(scales))
 
         if data:
             self.solar_ready.emit(data)
@@ -184,25 +436,19 @@ class _FetchThread(QThread):
 
     # ── Bz 24h ────────────────────────────────────────────────────────────────
     def _fetch_bz(self):
-        rows = _get_json(_BZ_1DAY)
-        if not rows or len(rows) < 2:
+        rows = _rtsw_active(_get_json(_RTSW_MAG, timeout=20))
+        if not rows:
             return
         now = datetime.datetime.now(datetime.timezone.utc)
         pts = []
-        for row in rows[1:]:
-            try:
-                ts = datetime.datetime.strptime(
-                    str(row[0])[:19], "%Y-%m-%d %H:%M:%S"
-                ).replace(tzinfo=datetime.timezone.utc)
-                bz = row[3]
-                if bz in (None, "null", ""):
-                    continue
-                ha = (now - ts).total_seconds() / 3600
-                if ha <= 24:
-                    pts.append((ha, float(bz)))
-            except Exception:
+        for row in rows:
+            bz, ts = row.get("bz_gsm"), _parse_ts(row.get("time_tag", ""))
+            if bz is None or ts is None:
                 continue
-        pts.reverse()
+            ha = (now - ts).total_seconds() / 3600
+            if ha <= 24:
+                pts.append((ha, float(bz)))
+        pts.sort(key=lambda p: p[0])         # nieuwste eerst (uren geleden oplopend), zoals voorheen
         if len(pts) > 240:
             step = len(pts) // 240
             pts = pts[::step]
@@ -293,6 +539,9 @@ class NoaaDataManager(QObject):
     xray_ready   = Signal(list)
     storm_ready  = Signal(dict)
     alerts_ready         = Signal(list)
+    drap_ready           = Signal(dict)
+    aurora_ready         = Signal(object)
+    outlook_ready        = Signal(list)
     next_refresh_changed = Signal(float)   # monotonic-tijdstip volgende refresh
 
     def __init__(self, parent=None):
@@ -331,6 +580,9 @@ class NoaaDataManager(QObject):
         t.xray_ready.connect(self.xray_ready)
         t.storm_ready.connect(self.storm_ready)
         t.alerts_ready.connect(self.alerts_ready)
+        t.drap_ready.connect(self.drap_ready)
+        t.aurora_ready.connect(self.aurora_ready)
+        t.outlook_ready.connect(self.outlook_ready)
         t.finished.connect(self._on_fetch_done)
         t.finished.connect(t.deleteLater)
         self._thread = t

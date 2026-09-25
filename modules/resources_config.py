@@ -1,4 +1,4 @@
-"""HAMIOS v5.6 - Online Resource Configuration
+"""HAMIOS v5.7 - Online Resource Configuration
 
 Central definition of all monitored resources with customizable URLs.
 Used by splash screen, resource monitor, and settings resource tab.
@@ -38,21 +38,29 @@ DEFAULT_RESOURCES = {
         "description": "Solar flux index and parameters",
         "method": "GET",
     },
-    # Satellites
-    "web_celestrak": {
-        "name": "CelesTrak",
+    # Satellites — TLE-bronnen (zie tle_sources.py). Niet in de opstartcontrole:
+    # TLE wordt alleen handmatig (↻) en rate-limited opgehaald.
+    "web_satnogs": {
+        "name": "SatNOGS DB",
         "category": "Satellites",
-        "url": "https://celestrak.org/",
-        "description": "TLE data for amateur, ISS, weather satellites",
+        "url": "https://db.satnogs.org/",
+        "description": "TLE data: ISS, weather satellites, CubeSats",
         "method": "HEAD",
-        "fallback_url": "https://www.heavens-above.com/",
+    },
+    "web_amsat": {
+        "name": "AMSAT",
+        "category": "Satellites",
+        "url": "https://www.amsat.org/",
+        "description": "TLE data: active amateur satellites",
+        "method": "HEAD",
     },
     # Weak Signal Propagation
     "web_wsprnet": {
-        "name": "WSPRnet",
+        # Sleutel ongewijzigd (opstartscherm); data komt sinds v5.7 van wspr.live
+        "name": "wspr.live",
         "category": "Weak Signal Propagation",
-        "url": "https://www.wsprnet.org/drupal/wsprnet/activity",
-        "description": "WSPR QSO spotting network activity page",
+        "url": "https://db1.wspr.live/?query=SELECT%201",
+        "description": "WSPR spots (database of all WSPRnet spots)",
         "method": "GET",
     },
     # DX Spotting

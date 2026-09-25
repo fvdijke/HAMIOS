@@ -23,14 +23,15 @@ import datetime
 
 from PySide6.QtWidgets import (
     QGraphicsView, QGraphicsScene, QGraphicsItem,
-    QGraphicsPixmapItem, QGraphicsLineItem
+    QGraphicsPixmapItem, QGraphicsPathItem,
+    QGraphicsEllipseItem, QGraphicsSimpleTextItem, QGraphicsItemGroup
 )
 from PySide6.QtCore import (
     Qt, QRectF, QPointF, QTimer, Signal, QObject, QThread
 )
 from PySide6.QtGui import (
     QPixmap, QPainter, QColor, QPen, QBrush, QImage,
-    QFont, QPixmapCache
+    QFont, QPixmapCache, QPainterPath
 )
 
 from .theme import ACCENT, BG_ROOT
@@ -420,7 +421,10 @@ class MoonMarkerItem(QGraphicsItem):
 
 
 class AuroraItem(QGraphicsItem):
-    """Aurora-ovaal gebaseerd op K-index (geomagnetische dipool-model). z=3"""
+    """Aurora. z=3
+    Met NOAA OVATION-data: kans op aurora per graad als gekleurd beeld, ingebakken
+    in de basiskaart (zie MapView._compose_base). Zonder: ovaal uit de K-index
+    (geomagnetisch dipoolmodel) als terugval."""
 
     # Geomagnetische dipool-polen (IGRF-2025)
     _POLES = [(80.65, -72.65), (-80.65, 107.35)]
@@ -429,6 +433,26 @@ class AuroraItem(QGraphicsItem):
         super().__init__()
         self.setZValue(3)
         self._k = 2.0
+        self._ovation: QImage | None = None      # MAP_W × MAP_H, voor de basiskaart
+        self._on_change = None
+
+    def set_ovation(self, rgba: bytes, obs_time: str = ""):
+        """OVATION-raster (360×181 RGBA, zie charts.ovation_rgba) → kaartbeeld."""
+        small = QImage(rgba, 360, 181, 360 * 4, QImage.Format_RGBA8888).copy()
+        self._ovation = small.scaled(MAP_W, MAP_H, Qt.IgnoreAspectRatio,
+                                     Qt.SmoothTransformation)
+        self._obs_time = obs_time
+        self.update()
+        if self._on_change:
+            self._on_change()
+
+    def ovation_image(self) -> QImage | None:
+        return self._ovation
+
+    def itemChange(self, change, value):
+        if change == QGraphicsItem.ItemVisibleHasChanged and self._on_change:
+            self._on_change()
+        return super().itemChange(change, value)
 
     def set_k_index(self, k: float):
         self._k = max(0.0, min(9.0, k))
@@ -438,6 +462,8 @@ class AuroraItem(QGraphicsItem):
         return QRectF(0, 0, MAP_W, MAP_H)
 
     def paint(self, painter: QPainter, option, widget=None):
+        if self._ovation is not None:
+            return                      # OVATION zit ingebakken in de basiskaart
         k = self._k
         if k < 3:
             color = QColor(60, 200, 60)
@@ -929,7 +955,7 @@ class _HiresDownloadThread(QThread):
         self._dest          = dest
         self._also_save_std = also_save_std
 
-    _UA = "HAMIOS/5.6 (HF Propagation Monitor)"
+    _UA = "HAMIOS/5.7 (HF Propagation Monitor)"
 
     def _fetch(self, url: str, dest: str) -> bool:
         """Download url naar dest. Probeert eerst normale SSL, dan zonder verificatie.
@@ -1101,6 +1127,7 @@ class MapView(QGraphicsView):
         self._base_src: QPixmap | None = None
         self._night._on_change    = self._compose_base
         self._grayline._on_change = self._compose_base
+        self._aurora._on_change   = self._compose_base
         QPixmapCache.setCacheLimit(max(QPixmapCache.cacheLimit(), 128 * 1024))
         for item in (self._base_map, self._graticule, self._maidenhead,
                      self._callsign_overlay, self._sat_layer,
@@ -1110,8 +1137,9 @@ class MapView(QGraphicsView):
         # TLE laden vanuit cache bij opstart
         QTimer.singleShot(500, self._load_tle_cache)
 
-        # GC-pad
-        self._gc_line: QGraphicsLineItem | None = None
+        # GC-pad (QTH → aangeklikt punt / aanbeveling)
+        self._gc_line = None
+        self._qth = (52.0, 5.0)
         self._spot_popup = None
 
         # Hover: callsign-popup en Maidenhead-locatorlabel
@@ -1215,7 +1243,8 @@ class MapView(QGraphicsView):
             return
         night = self._night._image    if self._night.isVisible()    else None
         gray  = self._grayline._image if self._grayline.isVisible() else None
-        if night is None and gray is None:
+        aur   = self._aurora.ovation_image() if self._aurora.isVisible() else None
+        if night is None and gray is None and aur is None:
             self._base_map.setPixmap(src)
             return
         comp = QPixmap(src)          # impliciet gedeeld; tekenen maakt een kopie
@@ -1224,6 +1253,8 @@ class MapView(QGraphicsView):
             p.drawImage(0, 0, night)
         if gray is not None:
             p.drawImage(0, 0, gray)
+        if aur is not None:
+            p.drawImage(0, 0, aur)   # z 3: boven nacht en grayline
         p.end()
         self._base_map.setPixmap(comp)
 
@@ -1702,17 +1733,73 @@ class MapView(QGraphicsView):
 
     # ── GC-pad ────────────────────────────────────────────────────────────────
     def _draw_gc_marker(self, lat: float, lon: float):
-        """Toon een kruisje op het aangeklikte punt."""
-        if self._gc_line:
+        """Klik op de kaart: grootcirkelpad vanaf de QTH naar het aangeklikte punt."""
+        self.show_path(lat, lon)
+
+    def show_path(self, lat: float, lon: float, label: str = ""):
+        """Teken het grootcirkelpad (korte weg) QTH → (lat, lon): amber
+        stippellijn (dikte onafhankelijk van zoom), gesplitst op de datumgrens,
+        met doelmarkering en label (standaard: afstand). Rechtsklik wist het."""
+        from .propagation import gc_point, _dist_km
+        if self._gc_line is not None:
             self._scene.removeItem(self._gc_line)
-        pt = latlon_to_scene(lat, lon)
-        pen = QPen(QColor(ACCENT), 3)
-        line = self._scene.addLine(pt.x()-8, pt.y(), pt.x()+8, pt.y(), pen)
-        line.setZValue(9)
-        self._gc_line = line
+            self._gc_line = None
+        qlat, qlon = self._qth
+        km = _dist_km(qlat, qlon, lat, lon)
+        n = max(16, int(km / 100))                       # ~100 km per stap
+        pts = [gc_point(qlat, qlon, lat, lon, i / n) for i in range(n + 1)]
+
+        path = QPainterPath()
+        prev_lon = None
+        for plat, plon in pts:
+            p = latlon_to_scene(plat, plon)
+            if prev_lon is None or abs(plon - prev_lon) > 180:
+                path.moveTo(p)                           # nieuw segment na datumgrens
+            else:
+                path.lineTo(p)
+            prev_lon = plon
+
+        amber = QColor(ACCENT)
+        shadow = QPen(QColor(0, 0, 0, 150), 5)
+        shadow.setCosmetic(True)
+        line = QPen(amber, 2.5, Qt.DashLine)
+        line.setCosmetic(True)
+        items = [QGraphicsPathItem(path), QGraphicsPathItem(path)]
+        items[0].setPen(shadow)
+        items[1].setPen(line)
+
+        tgt = latlon_to_scene(lat, lon)
+        dot = QGraphicsEllipseItem(-6, -6, 12, 12)
+        dot.setPos(tgt)
+        dot.setBrush(QBrush(amber))
+        dot.setPen(QPen(QColor(0, 0, 0), 1.5))
+        dot.setFlag(QGraphicsItem.ItemIgnoresTransformations, True)
+        items.append(dot)
+
+        text = QGraphicsSimpleTextItem(label or f"{km:,.0f} km".replace(",", "."))
+        f = QFont("Segoe UI", 10)
+        f.setBold(True)
+        text.setFont(f)
+        text.setBrush(QBrush(amber))
+        text.setPen(QPen(QColor(0, 0, 0, 200), 0.6))
+        text.setPos(tgt)
+        text.setFlag(QGraphicsItem.ItemIgnoresTransformations, True)
+        items.append(text)
+
+        group = QGraphicsItemGroup()
+        for it in items:
+            group.addToGroup(it)
+        dot.setPos(tgt)                                   # posities na groeperen
+        text.setPos(tgt.x() + 0, tgt.y() + 0)
+        group.setZValue(9)
+        self._scene.addItem(group)
+        # label iets naast de stip (in schermpixels, want ItemIgnoresTransformations)
+        text.setTransform(text.transform().translate(10, -8))
+        self._gc_line = group
 
     # ── QTH ───────────────────────────────────────────────────────────────────
     def set_qth(self, lat: float, lon: float):
+        self._qth = (lat, lon)
         self._qth_marker.set_qth(lat, lon)
         self._lightning_radius.set_qth(lat, lon)
         self._lightning_beep_radius.set_qth(lat, lon)
@@ -1780,6 +1867,11 @@ class MapView(QGraphicsView):
 
     def set_k_index(self, k: float):
         self._aurora.set_k_index(k)
+
+    def set_ovation(self, payload):
+        """(rgba-bytes, waarnemingstijd) van charts.aurora_ready."""
+        rgba, obs = payload
+        self._aurora.set_ovation(rgba, obs)
 
     def set_overlay_font_size(self, size: int):
         self._graticule.set_font_size(size)

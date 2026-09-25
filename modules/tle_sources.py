@@ -32,7 +32,7 @@ import urllib.request
 from ._appdir import APP_DIR
 
 _META_FILE = os.path.join(APP_DIR, "config", "hamios_tle_meta.json")
-_UA = "HAMIOS/5.6 (+https://hamios.space; amateur radio propagation monitor)"
+_UA = "HAMIOS/5.7 (+https://hamios.space; amateur radio propagation monitor)"
 
 SATNOGS_URL = "https://db.satnogs.org/api/tle/?format=json"
 AMSAT_URL   = "https://www.amsat.org/tle/current/nasabare.txt"

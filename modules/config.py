@@ -54,7 +54,8 @@ class AppConfig:
     refresh_interval:  int   = 5      # minuten (0 = uit)
 
     # ── Snap-raster / weergave ────────────────────────────────────────────────
-    snap_grid:         int   = 10
+    snap_grid:         int   = 10     # alleen nog voor vrije panelen (niet in tegelmodus)
+    layout_locked:     bool  = False  # tegelindeling vergrendeld (geen slepen/scheidingslijnen)
     overlay_font_size: int   = 8      # graticule lettergrootte (pt)
     sat_font_size:     int   = 8      # satelliet-labels op kaart
     dx_map_font_size:  int   = 7      # DX spots callsigns op kaart
@@ -108,6 +109,7 @@ class AppConfig:
     cat_rts:        bool  = False
     cat_radio_type: str   = "Yaesu"
     cat_civ_addr:   int   = 0x58   # Icom standaard adres 0x58
+    cat_data_mode:  str   = "USB"  # radiomode voor FT8/FT4/WSPR: "USB" of "PKT-U" (DATA-U)
 
 
 def load_config() -> AppConfig:

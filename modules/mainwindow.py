@@ -21,12 +21,15 @@ from . import theme as _theme
 from .i18n import tr, set_language, get_language
 from .header import HeaderBar
 from .panel import FloatingPanel
+from .tiling import TileArea, layout_from_rects, prune_tree, valid_tree
+from .layout_presets import preset_tree
+from .advice_panel import PropAdvWidget
 from .mapview import MapView
 from .charts import NoaaDataManager, KpChart, BzChart, XrayChart, SolarParamsWidget
 from .panels5 import (
-    BandRelWidget, BandCondWidget, StormFcWidget, BandSchedWidget,
+    BandRelWidget, StormFcWidget, BandSchedWidget,
     BandHistChart, SolarHistChart, LightningPanel, AlertsWidget,
-    DXSpotsTable, PropAdvWidget, MUFWidget, WSPRTableWidget,
+    DXSpotsTable, WSPRTableWidget,
 )
 from .config import AppConfig, load_config, save_config
 from .profiel_manager import ProfileManager
@@ -82,36 +85,34 @@ def _write_layouts(data: dict):
     except Exception:
         pass
 
-# Standaard paneel-layout voor v5 (scherm-relatief t.o.v. desktop-canvas)
+# Standaard paneel-layout (x, y, w, h, zichtbaar) — aansluitend, geen overlap.
+# Wordt bij het laden omgezet naar een tegelboom (tiling.py); alleen de
+# verhoudingen tellen, de pixels schalen mee met het venster.
 _PANEL_DEFAULTS = {
-    "worldmap":   (440,  0,    740, 490, True),
-    "solar":      (1190, 0,    370, 600, True),
-    "band_rel":   (0,    0,    430, 600, True),
-    "band_cond":  (0,    500,  200, 400, True),
-    "storm_fc":   (0,    910,  200, 140, True),
-    "band_sched": (440,  500,  370, 290, True),
-    "band_hist":  (820,  500,  370, 290, True),
-    "muf_forecast": (1200, 500, 370, 290, True),
-    "solar_hist": (820,  800,  370, 120, True),
-    "kp_48h":     (440,  800,  370, 270, True),
-    "bz_24h":     (820,  800,  370, 200, True),
-    "xray_24h":   (820, 1010,  370, 200, True),
-    "lightning":  (1200, 800,  370, 300, True),
-    "wspr_feed":  (440, 1100,  740, 300, True),
-    "alerts":     (0,    500,  200, 280, True),
-    "dx_spots":   (1200, 610,  370, 460, True),
-    "prop_adv":   (0,    610,  430, 460, True),
+    "band_rel":     (0,    0,    380, 370, True),
+    "band_sched":   (0,    370,  380, 470, True),
+    "storm_fc":     (0,    840,  380, 220, True),
+    "band_hist":    (0,    1060, 380, 240, True),
+    "worldmap":     (380,  0,   1520, 790, True),
+    "dx_spots":     (1900, 0,    620, 400, True),
+    "alerts":       (1900, 400,  620, 390, True),
+    "prop_adv":     (380,  790,  900, 270, True),
+    "kp_48h":       (380,  1060, 440, 240, True),
+    "bz_24h":       (820,  1060, 460, 240, True),
+    "lightning":    (1280, 790,  360, 120, True),
+    "solar":        (1280, 910,  360, 190, True),
+    "solar_hist":   (1280, 1100, 360, 200, True),
+    "xray_24h":     (1640, 790,  370, 510, True),
+    "wspr_feed":    (2010, 790,  510, 510, True),
 }
 
 _PANEL_TITLE_KEYS = {
     "worldmap":   "panel.map",
     "solar":      "panel.solar",
     "band_rel":   "panel.band_rel",
-    "band_cond":  "panel.band_cond",
     "storm_fc":   "panel.storm_fc",
     "band_sched": "panel.band_sched",
     "band_hist":  "panel.band_hist",
-    "muf_forecast": "panel.muf_forecast",
     "solar_hist": "panel.solar_hist",
     "kp_48h":     "panel.kp",
     "bz_24h":     "panel.bz",
@@ -222,7 +223,24 @@ class HAMIOSMainWindow(QMainWindow):
         # Centrale NOAA data-manager (gedeeld tussen alle chart-panels)
         self._data_mgr = NoaaDataManager(self)
         self._data_mgr.next_refresh_changed.connect(self._header.set_next_refresh)
+
+        # Centraal propagatiemodel: zonnedata EERST naar het model (verbindings-
+        # volgorde = aanroepvolgorde), zodat panelen daarna actuele cijfers lezen
+        from .propagation import ENGINE as _PROP, IonosondeFeed
+        self._data_mgr.solar_ready.connect(_PROP.set_solar)
+        # Gemeten HF-absorptie (NOAA D-RAP) → LUF in het model
+        self._data_mgr.drap_ready.connect(_PROP.set_drap)
         self._data_mgr.solar_ready.connect(self._on_solar_for_history)
+        # Gemeten ionosfeer (KC2G/GIRO) — kalibreert het model elke 15 min
+        self._iono_feed = IonosondeFeed(self)
+        self._iono_feed.stations_ready.connect(_PROP.set_ionosondes)
+        self._iono_feed.start()
+        # Nieuwe metingen/zonnedata → propagatiepanelen herberekenen (gebundeld)
+        self._prop_refresh = QTimer(self)
+        self._prop_refresh.setSingleShot(True)
+        self._prop_refresh.setInterval(300)
+        self._prop_refresh.timeout.connect(self._on_propagation_updated)
+        _PROP.updated.connect(self._prop_refresh.start)
 
         # Verwijder oude history-regels bij opstart (in achtergrond)
         import threading as _thr
@@ -237,8 +255,15 @@ class HAMIOSMainWindow(QMainWindow):
         self._panels: dict[str, FloatingPanel] = {}
         self._build_panels()
 
+        # Tegelindeling: panelen in een splitsingsboom die het canvas vult
+        self._tiles = TileArea(self._panels, self._desktop)
+        _dl = QVBoxLayout(self._desktop)
+        _dl.setContentsMargins(0, 0, 0, 0)
+        _dl.addWidget(self._tiles)
+
         # Layout laden
         self._load_layout()
+        self._tiles.set_locked(getattr(self._cfg, "layout_locked", False))
 
         # CAT interface aanmaken
         self._cat = _cat_mod.CatInterface(self._cfg)
@@ -282,16 +307,12 @@ class HAMIOSMainWindow(QMainWindow):
                 self._build_solar_panel(p)
             elif pid == "band_rel":
                 self._build_band_rel_panel(p)
-            elif pid == "band_cond":
-                self._build_band_cond_panel(p)
             elif pid == "storm_fc":
                 self._build_storm_fc_panel(p)
             elif pid == "band_sched":
                 self._build_band_sched_panel(p)
             elif pid == "band_hist":
                 self._build_band_hist_panel(p)
-            elif pid == "muf_forecast":
-                self._build_muf_forecast_panel(p)
             elif pid == "solar_hist":
                 self._build_solar_hist_panel(p)
             elif pid == "lightning":
@@ -316,6 +337,8 @@ class HAMIOSMainWindow(QMainWindow):
         self._map_view = MapView()
         layout.addWidget(self._map_view)
 
+        # Aurora: NOAA OVATION-kaart (terugval: ovaal uit K-index)
+        self._data_mgr.aurora_ready.connect(self._map_view.set_ovation)
         # Aurora K-index via solar data
         self._data_mgr.solar_ready.connect(
             lambda d: self._map_view.set_k_index(
@@ -385,20 +408,13 @@ class HAMIOSMainWindow(QMainWindow):
         w.settings_changed.connect(self._on_panel_settings_changed)
         self._band_rel_widget = w
 
-    def _build_band_cond_panel(self, panel):
-        layout = self._sprint5_layout(panel)
-        w = BandCondWidget(cfg=self._cfg)
-        layout.addWidget(w)
-        layout.addStretch()
-        self._data_mgr.solar_ready.connect(w.set_data)
-        self._band_cond_widget = w
-
     def _build_storm_fc_panel(self, panel):
         layout = self._sprint5_layout(panel)
         w = StormFcWidget()
         layout.addWidget(w)
         layout.addStretch()
         self._data_mgr.storm_ready.connect(w.set_data)
+        self._data_mgr.outlook_ready.connect(w.set_outlook)
 
     def _build_band_sched_panel(self, panel):
         layout = self._sprint5_layout(panel)
@@ -411,12 +427,6 @@ class HAMIOSMainWindow(QMainWindow):
         w = BandHistChart()
         self._sprint5_layout(panel).addWidget(w)
         self._data_mgr.solar_ready.connect(w.set_data)
-
-    def _build_muf_forecast_panel(self, panel):
-        w = MUFWidget(cfg=self._cfg)
-        self._sprint5_layout(panel).addWidget(w)
-        self._data_mgr.solar_ready.connect(w.set_data)
-        self._muf_widget = w
 
     def _build_solar_hist_panel(self, panel):
         w = SolarHistChart()
@@ -488,7 +498,29 @@ class HAMIOSMainWindow(QMainWindow):
         self._sprint5_layout(panel).addWidget(w)
         self._data_mgr.solar_ready.connect(w.set_data)
         w.analysis_changed.connect(self._on_analysis_changed)
+        w.recommendation_clicked.connect(self._on_recommendation_clicked)
+        # Waarnemingen: wat er NU gehoord wordt onderbouwt het advies
+        if hasattr(self, "_wspr_feed"):
+            self._wspr_feed.data_updated.connect(w.set_wspr)
+        dxl = self._map_view._dx_spots
+        dxl.spots_updated.connect(lambda _s, l=dxl, w=w: w.set_dx(l._raw_spots))
+        self._map_view._psk.reports_updated.connect(w.set_psk)
         self._prop_adv_widget = w
+
+    def _on_recommendation_clicked(self, lat: float, lon: float,
+                                   freq_khz: float, mode: str, label: str = ""):
+        """Aanbeveling aangeklikt: altijd het pad op de kaart; afstemmen via
+        CAT alleen als de radio verbonden is (geen foutmelding zonder CAT)."""
+        self._map_view.show_path(lat, lon, label)
+        from .panels5 import _cat_send
+        cat = getattr(self, "_cat", None)
+        if cat is None or not getattr(cat, "connected", False):
+            self._prop_adv_widget.show_cat_result(None, tr("adv.path_only", label=label))
+            return
+        # Modevertaling (FT8 → datamode, SSB → LSB/USB) zit centraal in _cat_send
+        ok, msg = _cat_send(int(round(freq_khz * 1000)), mode)
+        self._prop_adv_widget.show_cat_result(
+            ok, f"{freq_khz / 1000:.3f} MHz {mode}" if ok else msg)
 
     def _on_analysis_changed(self, changed_tips: list):
         """Stuur gewijzigde analyse-kaarten naar het meldingen-paneel."""
@@ -546,9 +578,9 @@ class HAMIOSMainWindow(QMainWindow):
 
         # Sync cfg-referentie in ALLE panel-widgets die cfg bewaren
         _panel_widgets = [
-            "_prop_adv_widget", "_band_rel_widget", "_band_cond_widget",
+            "_prop_adv_widget", "_band_rel_widget",
             "_dx_spots_widget", "_lightning_panel_widget", "_band_sched_widget",
-            "_muf_widget", "_alerts_widget",
+            "_alerts_widget",
         ]
         for attr in _panel_widgets:
             w = getattr(self, attr, None)
@@ -602,34 +634,60 @@ class HAMIOSMainWindow(QMainWindow):
             except Exception:
                 pass
 
-        # Venstergrootte herstellen
-        if "__window__" in saved and len(saved["__window__"]) >= 4:
-            wx, wy, ww, wh = saved["__window__"][:4]
+        self.apply_layout_dict(saved)
+
+    def apply_layout_dict(self, layout: dict, restore_window: bool = True):
+        """Pas een opgeslagen layout toe (profiel, reset, opstart).
+        Met "__tree__": direct de tegelboom. Oude pixel-layout: omzetten."""
+        layout = layout or {}
+        if restore_window and len(layout.get("__window__") or []) >= 4:
+            wx, wy, ww, wh = layout["__window__"][:4]
             _clamp_window(self, int(wx), int(wy), int(ww), int(wh))
 
-        for pid, p in self._panels.items():
-            if pid in saved and len(saved[pid]) >= 5:
-                x, y, w, h, vis = saved[pid][:5]
-            elif pid in _PANEL_DEFAULTS:
-                x, y, w, h, vis = _PANEL_DEFAULTS[pid]
-            else:
-                continue
-            p.setGeometry(int(x), int(y), int(w), int(h))
-            if vis:
-                p.show_panel()
-            else:
-                p.hide_panel()
+        rects, visible = {}, {}
+        for pid in self._panels:
+            v = layout.get(pid)
+            if not (isinstance(v, (list, tuple)) and len(v) >= 5):
+                v = _PANEL_DEFAULTS.get(pid, (0, 0, 300, 200, True))
+            rects[pid] = tuple(int(n) for n in v[:4])
+            visible[pid] = bool(v[4])
+
+        tree = layout.get("__tree__")
+        tree = prune_tree(tree, self._panels) if valid_tree(tree or {}) else None
+        if tree is None and not any(pid in layout for pid in self._panels):
+            # Nieuwe installatie (geen opgeslagen layout): standaardindeling
+            self.apply_preset("central")
+            return
+        if tree is None:
+            tree = layout_from_rects(rects, visible)
+        self._tiles.apply(tree, visible)
+
+    def apply_preset(self, name: str):
+        """Standaardindeling toepassen (alle panelen zichtbaar; kaart ~2:1
+        berekend op de huidige desktopgrootte)."""
+        d = self._desktop
+        w = d.width() if d.width() > 200 else self.width()
+        h = d.height() if d.height() > 200 else self.height() - 40
+        self._tiles.apply(preset_tree(name, w, h), {pid: True for pid in self._panels})
+
+    def set_layout_locked(self, locked: bool):
+        self._cfg.layout_locked = bool(locked)
+        self._tiles.set_locked(locked)
+        save_config(self._cfg)
+
+    def current_layout_dict(self) -> dict:
+        """Huidige layout: tegelboom + (voor oudere versies) pixelgeometrie."""
+        rects = self._tiles.rects()
+        layout = {pid: [rects[pid].x(), rects[pid].y(), rects[pid].width(),
+                        rects[pid].height(), p.is_panel_visible()]
+                  for pid, p in self._panels.items()}
+        layout["__tree__"] = self._tiles.tree()
+        layout["__window__"] = [self.x(), self.y(), self.width(), self.height()]
+        return layout
 
     def save_layout(self):
         """Sla huidige panel-layout op als __default__."""
-        layout = {}
-        for pid, p in self._panels.items():
-            g = p.geometry()
-            layout[pid] = [g.x(), g.y(), g.width(), g.height(),
-                           p.is_panel_visible()]
-        layout["__window__"] = [
-            self.x(), self.y(), self.width(), self.height()
-        ]
+        layout = self.current_layout_dict()
         # Sla op via ProfielManager (config + layout)
         from dataclasses import asdict
         config_dict = asdict(self._cfg)
@@ -752,7 +810,10 @@ class HAMIOSMainWindow(QMainWindow):
         base = getattr(sys, "_MEIPASS", _HERE)
         exe  = os.path.join(base, "tools", "HAM_Antenna_Designer.exe")
         try:
-            self._antenna_proc = subprocess.Popen([exe], cwd=os.path.dirname(exe))
+            # Designer volgt de taal van HAMIOS
+            from .i18n import get_language
+            self._antenna_proc = subprocess.Popen(
+                [exe, "--lang", get_language()], cwd=os.path.dirname(exe))
         except OSError as e:
             from PySide6.QtWidgets import QMessageBox
             QMessageBox.warning(self, "HAM Antenna Designer",
@@ -880,14 +941,38 @@ class HAMIOSMainWindow(QMainWindow):
         vlay.setSpacing(8)
 
         # Title
-        title = QLabel("Panelen")
+        title = QLabel(tr("panels.title"))
         title.setStyleSheet("color: #C8A84B; font-weight: bold;")
         vlay.addWidget(title)
 
+        # ── Indeling: standaardindelingen + vergrendelen ─────────────────────
+        lay_lbl = QLabel(tr("layout.title"))
+        lay_lbl.setStyleSheet("color: #C8A84B; font-size: 8pt;")
+        vlay.addWidget(lay_lbl)
+        preset_row = QHBoxLayout()
+        preset_row.setSpacing(4)
+        for key in ("central", "operating", "analysis"):
+            b = QPushButton(tr(f"layout.preset.{key}"))
+            b.setToolTip(tr(f"layout.preset.{key}.tip"))
+            b.clicked.connect(lambda _=False, k=key: (self.apply_preset(k),
+                                                      self._refresh_panel_checks()))
+            preset_row.addWidget(b)
+        vlay.addLayout(preset_row)
+        lock_cb = QCheckBox(tr("layout.lock"))
+        lock_cb.setChecked(self._tiles.is_locked())
+        lock_cb.toggled.connect(self.set_layout_locked)
+        vlay.addWidget(lock_cb)
+        hint = QLabel(tr("layout.hint"))
+        hint.setWordWrap(True)
+        hint.setStyleSheet("color: #808890; font-size: 7pt;")
+        vlay.addWidget(hint)
+        vlay.addSpacing(4)
+        self._panel_checks = {}
+
         # Panel visibility checkboxes
         _PANEL_KEYS = [
-            "worldmap", "solar", "band_rel", "band_cond", "storm_fc",
-            "band_sched", "band_hist", "muf_forecast", "solar_hist", "kp_48h", "bz_24h",
+            "worldmap", "solar", "band_rel", "storm_fc",
+            "band_sched", "band_hist", "solar_hist", "kp_48h", "bz_24h",
             "xray_24h", "lightning", "alerts", "dx_spots", "wspr_feed", "prop_adv",
         ]
 
@@ -895,6 +980,7 @@ class HAMIOSMainWindow(QMainWindow):
             panel = self._panels.get(pid)
             cb = QCheckBox(tr(f"panels.{pid}"))
             cb.setChecked(panel.is_panel_visible() if panel else False)
+            self._panel_checks[pid] = cb
             if panel:
                 cb.toggled.connect(
                     lambda v, p=panel: (p.show_panel() if v else p.hide_panel(),
@@ -922,6 +1008,15 @@ class HAMIOSMainWindow(QMainWindow):
         self._panel_dialog = dialog
         dialog.setAttribute(Qt.WA_DeleteOnClose, False)
         dialog.show()
+
+    def _refresh_panel_checks(self):
+        """Vinkjes in het panelenmenu gelijk trekken (na een standaardindeling)."""
+        for pid, cb in getattr(self, "_panel_checks", {}).items():
+            p = self._panels.get(pid)
+            if p is not None:
+                cb.blockSignals(True)
+                cb.setChecked(p.is_panel_visible())
+                cb.blockSignals(False)
 
     # ── CAT ───────────────────────────────────────────────────────────────────
     def _open_cat_dialog(self):
@@ -972,26 +1067,22 @@ class HAMIOSMainWindow(QMainWindow):
         dlg.exec()
 
     def _on_solar_for_history(self, solar: dict):
-        """Bereken bandpercentages en schrijf naar history-CSV."""
+        """Bandpercentages (centraal model) naar de history-CSV."""
         import threading as _thr
-        from .panels5 import (_calc_propagation_v4, BandRelWidget as _BRW,
-                              _MODE_DB, _POWER_DB, _ANT_DB)
-        try:
-            sfi = float(str(solar.get("sfi",     "90")).replace("—", "90") or "90")
-            ssn = float(str(solar.get("ssn",     "50")).replace("—", "50") or "50")
-            k   = float(str(solar.get("k_index", "2" )).replace("—",  "2") or  "2")
-        except (ValueError, TypeError):
-            sfi, ssn, k = 90.0, 50.0, 2.0
-        qth_lat = self._cfg.qth_lat
-        qth_lon = self._cfg.qth_lon
-        snr = (_MODE_DB.get(self._cfg.mode, 0) +
-               _POWER_DB.get(self._cfg.power, 0) +
-               _ANT_DB.get(getattr(self._cfg, "antenna", "Dipole ~2dBi"), 0))
-        is_day  = _BRW._is_day_at_qth(qth_lat, qth_lon)
-        bp, _, _ = _calc_propagation_v4(sfi, ssn, k, qth_lat, snr, is_day)
-        band_pct = {name: pct for name, _, pct in bp}
+        from .panels5 import _prop_now
+        band_pct = dict(_prop_now(self._cfg).band_pct)
         _thr.Thread(target=_history.append,
                     args=(band_pct, solar), daemon=True).start()
+
+    def _on_propagation_updated(self):
+        """Nieuwe ionosonde-meting of zonnedata: propagatiepanelen herberekenen."""
+        for attr, method in (("_band_rel_widget", "_recalc"),
+                             ("_band_sched_widget", "_recalc"),
+                             ("_prop_adv_widget", "_rebuild")):
+            w = getattr(self, attr, None)
+            if w is not None and hasattr(w, method):
+                getattr(w, method)()
+                w.update()
 
     def _set_refresh_interval(self, minutes: int):
         """Pas het data-verversinterval aan en sla op."""
@@ -1068,25 +1159,12 @@ class HAMIOSMainWindow(QMainWindow):
         if radius <= 0:
             self._header.set_lightning_warning(None)
             return
-        import math
-        from .layers import MAP_W, MAP_H
-        qlat = math.radians(self._cfg.qth_lat)
-        qlon = math.radians(self._cfg.qth_lon)
-        R = 6371.0
-        with self._map_view._lightning._lock:
-            strikes = list(self._map_view._lightning._strikes)
-        if not strikes:
+        # Afstanden uit de cache van de bliksemlaag (per inslag één keer berekend)
+        kms = [km for *_, km in self._map_view._lightning.strikes_km() if km is not None]
+        if not kms:
             self._header.set_lightning_warning(None)
             return
-        min_km = None
-        for x_px, y_px, _ in strikes:
-            slat = math.radians(90 - y_px / MAP_H * 180)
-            slon = math.radians(x_px / MAP_W * 360 - 180)
-            dlat = slat - qlat; dlon = slon - qlon
-            a = math.sin(dlat/2)**2 + math.cos(qlat)*math.cos(slat)*math.sin(dlon/2)**2
-            km = 2 * R * math.asin(min(1.0, math.sqrt(a)))
-            if min_km is None or km < min_km:
-                min_km = km
+        min_km = min(kms)
         if min_km is not None and min_km <= radius:
             self._header.set_lightning_warning(
                 tr("alert.lightning_hdr", km=min_km))
@@ -1108,11 +1186,9 @@ class HAMIOSMainWindow(QMainWindow):
         """Sla config op en herbereken afhankelijke panels."""
         from .config import save_config
         save_config(self._cfg)
-        # BandSchedWidget & MUFWidget herberekenen als mode/power/antenne wijzigt
+        # 24 uur vooruit herberekenen als mode/power/antenne wijzigt
         if hasattr(self, "_band_sched_widget"):
             self._band_sched_widget.set_cfg(self._cfg)
-        if hasattr(self, "_muf_widget"):
-            self._muf_widget.set_cfg(self._cfg)
 
     def _reset_layout(self):
         """Zet panels terug: eerst opgeslagen standaard, dan fabriekswaarden."""
@@ -1124,23 +1200,7 @@ class HAMIOSMainWindow(QMainWindow):
         except Exception:
             pass
 
-        # Venstergrootte herstellen
-        if "__window__" in saved and len(saved["__window__"]) >= 4:
-            wx, wy, ww, wh = saved["__window__"][:4]
-            _clamp_window(self, int(wx), int(wy), int(ww), int(wh))
-
-        for pid, p in self._panels.items():
-            if pid in saved and len(saved[pid]) >= 5:
-                x, y, w, h, vis = saved[pid][:5]
-            elif pid in _PANEL_DEFAULTS:
-                x, y, w, h, vis = _PANEL_DEFAULTS[pid]
-            else:
-                continue
-            p.setGeometry(int(x), int(y), int(w), int(h))
-            if vis:
-                p.show_panel()
-            else:
-                p.hide_panel()
+        self.apply_layout_dict(saved)
 
     # ── Satelliet-dialoog ────────────────────────────────────────────────────
     def _open_sat_dialog(self):
@@ -1240,6 +1300,8 @@ class HAMIOSMainWindow(QMainWindow):
             self._map_view._sat_layer.set_qth(lat, lon)
         if hasattr(self, "_header"):
             self._header.set_qth(lat, lon)
+        if hasattr(self, "_wspr_feed"):
+            self._wspr_feed.set_qth(lat, lon)
 
     # ── Overige ───────────────────────────────────────────────────────────────
     def _toggle_fullscreen(self):
@@ -1259,6 +1321,8 @@ class HAMIOSMainWindow(QMainWindow):
             self._map_view._lightning._worker.stop()
         if hasattr(self, "_wspr_feed"):
             self._wspr_feed.stop()
+        if hasattr(self, "_iono_feed"):
+            self._iono_feed.stop()
         if hasattr(self, "_cat"):
             self._cat.disconnect()
         super().closeEvent(event)
