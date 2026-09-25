@@ -1458,8 +1458,10 @@ def _maidenhead_to_latlon(locator: str) -> tuple[float, float] | None:
 
 
 class _PSKFetchThread(QThread):
-    """Haalt PSKReporter ontvangstmeldingen op (FT8/FT4/digital, laatste 15 min)."""
-    ready = Signal(list)
+    """Haalt PSKReporter ontvangstmeldingen op (FT8/FT4/digital, laatste 15 min).
+    Bij een fout (netwerk, of PSKReporter weigert een te snelle herhaling) komt
+    None: de laag houdt dan de laatste goede paden in plaats van alles te wissen."""
+    ready = Signal(object)            # list met rapporten, of None bij een fout
 
     _URL = ("https://pskreporter.info/cgi-bin/pskquery5.pl"
             "?encap=0&callback=_&statistics=0&noactive=1&nolocator=1"
@@ -1505,7 +1507,7 @@ class _PSKFetchThread(QThread):
 
             self.ready.emit(reports)
         except Exception:
-            self.ready.emit([])
+            self.ready.emit(None)
 
 
 class _PSKSignals(QObject):
@@ -1539,7 +1541,9 @@ class PSKReporterLayer(QGraphicsItem):
         self._fetch_thread = t
         t.start()
 
-    def _on_data(self, reports: list):
+    def _on_data(self, reports):
+        if reports is None:
+            return                     # fout: laatste goede paden blijven staan
         with self._lock:
             self._reports = reports
         self.update()
