@@ -285,7 +285,6 @@ def refresh(old_cache: dict, progress=None) -> tuple[dict, dict]:
     if not _refresh_lock.acquire(blocking=False):
         return old_cache, {"_busy": True}
     try:
-        results: dict = {}
 
         def _try(source: str, fn):
             wait = seconds_until_allowed(source)

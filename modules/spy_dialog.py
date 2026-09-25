@@ -242,7 +242,8 @@ class SpyStationsDialog(QDialog):
 
     def __init__(self, parent=None):
         super().__init__(parent)
-        self._stations  = _load_stations()
+        from .spy_en import localize
+        self._stations  = localize(_load_stations())     # weergave in de interfacetaal
         self._sort_col  = tr("spy.col.name")
         self._sort_asc  = True
         self.setWindowTitle(tr("spy.title"))
@@ -362,7 +363,7 @@ class SpyStationsDialog(QDialog):
             self._tree.addTopLevelItem(item)
         n = len(stations)
         t = len(self._stations)
-        self._status_lbl.setText(f"{n} van {t} stations")
+        self._status_lbl.setText(tr("spy.status", n=n, total=t))
         # Sorteerindicatoren in kolomkoppen
         labels = ["●", tr("spy.col.name"), tr("spy.col.country"), tr("spy.col.freq"), tr("spy.col.mode")]
         arrow  = " ↑" if self._sort_asc else " ↓"
@@ -374,7 +375,7 @@ class SpyStationsDialog(QDialog):
         s = item.data(0, Qt.UserRole)
         if not s:
             return
-        active = "🟢 Actief" if s.get("active") else "🔴 Inactief"
+        active = tr("spy.state.active") if s.get("active") else tr("spy.state.inactive")
         freqs  = s.get("frequencies", [])
         sched  = s.get("schedule", "—")
         info   = s.get("info", "")
@@ -384,9 +385,9 @@ class SpyStationsDialog(QDialog):
         html = (
             f"<b style='color:{ACCENT}'>{s.get('name','')}</b>"
             f"&nbsp;&nbsp;<span style='color:#888'>{active}</span><br>"
-            f"<span style='color:{TEXT_DIM}'>Land:</span> {s.get('country','—')}"
+            f"<span style='color:{TEXT_DIM}'>{tr('spy.lbl.country')}</span> {s.get('country','—')}"
             f"&nbsp;&nbsp;<span style='color:{TEXT_DIM}'>Mode:</span> {mode}<br>"
-            f"<span style='color:{TEXT_DIM}'>Schema:</span> {sched}<br><br>"
+            f"<span style='color:{TEXT_DIM}'>{tr('spy.lbl.schedule')}</span> {sched}<br><br>"
             f"{info}")
         self._detail.setHtml(html)
 

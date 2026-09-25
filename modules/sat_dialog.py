@@ -402,7 +402,7 @@ class SatelliteDialog(QDialog):
 
         if show_sel_only and self._tree.topLevelItemCount() == 0:
             placeholder = QTreeWidgetItem(
-                ["Geen satellieten geselecteerd — kies via 'Alle'"])
+                [tr("sat.none_selected")])
             placeholder.setForeground(0, QColor(TEXT_DIM))
             placeholder.setFlags(placeholder.flags() & ~Qt.ItemIsEnabled)
             self._tree.addTopLevelItem(placeholder)

@@ -22,6 +22,8 @@ IF-commando (FT-950 p.10):
 
 import threading
 
+from .i18n import tr
+
 _serial_available = False
 try:
     import serial
@@ -65,14 +67,14 @@ class CatInterface:
 
     def connect(self) -> tuple[bool, str]:
         if not _serial_available:
-            return False, "pyserial niet geïnstalleerd (pip install pyserial)"
+            return False, tr("cat.err.no_pyserial")
 
         cfg = self._cfg
         if cfg is None:
-            return False, "Geen configuratie beschikbaar"
+            return False, tr("cat.err.no_cfg")
         port = getattr(cfg, "cat_port", "").strip()
         if not port:
-            return False, "Geen seriële poort ingesteld"
+            return False, tr("cat.err.no_port")
 
         try:
             with self._lock:
@@ -109,14 +111,14 @@ class CatInterface:
                 self._serial.dtr = bool(getattr(cfg, "cat_dtr", False))
                 self._serial.rts = bool(getattr(cfg, "cat_rts", False))
 
-            self._log("INFO", f"Verbonden op {port}  "
-                              f"{getattr(cfg, 'cat_baud', 9600)} baud  "
-                              f"{getattr(cfg, 'cat_radio_type', '?')}")
+            self._log("INFO", tr("cat.log.connected", port=port,
+                                 baud=getattr(cfg, 'cat_baud', 9600),
+                                 radio=getattr(cfg, 'cat_radio_type', '?')))
             self._start_polling()
             return True, ""
         except PermissionError:
             self._serial = None
-            msg = "PermissionError — poort al in gebruik door ander programma"
+            msg = tr("cat.err.port_busy")
             self._log("ERR", msg)
             return False, msg
         except Exception as e:
@@ -133,7 +135,7 @@ class CatInterface:
                 except Exception:
                     pass
                 self._serial = None
-        self._log("INFO", "Verbinding verbroken")
+        self._log("INFO", tr("cat.log.disconnected"))
         cb = self._freq_callback
         if cb:
             try:
@@ -360,7 +362,7 @@ class CatInterface:
             txt = buf.decode("ascii", errors="replace").strip()
             if txt.startswith("ID") and txt.endswith(";"):
                 return True, txt[:-1]   # bijv. "ID0310"
-            return False, f"Onverwacht antwoord: {txt!r}"
+            return False, tr("cat.err.unexpected", txt=repr(txt))
         except Exception as e:
             return False, str(e)
 
@@ -396,10 +398,9 @@ class CatInterface:
                 self._log("RX", rx)
                 if b"?" in rx:
                     mhz = freq_hz / 1_000_000
-                    self._log("ERR",
-                        f"Radio weigert frequentie {mhz:.3f} MHz — "
-                        "buiten bereik of radio niet in CAT-modus")
-                    return False, f"Radio antwoordt ?; — frequentie geweigerd ({mhz:.3f} MHz)"
+                    self._log("ERR", tr("cat.log.refused", mhz=f"{mhz:.3f}"))
+                    # "?;" blijft in de melding: EIBI/FT8 herkennen een weigering daaraan
+                    return False, tr("cat.err.refused", mhz=f"{mhz:.3f}")
             return True, ""
         except Exception as e:
             self._log("ERR", str(e))
@@ -433,7 +434,7 @@ class CatInterface:
 
         rtype = getattr(self._cfg, "cat_radio_type", "")
         if "Icom" in rtype:
-            return False, "Modus instellen via CI-V nog niet ondersteund"
+            return False, tr("cat.err.icom_mode")
 
         data = f"MD0{code};".encode("ascii")
         try:

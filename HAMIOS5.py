@@ -240,7 +240,8 @@ class _InetCheckThread(QThread):
                     break          # beide SSL-varianten mislukt; volgende URL
                 except Exception:
                     break          # netwerk/HTTP-fout; volgende URL
-        self.result.emit(False, "geen verbinding")
+        from modules.i18n import tr as _tr
+        self.result.emit(False, _tr("res.no_connection"))
 
 
 # ── Online resource check thread ──────────────────────────────────────────────
@@ -527,13 +528,15 @@ def main():
     from modules.startup import check_files
     _, _err = check_files()
     if _err:
-        _show_error("HAMIOS — Opstartfout", "\n\n".join(_err))
+        from modules.i18n import tr as _tr
+        _show_error(_tr("app.startup_error"), "\n\n".join(_err))
         sys.exit(1)
 
     def _excepthook(exc_type, exc_value, exc_tb):
         msg = "".join(traceback.format_exception(exc_type, exc_value, exc_tb))
         print(msg, file=sys.stderr)
-        _show_error("HAMIOS — Onverwachte fout", msg)
+        from modules.i18n import tr as _tr
+        _show_error(_tr("app.unexpected_error"), msg)
     sys.excepthook = _excepthook
 
     from modules.theme import QSS as _QSS

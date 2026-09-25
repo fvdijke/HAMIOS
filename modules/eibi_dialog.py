@@ -75,11 +75,11 @@ class _EibiDownloadThread(QThread):
     def run(self):
         try:
             url = get_eibi_url()
-            self.progress.emit(f"Downloaden: {url} …")
+            self.progress.emit(tr("eibi.status.dl_url", url=url))
             req = urllib.request.Request(url, headers={"User-Agent": "HAMIOS/5.7"})
             with urllib.request.urlopen(req, timeout=30) as r:
                 raw = r.read().decode("latin-1", errors="replace")
-            self.progress.emit("Verwerken …")
+            self.progress.emit(tr("eibi.status.processing"))
 
             # Opslaan in cache
             with open(_CACHE_FILE, "w", encoding="latin-1") as f:
@@ -112,6 +112,13 @@ class _EibiSortProxy(QSortFilterProxyModel):
             except (ValueError, TypeError):
                 pass
         return super().lessThan(left, right)
+
+
+def _fmt_int(n: int) -> str:
+    """Getal met duizendtalscheiding in de notatie van de interfacetaal (9.443 / 9,443)."""
+    from .i18n import get_language
+    txt = f"{n:,}"
+    return txt.replace(",", ".") if get_language() == "nl" else txt
 
 
 # ── Dialoog ───────────────────────────────────────────────────────────────────
@@ -194,7 +201,7 @@ class EibiDialog(QDialog):
         flt.addWidget(QLabel(tr("eibi.band_lbl")))
         self._band_cb = QComboBox(); self._band_cb.setFont(f8)
         self._band_cb.addItems([
-            "Alle", "LF/MF (< 1600 kHz)", "60m (4–5 MHz)",
+            tr("eibi.band.all"), "LF/MF (< 1600 kHz)", "60m (4–5 MHz)",
             "49m (5.7–6.3 MHz)", "41m (7.1–7.5 MHz)",
             "31m (9.3–10 MHz)", "25m (11.5–12.2 MHz)",
             "22m (13.5–13.9 MHz)", "19m (15.1–15.8 MHz)",
@@ -213,18 +220,14 @@ class EibiDialog(QDialog):
         self._translate_cb = QCheckBox(tr("eibi.full_names"))
         self._translate_cb.setFont(f8)
         self._translate_cb.setChecked(True)
-        self._translate_cb.setToolTip(
-            "Vertaal taal- en doelgebied-codes naar volledige namen.\n"
-            "De originele EIBI-data wordt niet gewijzigd.")
+        self._translate_cb.setToolTip(tr("eibi.full_names_tip"))
         self._translate_cb.toggled.connect(self._apply_filter)
         flt.addWidget(self._translate_cb)
 
         self._am_cb = QCheckBox(tr("eibi.am_cb"))
         self._am_cb.setFont(f8)
         self._am_cb.setChecked(True)
-        self._am_cb.setToolTip(
-            "Stel automatisch AM in op de radio bij het klikken op een frequentie.\n"
-            "Kortegolf-omroepen zenden uit in AM (Amplitude Modulatie).")
+        self._am_cb.setToolTip(tr("eibi.am_tip"))
         flt.addWidget(self._am_cb)
 
         v.addLayout(flt)
@@ -232,8 +235,8 @@ class EibiDialog(QDialog):
         # ── Tabel ─────────────────────────────────────────────────────────────
         self._model = QStandardItemModel(0, len(_COL_HEADERS))
         self._model.setHorizontalHeaderLabels([
-            tr("eibi.col.freq"), tr("eibi.col.station"), tr("eibi.col.time"), "Dagen",
-            "Land", tr("eibi.col.lang"), tr("eibi.col.target"), "Opmerkingen",
+            tr("eibi.col.freq"), tr("eibi.col.station"), tr("eibi.col.time"), tr("eibi.col.days"),
+            tr("eibi.col.country"), tr("eibi.col.lang"), tr("eibi.col.target"), tr("eibi.col.remarks"),
         ])
 
         self._proxy = _EibiSortProxy()
@@ -287,11 +290,9 @@ class EibiDialog(QDialog):
         rows = _load_cache()
         if rows:
             meta = _load_meta()
-            upd  = meta.get("updated", "onbekend")
+            upd  = meta.get("updated", tr("eibi.upd_unknown"))
             self._populate(rows)
-            self._status_lbl.setText(
-                f"{len(rows):,} frequenties  ·  bijgewerkt {upd}  ·  "
-                f"Bron: eibispace.de")
+            self._status_lbl.setText(tr("eibi.status.count", n=_fmt_int(len(rows)), upd=upd))
         else:
             self._status_lbl.setText(tr("eibi.status.no_cache"))
 
@@ -302,7 +303,7 @@ class EibiDialog(QDialog):
         t.progress.connect(self._status_lbl.setText)
         t.done.connect(self._on_downloaded)
         t.error.connect(lambda e: (
-            self._status_lbl.setText(f"Fout: {e}"),
+            self._status_lbl.setText(tr("eibi.status.error", e=e)),
             self._progress.hide()))
         t.finished.connect(t.deleteLater)
         t.start()
@@ -310,11 +311,9 @@ class EibiDialog(QDialog):
     def _on_downloaded(self, rows: list):
         self._progress.hide()
         meta = _load_meta()
-        upd  = meta.get("updated", "zojuist")
+        upd  = meta.get("updated", tr("eibi.upd_now"))
         self._populate(rows)
-        self._status_lbl.setText(
-            f"{len(rows):,} frequenties  ·  bijgewerkt {upd}  ·  "
-            f"Bron: eibispace.de")
+        self._status_lbl.setText(tr("eibi.status.count", n=_fmt_int(len(rows)), upd=upd))
 
     def _resize_columns(self):
         """Pas kolombreedtes aan op inhoud (max 300px per kolom)."""
@@ -399,10 +398,10 @@ class EibiDialog(QDialog):
                     continue
 
             # Vertalingen berekenen (originele data onaangetast)
-            tr = enrich_row(row)
-            lang_full   = tr["lang_full"]
-            target_full = tr["target_full"]
-            itu_full    = tr["itu_full"]
+            names = enrich_row(row)        # niet 'tr' noemen: dat is de vertaalfunctie
+            lang_full   = names["lang_full"]
+            target_full = names["target_full"]
+            itu_full    = names["itu_full"]
 
             items = []
             for csv_j in _DISPLAY_ORDER:
@@ -434,9 +433,8 @@ class EibiDialog(QDialog):
             self._model.appendRow(items)
 
         n = self._model.rowCount()
-        self._status_lbl.setText(
-            f"{n:,} van {len(self._all_rows):,} frequenties  ·  "
-            f"Bron: eibispace.de")
+        self._status_lbl.setText(tr("eibi.status.filtered", n=_fmt_int(n),
+                                    total=_fmt_int(len(self._all_rows))))
 
     def _on_row_clicked(self, proxy_index):
         """Emitteer freq_selected (Hz) bij klik en stuur naar CAT als verbonden."""
@@ -462,12 +460,10 @@ class EibiDialog(QDialog):
         ok, msg = cat.set_freq_hz(hz)
         if not ok:
             if "geweigerd" in msg or "?" in msg:
-                self._status_lbl.setText(
-                    f"📟  {khz:.0f} kHz geweigerd door radio  "
-                    f"(buiten bereik of CAT niet actief)")
+                self._status_lbl.setText(tr("eibi.cat_refused", khz=f"{khz:.0f}"))
                 self._status_lbl.setStyleSheet(f"color: #FFA726; font-size: 8pt;")
             else:
-                self._status_lbl.setText(f"📟  CAT fout: {msg}")
+                self._status_lbl.setText(tr("eibi.status.cat_err", msg=msg))
                 self._status_lbl.setStyleSheet(f"color: #EF5350; font-size: 8pt;")
             QTimer.singleShot(5000, self._reset_status)
             return
@@ -476,7 +472,7 @@ class EibiDialog(QDialog):
         mode_note = ""
         if self._am_cb.isChecked():
             m_ok, m_msg = cat.set_mode("AM")
-            mode_note = "  AM ✔" if m_ok else f"  (modus: {m_msg})"
+            mode_note = "  AM ✔" if m_ok else tr("eibi.mode_note", msg=m_msg)
 
         self._status_lbl.setText(f"📟  CAT → {khz:.3f} kHz{mode_note}")
         self._status_lbl.setStyleSheet(f"color: #4CAF50; font-size: 8pt;")
@@ -484,8 +480,8 @@ class EibiDialog(QDialog):
 
     def _reset_status(self):
         n = self._model.rowCount()
-        self._status_lbl.setText(
-            f"{n:,} van {len(self._all_rows):,} frequenties  ·  Bron: eibispace.de")
+        self._status_lbl.setText(tr("eibi.status.filtered", n=_fmt_int(n),
+                                    total=_fmt_int(len(self._all_rows))))
         self._status_lbl.setStyleSheet(f"color: {TEXT_DIM}; font-size: 8pt;")
 
     def done(self, result):

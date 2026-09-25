@@ -97,9 +97,9 @@ def _cat_check() -> tuple:
     from .cat_interface import get_instance
     cat = get_instance()
     if cat is None:
-        return None, "CAT niet geconfigureerd"
+        return None, tr("cat.not_configured")
     if not cat.connected:
-        return cat, "CAT niet verbonden — open CAT venster"
+        return cat, tr("cat.not_connected")
     return cat, None
 
 
@@ -608,38 +608,15 @@ class StormFcWidget(QWidget):
     # (tr-key, data-key, Kp-bereik, tooltip)
     _LEVELS = [
         ("storm.active",    "active",   "Kp 3–4",
-         "<b>Actief (Kp 3–4)</b><br>"
-         "Lichte geomagnetische activiteit.<br>"
-         "HF-propagatie op polaire paden iets verminderd.<br>"
-         "Geen merkbaar effect op mid-latitude banden.<br>"
-         "Aurora mogelijk boven 65°N."),
+         "storm.tip.active"),
         ("storm.minor",  "minor",    "Kp 5",
-         "<b>G1 Minor storm (Kp 5)</b><br>"
-         "HF-degradatie op hoge-breedtegraad-paden (boven 60°N).<br>"
-         "160m/80m kunnen verslechteren door verhoogde absorptie.<br>"
-         "QRN toename op lage banden mogelijk.<br>"
-         "Aurora zichtbaar tot ~60°N."),
+         "storm.tip.minor"),
         ("storm.moderate",  "moderate", "Kp 6",
-         "<b>G2 Moderate storm (Kp 6)</b><br>"
-         "Merkbare HF-uitval op polaire en hoge breedtepaden.<br>"
-         "160m/80m/40m sterk verzwakt; MUF daalt.<br>"
-         "Verhoogde QRN, bandruis neemt toe.<br>"
-         "DX op lage banden moeilijk; hogere banden kunnen openen.<br>"
-         "Aurora tot ~55°N."),
+         "storm.tip.moderate"),
         ("storm.severe",  "severe",   "Kp 7",
-         "<b>G3 Strong storm (Kp 7)</b><br>"
-         "Intermitterende HF-uitval op veel paden.<br>"
-         "160m t/m 20m zwaar verstoord of gesloten.<br>"
-         "Sterke QRN op alle lage banden; pratical QSO moeilijk.<br>"
-         "Navigatie-GPS mogelijke afwijkingen.<br>"
-         "Aurora tot ~50°N."),
+         "storm.tip.severe"),
         ("storm.extreme", "extreme",  "Kp ≥8",
-         "<b>G4–G5 Severe/Extreme storm (Kp ≥8)</b><br>"
-         "Grootschalige HF-uitval, volledige bandsluitingen mogelijk.<br>"
-         "Alle lage banden (160m–20m) praktisch gesloten.<br>"
-         "Hoge banden (10m–6m) kunnen door aurora-E openen.<br>"
-         "Ernstige QRN; satellietsignalen verstoord.<br>"
-         "Aurora zichtbaar tot middenbreedtes (~45°N)."),
+         "storm.tip.extreme"),
     ]
 
     def __init__(self, parent=None):
@@ -698,6 +675,7 @@ class StormFcWidget(QWidget):
         self._cells: dict[tuple, QLabel] = {}
         self._row_lbls = []
         for row, (trkey, key, kp, tip) in enumerate(self._LEVELS, start=1):
+            tip = tr(tip)
             lbl = QLabel(f"{tr(trkey)}  <small style='color:#555;'>{kp}</small>")
             lbl.setTextFormat(Qt.RichText)
             lbl.setFont(f7)
@@ -976,6 +954,16 @@ def _rows_to_ha(rows: list, hours: float) -> list:
     return out
 
 
+def _gap_limit(data: list) -> float:
+    """Grootste afstand (uren) tussen twee metingen die nog verbonden wordt.
+    Groter = een gat (HAMIOS stond uit): daar geen lijn tekenen, anders lijkt
+    een rechte verbindingslijn op echte data. Grens: 4× het normale
+    meetinterval (mediaan), minstens 45 minuten."""
+    steps = sorted(abs(a[0] - b[0]) for a, b in zip(data, data[1:]) if a[0] != b[0])
+    median = steps[len(steps) // 2] if steps else 0.0
+    return max(0.75, 4 * median)
+
+
 class SolarHistChart(QWidget):
     """SFI + Kp historiek — leest uit HAMIOS_history.csv."""
 
@@ -1085,27 +1073,29 @@ class SolarHistChart(QWidget):
                 alpha = int(min(120, k * 14))
                 p.fillRect(x - 1, PT, 3, gH, QColor(200, 80, 50, alpha))
 
-        # SFI-lijn (oranje)
+        gap = _gap_limit(data)
+
+        # SFI-lijn (oranje) — onderbroken bij gaten in de data
         prev = None
+        p.setPen(QPen(QColor("#FFA726"), 1.5))
         for ha, ts, bp, sol in reversed(data):
             sfi = sol.get("sfi", 0)
             if sfi <= 0:
                 prev = None; continue
             x, y = ha_x(ha), sfi_y(sfi)
-            if prev:
-                p.setPen(QPen(QColor("#FFA726"), 1.5))
+            if prev and abs(prev[2] - ha) <= gap:
                 p.drawLine(prev[0], prev[1], x, y)
-            prev = (x, y)
+            prev = (x, y, ha)
 
         # K-index lijn (rood, rechts-as)
         prev = None
+        p.setPen(QPen(QColor("#EF5350"), 1.0))
         for ha, ts, bp, sol in reversed(data):
             k = sol.get("k_index", 0)
             x, y = ha_x(ha), kp_y(k)
-            if prev:
-                p.setPen(QPen(QColor("#EF5350"), 1.0))
+            if prev and abs(prev[2] - ha) <= gap:
                 p.drawLine(prev[0], prev[1], x, y)
-            prev = (x, y)
+            prev = (x, y, ha)
 
         # Rechts: K-as labels (0, 3, 5, 9)
         p.setPen(QColor("#EF5350"))
@@ -1219,18 +1209,19 @@ class BandHistChart(QWidget):
             p.drawText(0, yr - 5, PL - 2, 10,
                        Qt.AlignRight | Qt.AlignVCenter, f"{pct}%")
 
-        # Lijnen per band (alleen zichtbare banden)
+        # Lijnen per band (alleen zichtbare banden), onderbroken bij gaten
+        gap = _gap_limit(data)
         for band in self.SHOW:
             if band not in self._visible:
                 continue
+            p.setPen(QPen(QColor(self.COLORS[band]), 1.2))
             prev = None
             for ha, ts, bp, sol in reversed(data):
                 pct = bp.get(band, 0)
                 x, y = ha_x(ha), pct_y(pct)
-                if prev:
-                    p.setPen(QPen(QColor(self.COLORS[band]), 1.2))
+                if prev and abs(prev[2] - ha) <= gap:
                     p.drawLine(prev[0], prev[1], x, y)
-                prev = (x, y)
+                prev = (x, y, ha)
 
         # Tijdlabels direct onder grafiek
         y_time = H - PB_total + 2
@@ -1812,7 +1803,7 @@ class DXSpotsTable(QWidget):
         self._all_spots:  list = []
         self._filtered:   list = []
         self._history:    list = []
-        self._dx_font_sz: int  = getattr(cfg, "dx_font_size", 8) if cfg else 8
+        self._dx_font_sz: int  = getattr(cfg, "dx_font_size", 9) if cfg else 9
         self._build_ui()
         language_changed.connect(self._retranslate)
         if cfg:
@@ -1823,7 +1814,7 @@ class DXSpotsTable(QWidget):
     def set_cfg(self, cfg):
         self._cfg = cfg
         self._own_cb.setChecked(getattr(cfg, "dx_own_continent", False))
-        font_size = getattr(cfg, "dx_font_size", 8)
+        font_size = getattr(cfg, "dx_font_size", 9)
         self._set_font_size(font_size)
         self._apply_filter()
 
@@ -1842,7 +1833,19 @@ class DXSpotsTable(QWidget):
         fmono = QFont("Consolas", self._dx_font_sz)
         self._table.setFont(fmono)
         self._table.verticalHeader().setDefaultSectionSize(max(14, self._dx_font_sz + 6))
+        self._fit_columns(fmono)
         self._update_table()   # herteken met nieuwe fontgrootte
+
+    # Kolombreedtes in tekens (monospace): UTC, band, MHz, DX, spotter; commentaar rekt
+    _COL_CHARS = (5, 4, 7, 10, 10)
+
+    def _fit_columns(self, font: QFont):
+        """Kolombreedtes op de tekenbreedte van het gebruikte lettertype, zodat
+        bijv. de UTC-tijd bij elke lettergrootte volledig past."""
+        from PySide6.QtGui import QFontMetrics
+        cw = QFontMetrics(font).horizontalAdvance("0")
+        for i, n in enumerate(self._COL_CHARS):
+            self._table.setColumnWidth(i, int(cw * n + 14))
 
     def _build_ui(self):
         v = QVBoxLayout(self)
@@ -1866,7 +1869,7 @@ class DXSpotsTable(QWidget):
         ctrl.addWidget(self._heatmap_btn)
 
         ctrl.addStretch()
-        self._status_lbl = QLabel("Laden…")
+        self._status_lbl = QLabel(tr("app.loading"))
         self._status_lbl.setFont(f8)
         self._status_lbl.setStyleSheet(f"color: {TEXT_DIM};")
         ctrl.addWidget(self._status_lbl)
@@ -1889,12 +1892,10 @@ class DXSpotsTable(QWidget):
         self._table.setFont(fmono)
         hdr = self._table.horizontalHeader()
         hdr.setFont(QFont("Segoe UI", 7))
-        for i, w in enumerate([38, 38, 58, 80, 74, -1]):
-            if w > 0:
-                hdr.setSectionResizeMode(i, QHeaderView.Fixed)
-                self._table.setColumnWidth(i, w)
-            else:
-                hdr.setSectionResizeMode(i, QHeaderView.Stretch)
+        for i in range(5):
+            hdr.setSectionResizeMode(i, QHeaderView.Fixed)
+        hdr.setSectionResizeMode(5, QHeaderView.Stretch)
+        self._fit_columns(fmono)
         self._table.verticalHeader().setDefaultSectionSize(16)
         self._table.cellClicked.connect(self._on_row_clicked)
         self._table.setStyleSheet(f"""
@@ -1966,9 +1967,9 @@ class DXSpotsTable(QWidget):
         n     = len(self._filtered)
         total = len(self._all_spots)
         ts    = _dt.datetime.now().strftime("%H:%M")
-        filt  = " (eigen cont.)" if self._own_cb.isChecked() else ""
+        filt  = tr("dx.own_cont_short") if self._own_cb.isChecked() else ""
         self._status_lbl.setText(
-            f"{n}/{total} spots{filt}  {ts}" if total else f"Geen spots  {ts}")
+            f"{n}/{total} spots{filt}  {ts}" if total else tr("dx.no_spots", ts=ts))
 
     def _toggle_heatmap(self, on: bool):
         self._stack.setCurrentIndex(1 if on else 0)

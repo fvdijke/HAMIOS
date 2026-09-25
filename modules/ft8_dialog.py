@@ -114,8 +114,33 @@ _COLS = ["MHz", "Mode", "Band", "Regio", "Opmerkingen"]
 
 
 def _fmt_mhz(khz: float) -> str:
-    """kHz → MHz met 4 decimalen, Nederlandse notatie (1.296,1000 / 14,0740)."""
-    return f"{khz / 1000:,.4f}".replace(',', 'X').replace('.', ',').replace('X', '.')
+    """kHz → MHz met 4 decimalen in de notatie van de interfacetaal
+    (NL: 1.296,1000 / 14,0740 — EN: 1,296.1000 / 14.0740)."""
+    from .i18n import get_language
+    s = f"{khz / 1000:,.4f}"
+    if get_language() == "en":
+        return s
+    return s.replace(',', 'X').replace('.', ',').replace('X', '.')
+
+
+# Regio's en opmerkingen in de tabel staan in het Nederlands; Engelse weergave
+_REGION_EN = {"Wereld": "World", "Europa": "Europe"}
+_NOTE_EN = {"Naast JT65": "Next to JT65", "EME standaard": "EME standard",
+            "EME alternatief": "EME alternative", "JA regio": "JA region",
+            "5 MHz kanalen": "5 MHz channels", "Alternatief EU": "Alternative EU"}
+
+
+def _loc(text: str, table: dict) -> str:
+    """Tabeltekst in de interfacetaal (Standaard/Alternatief … → Standard/Alternative …)."""
+    from .i18n import get_language
+    if get_language() != "en" or not text:
+        return text
+    if text in table:
+        return table[text]
+    for nl, en in (("Standaard", "Standard"), ("Alternatief", "Alternative")):
+        if text.startswith(nl):
+            return en + text[len(nl):]
+    return text
 
 # Kleurcodering per mode
 _MODE_COLORS = {
@@ -197,14 +222,14 @@ class Ft8Dialog(QDialog):
 
         flt.addWidget(QLabel(tr("ft8.band_lbl")))
         self._band_cb = QComboBox(); self._band_cb.setFont(f8)
-        self._band_cb.addItems(_BANDS)
+        self._band_cb.addItems([tr("ft8.all")] + _BANDS[1:])
         self._band_cb.setFixedWidth(72)
         self._band_cb.currentIndexChanged.connect(self._apply_filter)
         flt.addWidget(self._band_cb)
 
         flt.addWidget(QLabel(tr("ft8.mode_lbl")))
         self._mode_cb = QComboBox(); self._mode_cb.setFont(f8)
-        self._mode_cb.addItems(_MODES_FILTER)
+        self._mode_cb.addItems([tr("ft8.all")] + _MODES_FILTER[1:])
         self._mode_cb.setFixedWidth(90)
         self._mode_cb.currentIndexChanged.connect(self._apply_filter)
         flt.addWidget(self._mode_cb)
@@ -212,9 +237,7 @@ class Ft8Dialog(QDialog):
         self._usb_cb = QCheckBox(tr("ft8.usb_mode"))
         self._usb_cb.setFont(f8)
         self._usb_cb.setChecked(True)
-        self._usb_cb.setToolTip(
-            "Stel automatisch USB in op de radio bij het klikken op een frequentie.\n"
-            "Alle digitale modi (FT8, FT4, WSPR, …) gebruiken USB als draaggolf.")
+        self._usb_cb.setToolTip(tr("ft8.usb_tip"))
         flt.addWidget(self._usb_cb)
 
         v.addLayout(flt)
@@ -233,7 +256,7 @@ class Ft8Dialog(QDialog):
         self._model = QStandardItemModel(0, len(_COLS))
         self._model.setHorizontalHeaderLabels([
             tr("ft8.col.freq") + " (MHz)", tr("ft8.col.mode"), tr("ft8.col.band"),
-            "Regio", tr("ft8.col.note"),
+            tr("ft8.col.region"), tr("ft8.col.note"),
         ])
 
         self._proxy = QSortFilterProxyModel()
@@ -287,8 +310,8 @@ class Ft8Dialog(QDialog):
 
     def _apply_filter(self):
         q    = self._search.text().strip().lower()
-        band = self._band_cb.currentText()
-        mode = self._mode_cb.currentText()
+        band = _BANDS[max(0, self._band_cb.currentIndex())]
+        mode = _MODES_FILTER[max(0, self._mode_cb.currentIndex())]
 
         self._model.removeRows(0, self._model.rowCount())
         f_mono = QFont("Consolas", 8)
@@ -296,13 +319,16 @@ class Ft8Dialog(QDialog):
 
         count = 0
         for khz, m, b, reg, note in _FREQS:
+            reg, note = _loc(reg, _REGION_EN), _loc(note, _NOTE_EN)
             if band != "Alle" and b != band:
                 continue
             if mode != "Alle" and m != mode:
                 continue
             if q:
                 # Zoeken werkt op kHz én MHz (14074, 14.074, 14,074)
-                haystack = f"{khz} {khz / 1000} {_fmt_mhz(khz)} {m} {b} {reg} {note}".lower()
+                mhz_dot = f"{khz / 1000} {khz / 1000:.4f}"
+                haystack = (f"{khz} {mhz_dot} {mhz_dot.replace('.', ',')} "
+                            f"{_fmt_mhz(khz)} {m} {b} {reg} {note}").lower()
                 if q not in haystack:
                     continue
 
@@ -332,8 +358,7 @@ class Ft8Dialog(QDialog):
             count += 1
 
         total = len(_FREQS)
-        self._status_lbl.setText(
-            f"{count} van {total} frequenties  ·  klik op rij om CAT af te stemmen")
+        self._status_lbl.setText(tr("ft8.status", n=count, total=total))
         self._status_lbl.setStyleSheet(f"color: {TEXT_DIM}; font-size: 8pt;")
 
     # ── CAT ───────────────────────────────────────────────────────────────────
@@ -354,14 +379,14 @@ class Ft8Dialog(QDialog):
         from .cat_interface import get_instance
         cat = get_instance()
         if cat is None:
-            self._cat_status("📟  Geen CAT verbinding", "#EF5350")
+            self._cat_status(tr("ft8.no_cat"), "#EF5350")
             return
 
         # Stel frequentie in
         ok, msg = cat.set_freq_hz(hz)
         if not ok:
             if "geweigerd" in msg or "?" in msg:
-                self._cat_status(f"📟  {_fmt_mhz(khz)} MHz geweigerd (buiten HAM-band?)", "#FFA726")
+                self._cat_status(tr("ft8.refused", mhz=_fmt_mhz(khz)), "#FFA726")
             else:
                 self._cat_status(f"📟  {msg}", "#EF5350")
             QTimer.singleShot(4000, self._reset_cat_lbl)
@@ -371,7 +396,7 @@ class Ft8Dialog(QDialog):
         mode_note = ""
         if self._usb_cb.isChecked():
             m_ok, m_msg = cat.set_mode("USB")
-            mode_note = "  USB ✔" if m_ok else f"  (modus: {m_msg})"
+            mode_note = "  USB ✔" if m_ok else tr("eibi.mode_note", msg=m_msg)
 
         self._cat_status(f"📟  CAT → {_fmt_mhz(khz)} MHz{mode_note}", "#4CAF50")
         QTimer.singleShot(4000, self._reset_cat_lbl)

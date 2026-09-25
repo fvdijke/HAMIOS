@@ -27,7 +27,7 @@ from PySide6.QtWidgets import (
     QGraphicsEllipseItem, QGraphicsSimpleTextItem, QGraphicsItemGroup
 )
 from PySide6.QtCore import (
-    Qt, QRectF, QPointF, QTimer, Signal, QObject, QThread
+    Qt, QRectF, QPointF, QTimer, Signal, QThread
 )
 from PySide6.QtGui import (
     QPixmap, QPainter, QColor, QPen, QBrush, QImage,
@@ -322,34 +322,48 @@ class SunMarkerItem(QGraphicsItem):
     def __init__(self):
         super().__init__()
         self.setZValue(3.5)
-        self._r = 6   # kern-radius; stralen schalen mee
+        # Vaste schermgrootte, net als het maanicoon (niet mee-schalen met de kaart)
+        self.setFlag(QGraphicsItem.ItemIgnoresTransformations, True)
+        self._size = 24.0     # totale diameter incl. stralen (schermpixels)
+        self._qth_lat, self._qth_lon = 52.0, 5.0
         self._update_position()
 
+    def set_qth(self, lat: float, lon: float):
+        self._qth_lat, self._qth_lon = lat, lon
+        self._update_position()
+
+    @property
+    def _r(self) -> float:
+        """Straal van de zonneschijf; de stralen lopen tot _size / 2."""
+        return self._size * 0.3
+
     def set_size(self, px: int):
-        self._r = max(4, px // 4)
         self.prepareGeometryChange()
+        self._size = float(max(10, px))
         self.update()
 
     def _update_position(self):
         lat, lon = _subsolar_point()
         pt = latlon_to_scene(lat, lon)
         self.setPos(pt)
+        self.setToolTip(sun_tooltip(self._qth_lat, self._qth_lon))
 
     def boundingRect(self) -> QRectF:
-        m = self._r * 2
+        m = self._size / 2 + 1
         return QRectF(-m, -m, m * 2, m * 2)
 
     def paint(self, painter: QPainter, option, widget=None):
         painter.setRenderHint(QPainter.Antialiasing)
         r = self._r
-        pen = QPen(QColor(255, 215, 0, 180), 1.2)
+        outer = self._size / 2
+        pen = QPen(QColor(255, 215, 0, 190), max(1.2, self._size / 16), Qt.SolidLine, Qt.RoundCap)
         painter.setPen(pen)
         painter.setBrush(Qt.NoBrush)
         for angle in range(0, 360, 45):
             a = math.radians(angle)
             cx, cy = math.cos(a), math.sin(a)
-            painter.drawLine(QPointF((r+2)*cx, (r+2)*cy),
-                             QPointF((r+5)*cx, (r+5)*cy))
+            painter.drawLine(QPointF((r + 1.5) * cx, (r + 1.5) * cy),
+                             QPointF(outer * cx, outer * cy))
         painter.setBrush(QBrush(QColor(255, 215, 0)))
         painter.setPen(QPen(QColor(200, 160, 0), 1))
         painter.drawEllipse(QPointF(0, 0), r, r)
@@ -361,6 +375,9 @@ class MoonMarkerItem(QGraphicsItem):
     def __init__(self):
         super().__init__()
         self.setZValue(3.7)
+        # Vaste schermgrootte (niet mee-schalen met de kaart): anders is het
+        # icoon bij de normale zoom maar ~6 px en is de fase niet te zien
+        self.setFlag(QGraphicsItem.ItemIgnoresTransformations, True)
         self._ICON_SIZE = 22
         self._icon: QImage | None = None
         self._elevation: float = 0.0   # graden boven/onder horizon t.o.v. QTH
@@ -382,13 +399,16 @@ class MoonMarkerItem(QGraphicsItem):
     def _update_position(self):
         lat, lon = _submoon_point()
         self.setPos(latlon_to_scene(lat, lon))
-        phase = _moon_phase_deg()
-        self._icon = _render_moon_icon(self._ICON_SIZE, phase)
-        self._elevation = _moon_elevation(self._qth_lat, self._qth_lon)
-        tip = (f"Maan  fase {int((phase % 360) / 360 * 100)}%  "
-               f"{'▲' if self._elevation >= 0 else '▼'} {abs(self._elevation):.0f}°"
-               f" {'boven' if self._elevation >= 0 else 'onder'} horizon")
-        self.setToolTip(tip)
+        view = moon_view(self._qth_lat, self._qth_lon)
+        phase = view["phase"]
+        self._icon = _render_moon_icon(self._ICON_SIZE, view["elong"], view["limb"])
+        self._elevation = view["el"]
+        from .i18n import tr
+        key, lit = moon_phase_info(phase)
+        above = self._elevation >= 0
+        self.setToolTip(tr("moon.tip", phase=tr(key), lit=lit,
+                           arrow="▲" if above else "▼", el=f"{abs(self._elevation):.0f}",
+                           pos=tr("moon.above" if above else "moon.below")))
         self.update()
 
     def boundingRect(self) -> QRectF:
@@ -401,23 +421,8 @@ class MoonMarkerItem(QGraphicsItem):
         s = self._ICON_SIZE
         painter.setRenderHint(QPainter.Antialiasing)
 
-        above = self._elevation >= 0
-
-        # Boven horizon: helder; onder horizon: getemperd
-        if above:
-            painter.setOpacity(1.0)
-        else:
-            painter.setOpacity(0.35)
-        painter.drawImage(QPointF(-s / 2, -s / 2), self._icon)
-        painter.setOpacity(1.0)
-
-        # Kleine indicator: ▲ of ▼ rechtsonder het icoon
-        clr = QColor(180, 220, 255, 200) if above else QColor(100, 110, 130, 200)
-        painter.setPen(clr)
-        painter.setFont(QFont("Segoe UI", 5))
-        arrow = "▲" if above else "▼"
-        painter.drawText(QRectF(s // 2 - 8, s // 2 - 8, 10, 10),
-                         Qt.AlignCenter, arrow)
+        # Altijd helder: de fase en stand zoals gezien vanaf de QTH
+        painter.drawImage(QRectF(-s / 2, -s / 2, s, s), self._icon)
 
 
 def grid_to_image(grid: bytes, w: int, h: int, colour, up: int = 4) -> QImage:
@@ -1121,8 +1126,11 @@ class MapView(QGraphicsView):
         self._propmap._on_change  = self._compose_base
         self._drap._on_change     = self._compose_base
         QPixmapCache.setCacheLimit(max(QPixmapCache.cacheLimit(), 128 * 1024))
+        # Statische lagen als pixmap cachen: bij elk animatieframe (DX-lijnen,
+        # bliksemringen) wordt dan alleen het beeld hergebruikt. PSKReporter
+        # (duizenden paden) verandert maar eens per 5 min.
         for item in (self._base_map, self._graticule, self._maidenhead,
-                     self._callsign_overlay, self._sat_layer,
+                     self._callsign_overlay, self._sat_layer, self._psk,
                      self._lightning_radius, self._lightning_beep_radius):
             item.setCacheMode(QGraphicsItem.DeviceCoordinateCache)
 
@@ -1771,6 +1779,7 @@ class MapView(QGraphicsView):
         self._lightning_radius.set_qth(lat, lon)
         self._lightning_beep_radius.set_qth(lat, lon)
         self._moon_marker.set_qth(lat, lon)
+        self._sun_marker.set_qth(lat, lon)
 
     def set_lightning_radius(self, km: int):
         """Rode cirkel — header-melding drempel."""
@@ -2002,67 +2011,151 @@ def _submoon_point() -> tuple[float, float]:
     return lat, lon
 
 
-def _moon_phase_deg() -> float:
-    """Maanfase in graden: 0=nieuwe maan, 180=volle maan."""
-    _, sun_lon  = _subsolar_point()
-    _, moon_lon = _submoon_point()
-    return (moon_lon - sun_lon + 360) % 360
+def _body_azel(sub_lat: float, sub_lon: float, lat: float, lon: float) -> tuple[float, float]:
+    """(azimut, elevatie) in graden van een ver hemellichaam met subpunt
+    (sub_lat, sub_lon), gezien vanaf (lat, lon)."""
+    p, pb = math.radians(lat), math.radians(sub_lat)
+    dl = math.radians(sub_lon - lon)
+    el = math.asin(max(-1.0, min(1.0, math.sin(p) * math.sin(pb)
+                                 + math.cos(p) * math.cos(pb) * math.cos(dl))))
+    az = math.atan2(math.sin(dl) * math.cos(pb),
+                    math.cos(p) * math.sin(pb) - math.sin(p) * math.cos(pb) * math.cos(dl))
+    return math.degrees(az) % 360, math.degrees(el)
 
 
-def _moon_elevation(qth_lat: float, qth_lon: float) -> float:
-    """Hoogte van de maan boven de horizon gezien vanaf het QTH (graden)."""
-    now = datetime.datetime.now(datetime.timezone.utc)
-    J2K = datetime.datetime(2000, 1, 1, 12, tzinfo=datetime.timezone.utc)
-    d   = (now - J2K).total_seconds() / 86400
-    # Maanpositie (dezelfde berekening als _submoon_point)
-    L   = math.radians((218.316 + 13.176396 * d) % 360)
-    M   = math.radians((134.963 + 13.064993 * d) % 360)
-    F   = math.radians((93.272  + 13.229350 * d) % 360)
-    lam = L + math.radians(6.289 * math.sin(M))
-    beta = math.radians(5.128 * math.sin(F))
-    obl  = math.radians(23.439)
-    dec  = math.asin(
-        math.sin(beta) * math.cos(obl) +
-        math.cos(beta) * math.sin(obl) * math.sin(lam))
-    ra   = math.degrees(math.atan2(
-        math.sin(lam) * math.cos(obl) - math.tan(beta) * math.sin(obl),
-        math.cos(lam)))
-    # Local Hour Angle
-    ut   = now.hour + now.minute / 60 + now.second / 3600
-    GMST = (6.697375 + 0.0657098242 * d + ut) % 24
-    LST  = (GMST + qth_lon / 15) % 24
-    HA   = math.radians(((LST - ra / 15) * 15 + 360) % 360)
-    # Altitude
-    lat_r = math.radians(qth_lat)
-    alt   = math.asin(max(-1.0, min(1.0,
-        math.sin(lat_r) * math.sin(dec) +
-        math.cos(lat_r) * math.cos(dec) * math.cos(HA))))
-    return math.degrees(alt)
+def moon_view(qth_lat: float, qth_lon: float) -> dict:
+    """De maan zoals gezien vanaf de QTH:
+    elong  — hoek zon–maan (0 = nieuw, 180 = vol)
+    phase  — 0–360 (< 180 = wassend), voor de fasenaam
+    limb   — richting van de verlichte kant: graden met de klok mee vanaf
+             'omhoog' (zenit), 90 = rechts — zoals je hem aan de hemel ziet
+    el     — elevatie boven de horizon (°)"""
+    s_lat, s_lon = _subsolar_point()
+    m_lat, m_lon = _submoon_point()
+    ps, pm = math.radians(s_lat), math.radians(m_lat)
+    cos_e = (math.sin(ps) * math.sin(pm)
+             + math.cos(ps) * math.cos(pm) * math.cos(math.radians(s_lon - m_lon)))
+    elong = math.degrees(math.acos(max(-1.0, min(1.0, cos_e))))
+    waxing = (m_lon - s_lon) % 360 < 180          # maan ten oosten van de zon
+    az_m, el_m = _body_azel(m_lat, m_lon, qth_lat, qth_lon)
+    az_s, el_s = _body_azel(s_lat, s_lon, qth_lat, qth_lon)
+    # Richting maan → zon op de hemelbol (rechts = toenemend azimut, omhoog = zenit)
+    fm, fs = math.radians(el_m), math.radians(el_s)
+    da = math.radians(az_s - az_m)
+    x = math.cos(fs) * math.sin(da)
+    y = math.cos(fm) * math.sin(fs) - math.sin(fm) * math.cos(fs) * math.cos(da)
+    return {"elong": elong, "phase": elong if waxing else 360 - elong,
+            "limb": math.degrees(math.atan2(x, y)) % 360, "el": el_m}
 
 
-def _render_moon_icon(size: int, phase_deg: float) -> QImage:
-    """Rendert een maanfase-icoon als QImage (size×size, ARGB32)."""
-    phase = math.radians(phase_deg)
-    img   = QImage(size, size, QImage.Format_ARGB32)
+def sun_times(lat: float, lon: float, day: datetime.date | None = None) -> dict:
+    """Zonsopkomst/-ondergang en grayline-vensters (UTC-datetimes) voor (lat, lon).
+    Grayline = zon tussen −6° en +6° (burgerlijke schemering rond op/ondergang).
+    Poolnacht/-dag: rise/set = None en 'polar' = 'day' of 'night'."""
+    from .propagation import sun_position
+    day = day or datetime.datetime.now(datetime.timezone.utc).date()
+    ref = datetime.datetime(day.year, day.month, day.day, 12, tzinfo=datetime.timezone.utc)
+    dec, _, eot = sun_position(ref)
+    noon_h = 12 - lon / 15 - eot / 60
+    base = datetime.datetime(day.year, day.month, day.day, tzinfo=datetime.timezone.utc)
+    p, d = math.radians(lat), math.radians(dec)
+
+    def hour_angle(alt_deg):
+        c = (math.sin(math.radians(alt_deg)) - math.sin(p) * math.sin(d)) / (math.cos(p) * math.cos(d))
+        return None if abs(c) > 1 else math.degrees(math.acos(c)) / 15   # uren
+
+    def at(h):
+        return base + datetime.timedelta(hours=h)
+
+    out = {"noon": at(noon_h), "rise": None, "set": None, "polar": None,
+           "gray_am": None, "gray_pm": None}
+    h0 = hour_angle(-0.833)
+    if h0 is None:
+        out["polar"] = "day" if math.sin(p) * math.sin(d) > 0 else "night"
+        return out
+    out["rise"], out["set"] = at(noon_h - h0), at(noon_h + h0)
+    lo, hi = hour_angle(-6.0), hour_angle(6.0)
+    if lo is not None:
+        hi = hi if hi is not None else 0.0
+        out["gray_am"] = (at(noon_h - lo), at(noon_h - hi))
+        out["gray_pm"] = (at(noon_h + hi), at(noon_h + lo))
+    return out
+
+
+def sun_tooltip(qth_lat: float, qth_lon: float) -> str:
+    """Tooltip van de zon: stand vanaf de QTH, op/ondergang (lokale tijd),
+    daglengte en de grayline-vensters."""
+    from .i18n import tr
+    from .sat_passes import compass
+    s_lat, s_lon = _subsolar_point()
+    az, el = _body_azel(s_lat, s_lon, qth_lat, qth_lon)
+    t = sun_times(qth_lat, qth_lon)
+    hm = lambda dt: dt.astimezone().strftime("%H:%M")
+    lines = [tr("sun.tip.pos", arrow="▲" if el >= 0 else "▼", el=f"{abs(el):.0f}",
+                pos=tr("moon.above" if el >= 0 else "moon.below"),
+                az=f"{az:.0f}", dir=compass(az))]
+    if t["polar"]:
+        lines.append(tr("sun.tip.polar_" + t["polar"]))
+    else:
+        mins = int((t["set"] - t["rise"]).total_seconds() // 60)
+        lines.append(tr("sun.tip.riseset", rise=hm(t["rise"]), set=hm(t["set"]),
+                        len=f"{mins // 60}:{mins % 60:02d}"))
+        if t["gray_am"]:
+            lines.append(tr("sun.tip.gray", am=f"{hm(t['gray_am'][0])}–{hm(t['gray_am'][1])}",
+                            pm=f"{hm(t['gray_pm'][0])}–{hm(t['gray_pm'][1])}"))
+    lines.append(tr("sun.tip.sub", lat=f"{s_lat:+.1f}", lon=f"{s_lon:+.1f}"))
+    return "\n".join(lines)
+
+
+def moon_phase_info(phase_deg: float) -> tuple[str, int]:
+    """Fase (0 = nieuw, 180 = vol) → (i18n-sleutel van de fasenaam, % verlicht)."""
+    p = phase_deg % 360
+    lit = int(round((1 - math.cos(math.radians(p))) / 2 * 100))
+    waxing = p < 180
+    if lit <= 2:
+        name = "new"
+    elif lit >= 98:
+        name = "full"
+    elif 45 <= lit <= 55:
+        name = "first_quarter" if waxing else "last_quarter"
+    elif lit < 45:
+        name = "waxing_crescent" if waxing else "waning_crescent"
+    else:
+        name = "waxing_gibbous" if waxing else "waning_gibbous"
+    return "moon." + name, lit
+
+
+def _render_moon_icon(size: int, elong_deg: float, limb_deg: float = 90.0,
+                      dpr: float = 2.0) -> QImage:
+    """Maanicoon (size×size schermpixels, scherp via dpr). elong: hoek zon–maan
+    (0 = nieuw, 180 = vol); limb: richting van de verlichte kant (graden met de
+    klok mee vanaf boven, 90 = rechts). Verlicht deel = halve schijf ± ellips
+    met halve as r·|cos elong|."""
+    from PySide6.QtGui import QPainterPath
+    px = max(8, int(round(size * dpr)))
+    img = QImage(px, px, QImage.Format_ARGB32_Premultiplied)
     img.fill(Qt.transparent)
-    r  = size / 2 - 0.5
-    cx = cy = size / 2 - 0.5
-    LIT  = QColor(235, 225, 190, 240)
-    DARK = QColor(28,  28,  42,  240)
-    EDGE = QColor(140, 135, 110, 180)
-    for py in range(size):
-        for px in range(size):
-            dx = px - cx
-            dy = py - cy
-            dist2 = dx * dx + dy * dy
-            if dist2 > r * r:
-                continue
-            # Randpixels
-            if dist2 > (r - 1) * (r - 1):
-                img.setPixelColor(px, py, EDGE)
-                continue
-            cos_y  = math.sqrt(max(0.0, 1.0 - (dy / r) ** 2))
-            x_term = math.cos(phase) * r * cos_y
-            lit = (dx > x_term) if phase <= math.pi else (dx < x_term)
-            img.setPixelColor(px, py, LIT if lit else DARK)
+    img.setDevicePixelRatio(dpr)
+    p = QPainter(img)
+    p.setRenderHint(QPainter.Antialiasing)
+    r = size / 2 - 1.0
+    c = size / 2
+    p.translate(c, c)
+    p.rotate(limb_deg - 90.0)                     # verlichte kant (rechts) → limb
+    disc = QPainterPath()
+    disc.addEllipse(QPointF(0, 0), r, r)
+    p.fillPath(disc, QColor(28, 28, 42, 235))     # donkere kant
+    e = math.radians(max(0.0, min(180.0, elong_deg)))
+    half = QPainterPath()
+    half.moveTo(0, -r)
+    half.arcTo(QRectF(-r, -r, 2 * r, 2 * r), 90, -180)   # rechterhelft
+    half.closeSubpath()
+    ell = QPainterPath()
+    ell.addEllipse(QPointF(0, 0), abs(math.cos(e)) * r, r)
+    lit = half.subtracted(ell) if math.cos(e) > 0 else half.united(ell)
+    p.fillPath(lit.intersected(disc), QColor(235, 225, 190, 245))
+    p.setPen(QPen(QColor(150, 145, 120, 200), 1.0))
+    p.setBrush(Qt.NoBrush)
+    p.drawEllipse(QPointF(0, 0), r, r)
+    p.end()
     return img

@@ -16,7 +16,7 @@ import threading
 import time
 import urllib.request
 
-from PySide6.QtCore import QObject, QRectF, QPointF, QTimer, Signal, Qt, QThread
+from PySide6.QtCore import QObject, QRectF, QPointF, QLineF, QTimer, Signal, Qt, QThread
 from PySide6.QtGui import QColor, QPainter, QPen, QBrush, QFont
 from PySide6.QtWidgets import QGraphicsItem
 
@@ -1239,13 +1239,14 @@ class DXSpotsLayer(QGraphicsItem):
         self._label_font_size: int = 7
         self._anim_phase: float = 0.0   # rijdende dash-offset voor animatie
 
-        # Animatietimer — 20 fps, beweegt de streepjes langs de lijn
+        # Animatietimer — 12,5 fps, beweegt de streepjes langs de lijn
+        self._geom: list = []            # voorbereide tekengeometrie per bandkleur
         self._anim_timer = QTimer()
         self._anim_timer.timeout.connect(self._anim_tick)
-        self._anim_timer.start(50)
+        self._anim_timer.start(80)
 
     def _anim_tick(self):
-        self._anim_phase = (self._anim_phase + 1.2) % 18.0
+        self._anim_phase = (self._anim_phase + 1.9) % 18.0
         with self._lock:
             has_spots = bool(self._spots)
         if has_spots and _on_screen(self):
@@ -1292,9 +1293,39 @@ class DXSpotsLayer(QGraphicsItem):
             if my_cont and _callsign_continent(spotter) != my_cont:
                 continue
             map_spots.append((dx_lat, dx_lon, call, freq, de_lat, de_lon))
+        geom = self._build_geom(map_spots)
         with self._lock:
             self._spots = map_spots
+            self._geom = geom
         self.update()
+
+    @staticmethod
+    def _build_geom(spots: list) -> list:
+        """Per bandkleur: lijnen, eindpunten en labels — één keer per data-update
+        berekend, zodat een animatieframe alleen nog hoeft te tekenen."""
+        groups: dict = {}
+        for lat, lon, call, freq, de_lat, de_lon in spots:
+            color = _band_color(freq)
+            g = groups.setdefault(color.rgb(), {"color": color, "lines": [], "de": [],
+                                                "dx": [], "labels": []})
+            pt = _xy(lat, lon)
+            if de_lat is not None:
+                de_pt = _xy(de_lat, de_lon)
+                g["lines"].append(QLineF(de_pt, pt))
+                g["de"].append(de_pt)
+            g["dx"].append(pt)
+            g["labels"].append((pt + QPointF(8, 5), call[:9]))
+        out = []
+        for g in groups.values():
+            c = g["color"]
+            dash = QPen(QColor(c.red(), c.green(), c.blue(), 200), 2.2)
+            dash.setCapStyle(Qt.RoundCap)
+            dash.setStyle(Qt.CustomDashLine)
+            dash.setDashPattern([5.0, 4.0])
+            g.update(dash=dash, de_brush=QBrush(c.darker(130)), dx_brush=QBrush(c),
+                     label_pen=QPen(c.lighter(170)))
+            out.append(g)
+        return out
 
     def find_spot_near(self, scene_x: float, scene_y: float,
                        radius: float = 14.0) -> dict | None:
@@ -1351,53 +1382,54 @@ class DXSpotsLayer(QGraphicsItem):
     def boundingRect(self) -> QRectF:
         return QRectF(0, 0, MAP_W, MAP_H)
 
+    _SHADOW_PEN = None
+
     def paint(self, painter: QPainter, option, widget=None):
         with self._lock:
-            spots = list(self._spots)
+            geom = self._geom
+        if not geom:
+            return
+        if DXSpotsLayer._SHADOW_PEN is None:
+            sp = QPen(QColor(0, 0, 0, 60), 3.5)
+            sp.setCapStyle(Qt.RoundCap)
+            DXSpotsLayer._SHADOW_PEN = sp
+            DXSpotsLayer._RING_DE = QPen(QColor(255, 255, 255, 180), 1.2)
+            DXSpotsLayer._RING_DX = QPen(QColor(255, 255, 255, 180), 1.5)
 
-        painter.setRenderHint(QPainter.Antialiasing)
-        font = QFont("Segoe UI", self._label_font_size)
-        painter.setFont(font)
-
+        painter.setFont(QFont("Segoe UI", self._label_font_size))
         phase = self._anim_phase
-        for lat, lon, call, freq, de_lat, de_lon in spots:
-            color = _band_color(freq)
-            pt    = _xy(lat, lon)
 
-            # ── Geanimeerde verbindingslijn spotter → DX ─────────────────────
-            if de_lat is not None:
-                de_pt = _xy(de_lat, de_lon)
-
-                # Schaduwlijn voor contrast
-                shadow_pen = QPen(QColor(0, 0, 0, 60), 3.5)
-                shadow_pen.setCapStyle(Qt.RoundCap)
-                painter.setPen(shadow_pen)
-                painter.setBrush(Qt.NoBrush)
-                painter.drawLine(de_pt, pt)
-
-                # Geanimeerde streepjes — rijden van spotter (DE) naar DX
-                line_color = QColor(color.red(), color.green(), color.blue(), 200)
-                line_pen = QPen(line_color, 2.2)
-                line_pen.setCapStyle(Qt.RoundCap)
-                line_pen.setStyle(Qt.CustomDashLine)
-                line_pen.setDashPattern([5.0, 4.0])
-                line_pen.setDashOffset(phase)
-                painter.setPen(line_pen)
-                painter.drawLine(de_pt, pt)
-
-                # ── Spotter (DE) eindpunt — kleine open cirkel ───────────────
-                painter.setPen(QPen(QColor(255, 255, 255, 180), 1.2))
-                painter.setBrush(QBrush(color.darker(130)))
-                painter.drawEllipse(de_pt, 3.5, 3.5)
-
-            # ── DX station eindpunt — gevulde cirkel met halo ────────────────
-            painter.setPen(QPen(QColor(255, 255, 255, 180), 1.5))
-            painter.setBrush(QBrush(color))
-            painter.drawEllipse(pt, 6, 6)
-
-            # ── Callsign label ───────────────────────────────────────────────
-            painter.setPen(color.lighter(170))
-            painter.drawText(pt + QPointF(8, 5), call[:9])
+        # 1. Schaduwlijnen (contrast), 2. geanimeerde streepjes spotter → DX.
+        # Zonder anti-aliasing: gestreepte AA-lijnen zijn ~20× trager te tekenen
+        # en dit gebeurt 12,5× per seconde; op 1–2 px bewegende streepjes is het
+        # verschil nauwelijks zichtbaar.
+        painter.setRenderHint(QPainter.Antialiasing, False)
+        painter.setBrush(Qt.NoBrush)
+        painter.setPen(DXSpotsLayer._SHADOW_PEN)
+        for g in geom:
+            if g["lines"]:
+                painter.drawLines(g["lines"])
+        for g in geom:
+            if g["lines"]:
+                g["dash"].setDashOffset(phase)
+                painter.setPen(g["dash"])
+                painter.drawLines(g["lines"])
+        # 3. Spotter-eindpunten, 4. DX-eindpunten, 5. labels (wél anti-aliased)
+        painter.setRenderHint(QPainter.Antialiasing, True)
+        painter.setPen(DXSpotsLayer._RING_DE)
+        for g in geom:
+            painter.setBrush(g["de_brush"])
+            for p in g["de"]:
+                painter.drawEllipse(p, 3.5, 3.5)
+        painter.setPen(DXSpotsLayer._RING_DX)
+        for g in geom:
+            painter.setBrush(g["dx_brush"])
+            for p in g["dx"]:
+                painter.drawEllipse(p, 6, 6)
+        for g in geom:
+            painter.setPen(g["label_pen"])
+            for p, txt in g["labels"]:
+                painter.drawText(p, txt)
 
 
 # ── PSKReporter Layer ──────────────────────────────────────────────────────────

@@ -1056,51 +1056,54 @@ class XrayChart(QWidget):
 class SolarParamsWidget(QWidget):
     """Actuele solar-parameters (SFI, SSN, Kp, Bz, solar wind)."""
 
-    # (label, data_key, eenheid, volledige_naam, tooltip, hint_fn)
-    _ROWS = [
-        ("SFI",        "sfi",        "SFU",    tr("solar.sfi.full"),
-         tr("solar.tip.sfi"),
-         lambda v: (tr("solar.hint.low"),   "#4FC3F7") if v < 100 else
-                   (tr("solar.hint.fair"),  "#FFF176") if v < 150 else
-                   (tr("solar.hint.high"),  "#FFA726") if v < 200 else
-                   (tr("solar.hint.high"),  "#EF5350")),
-        ("SSN",        "ssn",        "",       tr("solar.ssn.full"),
-         tr("solar.tip.ssn"),
-         lambda v: ("min.",              TEXT_DIM)  if v < 20  else
-                   (tr("solar.hint.low"),  "#4FC3F7") if v < 80  else
-                   (tr("solar.hint.fair"), "#FFF176") if v < 150 else
-                   (tr("solar.hint.high"), "#FFA726")),
-        ("K-index",    "k_index",    "(0–9)",  tr("solar.k.full"),
-         tr("solar.tip.k"),
-         lambda v: (tr("solar.hint.calm"),   "#4FC3F7") if v < 3 else
-                   (tr("solar.hint.active"), "#FFF176") if v < 5 else
-                   (tr("solar.hint.storm"),  "#FFA726") if v < 7 else
-                   (tr("solar.hint.severe"), "#EF5350")),
-        ("A-index",    "a_index",    "",       tr("solar.a.full"),
-         tr("solar.tip.a"),
-         lambda v: (tr("solar.hint.calm"),    "#4FC3F7") if v < 15 else
-                   (tr("solar.hint.active"),  "#FFF176") if v < 30 else
-                   (tr("solar.hint.stormig"), "#FFA726") if v < 50 else
-                   (tr("solar.hint.ernstig"), "#EF5350")),
-        (tr("solar.lbl.xray"), "xray",       "",       tr("solar.xray.full"),
-         tr("solar.tip.xray"),
-         None),
-        (tr("solar.lbl.vsw"), "sw_speed",   "km/s",   tr("solar.vsw.full"),
-         tr("solar.tip.vsw"),
-         lambda v: (tr("solar.hint.normal"),   "#4FC3F7") if v < 500 else
-                   (tr("solar.hint.elevated"), "#FFA726") if v < 700 else
-                   (tr("solar.hint.fast"),     "#EF5350")),
-        (tr("solar.lbl.nsw"), "sw_density", "p/cm³",  tr("solar.nsw.full"),
-         tr("solar.tip.nsw"),
-         lambda v: (tr("solar.hint.low"),   "#4FC3F7") if v < 5  else
-                   (tr("solar.hint.normal"), "TEXT_H1") if v < 15 else
-                   (tr("solar.hint.high"),  "#FFA726")),
-        ("Bz (GSM)",   "sw_bz",      "nT",     tr("solar.bz.full"),
-         tr("solar.tip.bz"),
-         lambda v: (tr("solar.hint.pos"),      "#4FC3F7") if v >= 0 else
-                   (tr("solar.hint.neg"),      "#FF8A65") if v > -10 else
-                   (tr("solar.hint.storm_ex"), "#EF5350")),
-    ]
+    # (label, data_key, eenheid, volledige_naam, tooltip, hint_fn) — als functie,
+    # zodat tr() de taal van dát moment gebruikt (niet die bij het importeren)
+    @staticmethod
+    def _rows() -> list:
+        return [
+            ("SFI",        "sfi",        "SFU",    tr("solar.sfi.full"),
+             tr("solar.tip.sfi"),
+             lambda v: (tr("solar.hint.low"),   "#4FC3F7") if v < 100 else
+                       (tr("solar.hint.fair"),  "#FFF176") if v < 150 else
+                       (tr("solar.hint.high"),  "#FFA726") if v < 200 else
+                       (tr("solar.hint.high"),  "#EF5350")),
+            ("SSN",        "ssn",        "",       tr("solar.ssn.full"),
+             tr("solar.tip.ssn"),
+             lambda v: ("min.",              TEXT_DIM)  if v < 20  else
+                       (tr("solar.hint.low"),  "#4FC3F7") if v < 80  else
+                       (tr("solar.hint.fair"), "#FFF176") if v < 150 else
+                       (tr("solar.hint.high"), "#FFA726")),
+            ("K-index",    "k_index",    "(0–9)",  tr("solar.k.full"),
+             tr("solar.tip.k"),
+             lambda v: (tr("solar.hint.calm"),   "#4FC3F7") if v < 3 else
+                       (tr("solar.hint.active"), "#FFF176") if v < 5 else
+                       (tr("solar.hint.storm"),  "#FFA726") if v < 7 else
+                       (tr("solar.hint.severe"), "#EF5350")),
+            ("A-index",    "a_index",    "",       tr("solar.a.full"),
+             tr("solar.tip.a"),
+             lambda v: (tr("solar.hint.calm"),    "#4FC3F7") if v < 15 else
+                       (tr("solar.hint.active"),  "#FFF176") if v < 30 else
+                       (tr("solar.hint.stormig"), "#FFA726") if v < 50 else
+                       (tr("solar.hint.ernstig"), "#EF5350")),
+            (tr("solar.lbl.xray"), "xray",       "",       tr("solar.xray.full"),
+             tr("solar.tip.xray"),
+             None),
+            (tr("solar.lbl.vsw"), "sw_speed",   "km/s",   tr("solar.vsw.full"),
+             tr("solar.tip.vsw"),
+             lambda v: (tr("solar.hint.normal"),   "#4FC3F7") if v < 500 else
+                       (tr("solar.hint.elevated"), "#FFA726") if v < 700 else
+                       (tr("solar.hint.fast"),     "#EF5350")),
+            (tr("solar.lbl.nsw"), "sw_density", "p/cm³",  tr("solar.nsw.full"),
+             tr("solar.tip.nsw"),
+             lambda v: (tr("solar.hint.low"),   "#4FC3F7") if v < 5  else
+                       (tr("solar.hint.normal"), "TEXT_H1") if v < 15 else
+                       (tr("solar.hint.high"),  "#FFA726")),
+            ("Bz (GSM)",   "sw_bz",      "nT",     tr("solar.bz.full"),
+             tr("solar.tip.bz"),
+             lambda v: (tr("solar.hint.pos"),      "#4FC3F7") if v >= 0 else
+                       (tr("solar.hint.neg"),      "#FF8A65") if v > -10 else
+                       (tr("solar.hint.storm_ex"), "#EF5350")),
+        ]
 
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -1120,7 +1123,7 @@ class SolarParamsWidget(QWidget):
 
         self._hint_labels: dict[str, QLabel] = {}
 
-        for row, (name, key, unit, full_name, tooltip, _) in enumerate(self._ROWS):
+        for row, (name, key, unit, full_name, tooltip, _) in enumerate(self._rows()):
             # Kolom 0: parameternaam
             lbl = QLabel(name + ":")
             lbl.setFont(f_lbl)
@@ -1161,7 +1164,7 @@ class SolarParamsWidget(QWidget):
 
 
     def set_data(self, data: dict):
-        for name, key, unit, full_name, tooltip, hint_fn in self._ROWS:
+        for name, key, unit, full_name, tooltip, hint_fn in self._rows():
             raw = data.get(key, "—")
             val = str(raw)
             val_lbl  = self._labels.get(key)

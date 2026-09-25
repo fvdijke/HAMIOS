@@ -176,7 +176,7 @@ class HeaderBar(QWidget):
         """Stel in wanneer de volgende verversing plaatsvindt (0 = Uit)."""
         self._next_refresh_at = epoch_secs
         if epoch_secs == 0.0:
-            self._countdown_lbl.setText("Uit")
+            self._countdown_lbl.setText(tr("hdr.refresh_off"))
             self._countdown_lbl.setStyleSheet(
                 f"color: {TEXT_DIM}; font-size: 9pt; padding: 0 4px;")
 
@@ -277,7 +277,7 @@ class HeaderBar(QWidget):
 
     def set_cat_connected(self, connected: bool):
         """Pas kleur van frequentie-label aan op basis van CAT-verbindingsstatus."""
-        if not connected and self._freq_lbl.text() == "Radio niet verbonden":
+        if not connected and self._freq_lbl.text() == tr("hdr.cat.disconnected"):
             self._freq_lbl.setStyleSheet(
                 f"color: {TEXT_DIM}; font-size: 9pt; font-family: Consolas; padding: 0 8px;")
 

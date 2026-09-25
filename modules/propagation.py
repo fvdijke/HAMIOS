@@ -31,6 +31,7 @@ import math
 import threading
 import urllib.request
 from dataclasses import dataclass, field
+from functools import lru_cache
 
 from PySide6.QtCore import QObject, QThread, Signal
 
@@ -61,9 +62,16 @@ def _utc(t: _dt.datetime | None) -> _dt.datetime:
 def sun_position(t: _dt.datetime | None = None) -> tuple[float, float, float]:
     """Zonpositie volgens de NOAA-zonnecalculator (Meeus; ~0,01°):
     (declinatie °, lengte van het subsolaire punt °, tijdvereffening min).
-    Eén bron voor kaart (nacht, grayline, zonmarker) en propagatiemodel."""
-    t = _utc(t)
-    T = (t.timestamp() / 86400 + 2440587.5 - 2451545.0) / 36525
+    Eén bron voor kaart (nacht, grayline, zonmarker) en propagatiemodel.
+    Gecachet per seconde (de zon verschuift 0,004°/s): het model vraagt per
+    berekening meerdere keren hetzelfde moment op."""
+    return _sun_position_at(round(_utc(t).timestamp()))
+
+
+@lru_cache(maxsize=4096)
+def _sun_position_at(ts: int) -> tuple[float, float, float]:
+    t = _dt.datetime.fromtimestamp(ts, _dt.timezone.utc)
+    T = (ts / 86400 + 2440587.5 - 2451545.0) / 36525
     L0 = (280.46646 + T * (36000.76983 + 0.0003032 * T)) % 360
     M = math.radians(357.52911 + T * (35999.05029 - 0.0001537 * T))
     e = 0.016708634 - T * (0.000042037 + 0.0000001267 * T)
@@ -79,7 +87,7 @@ def sun_position(t: _dt.datetime | None = None) -> tuple[float, float, float]:
     eot = 4 * math.degrees(y * math.sin(2 * l0) - 2 * e * math.sin(M)
                            + 4 * e * y * math.sin(M) * math.cos(2 * l0)
                            - 0.5 * y * y * math.sin(4 * l0) - 1.25 * e * e * math.sin(2 * M))
-    ut_h = t.hour + t.minute / 60 + (t.second + t.microsecond / 1e6) / 3600
+    ut_h = t.hour + t.minute / 60 + t.second / 3600
     lon = -15 * (ut_h - 12 + eot / 60)
     return decl, ((lon + 180) % 360) - 180, eot
 
@@ -321,11 +329,25 @@ class PropagationEngine(QObject):
         with self._lock:
             return list(self._ionosondes)
 
+    def _fresh_ionosondes(self, now: _dt.datetime | None) -> list[Ionosonde]:
+        """Bruikbare (niet te oude) ionosondes; per minuut gecachet — het model
+        vraagt dit voor elk controlepunt op (duizenden keren per propagatiekaart)."""
+        now = _utc(now)
+        key = (id(self._ionosondes), int(now.timestamp() // 60))
+        cache = getattr(self, "_fresh_cache", None)
+        if cache and cache[0] == key:
+            return cache[1]
+        fresh = [s for s in self.ionosondes()
+                 if -600 <= s.age_s(now) <= IONO_MAX_AGE_S]
+        self._fresh_cache = (key, fresh)
+        return fresh
+
     def nearest_ionosonde(self, lat: float, lon: float,
                           now: _dt.datetime | None = None) -> Ionosonde | None:
         best, best_d = None, IONO_MAX_DIST
-        for s in self.ionosondes():
-            if s.age_s(now) > IONO_MAX_AGE_S or s.age_s(now) < -600:
+        max_dlat = IONO_MAX_DIST / 111.0 + 0.5      # verder weg kan nooit binnen bereik zijn
+        for s in self._fresh_ionosondes(now):
+            if abs(s.lat - lat) > max_dlat:
                 continue
             d = _dist_km(lat, lon, s.lat, s.lon)
             if d < best_d:
@@ -412,6 +434,7 @@ class PropagationEngine(QObject):
         draagt, als grijswaarden (pct × 2,55; rij 0 = noord, kolom 0 = −180°,
         celmiddens). Zelfde padmodel als de aanbevelingen (path_detail); licht
         vervaagd (1-2-1) zodat de overgangen na het opschalen vloeiend zijn."""
+        t = _utc(t)                       # één tijdstip voor de hele kaart
         w, h = 360 // step, 180 // step
         g = [0.0] * (w * h)
         for y in range(h):

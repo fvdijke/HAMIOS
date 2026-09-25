@@ -212,6 +212,7 @@ All connections use standard HTTPS/WebSocket. No personal data is transmitted.
 - **Accuracy**: grey line and day/night terminator were up to ~6° (≈25 min) too far east — now within ~1°; satellite positions were hundreds of km off — now ~10 km
 - **Data**: real WSPR spots via wspr.live, real-time solar wind (Bz), 27-day outlook; NOAA data only downloaded when it can have changed
 - **UI**: checkboxes with an amber tick, dropdown arrows, remaining Dutch texts translated, HAM Antenna Designer follows the HAMIOS language
+- **Performance and polish**: CPU use during operation ~120 % → ~25 %, propagation model 2.5× faster; fully bilingual (EIBI, FT8, SpyStations, CAT, Help); moon phase as seen from your QTH; menus close on outside click; new installations start without overlays
 
 ### v5.6 — September 2026
 - Satellite TLE data from SatNOGS and AMSAT with protection against download blocks and a warning when outdated

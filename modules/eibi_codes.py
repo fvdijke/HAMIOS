@@ -217,22 +217,114 @@ ITU = {
 }
 
 
+# ── Engelse namen (zelfde codes) ──────────────────────────────────────────────
+LANG_EN = {
+    "E": "English", "M": "Mandarin (Chinese)", "S": "Spanish", "R": "Russian",
+    "F": "French", "A": "Arabic", "D": "German", "P": "Portuguese", "J": "Japanese",
+    "K": "Korean", "I": "Italian", "NL": "Dutch", "NO": "Norwegian", "SWE": "Swedish",
+    "FI": "Finnish", "DA": "Danish",
+    "VN": "Vietnamese", "TB": "Tibetan", "HI": "Hindi", "UR": "Urdu", "CA": "Cantonese",
+    "PS": "Pashto", "DR": "Dari / Farsi", "MO": "Mongolian", "HA": "Hausa", "AM": "Amharic",
+    "UI": "Uyghur", "KH": "Khmer", "TH": "Thai", "BU": "Burmese", "SI": "Sinhala",
+    "TA": "Tamil", "GU": "Gujarati", "BE": "Bengali", "HK": "Hokkien",
+    "IN": "Indonesian / Malay", "TU": "Turkish", "AZ": "Azeri", "KZ": "Kazakh",
+    "UZ": "Uzbek", "KG": "Kyrgyz", "TK": "Turkmen", "GE": "Georgian", "AR": "Armenian",
+    "RO": "Romanian", "BR": "Bulgarian", "BL": "Belarusian", "UK": "Ukrainian",
+    "LT": "Lithuanian", "LV": "Latvian", "EE": "Estonian", "FS": "Farsi / Persian",
+    "BO": "Tibetan (Bod)", "HU": "Hungarian", "PL": "Polish", "CZ": "Czech",
+    "SK": "Slovak", "SL": "Slovenian", "HR": "Croatian", "SR": "Serbian",
+    "BS": "Bosnian", "AL": "Albanian", "MK": "Macedonian", "GR": "Greek",
+    "TR": "Turkish", "HE": "Hebrew", "KU": "Kurdish",
+    "SWA": "Swahili", "ZU": "Zulu", "SO": "Somali", "OR": "Oromo", "TI": "Tigrinya",
+    "IG": "Igbo", "YO": "Yoruba", "FR": "Fulani",
+    "-CW": "Morse (CW)", "-HF": "HF digital", "-TS": "RTTY / teletype",
+    "-TY": "TDM / temporary", "-DM": "Digital mode", "-PI": "PACTOR",
+    "F,E": "French / English", "E,F": "English / French", "E,S": "English / Spanish",
+    "M,C": "Mandarin / Cantonese",
+}
+
+TARGET_EN = {
+    "Eu": "Europe", "WEu": "Western Europe", "NEu": "Northern Europe",
+    "EEu": "Eastern Europe", "SEu": "Southern Europe", "CEu": "Central Europe",
+    "SEE": "South-East Europe", "ME": "Middle East", "NAm": "North America",
+    "ENA": "Eastern North America", "WNA": "Western North America", "Car": "Caribbean",
+    "CAm": "Central America", "LAm": "Latin America", "SAm": "South America",
+    "Af": "Africa", "NAf": "North Africa", "WAf": "West Africa", "EAf": "East Africa",
+    "CAf": "Central Africa", "SAf": "Southern Africa", "FE": "Far East", "CHN": "China",
+    "SEA": "South-East Asia", "SAs": "South Asia", "CAs": "Central Asia",
+    "RUS": "Russia", "Sib": "Siberia", "Oc": "Oceania", "WOc": "Western Oceania",
+    "NOc": "Northern Oceania", "NAO": "North Atlantic Ocean", "INS": "Indonesia",
+    "KRE": "Korea", "TWN": "Taiwan", "IRN": "Iran", "AFG": "Afghanistan",
+    "HNG": "Hungary",
+    "B": "Brazil", "AUS": "Australia", "IND": "India", "JPN": "Japan",
+    "USA": "United States", "CAN": "Canada", "GBR": "United Kingdom", "DEU": "Germany",
+    "FRA": "France", "ESP": "Spain", "NLD": "Netherlands", "PAK": "Pakistan",
+    "BGD": "Bangladesh", "UKR": "Ukraine", "TUR": "Turkey", "SAU": "Saudi Arabia",
+    "NGA": "Nigeria", "ETH": "Ethiopia",
+}
+
+ITU_EN = {
+    "AFG": "Afghanistan", "ALB": "Albania", "ALG": "Algeria", "AND": "Andorra",
+    "ARS": "Saudi Arabia", "AUS": "Australia", "AUT": "Austria", "AZE": "Azerbaijan",
+    "B": "Brazil", "BEL": "Belgium", "BEN": "Benin", "BFA": "Burkina Faso",
+    "BGD": "Bangladesh", "BGR": "Bulgaria", "BHR": "Bahrain",
+    "BIH": "Bosnia and Herzegovina", "BLR": "Belarus", "BOL": "Bolivia", "BTN": "Bhutan",
+    "BUL": "Bulgaria", "BUR": "Myanmar", "CAF": "Central African Rep.", "CAN": "Canada",
+    "CHN": "China", "CHL": "Chile", "CMR": "Cameroon", "COD": "DR Congo",
+    "COG": "Congo", "COL": "Colombia", "COM": "Comoros", "CRO": "Croatia",
+    "CTI": "Ivory Coast", "CUB": "Cuba", "CYP": "Cyprus", "CZE": "Czechia",
+    "D": "Germany", "DEN": "Denmark", "E": "Spain", "EGY": "Egypt", "ERI": "Eritrea",
+    "ETH": "Ethiopia", "F": "France", "FIN": "Finland", "G": "United Kingdom",
+    "GAB": "Gabon", "GEO": "Georgia", "GHA": "Ghana", "GNE": "Equatorial Guinea",
+    "GRC": "Greece", "GTM": "Guatemala", "GUF": "French Guiana", "HNG": "Hungary",
+    "HOL": "Netherlands", "HRV": "Croatia", "HWA": "Hawaii", "I": "Italy",
+    "IND": "India", "INS": "Indonesia", "IRL": "Ireland", "IRN": "Iran", "IRQ": "Iraq",
+    "ISL": "Iceland", "ISR": "Israel", "J": "Japan", "JOR": "Jordan",
+    "KAZ": "Kazakhstan", "KEN": "Kenya", "KGZ": "Kyrgyzstan", "KOR": "South Korea",
+    "KRE": "North Korea", "KWT": "Kuwait", "LAO": "Laos", "LBN": "Lebanon",
+    "LBY": "Libya", "LTU": "Lithuania", "LVA": "Latvia", "MAR": "Morocco",
+    "MDG": "Madagascar", "MEX": "Mexico", "MLA": "Malaysia", "MLI": "Mali",
+    "MLT": "Malta", "MNG": "Mongolia", "MOZ": "Mozambique", "MRC": "Morocco",
+    "MRT": "Mauritania", "MWI": "Malawi", "MYA": "Myanmar", "NCL": "New Caledonia",
+    "NGR": "Niger", "NIG": "Nigeria", "NOR": "Norway", "NZL": "New Zealand",
+    "OMA": "Oman", "PAK": "Pakistan", "PHL": "Philippines", "PLW": "Palau",
+    "PNG": "Papua New Guinea", "POL": "Poland", "POR": "Portugal", "PRU": "Peru",
+    "QAT": "Qatar", "REU": "Réunion", "ROU": "Romania", "RRW": "Rwanda",
+    "RUS": "Russia", "S": "Sweden", "SDN": "Sudan", "SEN": "Senegal",
+    "SNG": "Singapore", "SOM": "Somalia", "SUI": "Switzerland", "SVK": "Slovakia",
+    "SVN": "Slovenia", "SWZ": "Eswatini", "SYR": "Syria", "TCD": "Chad", "TGO": "Togo",
+    "THA": "Thailand", "TJK": "Tajikistan", "TKM": "Turkmenistan", "TZA": "Tanzania",
+    "UAE": "United Arab Emirates", "UGA": "Uganda", "UKR": "Ukraine",
+    "URG": "Uruguay", "USA": "United States", "UZB": "Uzbekistan", "VTN": "Vietnam",
+    "YEM": "Yemen", "ZMB": "Zambia", "ZWE": "Zimbabwe",
+    "AGL": "Angola", "SRL": "Sierra Leone", "CLM": "Colombia", "NMB": "Namibia",
+    "MDR": "Madagascar", "TWN": "Taiwan", "VRC": "China (PRC)", "HON": "Honduras",
+    "CLN": "Sri Lanka",
+}
+
+
+def _table(nl: dict, en: dict) -> dict:
+    """Namentabel in de taal van de interface (Engels valt terug op Nederlands)."""
+    from .i18n import get_language
+    return en if get_language() == "en" else nl
+
+
 def translate_lang(code: str) -> str:
     """Vertaal EIBI taalcode naar volledige naam. Geeft '' terug als onbekend."""
     code = code.strip()
-    return LANG.get(code, "")
+    return _table(LANG, LANG_EN).get(code) or LANG.get(code, "")
 
 
 def translate_target(code: str) -> str:
     """Vertaal EIBI doelgebied-code naar volledige naam."""
     code = code.strip()
-    return TARGET.get(code, "")
+    return _table(TARGET, TARGET_EN).get(code) or TARGET.get(code, "")
 
 
 def translate_itu(code: str) -> str:
     """Vertaal ITU landcode naar volledige landnaam."""
     code = code.strip()
-    return ITU.get(code, "")
+    return _table(ITU, ITU_EN).get(code) or ITU.get(code, "")
 
 
 def enrich_row(row: list) -> dict:

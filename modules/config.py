@@ -20,20 +20,20 @@ class AppConfig:
     antenna:        str   = "Dipole ~2dBi"   # reëlere standaard
 
     # ── Kaart overlays ────────────────────────────────────────────────────────
-    show_night:     bool  = True
-    show_grayline:  bool  = True
-    show_aurora:    bool  = True
-    show_sun:       bool  = True
-    show_moon:      bool  = True
-    show_lightning: bool  = True
-    show_dx_spots:  bool  = True
+    show_night:     bool  = False   # nieuwe installatie: geen overlays actief
+    show_grayline:  bool  = False
+    show_aurora:    bool  = False
+    show_sun:       bool  = False
+    show_moon:      bool  = False
+    show_lightning: bool  = False   # bliksemverbinding (Blitzortung) — nieuwe installatie: uit
+    show_dx_spots:  bool  = False
     show_locator:          bool  = False
     show_psk:              bool  = False    # PSKReporter digitale propagatiepaden
     show_callsign_overlay:        bool  = False    # DXCC callsign prefix + country overlay
     show_drap:             bool  = False    # NOAA D-RAP HF-absorptie als kaartlaag
     show_propmap:          bool  = False    # propagatiekaart vanaf de QTH
     propmap_band:          str   = "20m"    # band van de propagatiekaart
-    callsign_overlay_font_size:   int   = 7        # lettergrootte DXCC overlay (pt)
+    callsign_overlay_font_size:   int   = 9        # lettergrootte DXCC overlay (pt)
     wspr_font_size:     int   = 9        # WSPR Live panel font size (pt)
     map_overlay:    bool  = True    # header-knop staat
 
@@ -50,8 +50,8 @@ class AppConfig:
     lightning_alert_pitch:    int   = 5000  # alert zone sound pitch in Hz
     lightning_alert_duration: int   = 10    # alert zone sound duration in ms
     lightning_anim_scale:     float = 2.0   # schaal animatie (2.0 = standaard voor 4096px kaart)
-    lightning_font_size:      int   = 7     # lettergrootte labels op kaart (pt)
-    lightning_overlay_visible: bool = True  # overlay zichtbaarheid (onafhankelijk van show_lightning)
+    lightning_font_size:      int   = 9     # lettergrootte labels op kaart (pt)
+    lightning_overlay_visible: bool = False  # overlay zichtbaarheid (onafhankelijk van show_lightning)
 
     # ── Refresh-interval ─────────────────────────────────────────────────────
     refresh_interval:  int   = 5      # minuten (0 = uit)
@@ -59,15 +59,17 @@ class AppConfig:
     # ── Snap-raster / weergave ────────────────────────────────────────────────
     snap_grid:         int   = 10     # alleen nog voor vrije panelen (niet in tegelmodus)
     layout_locked:     bool  = False  # tegelindeling vergrendeld (geen slepen/scheidingslijnen)
-    overlay_font_size: int   = 8      # graticule lettergrootte (pt)
-    sat_font_size:     int   = 8      # satelliet-labels op kaart
-    dx_map_font_size:  int   = 7      # DX spots callsigns op kaart
-    dx_font_size:      int   = 8      # DX spots tabel
+    overlay_font_size: int   = 9      # graticule lettergrootte (pt)
+    sat_font_size:     int   = 9      # satelliet-labels op kaart
+    dx_map_font_size:  int   = 9      # DX spots callsigns op kaart
+    dx_font_size:      int   = 9      # DX spots tabel
     language:               str   = "en"  # "en" or "nl"
     grat_step:              int   = 30   # graticule stap in graden (10/20/30)
-    maidenhead_font_size:   int   = 8    # Maidenhead locatorraster label-lettergrootte
-    sun_icon_size:          int   = 24   # zon-icoontje grootte (px)
-    moon_icon_size:         int   = 20   # maan-icoontje grootte (px)
+    maidenhead_font_size:   int   = 9    # Maidenhead locatorraster label-lettergrootte
+    sun_icon_size:          int   = 24   # (oud, kaartschaal — niet meer gebruikt)
+    moon_icon_size:         int   = 20   # (oud, kaartschaal — niet meer gebruikt)
+    sun_icon_px:            int   = 24   # zon-icoon op het scherm, incl. stralen (px)
+    moon_icon_px:           int   = 20   # maan-icoon op het scherm (px)
     show_splash:       bool  = True
 
     # ── DX spots status ───────────────────────────────────────────────────────

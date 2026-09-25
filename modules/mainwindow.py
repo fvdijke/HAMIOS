@@ -134,7 +134,6 @@ def _panel_titles():
     from .i18n import tr as _tr
     return {pid: _tr(key) for pid, key in _PANEL_TITLE_KEYS.items()}
 
-_PANEL_TITLES = _panel_titles()
 
 
 def _clamp_window(win, wx: int, wy: int, ww: int, wh: int):
@@ -193,6 +192,10 @@ class HAMIOSMainWindow(QMainWindow):
         if not QApplication.instance().styleSheet():
             QApplication.instance().setStyleSheet(QSS)
 
+        # Config en taal EERST: header en panelen gebruiken tr() bij het opbouwen
+        self._cfg = load_config()
+        set_language(getattr(self._cfg, "language", "nl"))
+
         # Header bovenaan
         self._header = HeaderBar()
         self._header.btn_exit.clicked.connect(self.close)
@@ -213,9 +216,7 @@ class HAMIOSMainWindow(QMainWindow):
         layout.addWidget(self._desktop, 1)
         self.setCentralWidget(container)
 
-        # Config laden, taal instellen en snap-grid instellen
-        self._cfg = load_config()
-        set_language(getattr(self._cfg, "language", "nl"))
+        # Snap-grid (config en taal zijn hierboven al geladen)
         _theme.PANEL_GRID = self._cfg.snap_grid
 
         # Bijhouden van geopende header-dialogen (meerdere tegelijk mogelijk)
@@ -297,7 +298,7 @@ class HAMIOSMainWindow(QMainWindow):
     # ── Panels ────────────────────────────────────────────────────────────────
     def _build_panels(self):
         """Maak alle panels aan als kind-widgets van _desktop."""
-        for pid, title in _PANEL_TITLES.items():
+        for pid, title in _panel_titles().items():   # taal van nu, niet van de import
             p = FloatingPanel(title, panel_id=pid, parent=self._desktop)
             p.hide()
             self._panels[pid] = p
@@ -588,8 +589,8 @@ class HAMIOSMainWindow(QMainWindow):
         self.set_qth(cfg.qth_lat, cfg.qth_lon)
         self._map_view.set_lightning_fade(cfg.lightning_fade)
         self._map_view.set_lightning_enabled(cfg.show_lightning)   # volledige aan/uit (verbinding)
-        self._map_view.set_lightning_visible(getattr(cfg, "lightning_overlay_visible", True))  # overlay zichtbaarheid
-        self._map_view.set_lightning_font_size(getattr(cfg, "lightning_font_size", 7))
+        self._map_view.set_lightning_visible(getattr(cfg, "lightning_overlay_visible", False))  # overlay zichtbaarheid
+        self._map_view.set_lightning_font_size(getattr(cfg, "lightning_font_size", 9))
         _lon = cfg.show_lightning
         self._map_view.set_lightning_radius(
             int(getattr(cfg, "lightning_beep_r", 0)) if _lon else 0)
@@ -612,15 +613,15 @@ class HAMIOSMainWindow(QMainWindow):
         self._map_view.set_drap_visible(getattr(cfg, "show_drap", False))
         self._map_view.set_propmap_visible(getattr(cfg, "show_propmap", False))
         self._refresh_propmap()
-        self._map_view.set_callsign_overlay_font_size(getattr(cfg, "callsign_overlay_font_size", 7))
+        self._map_view.set_callsign_overlay_font_size(getattr(cfg, "callsign_overlay_font_size", 9))
         self._map_view.set_overlay_font_size(cfg.overlay_font_size)
-        self._map_view.set_maidenhead_font_size(getattr(cfg, "maidenhead_font_size", 8))
+        self._map_view.set_maidenhead_font_size(getattr(cfg, "maidenhead_font_size", 9))
         self._map_view.set_grat_step(getattr(cfg, "grat_step", 30))
-        self._map_view.set_sun_size(getattr(cfg, "sun_icon_size", 24))
-        self._map_view.set_moon_size(getattr(cfg, "moon_icon_size", 20))
-        self._map_view.set_sat_font_size(getattr(cfg, "sat_font_size", 8))
+        self._map_view.set_sun_size(getattr(cfg, "sun_icon_px", 24))
+        self._map_view.set_moon_size(getattr(cfg, "moon_icon_px", 20))
+        self._map_view.set_sat_font_size(getattr(cfg, "sat_font_size", 9))
         self._map_view.set_satellite_path_width(getattr(cfg, "sat_path_width", 1.2))
-        self._map_view.set_dx_map_font_size(getattr(cfg, "dx_map_font_size", 7))
+        self._map_view.set_dx_map_font_size(getattr(cfg, "dx_map_font_size", 9))
 
         # Sync cfg-referentie in ALLE panel-widgets die cfg bewaren
         _panel_widgets = [
@@ -780,21 +781,21 @@ class HAMIOSMainWindow(QMainWindow):
         c = self._cfg
         self.set_qth(c.qth_lat, c.qth_lon)
         self._map_view.set_overlay_font_size(c.overlay_font_size)
-        self._map_view.set_maidenhead_font_size(getattr(c, "maidenhead_font_size", 8))
+        self._map_view.set_maidenhead_font_size(getattr(c, "maidenhead_font_size", 9))
         self._map_view.set_grat_step(getattr(c, "grat_step", 30))
-        self._map_view.set_sun_size(getattr(c, "sun_icon_size", 24))
-        self._map_view.set_moon_size(getattr(c, "moon_icon_size", 20))
-        self._map_view.set_sat_font_size(getattr(c, "sat_font_size", 8))
+        self._map_view.set_sun_size(getattr(c, "sun_icon_px", 24))
+        self._map_view.set_moon_size(getattr(c, "moon_icon_px", 20))
+        self._map_view.set_sat_font_size(getattr(c, "sat_font_size", 9))
         self._map_view.set_satellite_path_width(getattr(c, "sat_path_width", 1.2))
-        self._map_view.set_dx_map_font_size(getattr(c, "dx_map_font_size", 7))
+        self._map_view.set_dx_map_font_size(getattr(c, "dx_map_font_size", 9))
         if hasattr(self, "_dx_spots_widget"):
             self._dx_spots_widget.set_font_size(c.dx_font_size)
         if hasattr(self, "_wspr_table_widget") and self._wspr_table_widget:
             self._wspr_table_widget.set_font_size(getattr(c, "wspr_font_size", 9))
         self._map_view.set_lightning_fade(c.lightning_fade)
         self._map_view.set_lightning_enabled(c.show_lightning)   # volledige aan/uit (verbinding)
-        self._map_view.set_lightning_visible(getattr(c, "lightning_overlay_visible", True))  # overlay zichtbaarheid
-        self._map_view.set_lightning_font_size(getattr(c, "lightning_font_size", 7))
+        self._map_view.set_lightning_visible(getattr(c, "lightning_overlay_visible", False))  # overlay zichtbaarheid
+        self._map_view.set_lightning_font_size(getattr(c, "lightning_font_size", 9))
         _lon = c.show_lightning
         self._map_view.set_lightning_radius(
             int(getattr(c, "lightning_beep_r", 0)) if _lon else 0)
@@ -827,7 +828,7 @@ class HAMIOSMainWindow(QMainWindow):
         self._map_view.set_drap_visible(getattr(c, "show_drap", False))
         self._map_view.set_propmap_visible(getattr(c, "show_propmap", False))
         self._refresh_propmap()
-        self._map_view.set_callsign_overlay_font_size(getattr(c, "callsign_overlay_font_size", 7))
+        self._map_view.set_callsign_overlay_font_size(getattr(c, "callsign_overlay_font_size", 9))
 
     # ── Retranslate ───────────────────────────────────────────────────────────
     def _sync_dx_map_filter(self):
@@ -893,7 +894,7 @@ class HAMIOSMainWindow(QMainWindow):
         except OSError as e:
             from PySide6.QtWidgets import QMessageBox
             QMessageBox.warning(self, "HAM Antenna Designer",
-                                f"Kan de Antenna Designer niet starten:\n{exe}\n\n{e}")
+                                tr("ant.start_failed", exe=exe, e=e))
 
     def _open_overlay_menu(self):
         """Modeless overlay selection panel (multiple toggles, stays open)."""
@@ -907,13 +908,8 @@ class HAMIOSMainWindow(QMainWindow):
             self._overlay_dialog.activateWindow()
             return
 
-        # Create custom dialog that closes on focus loss
-        class AutoCloseDialog(QDialog):
-            def focusOutEvent(self, event):
-                super().focusOutEvent(event)
-                self.close()
-
-        dialog = AutoCloseDialog(self, Qt.FramelessWindowHint | Qt.WindowStaysOnTopHint)
+        # Popup: sluit vanzelf bij een klik ergens anders op het scherm
+        dialog = QDialog(self, Qt.Popup | Qt.FramelessWindowHint)
         dialog.setStyleSheet(
             f"QDialog {{ background: #1A1D22; border: 1px solid #404850; border-radius: 5px; }}"
             f"QCheckBox {{ color: #C8C8D0; }}"
@@ -1030,13 +1026,8 @@ class HAMIOSMainWindow(QMainWindow):
             self._panel_dialog.activateWindow()
             return
 
-        # Create custom dialog that closes on focus loss
-        class AutoCloseDialog(QDialog):
-            def focusOutEvent(self, event):
-                super().focusOutEvent(event)
-                self.close()
-
-        dialog = AutoCloseDialog(self, Qt.FramelessWindowHint | Qt.WindowStaysOnTopHint)
+        # Popup: sluit vanzelf bij een klik ergens anders op het scherm
+        dialog = QDialog(self, Qt.Popup | Qt.FramelessWindowHint)
         dialog.setStyleSheet(
             f"QDialog {{ background: #1A1D22; border: 1px solid #404850; border-radius: 5px; }}"
             f"QCheckBox {{ color: #C8C8D0; }}"

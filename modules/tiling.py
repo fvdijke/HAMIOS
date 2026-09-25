@@ -27,7 +27,7 @@ import copy
 
 from PySide6.QtCore import Qt, QRect, QPoint, Signal
 from PySide6.QtGui import QColor, QPainter, QPen
-from PySide6.QtWidgets import (QApplication, QSplitter, QStackedWidget, QTabBar,
+from PySide6.QtWidgets import (QApplication, QSplitter, QStackedWidget, QTabBar, QToolButton,
                                QVBoxLayout, QWidget)
 
 from .theme import ACCENT, BG_PANEL, BG_ROOT, BG_SURFACE, TEXT_DIM
@@ -279,9 +279,9 @@ class _TabBar(QTabBar):
         self._group = group
         self._press: QPoint | None = None
         self._press_idx = -1
-        self.setTabsClosable(True)
+        self.setTabsClosable(False)      # één sluitknop, alleen op de actieve tab
         self.setExpanding(False)
-        self.setElideMode(Qt.ElideRight)
+        self.setElideMode(Qt.ElideNone)
         self.setUsesScrollButtons(True)
         self.setDocumentMode(True)
         self.setStyleSheet(_TAB_QSS)
@@ -330,8 +330,17 @@ class TabGroup(QWidget):
             p = panels[pid]
             p.set_in_tabs(True)
             self._stack.addWidget(p)
+        self._close_btn = QToolButton()
+        self._close_btn.setText("✕")
+        self._close_btn.setAutoRaise(True)
+        self._close_btn.setCursor(Qt.PointingHandCursor)
+        self._close_btn.setStyleSheet(
+            f"QToolButton {{ color: {TEXT_DIM}; border: none; padding: 0 2px;"
+            f" font-size: 8pt; background: transparent; }}"
+            f"QToolButton:hover {{ color: {ACCENT}; }}")
+        self._close_btn.clicked.connect(
+            lambda: self._on_close(self._bar.currentIndex()))
         self._bar.currentChanged.connect(self._on_current)
-        self._bar.tabCloseRequested.connect(self._on_close)
         self.sync()
 
     # ── API ──────────────────────────────────────────────────────────────────
@@ -355,6 +364,9 @@ class TabGroup(QWidget):
         elif self._active not in visible and visible:
             self._active = visible[0]
         self._bar.blockSignals(True)
+        # gedeelde sluitknop eerst losmaken: removeTab verwijdert tab-widgets
+        for i in range(self._bar.count()):
+            self._bar.setTabButton(i, QTabBar.RightSide, None)
         while self._bar.count():
             self._bar.removeTab(0)
         for pid in visible:
@@ -366,6 +378,53 @@ class TabGroup(QWidget):
         if self._active in visible:
             self._stack.setCurrentWidget(self._panels[self._active])
             self._panels[self._active].show()
+        self._fit_labels()
+
+    # ── labels passend maken ─────────────────────────────────────────────────
+    @staticmethod
+    def _split_title(title: str) -> tuple[str, str]:
+        """'🔔  Meldingen' → ('🔔', 'Meldingen'); zonder icoon → ('', titel)."""
+        parts = title.split(None, 1)
+        if len(parts) == 2 and not parts[0][0].isalnum():
+            return parts[0], parts[1]
+        return "", title.strip()
+
+    def _fit_labels(self):
+        """Volledige titels als ze passen; anders alleen het icoon op de
+        niet-actieve tabs (volledige naam in de tooltip). Sluitknop op de
+        actieve tab."""
+        bar = self._bar
+        n = bar.count()
+        if n == 0:
+            return
+        cur = bar.currentIndex()
+        full = []
+        for i in range(n):
+            icon, name = self._split_title(self._panels[bar.tabData(i)].title())
+            full.append((icon, name))
+        for i in range(n):
+            bar.setTabButton(i, QTabBar.RightSide, None)
+        if 0 <= cur < n:
+            bar.setTabButton(cur, QTabBar.RightSide, self._close_btn)
+            self._close_btn.show()
+        avail = max(1, self.width() - 4)
+
+        def apply(compact: bool) -> int:
+            for i, (icon, name) in enumerate(full):
+                text = f"{icon} {name}".strip()
+                if compact and i != cur and icon:
+                    text = icon
+                if bar.tabText(i) != text:
+                    bar.setTabText(i, text)
+                bar.setTabToolTip(i, f"{icon} {name}".strip())
+            return sum(bar.tabSizeHint(i).width() for i in range(n))
+
+        if apply(False) > avail:
+            apply(True)
+
+    def resizeEvent(self, event):
+        super().resizeEvent(event)
+        self._fit_labels()
 
     # ── signalen ─────────────────────────────────────────────────────────────
     def _on_current(self, idx: int):
@@ -373,6 +432,7 @@ class TabGroup(QWidget):
         if pid:
             self._active = pid
             self._stack.setCurrentWidget(self._panels[pid])
+        self._fit_labels()
 
     def _on_close(self, idx: int):
         pid = self._bar.tabData(idx)
@@ -380,9 +440,7 @@ class TabGroup(QWidget):
             self._panels[pid].hide_panel()
 
     def set_title(self, pid: str, title: str):
-        for i in range(self._bar.count()):
-            if self._bar.tabData(i) == pid:
-                self._bar.setTabText(i, title)
+        self._fit_labels()
 
 
 # ── Sleep-overlay ─────────────────────────────────────────────────────────────

@@ -198,6 +198,7 @@ class SettingsDialog(QDialog):
     """Instellingen-dialoog met tabbladen."""
 
     applied = Signal(AppConfig)
+    _lightn_result = Signal(bool)        # bliksemtest (achtergrondthread → GUI)
 
     def __init__(self, cfg: AppConfig, panels: dict = None,
                  mainwindow=None, parent=None):
@@ -399,7 +400,7 @@ class SettingsDialog(QDialog):
         self._wspr_font_spin.setRange(7, 72)
         self._wspr_font_spin.setSuffix(" pt")
         self._wspr_font_spin.setFixedWidth(80)
-        row("WSPR Live font", self._wspr_font_spin)
+        row(tr("set.wspr_font"), self._wspr_font_spin)
 
         self._dx_map_font_spin = QSpinBox()
         self._dx_map_font_spin.setRange(6, 72)
@@ -416,13 +417,13 @@ class SettingsDialog(QDialog):
         _section(v, tr("sec.icon_sizes2"))
 
         self._sun_size_spin = QSpinBox()
-        self._sun_size_spin.setRange(8, 64)
+        self._sun_size_spin.setRange(12, 48)
         self._sun_size_spin.setSuffix(" px")
         self._sun_size_spin.setFixedWidth(80)
         row(tr("set.map.sun_size"), self._sun_size_spin)
 
         self._moon_size_spin = QSpinBox()
-        self._moon_size_spin.setRange(8, 64)
+        self._moon_size_spin.setRange(10, 48)
         self._moon_size_spin.setSuffix(" px")
         self._moon_size_spin.setFixedWidth(80)
         row(tr("set.map.moon_size"), self._moon_size_spin)
@@ -479,12 +480,12 @@ class SettingsDialog(QDialog):
         v.addLayout(h2)
 
         # Alert sound enable
-        self._lightn_alert_sound_cb = QCheckBox("Enable alert zone sound")
+        self._lightn_alert_sound_cb = QCheckBox(tr("set.lightn.zone_sound"))
         v.addWidget(self._lightn_alert_sound_cb)
 
         # Alert zone sound pitch
         h_pitch = QHBoxLayout()
-        h_pitch.addWidget(QLabel("Pitch (Hz):"))
+        h_pitch.addWidget(QLabel(tr("set.lightn.pitch")))
         self._lightn_pitch_spin = QSpinBox()
         self._lightn_pitch_spin.setRange(1000, 8000)
         self._lightn_pitch_spin.setSingleStep(100)
@@ -495,7 +496,7 @@ class SettingsDialog(QDialog):
 
         # Alert zone sound duration
         h_duration = QHBoxLayout()
-        h_duration.addWidget(QLabel("Duration (ms):"))
+        h_duration.addWidget(QLabel(tr("set.lightn.duration")))
         self._lightn_duration_spin = QSpinBox()
         self._lightn_duration_spin.setRange(1, 100)
         self._lightn_duration_spin.setSingleStep(1)
@@ -504,7 +505,7 @@ class SettingsDialog(QDialog):
         h_duration.addStretch()
         v.addLayout(h_duration)
 
-        _section(v, "Warning Zone")
+        _section(v, tr("set.lightn.warn_zone"))
 
         # Enable lightning beep
         self._lightn_beep_cb = QCheckBox(tr("set.lightn.beep"))
@@ -513,7 +514,7 @@ class SettingsDialog(QDialog):
 
         # Warning zone radius
         h_warn = QHBoxLayout()
-        h_warn.addWidget(QLabel("Warning radius (km, 0=off):"))
+        h_warn.addWidget(QLabel(tr("set.lightn.warn_radius")))
         self._lightn_warn_radius_spin = QSpinBox()
         self._lightn_warn_radius_spin.setRange(0, 5000)
         self._lightn_warn_radius_spin.setSingleStep(50)
@@ -524,7 +525,7 @@ class SettingsDialog(QDialog):
 
         # Warning zone sound pitch
         h_pitch_normal = QHBoxLayout()
-        h_pitch_normal.addWidget(QLabel("Pitch (Hz):"))
+        h_pitch_normal.addWidget(QLabel(tr("set.lightn.pitch")))
         self._lightn_beep_pitch_spin = QSpinBox()
         self._lightn_beep_pitch_spin.setRange(1000, 8000)
         self._lightn_beep_pitch_spin.setSingleStep(100)
@@ -535,7 +536,7 @@ class SettingsDialog(QDialog):
 
         # Warning zone sound duration
         h_duration_normal = QHBoxLayout()
-        h_duration_normal.addWidget(QLabel("Duration (ms):"))
+        h_duration_normal.addWidget(QLabel(tr("set.lightn.duration")))
         self._lightn_beep_duration_spin = QSpinBox()
         self._lightn_beep_duration_spin.setRange(1, 100)
         self._lightn_beep_duration_spin.setSingleStep(1)
@@ -875,7 +876,7 @@ class SettingsDialog(QDialog):
                 self._cat_status_lbl.setText(tr("cat.no_ports"))
                 self._cat_status_lbl.setStyleSheet(_STYLE_STATUS_ERR)
             else:
-                self._cat_status_lbl.setText(f"{n} poort{'en' if n > 1 else ''} gevonden")
+                self._cat_status_lbl.setText(tr("cat.ports_found1" if n == 1 else "cat.ports_found", n=n))
                 self._cat_status_lbl.setStyleSheet(f"color: {TEXT_DIM}; font-size: 8pt;")
 
     # ── Tab: Resources ────────────────────────────────────────────────────────
@@ -1014,9 +1015,7 @@ class SettingsDialog(QDialog):
         br.addStretch()
         v.addLayout(br)
 
-        note_def = QLabel(
-            "\"Als standaard\" slaat de huidige paneel-posities op.\n"
-            "\"Reset\" herstelt panelen naar die opgeslagen standaard (of fabriek).")
+        note_def = QLabel(tr("set.layout.note_def"))
         note_def.setFont(f8)
         note_def.setStyleSheet(f"color: {TEXT_DIM};")
         note_def.setWordWrap(True)
@@ -1027,7 +1026,7 @@ class SettingsDialog(QDialog):
 
         new_row = QHBoxLayout()
         self._profile_name = QLineEdit()
-        self._profile_name.setPlaceholderText("Naam voor nieuw profiel…")
+        self._profile_name.setPlaceholderText(tr("prof.name_ph"))
         self._profile_name.setFont(f8)
         btn_new = QPushButton(tr("btn.save_profile"))
         btn_new.setFont(f8)
@@ -1173,11 +1172,11 @@ class SettingsDialog(QDialog):
             self._apply_config_dict(config_dict)
             # Laad layout
             self._apply_layout_dict(layout_dict)
-            self._status_lbl.setText("✓  Standaard-instellingen hersteld")
+            self._status_lbl.setText(tr("prof.default_restored"))
             self._status_lbl.setStyleSheet(_STYLE_STATUS_OK)
             self._status_timer.start(2500)
         else:
-            self._status_lbl.setText("✗  Geen standaard-profiel gevonden")
+            self._status_lbl.setText(tr("prof.no_default"))
             self._status_lbl.setStyleSheet(_STYLE_STATUS_ERR)
             self._status_timer.start(3000)
 
@@ -1195,11 +1194,11 @@ class SettingsDialog(QDialog):
         if ProfileManager.save_profile(name, config_dict, layout_dict):
             self._profile_name.clear()
             self._refresh_profiles()
-            self._status_lbl.setText(f"[OK]  Profiel '{name}' opgeslagen")
+            self._status_lbl.setText(tr("prof.saved", name=name))
             self._status_lbl.setStyleSheet(_STYLE_STATUS_OK)
             self._status_timer.start(2500)
         else:
-            self._status_lbl.setText(f"✗  Profiel '{name}' kon niet opgeslagen worden")
+            self._status_lbl.setText(tr("prof.save_failed", name=name))
             self._status_lbl.setStyleSheet(_STYLE_STATUS_ERR)
             self._status_timer.start(3000)
 
@@ -1211,11 +1210,11 @@ class SettingsDialog(QDialog):
             self._apply_config_dict(profile.config)
             # Laad layout
             self._apply_layout_dict(profile.layout)
-            self._status_lbl.setText(f"✓  Profiel '{name}' geladen")
+            self._status_lbl.setText(tr("prof.loaded", name=name))
             self._status_lbl.setStyleSheet(_STYLE_STATUS_OK)
             self._status_timer.start(2500)
         else:
-            self._status_lbl.setText(f"✗  Profiel '{name}' niet gevonden")
+            self._status_lbl.setText(tr("prof.not_found", name=name))
             self._status_lbl.setStyleSheet(_STYLE_STATUS_ERR)
             self._status_timer.start(3000)
 
@@ -1225,11 +1224,11 @@ class SettingsDialog(QDialog):
         layout_dict = self._get_current_layout_dict()
 
         if ProfileManager.update_profile(name, config_dict, layout_dict):
-            self._status_lbl.setText(f"✓  Profiel '{name}' overschreven")
+            self._status_lbl.setText(tr("prof.overwritten", name=name))
             self._status_lbl.setStyleSheet(_STYLE_STATUS_OK)
             self._status_timer.start(2500)
         else:
-            self._status_lbl.setText(f"✗  Profiel '{name}' kon niet overschreven worden")
+            self._status_lbl.setText(tr("prof.overwrite_failed", name=name))
             self._status_lbl.setStyleSheet(_STYLE_STATUS_ERR)
             self._status_timer.start(3000)
 
@@ -1237,13 +1236,13 @@ class SettingsDialog(QDialog):
         """Verwijder profiel."""
         from PySide6.QtWidgets import QMessageBox
         if QMessageBox.question(
-                self, "Profiel verwijderen",
-                f"Profiel '{name}' verwijderen?",
+                self, tr("prof.delete_title"),
+                tr("prof.delete_q", name=name),
                 QMessageBox.Yes | QMessageBox.No) == QMessageBox.Yes:
             if ProfileManager.delete_profile(name):
                 self._refresh_profiles()
             else:
-                self._status_lbl.setText(f"✗  Profiel '{name}' kon niet verwijderd worden")
+                self._status_lbl.setText(tr("prof.delete_failed", name=name))
                 self._status_lbl.setStyleSheet(_STYLE_STATUS_ERR)
                 self._status_timer.start(3000)
 
@@ -1271,31 +1270,31 @@ class SettingsDialog(QDialog):
         self._day_auto_cb.setChecked(get_val("band_day_auto", True))
 
         # Kaart
-        self._cb_night.setChecked(get_val("show_night", True))
-        self._cb_grayline.setChecked(get_val("show_grayline", True))
-        self._cb_aurora.setChecked(get_val("show_aurora", True))
-        self._cb_sun.setChecked(get_val("show_sun", True))
-        self._cb_moon.setChecked(get_val("show_moon", True))
-        self._cb_lightn.setChecked(get_val("show_lightning", True))
-        self._cb_lightn_en.setChecked(get_val("show_lightning", True))
-        self._cb_dxspots.setChecked(get_val("show_dx_spots", True))
+        self._cb_night.setChecked(get_val("show_night", False))
+        self._cb_grayline.setChecked(get_val("show_grayline", False))
+        self._cb_aurora.setChecked(get_val("show_aurora", False))
+        self._cb_sun.setChecked(get_val("show_sun", False))
+        self._cb_moon.setChecked(get_val("show_moon", False))
+        self._cb_lightn.setChecked(get_val("show_lightning", False))
+        self._cb_lightn_en.setChecked(get_val("show_lightning", False))
+        self._cb_dxspots.setChecked(get_val("show_dx_spots", False))
         self._cb_locator.setChecked(get_val("show_locator", False))
         _set_combo_data(self._snap_cb, get_val("snap_grid", 10), _GRIDS[2])
         _set_combo_data(self._grat_step_cb, get_val("grat_step", 30), 30)
-        self._font_spin.setValue(int(get_val("overlay_font_size", 8)))
-        self._maid_font_spin.setValue(int(get_val("maidenhead_font_size", 8)))
-        self._sat_font_spin.setValue(int(get_val("sat_font_size", 8)))
+        self._font_spin.setValue(int(get_val("overlay_font_size", 9)))
+        self._maid_font_spin.setValue(int(get_val("maidenhead_font_size", 9)))
+        self._sat_font_spin.setValue(int(get_val("sat_font_size", 9)))
         self._sat_path_width_spin.setValue(float(get_val("sat_path_width", 1.2)))
-        self._callsign_font_spin.setValue(int(get_val("callsign_overlay_font_size", 7)))
+        self._callsign_font_spin.setValue(int(get_val("callsign_overlay_font_size", 9)))
         self._wspr_font_spin.setValue(int(get_val("wspr_font_size", 9)))
-        self._dx_map_font_spin.setValue(int(get_val("dx_map_font_size", 7)))
-        self._dx_font_spin.setValue(int(get_val("dx_font_size", 8)))
-        self._sun_size_spin.setValue(int(get_val("sun_icon_size", 24)))
-        self._moon_size_spin.setValue(int(get_val("moon_icon_size", 20)))
+        self._dx_map_font_spin.setValue(int(get_val("dx_map_font_size", 9)))
+        self._dx_font_spin.setValue(int(get_val("dx_font_size", 9)))
+        self._sun_size_spin.setValue(int(get_val("sun_icon_px", 24)))
+        self._moon_size_spin.setValue(int(get_val("moon_icon_px", 20)))
 
         # Bliksem
         self._fade_spin.setValue(int(get_val("lightning_fade", 600)))
-        self._cb_lightn_en.setChecked(get_val("show_lightning", True))
+        self._cb_lightn_en.setChecked(get_val("show_lightning", False))
         self._lightn_radius_spin.setValue(int(get_val("lightning_radius", 500)))
         self._lightn_rate_spin.setValue(int(get_val("lightning_rate", 500)))
         self._lightn_beep_cb.setChecked(get_val("lightning_beep", False))
@@ -1304,7 +1303,7 @@ class SettingsDialog(QDialog):
         self._lightn_beep_duration_spin.setValue(int(get_val("lightning_beep_duration", 5)))
         self._lightn_alert_sound_cb.setChecked(get_val("lightning_alert_sound_enabled", True))
         self._lightn_anim_scale_spin.setValue(float(get_val("lightning_anim_scale", 2.0)))
-        self._lightn_font_spin.setValue(int(get_val("lightning_font_size", 7)))
+        self._lightn_font_spin.setValue(int(get_val("lightning_font_size", 9)))
         self._lightn_pitch_spin.setValue(int(get_val("lightning_alert_pitch", 5000)))
         self._lightn_duration_spin.setValue(int(get_val("lightning_alert_duration", 10)))
 
@@ -1379,15 +1378,19 @@ class SettingsDialog(QDialog):
                 return False
 
         def run_test():
-            success = test_connection()
-            if success:
-                self._lightn_status.setText("✓ Connected")
-                self._lightn_status.setStyleSheet(_STYLE_OK_NO_SIZE)
-            else:
-                self._lightn_status.setText("✗ Connection failed")
-                self._lightn_status.setStyleSheet(_STYLE_ERR_NO_SIZE)
+            # Geen widgets aanraken buiten de GUI-thread: resultaat via signaal
+            self._lightn_result.emit(bool(test_connection()))
 
+        try:
+            self._lightn_result.disconnect()
+        except (RuntimeError, TypeError):
+            pass
+        self._lightn_result.connect(self._show_lightn_result)
         threading.Thread(target=run_test, daemon=True).start()
+
+    def _show_lightn_result(self, ok: bool):
+        self._lightn_status.setText(tr("set.lightn.test_ok" if ok else "set.lightn.test_fail"))
+        self._lightn_status.setStyleSheet(_STYLE_OK_NO_SIZE if ok else _STYLE_ERR_NO_SIZE)
 
     # ── Config laden/opslaan ──────────────────────────────────────────────────
     def _load_cfg(self):
@@ -1421,19 +1424,19 @@ class SettingsDialog(QDialog):
         _set_combo_data(self._snap_cb, c.snap_grid, _GRIDS[2])
         _set_combo_data(self._grat_step_cb, getattr(c, "grat_step", 30), 30)
         self._font_spin.setValue(c.overlay_font_size)
-        self._maid_font_spin.setValue(getattr(c, "maidenhead_font_size", 8))
-        self._sat_font_spin.setValue(getattr(c, "sat_font_size", 8))
+        self._maid_font_spin.setValue(getattr(c, "maidenhead_font_size", 9))
+        self._sat_font_spin.setValue(getattr(c, "sat_font_size", 9))
         self._sat_path_width_spin.setValue(getattr(c, "sat_path_width", 1.2))
-        self._callsign_font_spin.setValue(getattr(c, "callsign_overlay_font_size", 7))
+        self._callsign_font_spin.setValue(getattr(c, "callsign_overlay_font_size", 9))
         self._wspr_font_spin.setValue(getattr(c, "wspr_font_size", 9))
-        self._dx_map_font_spin.setValue(getattr(c, "dx_map_font_size", 7))
-        self._dx_font_spin.setValue(getattr(c, "dx_font_size", 8))
-        self._sun_size_spin.setValue(getattr(c, "sun_icon_size", 24))
-        self._moon_size_spin.setValue(getattr(c, "moon_icon_size", 20))
+        self._dx_map_font_spin.setValue(getattr(c, "dx_map_font_size", 9))
+        self._dx_font_spin.setValue(getattr(c, "dx_font_size", 9))
+        self._sun_size_spin.setValue(getattr(c, "sun_icon_px", 24))
+        self._moon_size_spin.setValue(getattr(c, "moon_icon_px", 20))
 
         # Bliksem
         self._fade_spin.setValue(c.lightning_fade)
-        self._cb_lightn_en.setChecked(getattr(c, "show_lightning", True))
+        self._cb_lightn_en.setChecked(getattr(c, "show_lightning", False))
         self._lightn_radius_spin.setValue(getattr(c, "lightning_radius", 500))
         self._lightn_rate_spin.setValue(getattr(c, "lightning_rate", 500))
         self._lightn_beep_cb.setChecked(getattr(c, "lightning_beep", False))
@@ -1442,7 +1445,7 @@ class SettingsDialog(QDialog):
         self._lightn_beep_duration_spin.setValue(getattr(c, "lightning_beep_duration", 5))
         self._lightn_alert_sound_cb.setChecked(getattr(c, "lightning_alert_sound_enabled", True))
         self._lightn_anim_scale_spin.setValue(getattr(c, "lightning_anim_scale", 2.0))
-        self._lightn_font_spin.setValue(getattr(c, "lightning_font_size", 7))
+        self._lightn_font_spin.setValue(getattr(c, "lightning_font_size", 9))
         self._lightn_pitch_spin.setValue(getattr(c, "lightning_alert_pitch", 5000))
         self._lightn_duration_spin.setValue(getattr(c, "lightning_alert_duration", 10))
 
@@ -1529,8 +1532,8 @@ class SettingsDialog(QDialog):
             wspr_font_size    = self._wspr_font_spin.value(),
             dx_map_font_size  = self._dx_map_font_spin.value(),
             dx_font_size      = self._dx_font_spin.value(),
-            sun_icon_size     = self._sun_size_spin.value(),
-            moon_icon_size    = self._moon_size_spin.value(),
+            sun_icon_px       = self._sun_size_spin.value(),
+            moon_icon_px      = self._moon_size_spin.value(),
             show_splash       = self._splash_about.isChecked(),
             language          = "en" if self._lang_en.isChecked() else "nl",
             k_alert           = self._k_spin.value(),
@@ -1583,8 +1586,8 @@ class SettingsDialog(QDialog):
     def _reset_layout(self):
         from PySide6.QtWidgets import QMessageBox
         if QMessageBox.question(
-                self, "Layout resetten",
-                "Alle panels terugzetten naar standaard positie?",
+                self, tr("set.layout.reset_title"),
+                tr("set.layout.reset_q"),
                 QMessageBox.Yes | QMessageBox.No) == QMessageBox.Yes:
             parent = self.parent()
             if parent and hasattr(parent, '_reset_layout'):
@@ -1749,13 +1752,13 @@ def _friendly_serial_error(msg: str) -> str:
     """Vertaal een pyserial-foutmelding naar een begrijpelijke Nederlandse tekst."""
     m = msg.lower()
     if "permissionerror" in m or "access is denied" in m or "[errno 13]" in m or "error(13" in m:
-        return "Toegang geweigerd — poort al in gebruik door ander programma"
+        return tr("cat.err.port_busy")
     if "filenotfounderror" in m or "cannot find the file" in m or "no such file" in m:
-        return "Poort niet gevonden — controleer de poortnaam"
+        return tr("cat.err.port_missing")
     if "seriaalexception" in m or "serialexception" in m:
-        return f"Serieel fout: {msg}"
+        return tr("cat.err.serial", msg=msg)
     if "timed out" in m or "timeout" in m:
-        return "Time-out — geen reactie van radio"
+        return tr("cat.err.timeout")
     return msg
 
 

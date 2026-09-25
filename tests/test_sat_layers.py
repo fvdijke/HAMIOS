@@ -77,5 +77,49 @@ class TestMapLayers(unittest.TestCase):
         self.assertEqual(C.propmap_colour(5)[3], 0)   # vrijwel dicht → geen kleur
 
 
+
+class TestMoonView(unittest.TestCase):
+    """Maan zoals gezien vanaf de QTH: verlichte kant wijst naar de zon."""
+
+    def _view(self, qth_lat, qth_lon):
+        from modules import mapview as MV
+        orig = MV._subsolar_point, MV._submoon_point
+        # Eerste kwartier: maan 90° ten oosten van de zon, beide op de evenaar
+        MV._subsolar_point = lambda: (0.0, -90.0)
+        MV._submoon_point = lambda: (0.0, 0.0)
+        try:
+            return MV.moon_view(qth_lat, qth_lon)
+        finally:
+            MV._subsolar_point, MV._submoon_point = orig
+
+    def test_first_quarter_northern_hemisphere_lit_right(self):
+        v = self._view(52.0, 0.0)            # zon in het westen op de horizon, maan in het zuiden
+        self.assertAlmostEqual(v["elong"], 90, delta=0.1)
+        self.assertLess(v["phase"], 180)     # wassend
+        self.assertAlmostEqual(v["limb"], 90, delta=1)    # verlicht rechts
+        self.assertAlmostEqual(v["el"], 38, delta=0.5)
+
+    def test_first_quarter_southern_hemisphere_lit_left(self):
+        v = self._view(-35.0, 0.0)           # maan in het noorden: beeld gespiegeld
+        self.assertAlmostEqual(v["limb"], 270, delta=1)   # verlicht links
+
+
+
+class TestSunTimes(unittest.TestCase):
+
+    def test_sunrise_sunset_and_grey_line(self):
+        from modules import mapview as MV
+        t = MV.sun_times(51.58, 4.25, dt.date(2026, 6, 21))
+        # almanak (UTC): op ~03:25, onder ~20:04
+        self.assertAlmostEqual(t["rise"].hour * 60 + t["rise"].minute, 3 * 60 + 25, delta=3)
+        self.assertAlmostEqual(t["set"].hour * 60 + t["set"].minute, 20 * 60 + 4, delta=3)
+        am0, am1 = t["gray_am"]
+        self.assertTrue(am0 < t["rise"] < am1)          # zonsopkomst valt in het grayline-venster
+
+    def test_polar_day_and_night(self):
+        from modules import mapview as MV
+        self.assertEqual(MV.sun_times(80, 0, dt.date(2026, 12, 21))["polar"], "night")
+        self.assertEqual(MV.sun_times(80, 0, dt.date(2026, 6, 21))["polar"], "day")
+
 if __name__ == "__main__":
     unittest.main()

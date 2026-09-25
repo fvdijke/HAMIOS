@@ -82,10 +82,29 @@ reality (one afternoon they gave MUF 29 / – / 9.5 MHz while 21 MHz was measure
   SGP4 over a day; elevation for the QTH-zone ping corrected
 - **Aurora** drawn smoothly (no 1° blocks), in the HAMIOS green → yellow → red colours
 
-### 8. **Other** ✨
+### 8. **Performance** ⚡
+- CPU use during normal operation down from ~120 % to ~25 % of one core: the PSKReporter
+  layer is cached as an image, DX-spot geometry is prepared once per data update and the
+  animated DX lines are drawn efficiently
+- Propagation model 2.5× faster (map, advice and band panels)
+
+### 9. **Fully Bilingual** 🌐
+- Every text in English and Dutch — including EIBI (column headings, ~280 language/region/
+  country names), FT8/Dig, SpyStations (all 40 stations), CAT messages, Settings and Help
+- Panel titles and header now follow the chosen language from the very start
+- Help updated for v5.7: tiled layout, propagation model, ionosondes, grey line/sun/moon,
+  satellite passes, map layers, data sources
+
+### 10. **Other** ✨
 - Checkboxes with an amber tick instead of a filled box; dropdowns show an arrow again
-- Remaining Dutch texts in the English interface translated (Solar panel, Alerts, Settings);
-  WSPR table columns fit their content
+- Tabs fit their space (inactive tabs show only their icon when narrow); close button on
+  the active tab
+- Overlays and Panels menus close when you click elsewhere
+- Moon icon shows the phase and orientation as seen from your QTH; sun and moon tooltips
+  (rise/set, grey-line windows, phase)
+- New installation: no map overlays and no lightning connection active; all fonts 9 pt
+- History charts no longer draw straight lines across periods when HAMIOS was not running
+- WSPR and DX tables fit their content; lightning connection test is thread-safe
 - Clicking the map now draws the great-circle path from your QTH with the distance
 - FT8/digital CAT tuning uses a selectable data mode (USB or PKT-U/DATA-U)
 - One storm threshold (your K setting) for advice and alerts — no duplicate alerts
@@ -101,7 +120,7 @@ reality (one afternoon they gave MUF 29 / – / 9.5 MHz while 21 MHz was measure
 - Removed panels "Band conditions" and "MUF forecast" (merged); saved layouts adapt
 - The "snap grid" setting is no longer shown (tiles always fit together)
 - All user-agent strings unified to `HAMIOS/5.7`
-- Verified: full compile, 106 unit tests, full application start-up with live data; orbit model checked against SGP4
+- Verified: full compile, 110 unit tests, full application start-up with live data; orbit model checked against SGP4
 
 ---
 

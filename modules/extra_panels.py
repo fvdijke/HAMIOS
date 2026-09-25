@@ -106,6 +106,14 @@ class IonosondeWidget(QWidget):
         c = self._cfg
         return (c.qth_lat, c.qth_lon) if c else (52.0, 5.0)
 
+    def resizeEvent(self, event):
+        """Smal paneel: foEs en leeftijd verbergen (verouderde rijen blijven
+        herkenbaar aan de gedimde kleur) zodat de stationsnaam past."""
+        super().resizeEvent(event)
+        w = self.width()
+        self._table.setColumnHidden(4, w < 380)
+        self._table.setColumnHidden(5, w < 320)
+
     def refresh(self):
         lat, lon = self._qth()
         now = _dt.datetime.now(_dt.timezone.utc)
@@ -142,8 +150,8 @@ class IonosondeWidget(QWidget):
             return tr("iono.none_near")
         km = _dist_km(lat, lon, s.lat, s.lon)
         head = (f"<b style='color:{ACCENT}'>{tr('iono.local')}</b> "
-                f"<span style='color:{TEXT_DIM}'>{s.name} · {km:,.0f} km · "
-                f"{tr('iono.age_min', n=int(s.age_s(now) / 60))}</span>").replace(",", ".")
+                f"<span style='color:{TEXT_DIM}'>{s.name} · {km:.0f} km · "
+                f"{tr('iono.age_min', n=int(s.age_s(now) / 60))}</span>")
         nvis = _highest_band(s.fof2)
         lines = [head,
                  tr("iono.nvis", fof2=f"{s.fof2:.1f}",

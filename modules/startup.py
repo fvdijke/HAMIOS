@@ -59,7 +59,8 @@ def check_files() -> tuple[list[str], list[str]]:
                 json.dump({}, f)
             warnings.append(f"Nieuwe configuratie aangemaakt: {_CONFIG}")
         except Exception as e:
-            errors.append(f"Kan configuratie niet aanmaken: {_CONFIG}\n{e}")
+            from .i18n import tr
+            errors.append(tr("app.config_create_failed", path=_CONFIG, e=e))
 
     # ── SpyStations: aanmaken met standaardwaarden ───────────────────────────
     if not os.path.exists(_SPY):

@@ -6,6 +6,7 @@ from PySide6.QtWidgets import (
 )
 
 from .resources_config import ResourceConfig, DEFAULT_RESOURCES
+from .i18n import tr
 from .theme import BG_PANEL, BG_SURFACE, TEXT_H1, TEXT_BODY, TEXT_DIM, BORDER
 
 
@@ -22,7 +23,7 @@ class ResourceManagerTab(QWidget):
         layout.setSpacing(8)
 
         # Title
-        title = QLabel("Online Resources")
+        title = QLabel(tr("res.tab.title"))
         title.setStyleSheet(f"color: {TEXT_H1}; font-weight: bold; font-size: 11pt;")
         layout.addWidget(title)
 
@@ -73,12 +74,12 @@ class ResourceManagerTab(QWidget):
         btn_layout = QHBoxLayout()
         btn_layout.addStretch()
 
-        save_btn = QPushButton("Save")
+        save_btn = QPushButton(tr("res.tab.save"))
         save_btn.setFixedWidth(80)
         save_btn.clicked.connect(self._save_resources)
         btn_layout.addWidget(save_btn)
 
-        reset_btn = QPushButton("Reset to Defaults")
+        reset_btn = QPushButton(tr("res.tab.reset"))
         reset_btn.setFixedWidth(120)
         reset_btn.clicked.connect(self._reset_defaults)
         btn_layout.addWidget(reset_btn)

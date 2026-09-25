@@ -138,7 +138,7 @@ class CatMonitorWindow(QWidget):
         self._lbl_port  = QLabel("—"); self._lbl_port.setFont(f8c)
         self._lbl_baud  = QLabel("—"); self._lbl_baud.setFont(f8)
         self._lbl_type  = QLabel("—"); self._lbl_type.setFont(f8)
-        for hdr, w in [("Poort:", self._lbl_port),
+        for hdr, w in [(tr("cat.port_lbl"), self._lbl_port),
                         ("Baud:", self._lbl_baud),
                         ("Type:", self._lbl_type)]:
             info.addWidget(QLabel(hdr))
@@ -223,16 +223,16 @@ class CatMonitorWindow(QWidget):
         """Verbind via de instellingen in ⚙ Instellingen → CAT."""
         ok, msg = self._cat.connect()
         if ok:
-            self._log_info("Verbinding tot stand gebracht")
+            self._log_info(tr("cat.log.established"))
         else:
-            self._queue_entry("ERR", f"Verbinden mislukt: {msg}")
+            self._queue_entry("ERR", tr("cat.log.failed", msg=msg))
         self._refresh_status()
 
     def _do_disconnect(self):
         self._cat.disconnect()
         if self._cat._cfg:
             self._cat._cfg.cat_enabled = False
-        self._log_info("Verbinding verbroken")
+        self._log_info(tr("cat.log.disconnected"))
         self._refresh_status()
 
     # ── Status bijwerken ─────────────────────────────────────────────────────
@@ -322,7 +322,7 @@ class CatMonitorWindow(QWidget):
         if not self._cat.connected:
             ok, err = self._cat.connect()
             if not ok:
-                self._queue_entry("ERR", f"Verbinden mislukt: {err}")
+                self._queue_entry("ERR", tr("cat.log.failed", msg=err))
                 self._refresh_status()
                 return
         try:
