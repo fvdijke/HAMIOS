@@ -264,6 +264,12 @@ class LightningWorker(QObject):
 
 # ── Lightning Layer ───────────────────────────────────────────────────────────
 
+_ANIM_MS     = 66    # ringanimatie ~15 fps
+_RING_LIFE   = 4.0   # s dat een inslag als ring zichtbaar is
+_DOTS_EVERY  = 2.0   # s: nieuwe inslagen hooguit zo vaak in de stippen-cache
+_FADE_EVERY  = 10.0  # s: fade-only hertekening van de stippen
+
+
 class LightningLayer(QGraphicsItem):
     """Real-time Blitzortung inslagen met fade-animatie."""
 
@@ -280,6 +286,14 @@ class LightningLayer(QGraphicsItem):
         self._font_size = 7       # lettergrootte labels (pt)
         self._cfg = None   # AppConfig — voor piepje-instellingen
 
+        # De stippen veranderen traag (fade over minuten): als pixmap cachen en
+        # hooguit elke _DOTS_EVERY s hertekenen. Alleen de uitdijende ringen
+        # (kind-item, weinig vormen) worden per animatieframe getekend.
+        self.setCacheMode(QGraphicsItem.DeviceCoordinateCache)
+        self._rings = _LightningRings(self)
+        self._dots_dirty = False
+        self._dots_drawn = 0.0
+
         self._worker = LightningWorker()
         self._worker.strike.connect(self._on_strike)
         self._worker.start()
@@ -289,11 +303,11 @@ class LightningLayer(QGraphicsItem):
         self._timer.timeout.connect(self._tick)
         self._timer.start(500)
 
-        # Animatie-timer: 20 fps voor vloeiende ring-expansie
-        # Stopt zichzelf als er geen actieve ringen zijn (CPU-vriendelijk)
+        # Animatie-timer voor de ring-expansie (15 fps); tekent alleen opnieuw
+        # zolang er ringen lopen
         self._anim_timer = QTimer()
         self._anim_timer.timeout.connect(self._anim_tick)
-        self._anim_timer.start(50)
+        self._anim_timer.start(_ANIM_MS)
 
     @property
     def status_signal(self) -> Signal:
@@ -310,7 +324,7 @@ class LightningLayer(QGraphicsItem):
             if not self._worker._running:
                 self._worker.start()
             if not self._anim_timer.isActive():
-                self._anim_timer.start(50)
+                self._anim_timer.start(_ANIM_MS)
         else:
             self._worker.stop()
             with self._lock:
@@ -342,6 +356,7 @@ class LightningLayer(QGraphicsItem):
             self._flashes.append((pt.x(), pt.y(), now))
             if len(self._strikes) > 5000:
                 self._strikes = self._strikes[-5000:]
+        self._dots_dirty = True
         # Piepje afspelen indien ingesteld
         cfg = self._cfg
         if cfg and getattr(cfg, "lightning_beep", False):
@@ -421,57 +436,114 @@ class LightningLayer(QGraphicsItem):
         return out
 
     def _anim_tick(self):
-        """20 fps tick — alleen actief redraw als er verse ringen zijn."""
+        """Animatieframe: alleen de gebieden van de lopende ringen hertekenen
+        (plus die van het vorige frame, zodat een verdwenen ring gewist wordt)."""
+        if not _on_screen(self):
+            return
         now = time.monotonic()
         with self._lock:
-            has_flashes = bool(self._flashes) and (now - self._flashes[-1][2] < 10)
-        if has_flashes and _on_screen(self):
-            self.update()
+            flashes = list(self._flashes)
+        rects = [self._rings.ring_rect(x, y, now - t) for x, y, t in flashes]
+        rects = [r for r in rects if r is not None]
+        for r in rects + self._rings.last_rects:
+            self._rings.update(r)
+        self._rings.last_rects = rects
 
     def _tick(self):
-        """Opruim-timer: verwijdert verouderde inslagen + traag fade-update."""
+        """Opruim-timer: verwijdert verouderde inslagen; de gecachte stippen
+        worden hooguit elke _DOTS_EVERY s opnieuw getekend (nieuwe inslagen,
+        fade, verwijderen) — de fade over minuten is dan nog steeds vloeiend."""
         now = time.monotonic()
         with self._lock:
-            n_before = len(self._strikes) + len(self._flashes)
+            n_before = len(self._strikes)
             self._strikes = [(x, y, t) for x, y, t in self._strikes
                              if now - t < self.fade_seconds]
+            # Een flits blijft tot hij als stip in de cache staat
             self._flashes = [(x, y, t) for x, y, t in self._flashes
-                             if now - t < 4.0]
-            changed = (bool(self._strikes)
-                       or len(self._strikes) + len(self._flashes) != n_before)
+                             if now - t < _RING_LIFE or t > self._dots_drawn]
+            if len(self._strikes) != n_before:
+                self._dots_dirty = True
+            has_dots = bool(self._strikes)
             if len(self._km_cache) > len(self._strikes):
                 live = set(self._strikes)
                 self._km_cache = {s: km for s, km in self._km_cache.items() if s in live}
-        # Alleen hertekenen als er iets te faden of te verwijderen viel
-        if changed:
-            self.update()
+        age = now - self._dots_drawn
+        due = ((self._dots_dirty and age >= _DOTS_EVERY)
+               or (has_dots and age >= _FADE_EVERY))
+        if due and _on_screen(self):
+            self._dots_dirty = False
+            self._dots_drawn = now
+            self.update()          # stippen-cache opnieuw opbouwen
+
+    def boundingRect(self) -> QRectF:
+        return QRectF(0, 0, MAP_W, MAP_H)
+
+    def _paint_dot(self, painter, x, y, age):
+        f = max(0.0, 1.0 - age / self.fade_seconds)
+        if age < 60:
+            r, g, b = 255, 255, int(180 + 75*f)
+        elif age < 300:
+            r, g, b = 255, int(150 + 105*f), 30
+        else:
+            r, g, b = int(150 + 105*f), int(60 + 60*f), 0
+        r, g, b = int(r*f), int(g*f), int(b*f)
+        sz = max(1.0, (1.5 + 2.5*f) * self._anim_scale)
+        painter.setBrush(QBrush(QColor(r, g, b, int(220*f))))
+        painter.drawEllipse(QPointF(x, y), sz, sz)
+
+    def paint(self, painter: QPainter, option, widget=None):
+        """Alle stippen (gecacht; zie _tick). Inslagen van na het laatste
+        cache-moment tekent _LightningRings tot de volgende hertekening."""
+        now = time.monotonic()
+        with self._lock:
+            strikes = list(self._strikes)
+        self._dots_drawn = now
+        painter.setRenderHint(QPainter.Antialiasing)
+        painter.setPen(Qt.NoPen)
+        for x, y, t in strikes:
+            self._paint_dot(painter, x, y, now - t)
+
+
+class _LightningRings(QGraphicsItem):
+    """Uitdijende ringen van verse inslagen — het enige deel van de bliksemlaag
+    dat per animatieframe getekend wordt (weinig vormen, geen cache)."""
+
+    def __init__(self, layer: "LightningLayer"):
+        super().__init__(layer)
+        self._layer = layer
+        self.last_rects: list = []    # gebieden die het vorige frame bijwerkte
+
+    def ring_rect(self, x: float, y: float, age: float):
+        """Gebied (scène) dat een inslag van deze leeftijd tot het volgende
+        frame beslaat: grootste ring + lijndikte + marge; None als hij klaar is
+        én al in de stippen-cache staat."""
+        sc = self._layer._anim_scale
+        if age >= _RING_LIFE + _ANIM_MS / 1000:
+            # alleen nog de losse stip (tot de cache hem bevat)
+            r = 6 * sc
+        else:
+            a = min(age + 2 * _ANIM_MS / 1000, 5.5)
+            r = (8 + a * 22) * sc + 4 * sc + 4
+        return QRectF(x - r, y - r, 2 * r, 2 * r)
 
     def boundingRect(self) -> QRectF:
         return QRectF(0, 0, MAP_W, MAP_H)
 
     def paint(self, painter: QPainter, option, widget=None):
+        L = self._layer
         now = time.monotonic()
-        with self._lock:
-            strikes = list(self._strikes)
-            flashes = list(self._flashes)
-
+        with L._lock:
+            flashes = list(L._flashes)
+        if not flashes:
+            return
         painter.setRenderHint(QPainter.Antialiasing)
-        painter.setPen(Qt.NoPen)
+        sc = L._anim_scale
 
-        sc = self._anim_scale
-        for x, y, t in strikes:
-            age = now - t
-            f   = max(0.0, 1.0 - age / self.fade_seconds)
-            if age < 60:
-                r, g, b = 255, 255, int(180 + 75*f)
-            elif age < 300:
-                r, g, b = 255, int(150 + 105*f), 30
-            else:
-                r, g, b = int(150 + 105*f), int(60 + 60*f), 0
-            r, g, b = int(r*f), int(g*f), int(b*f)
-            sz = max(1.0, (1.5 + 2.5*f) * sc)
-            painter.setBrush(QBrush(QColor(r, g, b, int(220*f))))
-            painter.drawEllipse(QPointF(x, y), sz, sz)
+        # Stippen die nog niet in de cache van de laag staan
+        painter.setPen(Qt.NoPen)
+        for x, y, t in flashes:
+            if t > L._dots_drawn:
+                L._paint_dot(painter, x, y, now - t)
 
         # Uitdijende ringen — helder wit → geel → oranje, lineaire fade
         _RING_DUR = 5.0   # 5 seconden zodat ringen goed zichtbaar blijven
@@ -1165,7 +1237,7 @@ class _DXFetchThread(QThread):
         try:
             import html as _html
             req = urllib.request.Request(
-                self._URL, headers={"User-Agent": "HAMIOS/5.8.1"})
+                self._URL, headers={"User-Agent": "HAMIOS/5.8.2"})
             with urllib.request.urlopen(req, timeout=12) as r:
                 raw = json.loads(r.read().decode("utf-8", errors="replace"))
 
@@ -1470,7 +1542,7 @@ class _PSKFetchThread(QThread):
     def run(self):
         try:
             req = urllib.request.Request(
-                self._URL, headers={"User-Agent": "HAMIOS/5.8.1"})
+                self._URL, headers={"User-Agent": "HAMIOS/5.8.2"})
             with urllib.request.urlopen(req, timeout=20) as r:
                 raw = r.read().decode("utf-8", errors="replace")
 

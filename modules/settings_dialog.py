@@ -1454,7 +1454,7 @@ class SettingsDialog(QDialog):
                 req = urllib.request.Request(
                     "https://www.blitzortung.org/",
                     method="HEAD",
-                    headers={"User-Agent": "HAMIOS/5.8.1"}
+                    headers={"User-Agent": "HAMIOS/5.8.2"}
                 )
                 with urllib.request.urlopen(req, timeout=5) as r:
                     return r.status < 400

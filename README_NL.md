@@ -6,7 +6,7 @@
 
 **Real-time HF-voortplanting en DX-monitor voor radioamateurs — Windows 10/11**
 
-> v5.8.1 · September 2026 · Frank van Dijke · *Ontwikkeld met Claude AI (Anthropic)*
+> v5.8.2 · September 2026 · Frank van Dijke · *Ontwikkeld met Claude AI (Anthropic)*
 
 [![Website](https://img.shields.io/badge/website-hamios.space-orange)](https://hamios.space)
 [![Release](https://img.shields.io/github/v/release/fvdijke/HAMIOS?label=latest)](https://github.com/fvdijke/HAMIOS/releases/latest)
@@ -201,6 +201,10 @@ Alle verbindingen gebruiken standaard HTTPS/WebSocket. Geen persoonlijke gegeven
 ---
 
 ## 📋 Changelog
+
+### v5.8.2 — September 2026
+- **Veel lager CPU-gebruik**: in rust van ~16 % naar ~4 % van één kern — bliksemstippen worden gecachet en alleen de gebieden rond de uitdijende inslagringen worden hertekend in plaats van de hele kaart
+- **HF-absorptie (D-RAP)**: een statusregel op de kaart toont het tijdstip van de NOAA-gegevens en de hoogste absorptie, zodat een lege laag bij een rustige zon niet meer kapot lijkt
 
 ### v5.8.1 — September 2026
 - **Thema's** (Instellingen → Layout): **Nacht** (standaard), **Dag** (licht) en **Goed leesbaar** (hoog contrast, grotere letters)

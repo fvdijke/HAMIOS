@@ -942,7 +942,7 @@ class _HiresDownloadThread(QThread):
         self._dest          = dest
         self._also_save_std = also_save_std
 
-    _UA = "HAMIOS/5.8.1 (HF Propagation Monitor)"
+    _UA = "HAMIOS/5.8.2 (HF Propagation Monitor)"
 
     def _fetch(self, url: str, dest: str) -> bool:
         """Download url naar dest. Probeert eerst normale SSL, dan zonder verificatie.
@@ -1038,7 +1038,12 @@ class MapView(QGraphicsView):
         # Hardware rendering hints
         self.setRenderHint(QPainter.Antialiasing, False)
         self.setRenderHint(QPainter.SmoothPixmapTransform, True)
-        self.setViewportUpdateMode(QGraphicsView.FullViewportUpdate)
+        # Alleen gewijzigde gebieden hertekenen: de bliksemringen werken kleine
+        # rechthoeken bij in plaats van de hele kaart (scheelt ~80 % CPU)
+        self.setViewportUpdateMode(QGraphicsView.SmartViewportUpdate)
+        # De view tekent altijd de volle achtergrond: ondoorzichtig markeren,
+        # anders tekent Qt bij elk animatieframe ook het paneel erachter
+        self.viewport().setAttribute(Qt.WA_OpaquePaintEvent, True)
         self.setOptimizationFlag(QGraphicsView.DontAdjustForAntialiasing, True)
         self.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
         self.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
@@ -1283,6 +1288,7 @@ class MapView(QGraphicsView):
     def resizeEvent(self, event):
         super().resizeEvent(event)
         self._fit_map()
+        self._place_drap_badge()
 
     def _fit_scale(self) -> float:
         """Schaalfactor waarbij de hele kaart precies in de viewport past."""
@@ -1820,9 +1826,52 @@ class MapView(QGraphicsView):
             grid, w, h = g
             self._drap.set_image(grid_to_image(
                 grid, w, h, lambda v: drap_colour(v * DRAP_MAX_MHZ / 255), up=8))
+            try:
+                peak = max(max(r) for r in drap["grid"])
+            except (KeyError, ValueError, TypeError):
+                peak = 0.0
+            self._drap_info = (peak, drap.get("valid"))
+            self._update_drap_badge()
 
     def set_drap_visible(self, on: bool):
         self._drap.setVisible(on)
+        self._update_drap_badge()
+
+    def _update_drap_badge(self):
+        """Statusregel linksonder zolang de D-RAP-laag aan staat. Bij een rustige
+        zon is de laag (terecht) leeg; zonder melding lijkt hij dan kapot."""
+        from PySide6.QtWidgets import QLabel
+        from .i18n import tr
+        lbl = getattr(self, "_drap_badge", None)
+        if not self._drap.isVisible():
+            if lbl is not None:
+                lbl.hide()
+            return
+        if lbl is None:
+            lbl = QLabel(self.viewport())
+            lbl.setAttribute(Qt.WA_TransparentForMouseEvents, True)
+            lbl.setStyleSheet(
+                "QLabel { background:#1A1D22; color:#C8D0DC; border:1px solid #3A4A60;"
+                " border-radius:4px; padding:2px 6px; font-size:8pt; }")
+            self._drap_badge = lbl
+        info = getattr(self, "_drap_info", None)
+        if info is None:
+            text = tr("map.drap.wait")
+        else:
+            peak, valid = info
+            t = valid.strftime("%H:%M") if valid else "--:--"
+            key = "map.drap.none" if peak < 2.0 else "map.drap.some"
+            text = tr(key, t=t, mhz=f"{peak:.1f}")
+        lbl.setText(text)
+        lbl.adjustSize()
+        self._place_drap_badge()
+        lbl.show()
+        lbl.raise_()
+
+    def _place_drap_badge(self):
+        lbl = getattr(self, "_drap_badge", None)
+        if lbl is not None:
+            lbl.move(8, max(4, self.viewport().height() - lbl.height() - 8))
 
     def set_propmap_visible(self, on: bool):
         self._propmap.setVisible(on)

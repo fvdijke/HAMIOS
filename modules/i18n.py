@@ -45,7 +45,7 @@ _S: dict[str, dict[str, str]] = {
 
 # ── App / algemeen ────────────────────────────────────────────────────────────
 "app.name":           "HF Propagation & Atmosphere Monitor",
-"app.version":        "v5.8.1",
+"app.version":        "v5.8.2",
 "app.close":          "Afsluiten",
 "app.ok":             "OK",
 "app.cancel":         "Annuleren",
@@ -296,6 +296,9 @@ _S: dict[str, dict[str, str]] = {
 "panels.ionosondes": "📡  Ionosondes",
 "panels.sat_passes": "🛰  Satellietovergangen",
 "ov.drap":           "HF-absorptie (NOAA D-RAP)",
+"map.drap.none":     "HF-absorptie (D-RAP {t} UTC): geen noemenswaardige absorptie — max {mhz} MHz",
+"map.drap.some":     "HF-absorptie (D-RAP {t} UTC): tot {mhz} MHz",
+"map.drap.wait":     "HF-absorptie: wachten op NOAA D-RAP-gegevens…",
 "ov.drap.tip":       "Waar HF door de D-laag wordt geabsorbeerd (zonnevlam, protonen-event).\nKleur = hoogste frequentie die wordt weggevreten: geel ~2 MHz, oranje ~6, rood ~12, magenta 20+ MHz.\nLeeg = geen noemenswaardige absorptie.",
 "ov.propmap":        "Propagatiekaart",
 "ov.propmap.tip":    "Kans dat de gekozen band het pad van jouw QTH naar elk punt op aarde draagt —\nzelfde model als het advies (gekalibreerd op de ionosonde, incl. D-RAP en je station).\nGroen = goed, oranje = matig, rood = marginaal, geen kleur = dicht. Ververst elke 10 min.",
@@ -1083,7 +1086,7 @@ _S: dict[str, dict[str, str]] = {
 
 # ── App / general ─────────────────────────────────────────────────────────────
 "app.name":           "HF Propagation & Atmosphere Monitor",
-"app.version":        "v5.8.1",
+"app.version":        "v5.8.2",
 "app.close":          "Exit",
 "app.ok":             "OK",
 "app.cancel":         "Cancel",
@@ -1334,6 +1337,9 @@ _S: dict[str, dict[str, str]] = {
 "panels.ionosondes": "📡  Ionosondes",
 "panels.sat_passes": "🛰  Satellite Passes",
 "ov.drap":           "HF absorption (NOAA D-RAP)",
+"map.drap.none":     "HF absorption (D-RAP {t} UTC): no significant absorption — max {mhz} MHz",
+"map.drap.some":     "HF absorption (D-RAP {t} UTC): up to {mhz} MHz",
+"map.drap.wait":     "HF absorption: waiting for NOAA D-RAP data…",
 "ov.drap.tip":       "Where HF is absorbed by the D layer (solar flare, proton event).\nColour = highest frequency being eaten: yellow ~2 MHz, orange ~6, red ~12, magenta 20+ MHz.\nEmpty = no significant absorption.",
 "ov.propmap":        "Propagation map",
 "ov.propmap.tip":    "Probability that the chosen band carries the path from your QTH to every point on Earth —\nsame model as the advice (calibrated on the ionosonde, incl. D-RAP and your station).\nGreen = good, orange = fair, red = marginal, no colour = closed. Refreshes every 10 min.",

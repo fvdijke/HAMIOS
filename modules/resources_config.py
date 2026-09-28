@@ -1,4 +1,4 @@
-"""HAMIOS v5.8.1 - Online Resource Configuration
+"""HAMIOS v5.8.2 - Online Resource Configuration
 
 Central definition of all monitored resources with customizable URLs.
 Used by splash screen, resource monitor, and settings resource tab.

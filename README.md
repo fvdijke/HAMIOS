@@ -7,7 +7,7 @@
 
 **Real-time HF propagation and DX monitor for amateur radio operators — Windows 10/11**
 
-> v5.8.1 · September 2026 · Frank van Dijke · *Developed with Claude AI (Anthropic)*
+> v5.8.2 · September 2026 · Frank van Dijke · *Developed with Claude AI (Anthropic)*
 
 [![Website](https://img.shields.io/badge/website-hamios.space-orange)](https://hamios.space)
 [![Release](https://img.shields.io/github/v/release/fvdijke/HAMIOS?label=latest)](https://github.com/fvdijke/HAMIOS/releases/latest)
@@ -202,6 +202,10 @@ All connections use standard HTTPS/WebSocket. No personal data is transmitted.
 ---
 
 ## 📋 Changelog
+
+### v5.8.2 — September 2026
+- **Much lower CPU use**: idle from ~16 % to ~4 % of one core — lightning dots are cached, and only the areas around the growing strike rings are redrawn instead of the whole map
+- **HF absorption (D-RAP)**: a status line on the map shows the NOAA data time and the peak absorption, so an empty layer on a quiet sun no longer looks broken
 
 ### v5.8.1 — September 2026
 - **Themes** (Settings → Layout): **Night** (default), **Day** (light) and **High readability** (high contrast, larger text)
