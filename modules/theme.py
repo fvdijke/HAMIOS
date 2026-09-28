@@ -5,6 +5,11 @@ Gebaseerd op de Midnight-stijl van v4.
 import os as _os
 import tempfile as _tmp
 
+# Thema (Night/Day/High readability/eigen) — vóór alles wat QColor gebruikt.
+# De constanten hieronder blijven de night-waarden; theme_engine zet ze om.
+from . import theme_engine as _engine
+_engine.activate()
+
 # Tijdelijke pijl-images worden bij app-start aangemaakt
 _ARROW_UP_PATH   = _os.path.join(_tmp.gettempdir(), "config/hamios_arrow_up.png")
 _ARROW_DOWN_PATH = _os.path.join(_tmp.gettempdir(), "config/hamios_arrow_dn.png")

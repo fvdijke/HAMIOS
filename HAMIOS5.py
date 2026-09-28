@@ -1,5 +1,5 @@
 """
-HAMIOS v5.8 — PySide6 versie
+HAMIOS v5.8.1 — PySide6 versie
 Developed with Claude AI
 
 """
@@ -14,6 +14,10 @@ import importlib
 signal.signal(signal.SIGINT, signal.SIG_IGN)
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+
+# Thema eerst: vervangt QColor/QFont vóórdat iets anders ze importeert
+from modules import theme_engine as _theme_engine
+_theme_engine.activate()
 
 from PySide6.QtWidgets import (QApplication, QMessageBox, QDialog,
                                QVBoxLayout, QHBoxLayout, QGridLayout,
@@ -124,7 +128,7 @@ def _make_header_pixmap() -> QPixmap:
 
     p.setFont(QFont("Segoe UI", 10))
     p.setPen(QColor(200, 168, 75, 130))
-    p.drawText(TX + 124, 8, 50, 44, Qt.AlignLeft | Qt.AlignVCenter, "v5.8")
+    p.drawText(TX + 124, 8, 64, 44, Qt.AlignLeft | Qt.AlignVCenter, "v5.8.1")
 
     p.setFont(QFont("Segoe UI", 8))
     p.setPen(LIGHT)
@@ -224,7 +228,7 @@ class _InetCheckThread(QThread):
             for use_ssl_verify in (True, False):
                 try:
                     req = _urlreq.Request(url, method="HEAD",
-                                          headers={"User-Agent": "HAMIOS/5.8"})
+                                          headers={"User-Agent": "HAMIOS/5.8.1"})
                     kwargs: dict = {"timeout": 6}
                     if not use_ssl_verify:
                         ctx = _ssl.create_default_context()
@@ -256,7 +260,7 @@ class _OnlineResourceCheckThread(QThread):
         # Satellite (TLE) sources are excluded: TLE is only fetched manually and
         # rate-limited (tle_sources.py), never as a startup connectivity probe.
         self._RESOURCES = {
-            key: (res["url"], {"User-Agent": "HAMIOS/5.8"})
+            key: (res["url"], {"User-Agent": "HAMIOS/5.8.1"})
             for key, res in DEFAULT_RESOURCES.items()
             if res.get("category") != "Satellites"
         }
@@ -508,7 +512,7 @@ def main():
 
     app = QApplication(sys.argv)
     app.setApplicationName("HAMIOS")
-    app.setApplicationVersion("5.8")
+    app.setApplicationVersion("5.8.1")
     app.setOrganizationName("")
 
     # Global window reference for cleanup

@@ -1424,6 +1424,27 @@ class HAMIOSMainWindow(QMainWindow):
             self.showFullScreen()
             self._header.btn_fullscreen.setText("⊡")
 
+    def restart_app(self):
+        """Sluit netjes af en start HAMIOS opnieuw (bv. na een themawissel)."""
+        import sys
+        from PySide6.QtCore import QProcess, QProcessEnvironment
+        from PySide6.QtWidgets import QApplication
+        self.close()                     # closeEvent bewaart layout + config
+        if getattr(sys, "frozen", False):
+            prog, args = sys.executable, sys.argv[1:]
+        else:
+            prog, args = sys.executable, [os.path.abspath(sys.argv[0])] + sys.argv[1:]
+        proc = QProcess()
+        proc.setProgram(prog)
+        proc.setArguments(args)
+        proc.setWorkingDirectory(os.getcwd())
+        env = QProcessEnvironment.systemEnvironment()
+        # PyInstaller onefile: nieuw, zelfstandig proces (eigen _MEI-map)
+        env.insert("PYINSTALLER_RESET_ENVIRONMENT", "1")
+        proc.setProcessEnvironment(env)
+        proc.startDetached()
+        QApplication.quit()
+
     def closeEvent(self, event):
         self.save_layout()
         save_config(self._cfg)

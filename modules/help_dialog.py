@@ -498,7 +498,7 @@ zijn <b>live</b> — u ziet het resultaat direct zonder opnieuw opstarten.</p>
 <li><b>🔔 Meldingen</b> — K-drempel, X-flare, band-drempel, FIFO-limiet</li>
 <li><b>📟 CAT</b> — seriële poort, radiotype, presets, terminal</li>
 <li><b>🌐 Resources</b> — online resources URL's, test en onderzoek endpoints</li>
-<li><b>📐 Layout</b> — standaard layout opslaan/herstellen, profielen</li>
+<li><b>📐 Layout</b> — thema (Nacht, Dag, Goed leesbaar, eigen thema via de thema-designer; actief na herstart), standaard layout opslaan/herstellen, profielen</li>
 <li><b>📦 Over</b> — versie-info, afhankelijkheden, bestandsstatus</li>
 </ul>
 
@@ -980,7 +980,7 @@ All changes are <b>live</b> — visible immediately without restarting.</p>
 <li><b>🔔 Alerts</b> — K-threshold, X-flare, band threshold, FIFO limit</li>
 <li><b>📟 CAT</b> — serial port, radio type, presets, terminal</li>
 <li><b>🌐 Resources</b> — online resource URLs, editable</li>
-<li><b>📐 Layout</b> — save/restore default, profiles</li>
+<li><b>📐 Layout</b> — theme (Night, Day, High readability, custom theme via the theme designer; applied after a restart), save/restore default, profiles</li>
 <li><b>📦 About</b> — version, dependencies, file status, language</li>
 </ul>
 

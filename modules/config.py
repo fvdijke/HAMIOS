@@ -71,6 +71,8 @@ class AppConfig:
     sun_icon_px:            int   = 24   # zon-icoon op het scherm, incl. stralen (px)
     moon_icon_px:           int   = 20   # maan-icoon op het scherm (px)
     show_splash:       bool  = True
+    theme:             str   = "night"   # night / day / contrast / custom (actief na herstart)
+    custom_theme:      dict  = field(default_factory=dict)   # palet uit de thema-designer
 
     # ── DX spots status ───────────────────────────────────────────────────────
     dx_own_continent:  bool  = False

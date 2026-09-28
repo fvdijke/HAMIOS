@@ -1003,6 +1003,35 @@ class SettingsDialog(QDialog):
             self._snap_cb.addItem(f"{val} px", val)
         self._snap_cb.hide()
 
+        # ── Thema ─────────────────────────────────────────────────────────
+        from . import theme_engine as _te
+        _section(v, tr("sec.theme"))
+        self._custom_theme = {}
+        th_row = QHBoxLayout()
+        self._theme_cb = QComboBox()
+        for key in _te.PRESET_ORDER:
+            self._theme_cb.addItem(tr(f"theme.{key}"), key)
+        btn_designer = QPushButton(tr("btn.theme_designer"))
+        th_row.addWidget(self._theme_cb, 1)
+        th_row.addWidget(btn_designer)
+        v.addLayout(th_row)
+
+        note_row = QHBoxLayout()
+        self._theme_note = QLabel()
+        self._theme_note.setFont(f8)
+        self._theme_note.setStyleSheet(f"color: {TEXT_DIM};")
+        self._theme_note.setWordWrap(True)
+        self._btn_restart = QPushButton(tr("btn.restart_now"))
+        self._btn_restart.setObjectName("accent")
+        self._btn_restart.setVisible(False)
+        note_row.addWidget(self._theme_note, 1)
+        note_row.addWidget(self._btn_restart)
+        v.addLayout(note_row)
+
+        self._theme_cb.currentIndexChanged.connect(self._on_theme_changed)
+        btn_designer.clicked.connect(self._open_theme_designer)
+        self._btn_restart.clicked.connect(self._restart_for_theme)
+
         # ── Standaard layout ──────────────────────────────────────────────
         _section(v, tr("sec.default_layout"))
 
@@ -1048,6 +1077,61 @@ class SettingsDialog(QDialog):
 
         self._refresh_profiles()
         return w
+
+    # ── Thema ─────────────────────────────────────────────────────────────────
+    def _theme_pending(self) -> bool:
+        """True als de gekozen thema-instelling afwijkt van wat nu draait."""
+        from . import theme_engine as _te
+        name = self._theme_cb.currentData()
+        if name != _te.ACTIVE_NAME:
+            return True
+        return (name == "custom"
+                and _te.palette_for("custom", self._custom_theme) != _te.ACTIVE_PALETTE)
+
+    def _update_theme_note(self):
+        from . import theme_engine as _te
+        pending = self._theme_pending()
+        note = tr("set.theme.active", name=tr(f"theme.{_te.ACTIVE_NAME}"))
+        if pending:
+            note += "\n" + tr("set.theme.note")
+        self._theme_note.setText(note)
+        self._btn_restart.setVisible(pending)
+
+    def _on_theme_changed(self, _idx=None):
+        if self._theme_cb.currentData() == "custom" and not self._custom_theme:
+            self._open_theme_designer()
+            return
+        self._update_theme_note()
+        if not self._loading:
+            self._do_apply()
+            self._save_cfg()
+
+    def _open_theme_designer(self):
+        from . import theme_engine as _te
+        from .theme_designer import ThemeDesignerDialog
+        name = self._theme_cb.currentData()
+        start = (self._custom_theme if name == "custom" and self._custom_theme
+                 else _te.palette_for(name, self._custom_theme))
+        dlg = ThemeDesignerDialog(start, self)   # erft de stylesheet van dit venster
+        if dlg.exec() == QDialog.Accepted:
+            self._custom_theme = dlg.palette()
+            self._theme_cb.blockSignals(True)
+            _set_combo_data(self._theme_cb, "custom", "night")
+            self._theme_cb.blockSignals(False)
+        elif not self._custom_theme and name == "custom":
+            # Geen eigen thema opgeslagen: terug naar het lopende thema
+            self._theme_cb.blockSignals(True)
+            _set_combo_data(self._theme_cb, _te.ACTIVE_NAME, "night")
+            self._theme_cb.blockSignals(False)
+        self._on_theme_changed()
+
+    def _restart_for_theme(self):
+        self._do_apply()
+        self._save_cfg()
+        mw = self._mainwin
+        self.accept()
+        if mw is not None and hasattr(mw, "restart_app"):
+            mw.restart_app()
 
     def _fit_to_tabs(self):
         """Pas breedte aan zodat alle tab-labels zichtbaar zijn."""
@@ -1370,7 +1454,7 @@ class SettingsDialog(QDialog):
                 req = urllib.request.Request(
                     "https://www.blitzortung.org/",
                     method="HEAD",
-                    headers={"User-Agent": "HAMIOS/5.8"}
+                    headers={"User-Agent": "HAMIOS/5.8.1"}
                 )
                 with urllib.request.urlopen(req, timeout=5) as r:
                     return r.status < 400
@@ -1466,6 +1550,13 @@ class SettingsDialog(QDialog):
         lang = getattr(c, "language", "nl")
         (self._lang_en if lang == "en" else self._lang_nl).setChecked(True)
 
+        # Thema
+        self._custom_theme = dict(getattr(c, "custom_theme", {}) or {})
+        self._theme_cb.blockSignals(True)
+        _set_combo_data(self._theme_cb, getattr(c, "theme", "night"), "night")
+        self._theme_cb.blockSignals(False)
+        self._update_theme_note()
+
         # CAT
         self._cat_en.setChecked(getattr(c, "cat_enabled", False))
         _set_cat_port(self._cat_port, getattr(c, "cat_port", ""))
@@ -1536,6 +1627,8 @@ class SettingsDialog(QDialog):
             moon_icon_px      = self._moon_size_spin.value(),
             show_splash       = self._splash_about.isChecked(),
             language          = "en" if self._lang_en.isChecked() else "nl",
+            theme             = self._theme_cb.currentData() or "night",
+            custom_theme      = dict(self._custom_theme),
             k_alert           = self._k_spin.value(),
             k_alert_en        = self._k_en.isChecked(),
             xflare_alert_en   = self._xflare_en.isChecked(),

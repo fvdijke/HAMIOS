@@ -7,7 +7,7 @@
 
 **Real-time HF propagation and DX monitor for amateur radio operators — Windows 10/11**
 
-> v5.8 · September 2026 · Frank van Dijke · *Developed with Claude AI (Anthropic)*
+> v5.8.1 · September 2026 · Frank van Dijke · *Developed with Claude AI (Anthropic)*
 
 [![Website](https://img.shields.io/badge/website-hamios.space-orange)](https://hamios.space)
 [![Release](https://img.shields.io/github/v/release/fvdijke/HAMIOS?label=latest)](https://github.com/fvdijke/HAMIOS/releases/latest)
@@ -202,6 +202,11 @@ All connections use standard HTTPS/WebSocket. No personal data is transmitted.
 ---
 
 ## 📋 Changelog
+
+### v5.8.1 — September 2026
+- **Themes** (Settings → Layout): **Night** (default), **Day** (light) and **High readability** (high contrast, larger text)
+- **Theme designer**: build your own theme — backgrounds, text, accent and status colours, text size — with a live preview and a contrast check
+- A new theme is applied after a restart; the **Restart now** button saves everything and restarts HAMIOS
 
 ### v5.8 — September 2026
 - **HAM Antenna Designer v3.0.1** (📐 button), fully reviewed:

@@ -6,7 +6,7 @@
 
 **Real-time HF-voortplanting en DX-monitor voor radioamateurs — Windows 10/11**
 
-> v5.8 · September 2026 · Frank van Dijke · *Ontwikkeld met Claude AI (Anthropic)*
+> v5.8.1 · September 2026 · Frank van Dijke · *Ontwikkeld met Claude AI (Anthropic)*
 
 [![Website](https://img.shields.io/badge/website-hamios.space-orange)](https://hamios.space)
 [![Release](https://img.shields.io/github/v/release/fvdijke/HAMIOS?label=latest)](https://github.com/fvdijke/HAMIOS/releases/latest)
@@ -201,6 +201,11 @@ Alle verbindingen gebruiken standaard HTTPS/WebSocket. Geen persoonlijke gegeven
 ---
 
 ## 📋 Changelog
+
+### v5.8.1 — September 2026
+- **Thema's** (Instellingen → Layout): **Nacht** (standaard), **Dag** (licht) en **Goed leesbaar** (hoog contrast, grotere letters)
+- **Thema-designer**: stel een eigen thema samen — achtergronden, tekst, accent- en statuskleuren, lettergrootte — met live voorbeeld en contrastcontrole
+- Een nieuw thema wordt na een herstart toegepast; de knop **Nu herstarten** bewaart alles en start HAMIOS opnieuw
 
 ### v5.8 — September 2026
 - **HAM Antenna Designer v3.0.1** (📐-knop), volledig herzien:
