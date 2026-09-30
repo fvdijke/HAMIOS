@@ -375,6 +375,11 @@ class TabGroup(QWidget):
             if pid == self._active:
                 self._bar.setCurrentIndex(i)
         self._bar.blockSignals(False)
+        # Maar één paneel zichtbaar: geen tab, maar een gewoon paneel met titelbalk
+        solo = len(visible) == 1
+        self._bar.setVisible(not solo)
+        for pid in self._pids:
+            self._panels[pid].show_own_title(solo and pid in visible)
         if self._active in visible:
             self._stack.setCurrentWidget(self._panels[self._active])
             self._panels[self._active].show()

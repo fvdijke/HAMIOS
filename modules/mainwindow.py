@@ -124,11 +124,13 @@ _PANEL_TITLE_KEYS = {
     "prop_adv":   "panel.prop_adv",
     "ionosondes": "panel.ionosondes",
     "sat_passes": "panel.sat_passes",
+    "prop_tips":  "panel.prop_tips",
 }
 
 # Panelen die na een update nieuw zijn: in een bestaande indeling als tabblad
 # bij deze buur plaatsen (in plaats van een extra kolom rechts)
-_NEW_PANEL_HOSTS = {"ionosondes": "dx_spots", "sat_passes": "dx_spots"}
+_NEW_PANEL_HOSTS = {"ionosondes": "dx_spots", "sat_passes": "dx_spots",
+                    "prop_tips": "prop_adv"}
 
 def _panel_titles():
     from .i18n import tr as _tr
@@ -337,6 +339,8 @@ class HAMIOSMainWindow(QMainWindow):
                 self._build_ionosondes_panel(p)
             elif pid == "sat_passes":
                 self._build_sat_passes_panel(p)
+            elif pid == "prop_tips":
+                self._build_prop_tips_panel(p)
             else:
                 self._build_placeholder(p, pid)
 
@@ -511,6 +515,14 @@ class HAMIOSMainWindow(QMainWindow):
         self._sprint5_layout(panel).addWidget(w)
         self._iono_widget = w
 
+    def _build_prop_tips_panel(self, panel):
+        """Propagatie-overzicht: de kaartjes van het advies-paneel van vóór v5.7."""
+        from .summary_panel import PropTipsWidget
+        w = PropTipsWidget(cfg=self._cfg)
+        self._sprint5_layout(panel).addWidget(w)
+        self._data_mgr.solar_ready.connect(w.set_data)
+        self._prop_tips_widget = w
+
     def _build_sat_passes_panel(self, panel):
         from .extra_panels import SatPassesWidget
         w = SatPassesWidget(cfg=self._cfg)
@@ -628,6 +640,7 @@ class HAMIOSMainWindow(QMainWindow):
             "_prop_adv_widget", "_band_rel_widget",
             "_dx_spots_widget", "_lightning_panel_widget", "_band_sched_widget",
             "_alerts_widget", "_iono_widget", "_sat_passes_widget",
+            "_prop_tips_widget",
         ]
         for attr in _panel_widgets:
             w = getattr(self, attr, None)
@@ -1075,7 +1088,7 @@ class HAMIOSMainWindow(QMainWindow):
             "worldmap", "solar", "band_rel", "storm_fc",
             "band_sched", "band_hist", "solar_hist", "kp_48h", "bz_24h",
             "xray_24h", "lightning", "alerts", "dx_spots", "wspr_feed", "prop_adv",
-            "ionosondes", "sat_passes",
+            "ionosondes", "sat_passes", "prop_tips",
         ]
 
         for pid in _PANEL_KEYS:
@@ -1188,7 +1201,8 @@ class HAMIOSMainWindow(QMainWindow):
         self._refresh_propmap()
         for attr, method in (("_band_rel_widget", "_recalc"),
                              ("_band_sched_widget", "_recalc"),
-                             ("_prop_adv_widget", "_rebuild")):
+                             ("_prop_adv_widget", "_rebuild"),
+                             ("_prop_tips_widget", "_rebuild")):
             w = getattr(self, attr, None)
             if w is not None and hasattr(w, method):
                 getattr(w, method)()

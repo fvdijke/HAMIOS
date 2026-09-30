@@ -173,7 +173,7 @@ class TestTreeOps(unittest.TestCase):
             for w, h in ((2528, 1311), (1366, 700)):
                 leaves = _leaves(preset_tree(name, w, h))
                 # klassieke panelen (RECTS) + de panelen die later zijn toegevoegd
-                expected = sorted(list(RECTS) + ["ionosondes", "sat_passes"])
+                expected = sorted(list(RECTS) + ["ionosondes", "sat_passes", "prop_tips"])
                 self.assertEqual(sorted(leaves), expected, f"{name} {w}x{h}")
                 self.assertTrue(valid_tree(preset_tree(name, w, h)))
 

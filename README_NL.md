@@ -6,7 +6,7 @@
 
 **Real-time HF-voortplanting en DX-monitor voor radioamateurs — Windows 10/11**
 
-> v5.8.2 · September 2026 · Frank van Dijke · *Ontwikkeld met Claude AI (Anthropic)*
+> v5.8.3 · September 2026 · Frank van Dijke · *Ontwikkeld met Claude AI (Anthropic)*
 
 [![Website](https://img.shields.io/badge/website-hamios.space-orange)](https://hamios.space)
 [![Release](https://img.shields.io/github/v/release/fvdijke/HAMIOS?label=latest)](https://github.com/fvdijke/HAMIOS/releases/latest)
@@ -201,6 +201,11 @@ Alle verbindingen gebruiken standaard HTTPS/WebSocket. Geen persoonlijke gegeven
 ---
 
 ## 📋 Changelog
+
+### v5.8.3 — September 2026
+- **Propagatie-overzicht** is terug: het advies-paneel met kaartjes van vóór v5.7, als extra paneel naast Propagatie Advies — elf vaste kaartjes (beste banden, geomagnetisch, zonactiviteit, zonnewind, flares, dagdeel, mode/vermogen, aurora-absorptie, sporadic-E, DX-routes, algeheel), met bandpercentages uit het gekalibreerde model
+- Een kaartje waarvan de inhoud verandert krijgt 5 minuten een knipperende stip
+- Een tabgroep met maar één zichtbaar paneel toont dat nu als gewoon paneel met eigen titelbalk
 
 ### v5.8.2 — September 2026
 - **Veel lager CPU-gebruik**: in rust van ~16 % naar ~4 % van één kern — bliksemstippen worden gecachet en alleen de gebieden rond de uitdijende inslagringen worden hertekend in plaats van de hele kaart

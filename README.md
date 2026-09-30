@@ -7,7 +7,7 @@
 
 **Real-time HF propagation and DX monitor for amateur radio operators — Windows 10/11**
 
-> v5.8.2 · September 2026 · Frank van Dijke · *Developed with Claude AI (Anthropic)*
+> v5.8.3 · September 2026 · Frank van Dijke · *Developed with Claude AI (Anthropic)*
 
 [![Website](https://img.shields.io/badge/website-hamios.space-orange)](https://hamios.space)
 [![Release](https://img.shields.io/github/v/release/fvdijke/HAMIOS?label=latest)](https://github.com/fvdijke/HAMIOS/releases/latest)
@@ -202,6 +202,11 @@ All connections use standard HTTPS/WebSocket. No personal data is transmitted.
 ---
 
 ## 📋 Changelog
+
+### v5.8.3 — September 2026
+- **Propagation overview** is back: the card-style advice panel from before v5.7, as an extra panel next to Propagation Advice — eleven fixed cards (best bands, geomagnetic, solar activity, solar wind, flares, time of day, mode/power, auroral absorption, Sporadic-E, DX routes, overall), with band percentages from the calibrated model
+- A card whose content changes shows a blinking dot for 5 minutes
+- A tab group with only one visible panel now shows it as a normal panel with its own title bar
 
 ### v5.8.2 — September 2026
 - **Much lower CPU use**: idle from ~16 % to ~4 % of one core — lightning dots are cached, and only the areas around the growing strike rings are redrawn instead of the whole map

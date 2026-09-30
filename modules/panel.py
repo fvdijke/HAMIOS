@@ -306,6 +306,12 @@ class FloatingPanel(QWidget):
         self._titlebar.setVisible(not in_tabs)
         self._title_sep.setVisible(not in_tabs)
 
+    def show_own_title(self, on: bool):
+        """Eigen titelbalk tonen/verbergen zonder de tabgroep te verlaten: een
+        tabgroep met één zichtbaar paneel toont dat als gewoon paneel."""
+        self._titlebar.setVisible(on)
+        self._title_sep.setVisible(on)
+
     def title(self) -> str:
         return self._titlebar._lbl.text()
 
