@@ -18,6 +18,7 @@ Cacheformaat blijft {groep: [[naam, line1, line2], ...]} zodat kaart, dialoog
 en hoofdvenster ongewijzigd werken. Mislukte groepen behouden hun oude data.
 """
 
+from .version import VERSION as _HAMIOS_VERSION
 import datetime
 import gzip
 import json
@@ -32,7 +33,7 @@ import urllib.request
 from ._appdir import APP_DIR
 
 _META_FILE = os.path.join(APP_DIR, "config", "hamios_tle_meta.json")
-_UA = "HAMIOS/5.8.3 (+https://hamios.space; amateur radio propagation monitor)"
+_UA = f"HAMIOS/{_HAMIOS_VERSION} (+https://hamios.space; amateur radio propagation monitor)"
 
 SATNOGS_URL = "https://db.satnogs.org/api/tle/?format=json"
 AMSAT_URL   = "https://www.amsat.org/tle/current/nasabare.txt"

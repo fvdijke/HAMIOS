@@ -7,6 +7,7 @@ doorzoekbare, sorteerbare tabel.
 Bron: http://www.eibispace.de/
 """
 
+from .version import USER_AGENT as _HAMIOS_UA
 import csv
 import datetime
 import io
@@ -76,7 +77,7 @@ class _EibiDownloadThread(QThread):
         try:
             url = get_eibi_url()
             self.progress.emit(tr("eibi.status.dl_url", url=url))
-            req = urllib.request.Request(url, headers={"User-Agent": "HAMIOS/5.8.3"})
+            req = urllib.request.Request(url, headers={"User-Agent": _HAMIOS_UA})
             with urllib.request.urlopen(req, timeout=30) as r:
                 raw = r.read().decode("latin-1", errors="replace")
             self.progress.emit(tr("eibi.status.processing"))

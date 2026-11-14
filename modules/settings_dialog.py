@@ -1,5 +1,6 @@
 """HAMIOS v5 — Instellingen-dialoog (PySide6 QDialog)"""
 
+from .version import USER_AGENT as _HAMIOS_UA
 import json
 import os
 from dataclasses import asdict
@@ -1454,7 +1455,7 @@ class SettingsDialog(QDialog):
                 req = urllib.request.Request(
                     "https://www.blitzortung.org/",
                     method="HEAD",
-                    headers={"User-Agent": "HAMIOS/5.8.3"}
+                    headers={"User-Agent": _HAMIOS_UA}
                 )
                 with urllib.request.urlopen(req, timeout=5) as r:
                     return r.status < 400

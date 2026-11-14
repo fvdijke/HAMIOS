@@ -13,6 +13,7 @@ Lagen (z-volgorde):
   7  OverlayItems      — QTH-marker, GC-pad
 """
 
+from .version import VERSION as _HAMIOS_VERSION
 import sys
 if __name__ == "__main__":
     sys.exit("Start het programma via HAMIOS5.py, niet via mapview.py")
@@ -942,7 +943,7 @@ class _HiresDownloadThread(QThread):
         self._dest          = dest
         self._also_save_std = also_save_std
 
-    _UA = "HAMIOS/5.8.3 (HF Propagation Monitor)"
+    _UA = f"HAMIOS/{_HAMIOS_VERSION} (HF Propagation Monitor)"
 
     def _fetch(self, url: str, dest: str) -> bool:
         """Download url naar dest. Probeert eerst normale SSL, dan zonder verificatie.

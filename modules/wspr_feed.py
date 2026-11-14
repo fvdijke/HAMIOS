@@ -17,6 +17,7 @@ Usage:
     feed.stop()
 """
 
+from .version import VERSION as _HAMIOS_VERSION
 import json
 import math
 import threading
@@ -33,7 +34,7 @@ WINDOW_MIN      = 30       # spots van de laatste N minuten
 MIN_DISTANCE_KM = 100      # lokale/zelf-spots zeggen niets over propagatie
 MAX_ROWS        = 500
 POLL_SECONDS    = 300
-_UA = "HAMIOS/5.8.3 (+https://hamios.space; WSPR propagation monitor)"
+_UA = f"HAMIOS/{_HAMIOS_VERSION} (+https://hamios.space; WSPR propagation monitor)"
 
 # wspr.live 'band' (MHz, afgerond) → bandnaam
 BAND_NAMES = {

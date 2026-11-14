@@ -1,5 +1,5 @@
 """
-HAMIOS v5.8.3 — PySide6 versie
+HAMIOS — PySide6 versie (versienummer: modules/version.py)
 Developed with Claude AI
 
 """
@@ -27,6 +27,8 @@ from PySide6.QtGui import QPixmap, QPainter, QColor, QFont, QPen, QBrush
 
 from modules.mainwindow import HAMIOSMainWindow
 from modules.resources_config import DEFAULT_RESOURCES, ResourceConfig
+from modules import version as _version
+from modules.version import VERSION, USER_AGENT
 
 
 # ── Antenne-logo ──────────────────────────────────────────────────────────────
@@ -128,7 +130,7 @@ def _make_header_pixmap() -> QPixmap:
 
     p.setFont(QFont("Segoe UI", 10))
     p.setPen(QColor(200, 168, 75, 130))
-    p.drawText(TX + 124, 8, 64, 44, Qt.AlignLeft | Qt.AlignVCenter, "v5.8.3")
+    p.drawText(TX + 124, 8, 64, 44, Qt.AlignLeft | Qt.AlignVCenter, f"v{VERSION}")
 
     p.setFont(QFont("Segoe UI", 8))
     p.setPen(LIGHT)
@@ -175,6 +177,7 @@ def _make_checks():
         ("websocket",  "websocket-client",   _tr("splash.detail.lightn")),
         ("tzfinder",   "timezonefinder",     _tr("splash.detail.tzfinder")),
         ("app",        _tr("splash.app_name"), _tr("splash.detail.app")),
+        ("version",    _tr("splash.version_lbl"), _tr("splash.detail.version")),
     ]
     online_checks = [
         # Solar & Ionosphere
@@ -228,7 +231,7 @@ class _InetCheckThread(QThread):
             for use_ssl_verify in (True, False):
                 try:
                     req = _urlreq.Request(url, method="HEAD",
-                                          headers={"User-Agent": "HAMIOS/5.8.3"})
+                                          headers={"User-Agent": USER_AGENT})
                     kwargs: dict = {"timeout": 6}
                     if not use_ssl_verify:
                         ctx = _ssl.create_default_context()
@@ -260,7 +263,7 @@ class _OnlineResourceCheckThread(QThread):
         # Satellite (TLE) sources are excluded: TLE is only fetched manually and
         # rate-limited (tle_sources.py), never as a startup connectivity probe.
         self._RESOURCES = {
-            key: (res["url"], {"User-Agent": "HAMIOS/5.8.3"})
+            key: (res["url"], {"User-Agent": USER_AGENT})
             for key, res in DEFAULT_RESOURCES.items()
             if res.get("category") != "Satellites"
         }
@@ -282,6 +285,16 @@ class _OnlineResourceCheckThread(QThread):
             except Exception as e:
                 detail = str(e)[:20]
                 self.result_updated.emit(key, False, detail)
+
+
+# ── Update-check thread ───────────────────────────────────────────────────────
+
+class _UpdateCheckThread(QThread):
+    """Haalt version.json van GitHub op (modules/version.py); stil bij elk probleem."""
+    result = Signal(str)   # gepubliceerde versie, of "" als onbekend
+
+    def run(self):
+        self.result.emit(_version.fetch_published_version())
 
 
 # ── SplashDialog ──────────────────────────────────────────────────────────────
@@ -345,6 +358,20 @@ class SplashDialog(QDialog):
         self._status_lbl.setStyleSheet(
             "color:#C8A84B; font-size:8pt; background:transparent;")
         bl.addWidget(self._status_lbl, 1)
+
+        # UPDATE BESCHIKBAAR — verborgen tot de update-check een nieuwere versie vond
+        self._update_btn = QPushButton(_tr("splash.update_badge"))
+        self._update_btn.setCursor(Qt.PointingHandCursor)
+        self._update_btn.setFixedHeight(22)
+        self._update_btn.setStyleSheet(
+            "QPushButton { background:rgba(240,180,76,36); color:#F0B44C;"
+            " font-size:7pt; font-weight:bold; letter-spacing:1px;"
+            " border:1px solid #F0B44C; border-radius:11px; padding:0 10px; }"
+            "QPushButton:hover { background:rgba(240,180,76,72); }")
+        self._update_btn.clicked.connect(self._open_releases)
+        self._update_btn.hide()
+        bl.addWidget(self._update_btn)
+        bl.addSpacing(8)
 
         self._btn = QPushButton(_tr("splash.loading"))
         self._btn.setFixedSize(120, 28)
@@ -470,6 +497,30 @@ class SplashDialog(QDialog):
             self._apply(key, "loading", f"{mb:.1f} MB")
         QApplication.processEvents()
 
+    def set_update_result(self, published: str):
+        """Resultaat van de update-check tonen (rij 'HAMIOS-versie' + badge)."""
+        if not self._active:
+            return
+        from modules.i18n import tr as _tr
+        new = _version.newer_version(published)
+        if new:
+            self._apply("version", "warn", _tr("splash.version_new", version=new))
+            tip = _tr("splash.update_tip", new=new, cur=VERSION)
+            self._update_btn.setToolTip(tip)
+            for w in self._rows["version"][:2]:
+                w.setToolTip(tip)
+            self._update_btn.show()
+        elif published:
+            self._apply("version", "ok", _tr("splash.version_current"))
+        else:
+            self._apply("version", "pending", _tr("splash.version_unknown"))
+
+    @staticmethod
+    def _open_releases():
+        from PySide6.QtGui import QDesktopServices
+        from PySide6.QtCore import QUrl
+        QDesktopServices.openUrl(QUrl(_version.RELEASES_URL))
+
     def set_status(self, text: str):
         self._status_lbl.setText(text)
         QApplication.processEvents()
@@ -512,7 +563,7 @@ def main():
 
     app = QApplication(sys.argv)
     app.setApplicationName("HAMIOS")
-    app.setApplicationVersion("5.8.3")
+    app.setApplicationVersion(VERSION)
     app.setOrganizationName("")
 
     # Global window reference for cleanup
@@ -659,6 +710,16 @@ def main():
         splash.set_check("websocket", "ok"   if okws   else "warn",  dws)
         splash.set_check("tzfinder",  "ok"   if oktz   else "warn",  dtz)
 
+        # ── Update-controle — async, stil als offline ─────────────────────────
+        _upd_thread = None
+        if _version.update_check_enabled():
+            splash.set_check("version", "loading", f"v{VERSION} …")
+            _upd_thread = _UpdateCheckThread()
+            _upd_thread.result.connect(splash.set_update_result)
+            _upd_thread.start()
+        else:
+            splash.set_check("version", "pending", _tr("splash.version_off"))
+
         # ── Applicatie laden ──────────────────────────────────────────────────
         splash.set_check("app", "loading", _load_str)
         splash.set_status(_map_str)
@@ -730,6 +791,8 @@ def main():
         # MapView houdt ze vast en laadt de kaart bij 'done'.
         _online_thread.requestInterruption()
         _bg_threads.extend([_inet_thread, _online_thread])
+        if _upd_thread is not None:
+            _bg_threads.append(_upd_thread)
 
     # ── Mainwindow: hergebruik het venster uit de splash-fase, of maak het nu ──
     # (voorheen werd het venster bij een splash-start tweemaal opgebouwd)

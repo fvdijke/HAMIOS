@@ -9,6 +9,7 @@ Usage:
 
 from __future__ import annotations
 from PySide6.QtCore import QObject, Signal
+from .version import VERSION as _HAMIOS_VERSION
 
 # ── Language signal emitter ───────────────────────────────────────────────────
 
@@ -45,7 +46,7 @@ _S: dict[str, dict[str, str]] = {
 
 # ── App / algemeen ────────────────────────────────────────────────────────────
 "app.name":           "HF Propagation & Atmosphere Monitor",
-"app.version":        "v5.8.3",
+"app.version":        f"v{_HAMIOS_VERSION}",
 "app.close":          "Afsluiten",
 "app.ok":             "OK",
 "app.cancel":         "Annuleren",
@@ -627,6 +628,14 @@ _S: dict[str, dict[str, str]] = {
 "splash.failed":          "mislukt",
 "splash.manual":          "handmatig",
 "splash.tle_na":          "niet aanwezig",
+"splash.version_lbl":     "HAMIOS-versie",
+"splash.detail.version":  "update-controle",
+"splash.version_current": "actueel",
+"splash.version_new":     "v{version} beschikbaar",
+"splash.version_unknown": "onbekend",
+"splash.version_off":     "uitgeschakeld",
+"splash.update_badge":    "UPDATE BESCHIKBAAR",
+"splash.update_tip":      "Versie {new} is beschikbaar (dit is {cur}). Klik om de downloadpagina te openen.",
 "splash.tle_stale_tip":   "TLE-data is {age} oud — vernieuw via ↻ TLE vernieuwen in het satellietvenster",
 
 # ── Alert messages ───────────────────────────────────────────────────────────
@@ -1125,7 +1134,7 @@ _S: dict[str, dict[str, str]] = {
 
 # ── App / general ─────────────────────────────────────────────────────────────
 "app.name":           "HF Propagation & Atmosphere Monitor",
-"app.version":        "v5.8.3",
+"app.version":        f"v{_HAMIOS_VERSION}",
 "app.close":          "Exit",
 "app.ok":             "OK",
 "app.cancel":         "Cancel",
@@ -1707,6 +1716,14 @@ _S: dict[str, dict[str, str]] = {
 "splash.failed":          "failed",
 "splash.manual":          "manual",
 "splash.tle_na":          "not available",
+"splash.version_lbl":     "HAMIOS version",
+"splash.detail.version":  "update check",
+"splash.version_current": "up to date",
+"splash.version_new":     "v{version} available",
+"splash.version_unknown": "unknown",
+"splash.version_off":     "disabled",
+"splash.update_badge":    "UPDATE AVAILABLE",
+"splash.update_tip":      "Version {new} is available (this is {cur}). Click to open the download page.",
 "splash.tle_stale_tip":   "TLE data is {age} old — refresh via ↻ Refresh TLE in the Satellite window",
 
 # ── Remaining UI strings ─────────────────────────────────────────────────────
