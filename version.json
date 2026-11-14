@@ -1,5 +1,5 @@
 {
-  "_info": "Published HAMIOS version. HAMIOS fetches this file from GitHub (master) at start-up and shows UPDATE AVAILABLE on the splash screen when this version is newer than its own (modules/version.py). Bump both together, build, push.",
+  "_info": "Published HAMIOS version. HAMIOS fetches this file from GitHub (main) at start-up and shows UPDATE AVAILABLE on the splash screen when this version is newer than its own (modules/version.py). Bump both together, build, push.",
   "app": "hamios",
   "version": "5.8.3"
 }

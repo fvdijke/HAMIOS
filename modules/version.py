@@ -5,7 +5,7 @@ VERSION is de enige plek waar het versienummer van HAMIOS staat; de rest van de
 code (venstertitel, splash, User-Agent) leest het hier.
 
 Update-controle (zelfde opzet als COHESION): bij het opstarten haalt de splash
-version.json van GitHub (master) op en vergelijkt de daar gepubliceerde versie
+version.json van GitHub (main) op en vergelijkt de daar gepubliceerde versie
 met VERSION. Is die nieuwer, dan toont de splash UPDATE BESCHIKBAAR.
 
 - Offline, time-out, HTTP-fout, ongeldige JSON: geen melding, de check blijft stil.
@@ -27,7 +27,7 @@ VERSION = "5.8.3"
 
 USER_AGENT = f"HAMIOS/{VERSION}"
 
-VERSION_URL  = "https://raw.githubusercontent.com/fvdijke/HAMIOS/master/version.json"
+VERSION_URL  = "https://raw.githubusercontent.com/fvdijke/HAMIOS/main/version.json"
 RELEASES_URL = "https://github.com/fvdijke/HAMIOS/releases/latest"
 TIMEOUT_S    = 4
 
