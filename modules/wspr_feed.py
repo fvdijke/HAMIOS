@@ -124,6 +124,9 @@ class WSPRFeed(QThread):
     def run(self):
         self._running = True
         while self._running:
+            # Vóór het ophalen wissen: een QTH-wijziging tíjdens het ophalen
+            # wekt de lus dan meteen opnieuw (anders pas na 5 minuten)
+            self._wake.clear()
             try:
                 records = self._fetch()
                 with self._cache_lock:
@@ -132,8 +135,8 @@ class WSPRFeed(QThread):
             except Exception as e:
                 # Géén nepdata: laatste echte data blijft staan
                 self.error_occurred.emit(str(e)[:120])
-            self._wake.clear()
-            self._wake.wait(self._update_interval)
+            if self._running:
+                self._wake.wait(self._update_interval)
 
     def stop(self):
         self._running = False

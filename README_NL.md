@@ -6,7 +6,7 @@
 
 **Real-time HF-voortplanting en DX-monitor voor radioamateurs — Windows 10/11**
 
-> v5.8.3 · September 2026 · Frank van Dijke · *Ontwikkeld met Claude AI (Anthropic)*
+> v5.8.4 · November 2026 · Frank van Dijke · *Ontwikkeld met Claude AI (Anthropic)*
 
 [![Website](https://img.shields.io/badge/website-hamios.space-orange)](https://hamios.space)
 [![Release](https://img.shields.io/github/v/release/fvdijke/HAMIOS?label=latest)](https://github.com/fvdijke/HAMIOS/releases/latest)
@@ -201,6 +201,20 @@ Alle verbindingen gebruiken standaard HTTPS/WebSocket. Geen persoonlijke gegeven
 ---
 
 ## 📋 Changelog
+
+### v5.8.4 — November 2026
+- **Versiecontrole**: het opstartscherm controleert op GitHub of er een nieuwere versie is en toont **UPDATE BESCHIKBAAR** (klik opent de downloadpagina); stil als je offline bent
+- **Volledige codecontrole** — 18 verbeteringen, uiterlijk ongewijzigd:
+  - Kp- en röntgengrafiek toonden de oudste meting als huidige waarde (Kp van ~45 u geleden); nu de nieuwste
+  - Een locator van 6 tekens in Instellingen gaf coördinaten tot ~70 km naast het midden van het vak
+  - Het ophalen van DX-clusterspots startte alleen via een lettergrootte-instelling; elke instellingenwijziging gaf een extra ophaalronde
+  - Het bandverloop staat nu in `config/` (het oude bestand wordt automatisch samengevoegd) en de Bz-kolom wordt gevuld
+  - Maanpositie nauwkeuriger (fout van ~1,7° naar ~0,1°)
+  - Stormprognose volgt de NOAA-indeling (G3–G5 is één kans; geen nep-0 % voor G4+)
+  - Propagatie-overzicht: DX-routes uit het model voor je eigen QTH (niet meer vaste Europa-regels); Sporadic-E-seizoen voor het zuidelijk halfrond
+  - Advies in AM gebruikt telefoniefrequenties (was FT8); FM alleen op 10m/6m
+  - CAT: binair protocol voor FT-817/857/897 (werkte niet), modus-commando Kenwood/Elecraft, Icom-echo en modus instellen, nieuw type voor FT-991/710/DX10/DX101 (frequentie met 9 cijfers)
+  - Robuuster: NOAA-ophaalronde, bliksemverbinding, WSPR bij QTH-wijziging en afsluiten; eigen-continentfilter klopt ook voor West-Afrika, Midden-Oosten en Europees Rusland
 
 ### v5.8.3 — September 2026
 - **Propagatie-overzicht** is terug: het advies-paneel met kaartjes van vóór v5.7, als extra paneel naast Propagatie Advies — elf vaste kaartjes (beste banden, geomagnetisch, zonactiviteit, zonnewind, flares, dagdeel, mode/vermogen, aurora-absorptie, sporadic-E, DX-routes, algeheel), met bandpercentages uit het gekalibreerde model

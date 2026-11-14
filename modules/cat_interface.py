@@ -5,8 +5,10 @@ Frequentie-digit-aantallen per radiotype:
   • Yaesu FT-950/2000/DX series → FA<8 cijfers>;   bijv. FA14250000;  (= 14.250 MHz)
       Paginanummer 2 handleiding: "FA14250000;" (Set command voorbeeld)
       Parameter P1 bereik: 0030000 – 56000000 (Hz), 8 cijfers
-  • Kenwood / Elecraft (TS-590 e.d.) → FA<11 cijfers>;
-  • Icom CI-V → binary BCD frame
+  • Yaesu FT-991/710/DX10/DX101 → FA<9 cijfers>;  bijv. FA014250000;
+  • Yaesu FT-817/857/897 → binair 5-byte-commando (4 BCD-bytes + opcode), 10 Hz-eenheid
+  • Kenwood / Elecraft (TS-590 e.d.) → FA<11 cijfers>;  modus: MD<n>;
+  • Icom CI-V → binary BCD frame (frequentie 05/03, modus 06)
 
 VS-commando (FT-950 p.17):
   VS0; = selecteer VFO-A (sturen vóór FA voor zekerheid)
@@ -37,12 +39,26 @@ class CatInterface:
 
     RADIO_TYPES = [
         "Yaesu (FT-950/2000/DX/3000/5000)",
+        "Yaesu (FT-991/710/DX10/DX101)",
         "Yaesu (FT-817/857/897)",
         "Kenwood / Elecraft",
         "Icom CI-V",
     ]
 
     _POLL_INTERVAL = 2.0   # seconden tussen frequentie-peilingen
+
+    def _kind(self) -> str:
+        """Protocolfamilie van het ingestelde radiotype."""
+        rtype = getattr(self._cfg, "cat_radio_type", "") or ""
+        if "Icom" in rtype:
+            return "icom"
+        if "Kenwood" in rtype or "Elecraft" in rtype:
+            return "kenwood"
+        if "817" in rtype or "857" in rtype or "897" in rtype:
+            return "ft817"
+        if "991" in rtype or "710" in rtype or "DX10" in rtype:
+            return "yaesu9"
+        return "yaesu8"
 
     def __init__(self, cfg=None):
         self._cfg          = cfg
@@ -207,12 +223,16 @@ class CatInterface:
         """
         if not self.connected:
             return None
-        rtype = getattr(self._cfg, "cat_radio_type", "")
+        kind = self._kind()
         try:
-            if "Icom" in rtype:
+            if kind == "icom":
                 result = self._icom_read_freq()
-            elif "Kenwood" in rtype or "Elecraft" in rtype:
+            elif kind == "ft817":
+                result = self._ft817_read_freq()
+            elif kind == "kenwood":
                 result = self._fa_read_freq(digits=11)
+            elif kind == "yaesu9":
+                result = self._fa_read_freq(digits=9)
             else:
                 # Yaesu: probeer eerst FA; (8 cijfers), dan IF; als fallback
                 result = self._fa_read_freq(digits=8)
@@ -305,26 +325,72 @@ class CatInterface:
             time.sleep(0.12)
             buf = b""
             deadline = time.monotonic() + 0.5
+            freq = None
+            # Veel CI-V-interfaces echoën het commando: wacht op het échte
+            # antwoord (aan E0) in plaats van te stoppen bij de eerste FD
             while time.monotonic() < deadline:
                 if self._serial.in_waiting:
                     buf += self._serial.read(self._serial.in_waiting)
-                    if 0xFD in buf:
+                    freq = self._icom_parse_freq(buf)
+                    if freq is not None:
                         break
                 time.sleep(0.02)
-        # Zoek response frame: FE FE E0 addr 03 <5 bytes> FD
-        i = 0
-        while i < len(buf) - 10:
-            if buf[i] == 0xFE and buf[i+1] == 0xFE and buf[i+4] == 0x03:
-                bcd = buf[i+5:i+10]
-                if len(bcd) == 5:
-                    freq = 0
-                    mul  = 1
-                    for byte in bcd:
-                        freq += (byte & 0x0F) * mul;      mul *= 10
-                        freq += ((byte >> 4) & 0x0F) * mul; mul *= 10
+        return freq
+
+    @staticmethod
+    def _icom_parse_freq(buf: bytes) -> int | None:
+        """Zoek een antwoordframe FE FE E0 <radio> 03 <5 BCD-bytes> FD (de echo
+        van ons eigen commando, FE FE <radio> E0 03 FD, wordt overgeslagen)."""
+        for i in range(len(buf) - 10):
+            if (buf[i] == 0xFE and buf[i + 1] == 0xFE and buf[i + 2] == 0xE0
+                    and buf[i + 4] == 0x03 and buf[i + 10] == 0xFD):
+                freq, mul = 0, 1
+                for byte in buf[i + 5:i + 10]:
+                    lo, hi = byte & 0x0F, (byte >> 4) & 0x0F
+                    if lo > 9 or hi > 9:
+                        break                    # geen geldige BCD
+                    freq += lo * mul
+                    mul *= 10
+                    freq += hi * mul
+                    mul *= 10
+                else:
                     return freq
-            i += 1
         return None
+
+    # ── Yaesu FT-817/857/897: binair 5-byte-protocol ─────────────────────────
+    @staticmethod
+    def _bcd_10hz(freq_hz: int) -> list:
+        """Frequentie → 4 BCD-bytes in eenheden van 10 Hz (FT-817: 01 42 50 00 = 14,250 MHz)."""
+        digits = f"{max(0, int(freq_hz)) // 10:08d}"[-8:]
+        return [(int(digits[k]) << 4) | int(digits[k + 1]) for k in range(0, 8, 2)]
+
+    @staticmethod
+    def _ft817_parse_freq(buf: bytes) -> int:
+        """4 BCD-bytes (10 Hz-eenheden) → Hz, of 0 bij ongeldige data."""
+        if len(buf) < 4:
+            return 0
+        val = 0
+        for byte in buf[:4]:
+            hi, lo = (byte >> 4) & 0x0F, byte & 0x0F
+            if hi > 9 or lo > 9:
+                return 0
+            val = val * 100 + hi * 10 + lo
+        return val * 10
+
+    def _ft817_read_freq(self) -> int:
+        """Opcode 03: antwoord = 4 BCD-bytes (10 Hz) + modusbyte."""
+        import time
+        with self._lock:
+            self._serial.reset_input_buffer()
+            self._serial.write(bytes([0, 0, 0, 0, 0x03]))
+            self._serial.flush()
+            buf = b""
+            deadline = time.monotonic() + 0.5
+            while time.monotonic() < deadline and len(buf) < 5:
+                if self._serial.in_waiting:
+                    buf += self._serial.read(self._serial.in_waiting)
+                time.sleep(0.02)
+        return self._ft817_parse_freq(buf) if len(buf) >= 5 else 0
 
     @property
     def connected(self) -> bool:
@@ -342,6 +408,15 @@ class CatInterface:
             if not ok:
                 return False, err
         import time
+        if self._kind() in ("icom", "ft817"):
+            # Geen ID-commando: test met het uitlezen van de frequentie
+            try:
+                f = self._icom_read_freq() if self._kind() == "icom" else self._ft817_read_freq()
+            except Exception as e:
+                return False, str(e)
+            if f:
+                return True, f"{f / 1e6:.6f} MHz"
+            return False, tr("cat.err.unexpected", txt="—")
         try:
             with self._lock:
                 self._serial.reset_input_buffer()
@@ -374,12 +449,16 @@ class CatInterface:
             if not ok:
                 return False, err
 
-        rtype = getattr(self._cfg, "cat_radio_type", "")
+        kind = self._kind()
         try:
-            if "Icom" in rtype:
+            if kind == "icom":
                 data = self._icom_cmd(freq_hz)
-            elif "Kenwood" in rtype or "Elecraft" in rtype:
+            elif kind == "ft817":
+                data = bytes(self._bcd_10hz(freq_hz) + [0x01])
+            elif kind == "kenwood":
                 data = self._fa_cmd_11(freq_hz)
+            elif kind == "yaesu9":
+                data = f"FA{freq_hz:09d};".encode("ascii")
             else:
                 # Yaesu FT-950/2000/DX/3000/5000 — 8 cijfers (conform handleiding p.2,9)
                 data = self._fa_cmd_8(freq_hz)
@@ -416,6 +495,18 @@ class CatInterface:
         "PKT-FM":"A", "FM-N":  "B", "PKT-U": "C",
         "AM-N":  "D",
     }
+    # Kenwood/Elecraft MD-codes (geen aparte datamodus: PKT → SSB)
+    _KENWOOD_MODES = {"LSB": "1", "USB": "2", "CW": "3", "FM": "4", "AM": "5",
+                      "RTTY": "6", "CW-R": "7", "FSK-R": "9",
+                      "PKT-L": "1", "PKT-U": "2", "PKT-FM": "4", "FM-N": "4", "AM-N": "5"}
+    # Icom CI-V commando 06
+    _ICOM_MODES = {"LSB": 0x00, "USB": 0x01, "AM": 0x02, "CW": 0x03, "RTTY": 0x04,
+                   "FM": 0x05, "CW-R": 0x07, "FSK-R": 0x08,
+                   "PKT-L": 0x00, "PKT-U": 0x01, "PKT-FM": 0x05, "FM-N": 0x05, "AM-N": 0x02}
+    # Yaesu FT-817/857/897 opcode 07 (DIG voor data/RTTY, PKT voor FM-packet)
+    _FT817_MODES = {"LSB": 0x00, "USB": 0x01, "CW": 0x02, "CW-R": 0x03, "AM": 0x04,
+                    "AM-N": 0x04, "FM": 0x08, "FM-N": 0x88, "RTTY": 0x0A, "FSK-R": 0x0A,
+                    "PKT-L": 0x0A, "PKT-U": 0x0A, "PKT-FM": 0x0C}
 
     def set_mode(self, mode: str) -> tuple[bool, str]:
         """
@@ -428,15 +519,23 @@ class CatInterface:
             if not ok:
                 return False, err
 
-        code = self._MODE_CODES.get(mode.upper())
+        m = mode.upper()
+        code = self._MODE_CODES.get(m)
         if not code:
-            return False, f"Onbekende modus: {mode!r}"
+            return False, tr("cat.err.unknown_mode", mode=mode)
 
-        rtype = getattr(self._cfg, "cat_radio_type", "")
-        if "Icom" in rtype:
-            return False, tr("cat.err.icom_mode")
-
-        data = f"MD0{code};".encode("ascii")
+        kind = self._kind()
+        if kind == "icom":
+            addr = int(getattr(self._cfg, "cat_civ_addr", 0x58))
+            data = bytes([0xFE, 0xFE, addr, 0xE0, 0x06,
+                          self._ICOM_MODES.get(m, 0x01), 0xFD])
+        elif kind == "ft817":
+            data = bytes([self._FT817_MODES.get(m, 0x01), 0, 0, 0, 0x07])
+        elif kind == "kenwood":
+            # Kenwood/Elecraft: MD<n>; (zonder de '0' van Yaesu); datamodi → SSB
+            data = f"MD{self._KENWOOD_MODES.get(m, '2')};".encode("ascii")
+        else:
+            data = f"MD0{code};".encode("ascii")
         try:
             with self._lock:
                 self._serial.write(data)
@@ -450,7 +549,7 @@ class CatInterface:
             if rx:
                 self._log("RX", rx)
                 if b"?" in rx:
-                    return False, f"Radio weigert modus {mode}"
+                    return False, tr("cat.err.mode_refused", mode=mode)
             return True, ""
         except Exception as e:
             self._log("ERR", str(e))

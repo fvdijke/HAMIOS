@@ -285,6 +285,7 @@ class PropagationEngine(QObject):
         super().__init__()
         self.sfi, self.ssn, self.k = 90.0, 50.0, 2.0
         self._ionosondes: list[Ionosonde] = []
+        self._iono_gen = 0                 # telt per nieuwe stationslijst (cache-sleutel)
         self._drap: dict | None = None
         self._lock = threading.Lock()
 
@@ -303,6 +304,7 @@ class PropagationEngine(QObject):
     def set_ionosondes(self, stations: list[Ionosonde]):
         with self._lock:
             self._ionosondes = list(stations)
+            self._iono_gen += 1
         self.updated.emit()
 
     def set_drap(self, drap: dict):
@@ -334,7 +336,8 @@ class PropagationEngine(QObject):
         """Bruikbare (niet te oude) ionosondes; per minuut gecachet — het model
         vraagt dit voor elk controlepunt op (duizenden keren per propagatiekaart)."""
         now = _utc(now)
-        key = (id(self._ionosondes), int(now.timestamp() // 60))
+        # Generatieteller i.p.v. id(lijst): een id kan na opruimen hergebruikt worden
+        key = (self._iono_gen, int(now.timestamp() // 60))
         cache = getattr(self, "_fresh_cache", None)
         if cache and cache[0] == key:
             return cache[1]
@@ -492,11 +495,10 @@ class IonosondeFeed(QThread):
 
     def __init__(self, parent=None):
         super().__init__(parent)
-        self._running = False
+        self._running = True               # stop() vóór de start blijft gelden
         self._wake = threading.Event()
 
     def run(self):
-        self._running = True
         while self._running:
             try:
                 req = urllib.request.Request(KC2G_URL, headers={"User-Agent": _UA})
@@ -506,7 +508,8 @@ class IonosondeFeed(QThread):
                     self.stations_ready.emit(stations)
             except Exception as e:
                 self.error_occurred.emit(str(e)[:120])
-            self._wake.wait(IONO_POLL_S)
+            if self._running:
+                self._wake.wait(IONO_POLL_S)
 
     def stop(self):
         self._running = False

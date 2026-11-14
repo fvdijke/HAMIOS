@@ -607,13 +607,13 @@ class StormFcWidget(QWidget):
 
     # (tr-key, data-key, Kp-bereik, tooltip)
     _LEVELS = [
-        ("storm.active",    "active",   "Kp 3–4",
+        ("storm.active",    "active",   "Kp 4",
          "storm.tip.active"),
         ("storm.minor",  "minor",    "Kp 5",
          "storm.tip.minor"),
         ("storm.moderate",  "moderate", "Kp 6",
          "storm.tip.moderate"),
-        ("storm.severe",  "severe",   "Kp 7",
+        ("storm.severe",  "severe",   "Kp ≥7",
          "storm.tip.severe"),
         ("storm.extreme", "extreme",  "Kp ≥8",
          "storm.tip.extreme"),
@@ -713,7 +713,16 @@ class StormFcWidget(QWidget):
 
     def set_data(self, storm: dict):
         for _trkey, key, _kp, _tip in self._LEVELS:
-            vals = storm.get(key, [0, 0, 0])
+            if key not in storm:
+                # NOAA geeft G3–G5 samen ('Strong-Extreme', rij G3): voor G4+
+                # bestaat geen apart cijfer — '—' in plaats van een nep-0 %
+                for day in range(3):
+                    cell = self._cells.get((key, day))
+                    if cell:
+                        cell.setText("—")
+                        cell.setStyleSheet(f"color: {TEXT_DIM}; font-weight: bold; font-size: 7pt;")
+                continue
+            vals = storm[key]
             for day, val in enumerate(vals[:3]):
                 cell = self._cells.get((key, day))
                 if cell:
@@ -1414,7 +1423,7 @@ class LightningPanel(QWidget):
         elif secs < 3600:
             period = f"/{secs//60}m"
         else:
-            period = f"/{secs//3600}u"
+            period = f"/{secs//3600}{tr('lightn.per_hour')}"
         self._count_period_lbl.setText(period)
 
         # QRN-niveau + advies
@@ -1428,7 +1437,7 @@ class LightningPanel(QWidget):
             lvl, qrn, qrn_clr = 3, tr("qrn.high"),   "#FF7043"
         else:
             lvl, qrn, qrn_clr = 4, tr("qrn.severe"),  "#EF5350"
-        radius_lbl = f" ({n} inslagen ≤{self._QRN_RADIUS_KM//1000}Mm)" if n > 0 else ""
+        radius_lbl = tr("lightn.qrn_count", n=n, km=self._QRN_RADIUS_KM) if n > 0 else ""
         self._qrn_lbl.setText(f"QRN: {qrn}{radius_lbl}")
         self._qrn_lbl.setStyleSheet(f"color:{qrn_clr}; font-size:8pt;")
 
@@ -1706,12 +1715,34 @@ _DXCC_CONT: dict[str, str] = {
 }
 
 def _qth_to_continent(lat: float, lon: float) -> str:
-    if   lat > 35 and -25 < lon < 65:   return "EU"
-    elif lat > 0  and -170 < lon < -30: return "NA"
-    elif lat < 0  and -90  < lon < -30: return "SA"
-    elif lat > 0  and 60   < lon < 150: return "AS"
-    elif lat < 0  and 100  < lon < 180: return "OC"
-    elif -40 < lat < 38 and 10 < lon < 55: return "AF"
+    """Continent (DXCC-indeling, benaderd) van een positie — voor het
+    'eigen continent'-filter. Grenzen bij benadering: Oeral, Suez/Rode Zee,
+    Panama, Wallace-lijn."""
+    lon = ((lon + 180) % 360) - 180
+    # Europa (incl. Turkije en Europees Rusland tot de Oeral) en IJsland
+    if lat >= 36 and -32 <= lon < 45:
+        return "EU"
+    if lat >= 45 and 45 <= lon < 60:
+        return "EU"
+    # Afrika: ten westen van de Rode Zee / Suez; Arabisch schiereiland → Azië
+    if -36 <= lat < 37 and -26 <= lon < 52 and not (lat >= 12 and lon >= 34):
+        return "AF"
+    # Noord-Amerika incl. Midden-Amerika, Caribisch gebied en Groenland
+    if lat >= 7 and -170 <= lon < -50 and not (lat < 13 and lon > -78):
+        return "NA"
+    if lat >= 55 and -75 <= lon < -10:
+        return "NA"
+    # Zuid-Amerika
+    if lat < 13 and -92 <= lon < -30:
+        return "SA"
+    # Oceanië: Australië/NZ/Pacific (oostelijk van de Wallace-lijn ten zuiden van de evenaar)
+    if lat < -10 and lon >= 110:
+        return "OC"
+    if (lon >= 165 or lon < -150) and lat < 30:
+        return "OC"
+    # Azië: de rest van het oostelijk halfrond
+    if lon >= 26 and lat >= -11:
+        return "AS"
     return "??"
 
 def _callsign_continent(call: str) -> str:

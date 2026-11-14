@@ -404,15 +404,17 @@ class _FetchThread(QThread):
     outlook_ready = Signal(list)    # parse_outlook()
 
     def run(self):
-        self._fetch_solar()
-        self._fetch_kp()
-        self._fetch_bz()
-        self._fetch_xray()
-        self._fetch_storm()
-        self._fetch_alerts()
-        self._fetch_drap()
-        self._fetch_ovation()
-        self._fetch_outlook()
+        # Elke bron apart afschermen: een onverwacht formaat bij één bron mag de
+        # rest van de ronde (D-RAP, aurora, vooruitzicht …) niet overslaan
+        for fetch in (self._fetch_solar, self._fetch_kp, self._fetch_bz,
+                      self._fetch_xray, self._fetch_storm, self._fetch_alerts,
+                      self._fetch_drap, self._fetch_ovation, self._fetch_outlook):
+            if self.isInterruptionRequested():
+                return
+            try:
+                fetch()
+            except Exception:
+                continue
 
     # ── P3: absorptie, aurora, 27-dagen ──────────────────────────────────────
     def _fetch_drap(self):
@@ -601,6 +603,8 @@ class _FetchThread(QThread):
             return
         alerts = []
         for item in data[:20]:  # max 20 meest recente
+            if not isinstance(item, dict):
+                continue
             msg = str(item.get("message", ""))
             issued = str(item.get("issue_datetime", ""))[:16]
             product = str(item.get("product_id", ""))
@@ -608,8 +612,10 @@ class _FetchThread(QThread):
             sev = ("high"   if any(x in product for x in ("X-RAY", "WATCH", "WARNING"))
                    else "medium" if "ALERT" in product
                    else "low")
-            # Eerste regel van message als samenvatting
-            summary = msg.split("\n")[2].strip() if "\n" in msg else msg[:80]
+            # Samenvatting: de derde regel (na de kop), anders de eerste niet-lege
+            lines = [ln.strip() for ln in msg.splitlines()]
+            summary = (lines[2] if len(lines) > 2 and lines[2]
+                       else next((ln for ln in lines if ln), ""))[:80]
             alerts.append({"severity": sev, "summary": summary, "issued": issued,
                            "message": msg})
         self.alerts_ready.emit(alerts)
@@ -666,7 +672,17 @@ class NoaaDataManager(QObject):
         QTimer.singleShot(1000, self.refresh)
 
     def stop(self):
+        """Timer stoppen en een lopende ophaalronde kort de tijd geven om af te
+        ronden (voorkomt 'QThread destroyed while running' bij afsluiten)."""
         self._timer.stop()
+        t = self._thread
+        if t is not None:
+            try:
+                if t.isRunning():
+                    t.requestInterruption()
+                    t.wait(2000)
+            except RuntimeError:
+                pass                     # C++-object al opgeruimd
 
     def set_interval(self, minutes: int):
         """Pas het refresh-interval aan (0 = stop)."""
@@ -841,9 +857,10 @@ class KpChart(QWidget):
         p.drawText(PL, H - PB + 2, 24, PB, Qt.AlignLeft,  "48h")
         p.drawText(W - PR - 24, H - PB + 2, 24, PB, Qt.AlignRight, tr("sched.now"))
 
-        # Huidige Kp waarde
+        # Huidige Kp waarde = de nieuwste meting (kleinste 'uren geleden');
+        # de lijst loopt nieuw → oud, dus niet het laatste element
         if self._pts:
-            last_kp = self._pts[-1][1]
+            last_kp = min(self._pts, key=lambda pt: pt[0])[1]
             p.setFont(f7b)
             p.setPen(_kp_color(last_kp))
             p.drawText(W - PR - 32, PT, 32, 14, Qt.AlignRight, f"{last_kp:.1f}")
@@ -1043,9 +1060,9 @@ class XrayChart(QWidget):
         p.drawText(PL, H - PB + 2, 24, PB, Qt.AlignLeft,  "24h")
         p.drawText(W - PR - 24, H - PB + 2, 24, PB, Qt.AlignRight, tr("sched.now"))
 
-        # Huidige klasse
+        # Huidige klasse = de nieuwste meting (kleinste 'uren geleden')
         if self._pts:
-            last_flux = self._pts[-1][1]
+            last_flux = min(self._pts, key=lambda pt: pt[0])[1]
             cls_str, cls_col = _xray_class(last_flux)
             f7b = QFont("Segoe UI", 7); f7b.setBold(True)
             p.setFont(f7b); p.setPen(cls_col)

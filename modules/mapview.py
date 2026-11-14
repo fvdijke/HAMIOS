@@ -2039,15 +2039,25 @@ def render_night_gray(sun_lat: float, sun_lon: float,
 
 
 def _submoon_point() -> tuple[float, float]:
-    """Geocentrische positie van de maan (vereenvoudigd, nauwkeurig ~0.5°)."""
+    """Geocentrische positie van de maan (Meeus, grootste periodieke termen:
+    middelpuntsvergelijking, evectie, variatie, jaarlijkse vereffening;
+    nauwkeurig ~0,3°; met alleen de eerste term was dat tot ~1,5°)."""
     now = datetime.datetime.now(datetime.timezone.utc)
     J2K = datetime.datetime(2000, 1, 1, 12, tzinfo=datetime.timezone.utc)
     d   = (now - J2K).total_seconds() / 86400
     L   = math.radians((218.316 + 13.176396 * d) % 360)
-    M   = math.radians((134.963 + 13.064993 * d) % 360)
-    F   = math.radians((93.272  + 13.229350 * d) % 360)
-    lam = L + math.radians(6.289 * math.sin(M))
-    beta = math.radians(5.128 * math.sin(F))
+    M   = math.radians((134.963 + 13.064993 * d) % 360)      # anomalie maan
+    F   = math.radians((93.272  + 13.229350 * d) % 360)      # breedte-argument
+    D   = math.radians((297.850 + 12.190749 * d) % 360)      # elongatie
+    Ms  = math.radians((357.529 + 0.98560028 * d) % 360)     # anomalie zon
+    lam = L + math.radians(6.289 * math.sin(M)
+                           + 1.274 * math.sin(2 * D - M)      # evectie
+                           + 0.658 * math.sin(2 * D)          # variatie
+                           - 0.186 * math.sin(Ms)             # jaarlijkse vereffening
+                           + 0.214 * math.sin(2 * M)
+                           - 0.114 * math.sin(2 * F))
+    beta = math.radians(5.128 * math.sin(F) + 0.281 * math.sin(M + F)
+                        + 0.278 * math.sin(M - F) + 0.173 * math.sin(2 * D - F))
     obl  = math.radians(23.439)
     lat  = math.degrees(math.asin(
         math.sin(beta) * math.cos(obl) +

@@ -43,7 +43,11 @@ FREQ_KHZ = {
             "20m": 14030, "17m": 18080, "15m": 21030, "12m": 24900, "10m": 28030, "6m": 50090},
     "SSB": {"160m": 1850, "80m": 3700, "60m": 5360, "40m": 7150, "30m": 10136,
             "20m": 14250, "17m": 18130, "15m": 21300, "12m": 24950, "10m": 28450, "6m": 50150},
+    # FM-aanroepfrequenties (IARU)
+    "FM":  {"10m": 29600, "6m": 51510},
 }
+# AM gebruikt het telefoniesegment (anders kwam er een FT8-frequentie uit)
+FREQ_KHZ["AM"] = FREQ_KHZ["SSB"]
 _DIGITAL = {"FT8", "FT4", "WSPR", "PSK31", "RTTY", "JS8"}
 
 
@@ -212,11 +216,17 @@ def collect_observations(qth, wspr=(), dx=(), psk=()) -> dict:
 _NO_PHONE = {"30m"}
 
 
+# FM (breedband) is op HF alleen gebruikelijk op 10m en 6m
+_FM_BANDS = {"10m", "6m"}
+
+
 def _mode_for(cfg_mode: str, pct: int, band: str = "") -> str:
     """Eigen mode, maar zwakke paden liever digitaal; geen SSB op 30m."""
     m = (cfg_mode or "SSB").upper()
     if m in ("SSB", "AM", "FM") and band in _NO_PHONE:
         return "FT8"
+    if m == "FM" and band not in _FM_BANDS:
+        m = "SSB"                                # geen FM onder 28 MHz
     if pct >= 60 or m in _DIGITAL or m == "CW":
         return m if m in FREQ_KHZ else ("FT8" if m in _DIGITAL else m)
     return "FT8"

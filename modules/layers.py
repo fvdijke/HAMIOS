@@ -182,8 +182,8 @@ def _parse_blitzortung(msg) -> tuple[float | None, float | None]:
     # Methode 1: standaard JSON
     try:
         d = json.loads(msg)
-        lat = d.get("lat") or d.get("y")
-        lon = d.get("lon") or d.get("x")
+        lat = d.get("lat") if d.get("lat") is not None else d.get("y")
+        lon = d.get("lon") if d.get("lon") is not None else d.get("x")
         if lat is not None and lon is not None:
             return float(lat), float(lon)
     except Exception:
@@ -218,14 +218,18 @@ class LightningWorker(QObject):
         super().__init__()
         self._running = False
         self._ws      = None   # actieve WebSocketApp-instantie
+        self._gen     = 0      # verbindingsgeneratie: een gestopte thread stopt echt
 
     def start(self):
         self._running = True
-        threading.Thread(target=self._run, daemon=True, name="blitz-ws").start()
+        self._gen += 1
+        threading.Thread(target=self._run, args=(self._gen,), daemon=True,
+                         name="blitz-ws").start()
 
     def stop(self):
         """Stop de worker: sluit de actieve WebSocket zodat run_forever() direct terugkeert."""
         self._running = False
+        self._gen += 1
         ws = self._ws
         if ws is not None:
             try:
@@ -234,14 +238,16 @@ class LightningWorker(QObject):
                 pass
         self._ws = None
 
-    def _run(self):
+    def _run(self, gen: int):
         try:
             import websocket
         except ImportError:
             self.status.emit("no_lib")
             return
 
-        while self._running:
+        # Snel uit/aan zetten: de oude thread ziet een nieuwere generatie en
+        # stopt, zodat er nooit twee verbindingen (dubbele inslagen) lopen
+        while self._running and gen == self._gen:
             try:
                 ws = websocket.WebSocketApp(
                     self._URL,
@@ -254,7 +260,7 @@ class LightningWorker(QObject):
                 self._ws = None
             except Exception:
                 self._ws = None
-                if self._running:
+                if self._running and gen == self._gen:
                     time.sleep(10)
 
     def _on_msg(self, msg):
@@ -1318,6 +1324,14 @@ class DXSpotsLayer(QGraphicsItem):
         self._anim_timer.timeout.connect(self._anim_tick)
         self._anim_timer.start(80)
 
+        # DXWatch elke 2 min pollen; eerste keer kort na het opstarten.
+        # (Stond per ongeluk in set_label_font_size: zonder die aanroep kwamen er
+        # geen spots, en elke instellingenwijziging startte een extra ophaalronde.)
+        self._timer = QTimer()
+        self._timer.timeout.connect(self._fetch)
+        self._timer.start(120_000)
+        QTimer.singleShot(4000, self._fetch)
+
     def _anim_tick(self):
         self._anim_phase = (self._anim_phase + 1.9) % 18.0
         with self._lock:
@@ -1328,11 +1342,6 @@ class DXSpotsLayer(QGraphicsItem):
     def set_label_font_size(self, size: int):
         self._label_font_size = max(6, size)
         self.update()
-
-        self._timer = QTimer()
-        self._timer.timeout.connect(self._fetch)
-        self._timer.start(120_000)
-        QTimer.singleShot(4000, self._fetch)
 
     def _fetch(self):
         if self._fetch_thread is not None:

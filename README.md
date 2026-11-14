@@ -7,7 +7,7 @@
 
 **Real-time HF propagation and DX monitor for amateur radio operators — Windows 10/11**
 
-> v5.8.3 · September 2026 · Frank van Dijke · *Developed with Claude AI (Anthropic)*
+> v5.8.4 · November 2026 · Frank van Dijke · *Developed with Claude AI (Anthropic)*
 
 [![Website](https://img.shields.io/badge/website-hamios.space-orange)](https://hamios.space)
 [![Release](https://img.shields.io/github/v/release/fvdijke/HAMIOS?label=latest)](https://github.com/fvdijke/HAMIOS/releases/latest)
@@ -202,6 +202,20 @@ All connections use standard HTTPS/WebSocket. No personal data is transmitted.
 ---
 
 ## 📋 Changelog
+
+### v5.8.4 — November 2026
+- **Update check**: the splash screen checks GitHub for a newer version and shows **UPDATE AVAILABLE** (click to open the download page); silent when offline
+- **Full code review** — 18 fixes, look and feel unchanged:
+  - Kp and X-ray charts showed the oldest reading as the current value (Kp from ~45 h ago); they now show the newest
+  - A 6-character locator in Settings gave coordinates up to ~70 km off the square centre
+  - DX cluster polling only started via a font-size setting; every settings change triggered an extra fetch
+  - Band history is now stored in `config/` (old file is merged automatically) and the Bz column is filled
+  - Moon position more accurate (error from ~1.7° to ~0.1°)
+  - Storm forecast follows the NOAA categories (G3–G5 is one probability; no fake 0 % for G4+)
+  - Propagation overview: DX routes from the model for your own QTH (no longer fixed Europe rules); Sporadic-E season for the southern hemisphere
+  - Advice in AM uses phone frequencies (was FT8); FM only on 10m/6m
+  - CAT: FT-817/857/897 binary protocol (did not work before), Kenwood/Elecraft mode command, Icom echo handling and mode setting, new type for FT-991/710/DX10/DX101 (9-digit frequency)
+  - More robust NOAA fetch, lightning connection, WSPR QTH change and shutdown; own-continent filter covers West Africa, Middle East and European Russia
 
 ### v5.8.3 — September 2026
 - **Propagation overview** is back: the card-style advice panel from before v5.7, as an extra panel next to Propagation Advice — eleven fixed cards (best bands, geomagnetic, solar activity, solar wind, flares, time of day, mode/power, auroral absorption, Sporadic-E, DX routes, overall), with band percentages from the calibrated model

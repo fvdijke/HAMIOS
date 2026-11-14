@@ -312,8 +312,11 @@ class PropTipsWidget(QWidget):
             else:
                 tips.append(("s8", "🧲", tr("prop.adv.aurora.none", k_i=k_i, lat=lat), TEXT_BODY))
 
-        # 9. Sporadic-E (noordelijk halfrond: mei–aug, klein winterpiekje)
-        es_score = 3 if month in (6, 7) else 2 if month in (5, 8) else 1 if month in (12, 1) else 0
+        # 9. Sporadic-E (noordelijk halfrond: mei–aug, klein winterpiekje;
+        #    zuidelijk halfrond: zes maanden verschoven, piek dec–jan)
+        south = bool(self._cfg) and self._cfg.qth_lat < 0
+        es_month = (month + 5) % 12 + 1 if south else month
+        es_score = 3 if es_month in (6, 7) else 2 if es_month in (5, 8) else 1 if es_month in (12, 1) else 0
         es_time = (9 <= lok_h < 14) or (17 <= lok_h < 22)
         if es_score >= 2 and es_time:
             tips.append(("s9", "⚡", tr("prop.adv.es.high", month=month, h_s=h_s), "#66BB6A"))
@@ -322,16 +325,17 @@ class PropTipsWidget(QWidget):
         else:
             tips.append(("s9", "⚡", tr("prop.adv.es.off", month=month), TEXT_DIM))
 
-        # 10. DX-routes (vuistregels vanuit Europa, UTC)
+        # 10. DX-routes vanaf de eigen QTH, uit hetzelfde padmodel als de
+        #     aanbevelingen (voorheen vaste vuistregels die alleen vanuit Europa klopten)
         routes = []
-        if is_day:
-            if 5 <= utc_h < 10 and sfi >= 100: routes.append("EU→JA (20m/17m)")
-            if 12 <= utc_h < 18 and sfi >= 80:  routes.append("EU→W (20m/15m)")
-            if 8 <= utc_h < 14 and sfi >= 80:   routes.append("EU→AF (20m/17m)")
-            if 14 <= utc_h < 20 and sfi >= 120: routes.append("EU→OC (15m/10m)")
-        else:
-            if utc_h >= 22 or utc_h < 4: routes.append("EU→W (40m/80m)")
-            if 2 <= utc_h < 8:           routes.append("EU→JA (40m gray line)")
+        if self._cfg and self._solar:
+            try:
+                from .propagation import ENGINE
+                for region, _km, bands in ENGINE.dx_routes(
+                        self._cfg.qth_lat, self._cfg.qth_lon, _station_snr(self._cfg))[:4]:
+                    routes.append(f"{region} ({'/'.join(b for b, _ in bands)})")
+            except Exception:
+                routes = []
         if routes:
             tips.append(("s10", "🌍", tr("prop.adv.dx.routes", routes="  ·  ".join(routes)), "#4FC3F7"))
         else:

@@ -92,7 +92,9 @@ _GRIDS = [1, 5, 10, 20, 50]
 # ── Maidenhead ────────────────────────────────────────────────────────────────
 
 def latlon_to_locator(lat: float, lon: float) -> str:
-    lon += 180; lat += 90
+    # Precies op de pool / datumgrens hoort nog bij het laatste veld (R)
+    lon = min(max(lon, -180.0), 180.0 - 1e-9) + 180
+    lat = min(max(lat, -90.0), 90.0 - 1e-9) + 90
     loc  = chr(ord('A') + int(lon / 20))
     loc += chr(ord('A') + int(lat / 10))
     loc += str(int((lon % 20) / 2))
@@ -103,20 +105,25 @@ def latlon_to_locator(lat: float, lon: float) -> str:
 
 
 def locator_to_latlon(loc: str):
+    """Maidenhead (4 of 6 tekens) → middelpunt van het vak. Ongeldige invoer → None."""
     loc = loc.strip().upper()
     if len(loc) < 4:
         return None
-    try:
-        lon = (ord(loc[0]) - ord('A')) * 20 - 180
-        lat = (ord(loc[1]) - ord('A')) * 10 - 90
-        lon += int(loc[2]) * 2
-        lat += int(loc[3]) * 1
-        if len(loc) >= 6:
-            lon += (ord(loc[4]) - ord('A')) * 2 / 24
-            lat += (ord(loc[5]) - ord('A')) * 1 / 24
-        return round(lat + 0.5, 4), round(lon + 1.0, 4)
-    except Exception:
+    if not ("A" <= loc[0] <= "R" and "A" <= loc[1] <= "R"
+            and loc[2].isdigit() and loc[3].isdigit()):
         return None
+    six = len(loc) >= 6 and "A" <= loc[4] <= "X" and "A" <= loc[5] <= "X"
+    lon = (ord(loc[0]) - ord('A')) * 20 - 180 + int(loc[2]) * 2
+    lat = (ord(loc[1]) - ord('A')) * 10 - 90 + int(loc[3])
+    if six:
+        # Subsquare 5' × 2,5': middelpunt = halve subsquare verder
+        lon += (ord(loc[4]) - ord('A')) * 2 / 24 + 1 / 24
+        lat += (ord(loc[5]) - ord('A')) / 24 + 0.5 / 24
+    else:
+        # Square 2° × 1°: middelpunt
+        lon += 1.0
+        lat += 0.5
+    return round(lat, 4), round(lon, 4)
 
 
 # ── Stylesheet ────────────────────────────────────────────────────────────────
@@ -776,13 +783,13 @@ class SettingsDialog(QDialog):
         _none = tr("cat.parity.none")
         for label, rtype, baud, bits, par, stop in [
             ("FT-950",  "Yaesu (FT-950/2000/DX/3000/5000)", 38400, 8, _none, "2"),
-            ("FT-817",  "Yaesu (FT-817/857/897)",           9600,  8, _none, "1"),
+            ("FT-817",  "Yaesu (FT-817/857/897)",           9600,  8, _none, "2"),
             ("TS-590",  "Kenwood / Elecraft",               9600,  8, _none, "1"),
             ("K3/KX3",  "Kenwood / Elecraft",               38400, 8, _none, "1"),
         ]:
             b = QPushButton(label)
             b.setFont(f8)
-            b.setToolTip(f"{rtype}  ·  {baud} baud  {bits}{par[0]}1")
+            b.setToolTip(f"{rtype}  ·  {baud} baud  {bits}{par[0]}{stop}")
             b.clicked.connect(
                 lambda _=0, rt=rtype, bd=baud, bi=bits, pa=par, st=stop:
                     self._apply_cat_preset(rt, bd, bi, pa, st))
