@@ -214,6 +214,7 @@ Alle verbindingen gebruiken standaard HTTPS/WebSocket. Geen persoonlijke gegeven
   - Propagatie-overzicht: DX-routes uit het model voor je eigen QTH (niet meer vaste Europa-regels); Sporadic-E-seizoen voor het zuidelijk halfrond
   - Advies in AM gebruikt telefoniefrequenties (was FT8); FM alleen op 10m/6m
   - CAT: binair protocol voor FT-817/857/897 (werkte niet), modus-commando Kenwood/Elecraft, Icom-echo en modus instellen, nieuw type voor FT-991/710/DX10/DX101 (frequentie met 9 cijfers)
+  - EXE: de lokale klok volgt weer de tijdzone van de QTH (timezonefinder ontbrak)
   - Robuuster: NOAA-ophaalronde, bliksemverbinding, WSPR bij QTH-wijziging en afsluiten; eigen-continentfilter klopt ook voor West-Afrika, Midden-Oosten en Europees Rusland
 
 ### v5.8.3 — September 2026

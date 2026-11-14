@@ -215,6 +215,7 @@ All connections use standard HTTPS/WebSocket. No personal data is transmitted.
   - Propagation overview: DX routes from the model for your own QTH (no longer fixed Europe rules); Sporadic-E season for the southern hemisphere
   - Advice in AM uses phone frequencies (was FT8); FM only on 10m/6m
   - CAT: FT-817/857/897 binary protocol (did not work before), Kenwood/Elecraft mode command, Icom echo handling and mode setting, new type for FT-991/710/DX10/DX101 (9-digit frequency)
+  - EXE: the local clock follows the QTH time zone again (timezonefinder was missing)
   - More robust NOAA fetch, lightning connection, WSPR QTH change and shutdown; own-continent filter covers West Africa, Middle East and European Russia
 
 ### v5.8.3 — September 2026

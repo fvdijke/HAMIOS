@@ -35,6 +35,9 @@ Look and feel are unchanged; only what was wrong has been fixed.
 - **Icom**: interfaces that echo commands no longer give a wrong frequency; setting the mode now works
 - New radio type **Yaesu FT-991/710/DX10/DX101** (9-digit frequency)
 
+**EXE**
+- The local clock follows the time zone of your QTH again (timezonefinder was missing from the EXE and fell back to the Windows time zone)
+
 ---
 
 Also included: everything from v5.8.3 (propagation overview, tab groups).

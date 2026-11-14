@@ -3,6 +3,8 @@
 
 import os
 
+from PyInstaller.utils.hooks import copy_metadata
+
 block_cipher = None
 
 a = Analysis(
@@ -17,7 +19,8 @@ a = Analysis(
         ('config/hamios_resources.json',          'config'),
         ('modules',                      'modules'),
         ('tools',                        'tools'),
-    ],
+    # h3 (via timezonefinder) leest bij import zijn eigen pakketversie
+    ] + copy_metadata('h3') + copy_metadata('timezonefinder'),
     hiddenimports=[
         'PySide6.QtCore',
         'PySide6.QtGui',
@@ -30,13 +33,17 @@ a = Analysis(
         'websocket._core',
         'websocket._http',
         'timezonefinder',
+        'h3',
+        'cffi',
         'zoneinfo',
     ],
     hookspath=[],
     hooksconfig={},
     runtime_hooks=[],
+    # numpy NIET uitsluiten: timezonefinder (lokale tijdzone van de QTH) heeft
+    # numpy, h3 en cffi nodig — zonder numpy viel de klok terug op de pc-tijdzone
     excludes=[
-        'tkinter', 'matplotlib', 'numpy', 'scipy',
+        'tkinter', 'matplotlib', 'scipy',
         'PIL', 'Pillow', 'cv2', 'pandas',
     ],
     win_no_prefer_redirects=False,
