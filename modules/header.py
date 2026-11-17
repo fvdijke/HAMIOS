@@ -2,7 +2,7 @@
 import datetime
 
 from PySide6.QtWidgets import QWidget, QHBoxLayout, QLabel, QPushButton, QFrame, QSpinBox
-from PySide6.QtCore import QTimer, Signal
+from PySide6.QtCore import Qt, QTimer, Signal
 from PySide6.QtGui import QColor, QPalette
 
 from .theme import ACCENT, BG_PANEL, TEXT_H1, TEXT_DIM, HDR_H, BG_SURFACE, BORDER
@@ -102,6 +102,19 @@ class HeaderBar(QWidget):
             f"color: {TEXT_DIM}; font-size: 9pt; font-family: Consolas;"
             f" padding: 0 8px;")
         layout.addWidget(self._freq_lbl)
+
+        # UPDATE BESCHIKBAAR — verborgen tot de versiecontrole een nieuwere vindt
+        self._update_btn = QPushButton(tr("splash.update_badge"))
+        self._update_btn.setCursor(Qt.PointingHandCursor)
+        self._update_btn.setFixedHeight(20)
+        self._update_btn.setStyleSheet(
+            "QPushButton { background:rgba(240,180,76,36); color:#F0B44C;"
+            " font-size:7pt; font-weight:bold; letter-spacing:1px;"
+            " border:1px solid #F0B44C; border-radius:10px; padding:0 10px; }"
+            "QPushButton:hover { background:rgba(240,180,76,72); }")
+        self._update_btn.clicked.connect(self._open_releases)
+        self._update_btn.hide()
+        layout.addWidget(self._update_btn)
 
         layout.addStretch(1)
 
@@ -203,6 +216,22 @@ class HeaderBar(QWidget):
     def set_qth(self, lat: float, lon: float):
         """Update lokale tijdzone op basis van QTH-coördinaten."""
         self._local_tz = _tz_from_latlon(lat, lon)
+
+    def set_update(self, new_version: str):
+        """Toon het update-label als er een nieuwere HAMIOS-versie is."""
+        from .version import VERSION
+        if new_version:
+            self._update_btn.setToolTip(tr("splash.update_tip", new=new_version, cur=VERSION))
+            self._update_btn.show()
+        else:
+            self._update_btn.hide()
+
+    @staticmethod
+    def _open_releases():
+        from PySide6.QtGui import QDesktopServices
+        from PySide6.QtCore import QUrl
+        from .version import RELEASES_URL
+        QDesktopServices.openUrl(QUrl(RELEASES_URL))
 
     def set_offline(self, offline: bool):
         """Toon/verberg OFFLINE indicator."""

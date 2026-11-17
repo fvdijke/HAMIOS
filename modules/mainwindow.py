@@ -125,12 +125,22 @@ _PANEL_TITLE_KEYS = {
     "ionosondes": "panel.ionosondes",
     "sat_passes": "panel.sat_passes",
     "prop_tips":  "panel.prop_tips",
+    "my_signal":  "panel.my_signal",
+    "path_fc":    "panel.path_fc",
+    "watchlist":  "panel.watchlist",
+    "azimuthal":  "panel.azimuthal",
+    "verify":     "panel.verify",
+    "doppler":    "panel.doppler",
 }
 
 # Panelen die na een update nieuw zijn: in een bestaande indeling als tabblad
 # bij deze buur plaatsen (in plaats van een extra kolom rechts)
 _NEW_PANEL_HOSTS = {"ionosondes": "dx_spots", "sat_passes": "dx_spots",
-                    "prop_tips": "prop_adv"}
+                    "prop_tips": "prop_adv",
+                    # v5.9
+                    "my_signal": "dx_spots", "watchlist": "dx_spots",
+                    "azimuthal": "dx_spots", "doppler": "dx_spots",
+                    "path_fc": "prop_adv", "verify": "prop_adv"}
 
 def _panel_titles():
     from .i18n import tr as _tr
@@ -252,6 +262,10 @@ class HAMIOSMainWindow(QMainWindow):
         self._prop_refresh.timeout.connect(self._on_propagation_updated)
         _PROP.updated.connect(self._prop_refresh.start)
 
+        # DXCC-database (cty.dat): bewaarde versie laden, maandelijks verversen
+        from . import cty as _cty
+        _cty.ensure_loaded_async()
+
         # Verwijder oude history-regels bij opstart (in achtergrond)
         import threading as _thr
         _thr.Thread(target=_history.prune, daemon=True).start()
@@ -293,6 +307,13 @@ class HAMIOSMainWindow(QMainWindow):
 
         # Verouderde TLE-data: eenmalige melding (geen automatische download)
         QTimer.singleShot(6000, self._check_tle_age)
+
+        # Versiecontrole: kort na de start en daarna elke 12 uur (label in de header)
+        self._update_published = None
+        QTimer.singleShot(10_000, self._check_update)
+        self._update_timer = QTimer(self)
+        self._update_timer.timeout.connect(self._check_update)
+        self._update_timer.start(12 * 3600_000)
 
         # Ensure config directories exist after initialization
         save_config(self._cfg)
@@ -341,6 +362,18 @@ class HAMIOSMainWindow(QMainWindow):
                 self._build_sat_passes_panel(p)
             elif pid == "prop_tips":
                 self._build_prop_tips_panel(p)
+            elif pid == "my_signal":
+                self._build_my_signal_panel(p)
+            elif pid == "path_fc":
+                self._build_path_fc_panel(p)
+            elif pid == "watchlist":
+                self._build_watchlist_panel(p)
+            elif pid == "azimuthal":
+                self._build_azimuthal_panel(p)
+            elif pid == "verify":
+                self._build_verify_panel(p)
+            elif pid == "doppler":
+                self._build_doppler_panel(p)
             else:
                 self._build_placeholder(p, pid)
 
@@ -531,6 +564,135 @@ class HAMIOSMainWindow(QMainWindow):
         w.pass_soon.connect(self._on_sat_pass_soon)
         self._sat_passes_widget = w
 
+    # ── v5.9-panelen ────────────────────────────────────────────────────────
+    def _build_my_signal_panel(self, panel):
+        from .my_signal import MySignalWidget
+        w = MySignalWidget(cfg=self._cfg)
+        self._sprint5_layout(panel).addWidget(w)
+        w.path_requested.connect(self._map_view.show_path)
+        self._my_signal_widget = w
+
+    def _build_path_fc_panel(self, panel):
+        from .path_forecast import PathForecastWidget
+        w = PathForecastWidget(cfg=self._cfg)
+        self._sprint5_layout(panel).addWidget(w)
+        self._map_view.path_target.connect(w.set_target)
+        w.show_on_map.connect(self._map_view.show_path)
+        self._path_fc_widget = w
+
+    def _build_watchlist_panel(self, panel):
+        from .watchlist import WatchlistWidget
+        w = WatchlistWidget(cfg=self._cfg, save=lambda: save_config(self._cfg))
+        self._sprint5_layout(panel).addWidget(w)
+        self._map_view._dx_spots.spots_updated.connect(w.set_spots)
+        w.hit.connect(self._on_watch_hit)
+        w.path_requested.connect(self._map_view.show_path)
+        w.tune_requested.connect(self._tune_from_panel)
+        self._watchlist_widget = w
+
+    def _build_azimuthal_panel(self, panel):
+        from .azimuthal import AzimuthalWidget
+        from .mapview import MAP_FILE
+        w = AzimuthalWidget(cfg=self._cfg, map_file=MAP_FILE)
+        self._sprint5_layout(panel).addWidget(w)
+        dxl = self._map_view._dx_spots
+        dxl.spots_updated.connect(lambda _s, l=dxl, w=w: w.set_spots(l._raw_spots))
+        self._map_view.path_target.connect(w.set_target)
+        w.target_picked.connect(self._map_view.show_path)
+        self._azimuthal_widget = w
+
+    def _build_verify_panel(self, panel):
+        from .verify import Verifier, VerifyWidget
+        from .panels5 import _station_snr
+        self._verifier = Verifier()
+        w = VerifyWidget(self._verifier)
+        self._sprint5_layout(panel).addWidget(w)
+
+        def qth_snr():
+            return (self._cfg.qth_lat, self._cfg.qth_lon), _station_snr(self._cfg)
+
+        if hasattr(self, "_wspr_feed"):
+            self._wspr_feed.data_updated.connect(
+                lambda recs: self._verifier.add_wspr(recs, *qth_snr()))
+        self._map_view._psk.reports_updated.connect(
+            lambda reps: self._verifier.add_psk(reps, *qth_snr()))
+        self._verify_save_timer = QTimer(self)
+        self._verify_save_timer.timeout.connect(self._verifier.save)
+        self._verify_save_timer.start(10 * 60_000)
+        self._verify_widget = w
+
+    def _build_doppler_panel(self, panel):
+        from .doppler import DopplerWidget
+        w = DopplerWidget(cfg=self._cfg, source=self._sat_pass_source)
+        self._sprint5_layout(panel).addWidget(w)
+        self._doppler_widget = w
+
+    def _tune_from_panel(self, hz: int, mode: str):
+        """Afstemmen vanuit een paneel (watchlist): alleen als CAT verbonden is."""
+        from .panels5 import _cat_send
+        cat = getattr(self, "_cat", None)
+        if cat is not None and getattr(cat, "connected", False):
+            _cat_send(hz, mode)
+
+    def _on_watch_hit(self, h: dict):
+        """Gezocht station gespot: melding in het paneel, Windows-melding, geluid."""
+        pct = "—" if h.get("pct") is None else f"{h['pct']}%"
+        text = tr("watch.alert", call=h["call"], band=h["band"],
+                  khz=f"{h['khz']:.1f}", entity=h.get("entity") or h.get("entry", ""), pct=pct)
+        if hasattr(self, "_alerts_widget"):
+            self._alerts_widget.add_alert("🎯", text, "#66BB6A", tr("watch.source"))
+        if getattr(self._cfg, "watch_notify", True):
+            self._notify(tr("watch.notify_title"), text)
+            import threading as _th
+            from .sound import play_sat_enter
+            _th.Thread(target=play_sat_enter, daemon=True).start()
+
+    def _notify(self, title: str, text: str):
+        """Windows-melding via het systeemvak (ook als HAMIOS geminimaliseerd is)."""
+        from PySide6.QtWidgets import QSystemTrayIcon
+        if not QSystemTrayIcon.isSystemTrayAvailable():
+            return
+        tray = getattr(self, "_tray", None)
+        if tray is None:
+            from PySide6.QtGui import QIcon
+            icon = self.windowIcon()
+            if icon.isNull():
+                from ._appdir import APP_DIR
+                icon = QIcon(os.path.join(APP_DIR, "hamios.ico"))
+            tray = QSystemTrayIcon(icon, self)
+            tray.setToolTip("HAMIOS")
+            tray.activated.connect(lambda *_: (self.showNormal(), self.raise_(),
+                                               self.activateWindow()))
+            tray.show()
+            self._tray = tray
+        tray.showMessage(title, text, QSystemTrayIcon.Information, 8000)
+
+    # ── Versiecontrole (ook na het opstartscherm, elke 12 uur) ──────────────
+    def _check_update(self):
+        from PySide6.QtCore import QThread, Signal as _Sig
+        from . import version as _v
+        if not _v.update_check_enabled() or getattr(self, "_upd_thread", None) is not None:
+            return
+
+        class _T(QThread):
+            done = _Sig(str)
+
+            def run(self):
+                self.done.emit(_v.fetch_published_version())
+
+        th = _T(self)
+        th.done.connect(self._on_update_result)
+        th.finished.connect(th.deleteLater)
+        th.finished.connect(lambda: setattr(self, "_upd_thread", None))
+        self._upd_thread = th
+        th.start()
+
+    def _on_update_result(self, published: str):
+        from .version import newer_version
+        if published:
+            self._update_published = published
+        self._header.set_update(newer_version(published) if published else "")
+
     def _sat_pass_source(self):
         """(TLE's van de gevolgde satellieten, QTH) voor het overkomstenpaneel."""
         sat = self._map_view._sat_layer
@@ -640,7 +802,8 @@ class HAMIOSMainWindow(QMainWindow):
             "_prop_adv_widget", "_band_rel_widget",
             "_dx_spots_widget", "_lightning_panel_widget", "_band_sched_widget",
             "_alerts_widget", "_iono_widget", "_sat_passes_widget",
-            "_prop_tips_widget",
+            "_prop_tips_widget", "_my_signal_widget", "_path_fc_widget",
+            "_watchlist_widget", "_azimuthal_widget", "_doppler_widget",
         ]
         for attr in _panel_widgets:
             w = getattr(self, attr, None)
@@ -730,15 +893,38 @@ class HAMIOSMainWindow(QMainWindow):
         update) als tabblad bij hun buur zetten; zonder buur: verborgen."""
         from .tiling import insert_panel, _leaves
         leaves = set(_leaves(tree))
+        added = set()
+        actives = set()                     # actieve tabbladen/panelen vóór het invoegen
+
+        def collect(n):
+            if "p" in n:
+                actives.add(n["p"])
+            elif "t" in n:
+                actives.add(n.get("a") or n["t"][0])
+            for c in n.get("c", []):
+                collect(c)
+        collect(tree)
         for pid, host in _NEW_PANEL_HOSTS.items():
             if pid in leaves or pid not in self._panels:
                 continue
             if host in leaves:
                 tree = insert_panel(tree, pid, host, "center")
                 leaves.add(pid)
+                added.add(pid)
                 visible[pid] = True
             else:
                 visible[pid] = False
+        if added:
+            # Nieuwe tabbladen niet naar voren halen: het tabblad dat de gebruiker
+            # open had (de buur waar ze bij kwamen) blijft het actieve
+            def keep_active(n):
+                if "t" in n and n.get("a") in added:
+                    old = next((p for p in n["t"] if p in actives), None)
+                    if old:
+                        n["a"] = old
+                for c in n.get("c", []):
+                    keep_active(c)
+            keep_active(tree)
         return tree
 
     def apply_preset(self, name: str):
@@ -1089,6 +1275,7 @@ class HAMIOSMainWindow(QMainWindow):
             "band_sched", "band_hist", "solar_hist", "kp_48h", "bz_24h",
             "xray_24h", "lightning", "alerts", "dx_spots", "wspr_feed", "prop_adv",
             "ionosondes", "sat_passes", "prop_tips",
+            "my_signal", "path_fc", "watchlist", "azimuthal", "verify", "doppler",
         ]
 
         for pid in _PANEL_KEYS:
@@ -1470,6 +1657,10 @@ class HAMIOSMainWindow(QMainWindow):
             self._wspr_feed.stop()
         if hasattr(self, "_iono_feed"):
             self._iono_feed.stop()
+        if hasattr(self, "_verifier"):
+            self._verifier.save()
+        if getattr(self, "_tray", None) is not None:
+            self._tray.hide()
         if hasattr(self, "_cat"):
             self._cat.disconnect()
         super().closeEvent(event)

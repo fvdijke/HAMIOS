@@ -23,7 +23,7 @@ import json
 import os
 import re
 
-VERSION = "5.8.4"
+VERSION = "5.9"
 
 USER_AGENT = f"HAMIOS/{VERSION}"
 

@@ -1211,6 +1211,12 @@ _DXCC: dict[str, tuple[float, float]] = {
 
 
 def _call_to_latlon(call: str) -> tuple[float, float] | None:
+    """Positie van het land van de roepnaam: cty.dat (volledige DXCC-lijst),
+    anders de kleine ingebouwde tabel."""
+    from .cty import lookup as _cty_lookup
+    ent = _cty_lookup(call or "")
+    if ent is not None:
+        return ent.lat, ent.lon
     call = call.upper().split("/")[0]
     for n in range(min(len(call), 4), 0, -1):
         if call[:n] in _DXCC:

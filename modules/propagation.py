@@ -229,6 +229,15 @@ def _dist_km(lat1, lon1, lat2, lon2) -> float:
     return 6371 * 2 * math.asin(min(1.0, math.sqrt(a)))
 
 
+def bearing_deg(lat1, lon1, lat2, lon2) -> float:
+    """Beginrichting (°, kortste pad) van punt 1 naar punt 2 — de antennerichting."""
+    p1, p2 = math.radians(lat1), math.radians(lat2)
+    dl = math.radians(lon2 - lon1)
+    y = math.sin(dl) * math.cos(p2)
+    x = math.cos(p1) * math.sin(p2) - math.sin(p1) * math.cos(p2) * math.cos(dl)
+    return math.degrees(math.atan2(y, x)) % 360
+
+
 def gc_point(lat1, lon1, lat2, lon2, frac: float) -> tuple[float, float]:
     """Punt op fractie frac (0–1) van het grootcirkelpad."""
     p1, l1, p2, l2 = map(math.radians, (lat1, lon1, lat2, lon2))
@@ -408,10 +417,27 @@ class PropagationEngine(QObject):
          'points': [Conditions per controlepunt], 'km': afstand}"""
         d = _dist_km(lat1, lon1, lat2, lon2)
         fracs = (0.5,) if d <= 4000 else (0.25, 0.75)
+        # Lange paden: het signaal gaat vlak bij zender en ontvanger door de D-laag
+        # (de straal snijdt de D-laag op ~100 km hoogte, ~250 km van elk eind).
+        # Is het daar dag, dan sluit de absorptie de lage banden — ook als de
+        # controlepunten op ¼ en ¾ in de nacht liggen.
+        luf_end = 0.0
+        if d > 4000:
+            tu = _utc(t)
+            fe = min(0.25, 250.0 / d)
+            for fr in (fe, 1 - fe):
+                elat, elon = gc_point(lat1, lon1, lat2, lon2, fr)
+                luf_end = max(luf_end,
+                              model_luf(elat, elon, tu, self.sfi, self.k, snr_db),
+                              self.drap_haf(elat, elon, tu))
         points, result = [], None
         for fr in fracs:
             plat, plon = gc_point(lat1, lon1, lat2, lon2, fr)
             c = self.conditions(plat, plon, t, snr_db)
+            if luf_end > c.luf:
+                c.luf = round(luf_end, 1)
+                c.band_pct = {name: int(round(100 * band_probability(f, c.muf, luf_end)))
+                              for name, f in BANDS}
             if d < 3000:
                 # Korte sprong: steilere invalshoek → lagere MUF (dode zone).
                 # MUF(d) ≈ foF2 · √(1 + (d / 2h)²), h ≈ 300 km, begrensd op MUF(3000)

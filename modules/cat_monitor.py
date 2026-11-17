@@ -327,6 +327,17 @@ class CatMonitorWindow(QWidget):
                 return
         try:
             data = cmd.encode("ascii")
+            net = getattr(self._cat, "_net", None)
+            if net is not None and net.kind == "rigctld":
+                # rigctld: tekstopdracht, antwoordregel terug
+                with self._cat._lock:
+                    reply = net._cmd(cmd)
+                self._queue_entry("TX", data)
+                self._queue_entry("RX", reply.encode("ascii", errors="replace"))
+                self._refresh_status()
+                return
+            if net is not None:
+                raise OSError(tr("cat.err.raw_flrig"))
             with self._cat._lock:
                 self._cat._serial.write(data)
                 self._cat._serial.flush()

@@ -7,7 +7,7 @@
 
 **Real-time HF propagation and DX monitor for amateur radio operators — Windows 10/11**
 
-> v5.8.4 · November 2026 · Frank van Dijke · *Developed with Claude AI (Anthropic)*
+> v5.9 · November 2026 · Frank van Dijke · *Developed with Claude AI (Anthropic)*
 
 [![Website](https://img.shields.io/badge/website-hamios.space-orange)](https://hamios.space)
 [![Release](https://img.shields.io/github/v/release/fvdijke/HAMIOS?label=latest)](https://github.com/fvdijke/HAMIOS/releases/latest)
@@ -202,6 +202,18 @@ All connections use standard HTTPS/WebSocket. No personal data is transmitted.
 ---
 
 ## 📋 Changelog
+
+### v5.9 — November 2026
+- **My signal**: where your own callsign was heard in the last hour (PSKReporter and WSPR) — receivers, farthest distance and best SNR per band
+- **Path forecast**: chance per band for the next 24 hours on the path to any place (map click, recommendation, locator or callsign), with the best windows
+- **Watchlist**: wanted callsigns, prefixes or countries; alert, Windows notification and sound when spotted on a band that is open on that path
+- **Azimuthal map** centred on your QTH (bearing = antenna heading), with DX spots; click to turn a rotator (Yaesu GS-232 or Hamlib rotctld)
+- **Model vs reality**: per band how often the propagation model agrees with real WSPR/PSKReporter paths (kept 30 days)
+- **Doppler**: Doppler-corrected downlink/uplink of tracked satellites (SatNOGS transmitters), tune or follow via CAT
+- **CAT via Hamlib rigctld and flrig**: practically every radio
+- **Full DXCC database (cty.dat)**, updated monthly
+- **Propagation model**: D-layer absorption near both ends of long paths now counts — no more open low bands to the other side of the world at noon
+- Update badge also in the header and in Settings → About; unused Sporadic-E module removed
 
 ### v5.8.4 — November 2026
 - **Update check**: the splash screen checks GitHub for a newer version and shows **UPDATE AVAILABLE** (click to open the download page); silent when offline

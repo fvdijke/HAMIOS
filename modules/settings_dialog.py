@@ -709,7 +709,7 @@ class SettingsDialog(QDialog):
         self._cat_port.setEditable(True)
         self._cat_port.setFont(QFont("Consolas", 8))
         self._cat_port.setMinimumWidth(160)
-        self._cat_port.lineEdit().setPlaceholderText("COM3  /  /dev/ttyUSB0")
+        self._cat_port.lineEdit().setPlaceholderText("COM3  /  /dev/ttyUSB0  /  127.0.0.1:4532")
         btn_scan = QPushButton("↺")
         btn_scan.setFixedWidth(28)
         btn_scan.setToolTip(tr("tip.port.scan"))
@@ -770,6 +770,22 @@ class SettingsDialog(QDialog):
         self._cat_data.addItem("PKT-U (DATA-U)", "PKT-U")
         self._cat_data.setToolTip(tr("tip.cat_data_mode"))
         row(tr("cat.data_mode_lbl"), self._cat_data)
+
+        # Rotor (azimutale kaart: klik = antenne draaien)
+        _section(v, tr("sec.rotor"))
+        self._rot_type = QComboBox()
+        self._rot_type.addItem(tr("rotor.none"), "")
+        self._rot_type.addItem("Yaesu GS-232 (COM)", "gs232")
+        self._rot_type.addItem("Hamlib rotctld (TCP)", "rotctld")
+        row(tr("rotor.type_lbl"), self._rot_type)
+        self._rot_addr = QLineEdit()
+        self._rot_addr.setPlaceholderText("COM5  /  127.0.0.1:4533")
+        self._rot_addr.setToolTip(tr("tip.rotor_addr"))
+        row(tr("rotor.addr_lbl"), self._rot_addr)
+        self._rot_baud = QComboBox()
+        for b in (1200, 4800, 9600, 19200, 38400):
+            self._rot_baud.addItem(str(b), b)
+        row(tr("rotor.baud_lbl"), self._rot_baud)
 
         def _update_civ_vis():
             show = "Icom" in self._cat_type.currentText()
@@ -902,7 +918,16 @@ class SettingsDialog(QDialog):
         f8 = QFont("Segoe UI", 8)
 
         _section(v, tr("sec.version"))
-        for txt in [tr("set.about.app_line"), tr("set.about.dev_line")]:
+        from .version import VERSION as _VER, newer_version as _newer
+        _pub = getattr(self._mainwin, "_update_published", None) if self._mainwin else None
+        if _pub is None:
+            _upd = tr("about.update_unknown")
+        elif _newer(_pub):
+            _upd = tr("about.update_new", new=_pub)
+        else:
+            _upd = tr("about.update_current")
+        for txt in [tr("set.about.app_line"), tr("set.about.dev_line"),
+                    tr("about.version_line", v=_VER, upd=_upd)]:
             lbl = QLabel(txt)
             lbl.setFont(f8)
             v.addWidget(lbl)
@@ -1431,6 +1456,9 @@ class SettingsDialog(QDialog):
         _set_combo(self._cat_type, saved_type, CatInterface.RADIO_TYPES[0])
         self._cat_civ.setValue(int(get_val("cat_civ_addr", 0x58)))
         _set_combo_data(self._cat_data, get_val("cat_data_mode", "USB"), "USB")
+        _set_combo_data(self._rot_type, get_val("rotor_type", ""), "")
+        self._rot_addr.setText(get_val("rotor_addr", ""))
+        _set_combo_data(self._rot_baud, int(get_val("rotor_baud", 9600)), 9600)
 
         self._loading = False
         # Verbind alle controls na laden
@@ -1582,6 +1610,9 @@ class SettingsDialog(QDialog):
         _set_combo(self._cat_type, saved_type, CatInterface.RADIO_TYPES[0])
         self._cat_civ.setValue(int(getattr(c, "cat_civ_addr", 0x58)))
         _set_combo_data(self._cat_data, getattr(c, "cat_data_mode", "USB"), "USB")
+        _set_combo_data(self._rot_type, getattr(c, "rotor_type", ""), "")
+        self._rot_addr.setText(getattr(c, "rotor_addr", ""))
+        _set_combo_data(self._rot_baud, int(getattr(c, "rotor_baud", 9600)), 9600)
 
         self._loading = False
         # Verbind alle controls na laden (voorkomt trigger tijdens init)
@@ -1658,6 +1689,9 @@ class SettingsDialog(QDialog):
             cat_radio_type    = self._cat_type.currentText(),
             cat_civ_addr      = self._cat_civ.value(),
             cat_data_mode     = self._cat_data.currentData() or "USB",
+            rotor_type        = self._rot_type.currentData() or "",
+            rotor_addr        = self._rot_addr.text().strip(),
+            rotor_baud        = int(self._rot_baud.currentData() or 9600),
         )
         # Velden die via panel-signals bewaard worden (niet hier overschrijven):
         # dx_own_continent, dx_heatmap, band_mode, band_power, band_day_auto,
@@ -1740,10 +1774,11 @@ class SettingsDialog(QDialog):
         # Panel checkboxes moved to header panel chooser dialog
         for combo in [self._mode_cb, self._power_cb, self._ant_cb, self._snap_cb,
                       self._cat_baud, self._cat_bits, self._cat_parity,
-                      self._cat_stop, self._cat_type, self._cat_data]:
+                      self._cat_stop, self._cat_type, self._cat_data,
+                      self._rot_type, self._rot_baud]:
             combo.currentIndexChanged.connect(lambda: self._live(0))
         # Tekstvelden: bij verlaten
-        for le in [self._call_edit, self._loc_edit]:
+        for le in [self._call_edit, self._loc_edit, self._rot_addr]:
             le.editingFinished.connect(lambda: self._live(0))
         # cat_port is een editable combobox — gebruik lineEdit signal
         if hasattr(self, "_cat_port") and self._cat_port.lineEdit():

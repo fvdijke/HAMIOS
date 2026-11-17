@@ -43,6 +43,8 @@ class CatInterface:
         "Yaesu (FT-817/857/897)",
         "Kenwood / Elecraft",
         "Icom CI-V",
+        "Hamlib rigctld (TCP)",
+        "flrig (XML-RPC)",
     ]
 
     _POLL_INTERVAL = 2.0   # seconden tussen frequentie-peilingen
@@ -50,6 +52,10 @@ class CatInterface:
     def _kind(self) -> str:
         """Protocolfamilie van het ingestelde radiotype."""
         rtype = getattr(self._cfg, "cat_radio_type", "") or ""
+        if "rigctld" in rtype:
+            return "rigctld"
+        if "flrig" in rtype:
+            return "flrig"
         if "Icom" in rtype:
             return "icom"
         if "Kenwood" in rtype or "Elecraft" in rtype:
@@ -63,6 +69,7 @@ class CatInterface:
     def __init__(self, cfg=None):
         self._cfg          = cfg
         self._serial       = None
+        self._net          = None    # rig_net.NetRig bij rigctld / flrig
         self._lock         = threading.Lock()
         self._log_callback  = None   # callable(direction, data)
         self._freq_callback = None   # callable(freq_hz: int | None)
@@ -82,6 +89,8 @@ class CatInterface:
     # ── Verbinding ────────────────────────────────────────────────────────────
 
     def connect(self) -> tuple[bool, str]:
+        if self._kind() in ("rigctld", "flrig"):
+            return self._connect_net()
         if not _serial_available:
             return False, tr("cat.err.no_pyserial")
 
@@ -142,9 +151,42 @@ class CatInterface:
             self._log("ERR", str(e))
             return False, str(e)
 
+    def _connect_net(self) -> tuple[bool, str]:
+        """Hamlib rigctld / flrig: adres uit het poortveld (host:poort)."""
+        from .rig_net import NetRig
+        cfg = self._cfg
+        if cfg is None:
+            return False, tr("cat.err.no_cfg")
+        kind = self._kind()
+        try:
+            with self._lock:
+                if self._net is not None:
+                    self._net.close()
+                if self._serial is not None:
+                    try:
+                        self._serial.close()
+                    except Exception:
+                        pass
+                    self._serial = None
+                net = NetRig(kind, getattr(cfg, "cat_port", ""))
+                net.open()
+                self._net = net
+            self._log("INFO", tr("cat.log.connected", port=f"{net.host}:{net.port}",
+                                 baud="TCP", radio=getattr(cfg, "cat_radio_type", "?")))
+            self._start_polling()
+            return True, ""
+        except Exception as e:
+            self._net = None
+            msg = tr("cat.err.net", kind=kind, err=str(e))
+            self._log("ERR", msg)
+            return False, msg
+
     def disconnect(self):
         self._stop_polling()
         with self._lock:
+            if self._net is not None:
+                self._net.close()
+                self._net = None
             if self._serial:
                 try:
                     self._serial.close()
@@ -225,6 +267,9 @@ class CatInterface:
             return None
         kind = self._kind()
         try:
+            if kind in ("rigctld", "flrig"):
+                with self._lock:
+                    return self._net.read_freq() if self._net else None
             if kind == "icom":
                 result = self._icom_read_freq()
             elif kind == "ft817":
@@ -394,6 +439,8 @@ class CatInterface:
 
     @property
     def connected(self) -> bool:
+        if self._net is not None:
+            return self._net.is_open
         return self._serial is not None and self._serial.is_open
 
     # ── Verbindingstest / identificatie ──────────────────────────────────────
@@ -408,6 +455,14 @@ class CatInterface:
             if not ok:
                 return False, err
         import time
+        if self._kind() in ("rigctld", "flrig"):
+            try:
+                with self._lock:
+                    f = self._net.read_freq() if self._net else 0
+            except Exception as e:
+                return False, str(e)
+            return (True, f"{self._kind()} · {f / 1e6:.6f} MHz") if f else \
+                (False, tr("cat.err.unexpected", txt="—"))
         if self._kind() in ("icom", "ft817"):
             # Geen ID-commando: test met het uitlezen van de frequentie
             try:
@@ -450,6 +505,17 @@ class CatInterface:
                 return False, err
 
         kind = self._kind()
+        if kind in ("rigctld", "flrig"):
+            try:
+                with self._lock:
+                    ok = self._net.set_freq(freq_hz)
+                self._log("TX", f"F {freq_hz}".encode())
+                if not ok:
+                    return False, tr("cat.err.refused", mhz=f"{freq_hz / 1e6:.3f}")
+                return True, ""
+            except Exception as e:
+                self._log("ERR", str(e))
+                return False, str(e)
         try:
             if kind == "icom":
                 data = self._icom_cmd(freq_hz)
@@ -525,6 +591,15 @@ class CatInterface:
             return False, tr("cat.err.unknown_mode", mode=mode)
 
         kind = self._kind()
+        if kind in ("rigctld", "flrig"):
+            try:
+                with self._lock:
+                    ok = self._net.set_mode(m)
+                self._log("TX", f"M {m}".encode())
+                return (True, "") if ok else (False, tr("cat.err.mode_refused", mode=mode))
+            except Exception as e:
+                self._log("ERR", str(e))
+                return False, str(e)
         if kind == "icom":
             addr = int(getattr(self._cfg, "cat_civ_addr", 0x58))
             data = bytes([0xFE, 0xFE, addr, 0xE0, 0x06,

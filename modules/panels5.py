@@ -1727,6 +1727,9 @@ def _qth_to_continent(lat: float, lon: float) -> str:
     # Afrika: ten westen van de Rode Zee / Suez; Arabisch schiereiland → Azië
     if -36 <= lat < 37 and -26 <= lon < 52 and not (lat >= 12 and lon >= 34):
         return "AF"
+    # Hawaï en de Pacific vóór Noord-Amerika (DXCC: KH6 = OC)
+    if lon < -150 and lat < 30:
+        return "OC"
     # Noord-Amerika incl. Midden-Amerika, Caribisch gebied en Groenland
     if lat >= 7 and -170 <= lon < -50 and not (lat < 13 and lon > -78):
         return "NA"
@@ -1746,6 +1749,10 @@ def _qth_to_continent(lat: float, lon: float) -> str:
     return "??"
 
 def _callsign_continent(call: str) -> str:
+    from .cty import lookup as _cty_lookup
+    ent = _cty_lookup(call or "")
+    if ent is not None:
+        return ent.cont
     call = call.upper().split("/")[0]
     for n in range(min(len(call), 3), 0, -1):
         if call[:n] in _DXCC_CONT:

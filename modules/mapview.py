@@ -1028,6 +1028,7 @@ class MapView(QGraphicsView):
     """
 
     gc_path_changed   = Signal(float, float)   # lat, lon van klikpunt
+    path_target       = Signal(float, float, str)  # doel van een getoond pad (+ label)
     map_download_progress = Signal(str, int, int)  # (bestandsnaam, ontvangen, totaal)
     map_download_done     = Signal(str)             # bestandsnaam klaar
 
@@ -1778,6 +1779,7 @@ class MapView(QGraphicsView):
         # label iets naast de stip (in schermpixels, want ItemIgnoresTransformations)
         text.setTransform(text.transform().translate(10, -8))
         self._gc_line = group
+        self.path_target.emit(lat, lon, label)       # padvoorspelling volgt het pad
 
     # ── QTH ───────────────────────────────────────────────────────────────────
     def set_qth(self, lat: float, lon: float):

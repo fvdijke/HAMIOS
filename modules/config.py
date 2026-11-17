@@ -120,6 +120,16 @@ class AppConfig:
     cat_civ_addr:   int   = 0x58   # Icom standaard adres 0x58
     cat_data_mode:  str   = "USB"  # radiomode voor FT8/FT4/WSPR: "USB" of "PKT-U" (DATA-U)
 
+    # ── Rotor (azimutale kaart) ───────────────────────────────────────────────
+    rotor_type:     str   = ""     # "" (geen), "gs232" (serieel) of "rotctld" (netwerk)
+    rotor_addr:     str   = ""     # COM-poort of host:poort
+    rotor_baud:     int   = 9600
+
+    # ── Watchlist (gezochte stations/landen in het DX-cluster) ────────────────
+    watchlist:          list  = field(default_factory=list)   # roepnamen, prefixen, landnamen
+    watch_open_only:    bool  = True    # alleen melden als de band op dat pad open is
+    watch_notify:       bool  = True    # Windows-melding + geluid
+
 
 def load_config() -> AppConfig:
     cfg = AppConfig()

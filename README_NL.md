@@ -6,7 +6,7 @@
 
 **Real-time HF-voortplanting en DX-monitor voor radioamateurs — Windows 10/11**
 
-> v5.8.4 · November 2026 · Frank van Dijke · *Ontwikkeld met Claude AI (Anthropic)*
+> v5.9 · November 2026 · Frank van Dijke · *Ontwikkeld met Claude AI (Anthropic)*
 
 [![Website](https://img.shields.io/badge/website-hamios.space-orange)](https://hamios.space)
 [![Release](https://img.shields.io/github/v/release/fvdijke/HAMIOS?label=latest)](https://github.com/fvdijke/HAMIOS/releases/latest)
@@ -201,6 +201,18 @@ Alle verbindingen gebruiken standaard HTTPS/WebSocket. Geen persoonlijke gegeven
 ---
 
 ## 📋 Changelog
+
+### v5.9 — November 2026
+- **Mijn signaal**: waar je eigen roepnaam het afgelopen uur gehoord is (PSKReporter en WSPR) — ontvangers, verste afstand en beste SNR per band
+- **Padvoorspelling**: kans per band voor de komende 24 uur op het pad naar elke plek (klik op de kaart, aanbeveling, locator of roepnaam), met de beste vensters
+- **Watchlist**: gezochte roepnamen, prefixen of landen; melding, Windows-melding en geluid als ze gespot worden op een band die op dat pad open is
+- **Azimutale kaart** rond je QTH (richting = antennerichting), met DX-spots; klik om een rotor te draaien (Yaesu GS-232 of Hamlib rotctld)
+- **Model vs werkelijkheid**: per band hoe vaak het propagatiemodel klopt met echte WSPR/PSKReporter-paden (30 dagen bewaard)
+- **Doppler**: Doppler-gecorrigeerde down- en uplink van gevolgde satellieten (SatNOGS-zenders), afstemmen of volgen via CAT
+- **CAT via Hamlib rigctld en flrig**: vrijwel elke radio
+- **Volledige DXCC-database (cty.dat)**, maandelijks bijgewerkt
+- **Propagatiemodel**: D-laag-absorptie bij beide einden van lange paden telt mee — geen open lage banden meer naar de andere kant van de wereld op het middaguur
+- Update-label ook in de kopbalk en bij Instellingen → Over; ongebruikte Sporadic-E-module verwijderd
 
 ### v5.8.4 — November 2026
 - **Versiecontrole**: het opstartscherm controleert op GitHub of er een nieuwere versie is en toont **UPDATE BESCHIKBAAR** (klik opent de downloadpagina); stil als je offline bent
