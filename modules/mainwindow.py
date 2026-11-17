@@ -248,7 +248,7 @@ class HAMIOSMainWindow(QMainWindow):
             lambda d: self._map_view.set_drap(d) if hasattr(self, "_map_view") else None)
         # Propagatiekaart: elke 10 min opnieuw (de zon schuift op)
         self._propmap_timer = QTimer(self)
-        self._propmap_timer.timeout.connect(self._refresh_propmap)
+        self._propmap_timer.timeout.connect(lambda: self._refresh_propmap(force=True))
         self._propmap_timer.start(10 * 60_000)
         self._data_mgr.solar_ready.connect(self._on_solar_for_history)
         # Gemeten ionosfeer (KC2G/GIRO) — kalibreert het model elke 15 min
@@ -285,9 +285,10 @@ class HAMIOSMainWindow(QMainWindow):
         _dl.setContentsMargins(0, 0, 0, 0)
         _dl.addWidget(self._tiles)
 
-        # Layout laden
-        self._load_layout()
+        # Layout laden — vergrendeling eerst, zodat de splitters meteen de juiste
+        # stijl krijgen (achteraf wisselen herstijlt alle panelen)
         self._tiles.set_locked(getattr(self._cfg, "layout_locked", False))
+        self._load_layout()
 
         # CAT interface aanmaken
         self._cat = _cat_mod.CatInterface(self._cfg)
@@ -1376,16 +1377,26 @@ class HAMIOSMainWindow(QMainWindow):
         _thr.Thread(target=_history.append,
                     args=(band_pct, solar), daemon=True).start()
 
-    def _refresh_propmap(self):
-        """Propagatiekaart (band uit de instellingen) herberekenen als hij aan staat."""
+    def _refresh_propmap(self, force: bool = False):
+        """Propagatiekaart (band uit de instellingen) herberekenen als hij aan staat.
+        Zonder force alleen als band, QTH of stationsmarge veranderd is: een
+        berekening kost ~0,6 s rekentijd en liet het instellingenvenster haperen
+        (elke wijziging rekende de kaart twee keer opnieuw uit)."""
         c = self._cfg
-        if hasattr(self, "_map_view") and getattr(c, "show_propmap", False):
-            from .panels5 import _station_snr
-            self._map_view.update_propmap(getattr(c, "propmap_band", "20m"), _station_snr(c))
+        if not (hasattr(self, "_map_view") and getattr(c, "show_propmap", False)):
+            self._propmap_sig = None
+            return
+        from .panels5 import _station_snr
+        band, snr = getattr(c, "propmap_band", "20m"), _station_snr(c)
+        sig = (band, round(c.qth_lat, 3), round(c.qth_lon, 3), snr)
+        if not force and sig == getattr(self, "_propmap_sig", None):
+            return
+        self._propmap_sig = sig
+        self._map_view.update_propmap(band, snr)
 
     def _on_propagation_updated(self):
         """Nieuwe ionosonde-meting of zonnedata: propagatiepanelen herberekenen."""
-        self._refresh_propmap()
+        self._refresh_propmap(force=True)
         for attr, method in (("_band_rel_widget", "_recalc"),
                              ("_band_sched_widget", "_recalc"),
                              ("_prop_adv_widget", "_rebuild"),

@@ -1585,8 +1585,19 @@ class AlertsWidget(QWidget):
         self._cleared     = True
         self._rebuild()
 
+    def showEvent(self, event):
+        super().showEvent(event)
+        if getattr(self, "_dirty", False):
+            self._rebuild()
+
     def _rebuild(self):
         """Bouw de meldingenlijst op basis van instellingen."""
+        # Verborgen (ander tabblad): niet elke 30 s alle widgets opnieuw opbouwen;
+        # bijwerken zodra het paneel weer zichtbaar wordt
+        if not self.isVisible():
+            self._dirty = True
+            return
+        self._dirty = False
         items: list[tuple] = []  # (kleur_hex, icon, tekst, detail)
         cfg = self._cfg
         data = self._solar_data
@@ -2018,6 +2029,11 @@ class DXSpotsTable(QWidget):
         self.settings_changed.emit()
 
     def _update_table(self):
+        from .extra_panels import bulk_fill
+        with bulk_fill(self._table):
+            self._fill_table()
+
+    def _fill_table(self):
         self._table.setRowCount(0)
         fmono = QFont("Consolas", self._dx_font_sz)
         for spot in self._filtered:
@@ -2203,6 +2219,7 @@ class WSPRTableWidget(QWidget):
             f"({tr('wspr.last_update')}: {_dt.datetime.now().strftime('%H:%M')})"
         )
 
+        self._table.setUpdatesEnabled(False)       # één keer tekenen na het vullen
         for row, record in enumerate(self._records[:100]):  # Limit to 100 rows
             self._table.insertRow(row)
 
@@ -2259,6 +2276,7 @@ class WSPRTableWidget(QWidget):
         self._table.setSortingEnabled(True)
         self._table.resizeColumnsToContents()
         self._table.resizeRowsToContents()
+        self._table.setUpdatesEnabled(True)
 
     def set_font_size(self, pt: int) -> None:
         """Set font size for table and adjust column widths accordingly."""

@@ -131,7 +131,21 @@ class PropTipsWidget(QWidget):
         self._relang = False
         self._changed_at = {k: t for k, t in self._changed_at.items()
                             if k in new_hashes and now - t < self.PULSE_S}
+        # Verborgen tabblad: wijzigingen zijn bijgehouden (stippen), kaartjes pas
+        # opbouwen als het paneel zichtbaar wordt
+        self._tips = tips
+        if not self.isVisible():
+            self._dirty = True
+            return
+        self._build_cards(tips)
 
+    def showEvent(self, event):
+        super().showEvent(event)
+        if getattr(self, "_dirty", False):
+            self._build_cards(self._tips)
+
+    def _build_cards(self, tips):
+        self._dirty = False
         while self._grid.count():
             item = self._grid.takeAt(0)
             if item.widget():

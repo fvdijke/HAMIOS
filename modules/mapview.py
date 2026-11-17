@@ -799,6 +799,11 @@ class DXCCOverlayItem(QGraphicsItem):
         self.setZValue(7.5)
         self._font_size = 7
         self.setVisible(False)
+        # ~340 labels met schaduw: één keer tekenen en daarna uit de cache
+        # (bij pannen, hertekenen van andere lagen en andere panelen)
+        self.setCacheMode(QGraphicsItem.DeviceCoordinateCache)
+        # exposedRect meekrijgen: bij pannen/zoomen alleen de labels in beeld tekenen
+        self.setFlag(QGraphicsItem.ItemUsesExtendedStyleOption, True)
 
     def set_font_size(self, size: int):
         self._font_size = max(5, size)
@@ -823,35 +828,61 @@ class DXCCOverlayItem(QGraphicsItem):
     def paint(self, painter: QPainter, option, widget=None):
         painter.setRenderHint(QPainter.Antialiasing)
 
+        from PySide6.QtGui import QFontMetricsF, QStaticText
         f_prefix  = QFont("Segoe UI", self._font_size)
         f_prefix.setBold(True)
         f_country = QFont("Segoe UI", max(4, self._font_size - 1))
+        # Alleen wat (bijna) in beeld valt: labels steken ~80 px rechts/onder uit
+        vis = option.exposedRect.adjusted(-90, -40, 10, 10) if option is not None else None
+
+        # Voorbereide tekst (QStaticText): de opmaak van ~700 labels gebeurt één
+        # keer per lettergrootte i.p.v. bij elk frame (drawText was ~70 % van de
+        # tijd bij zoomen). drawStaticText plaatst linksboven → basislijn − ascent.
+        cache = getattr(self, "_static", None)
+        if cache is None or cache[0] != self._font_size:
+            fm_p, fm_c = QFontMetricsF(f_prefix), QFontMetricsF(f_country)
+            texts = {}
+            for prefix, country, _la, _lo in _DXCC_CANONICAL:
+                for txt in (prefix, country):
+                    if txt not in texts:
+                        st = QStaticText(txt)
+                        st.setPerformanceHint(QStaticText.AggressiveCaching)
+                        texts[txt] = st
+            from PySide6.QtGui import QFontMetrics
+            fmi = QFontMetrics(f_country)            # regelafstand in hele pixels, zoals voorheen
+            cache = self._static = (self._font_size, texts, fm_p.ascent(),
+                                    fm_c.ascent(), fmi.ascent() + fmi.descent())
+        _sz, texts, asc_p, asc_c, line_c = cache
+        dot_brush = QBrush(self._DOT)
 
         for prefix, country, lat, lon in _DXCC_CANONICAL:
             pt = latlon_to_scene(lat, lon)
+            if vis is not None and not vis.contains(pt):
+                continue
 
             # dot
             painter.setPen(Qt.NoPen)
-            painter.setBrush(QBrush(self._DOT))
+            painter.setBrush(dot_brush)
             painter.drawEllipse(pt, 2.5, 2.5)
             painter.setBrush(Qt.NoBrush)
 
             # prefix label with shadow
             painter.setFont(f_prefix)
             ox, oy = pt.x() + 5, pt.y() + 1
+            st = texts[prefix]
             painter.setPen(self._SHADOW)
-            painter.drawText(QPointF(ox + 1, oy + 1), prefix)
+            painter.drawStaticText(QPointF(ox + 1, oy + 1 - asc_p), st)
             painter.setPen(self._AMBER)
-            painter.drawText(QPointF(ox, oy), prefix)
+            painter.drawStaticText(QPointF(ox, oy - asc_p), st)
 
             # country name with shadow
             painter.setFont(f_country)
-            fm = painter.fontMetrics()
-            cy = oy + fm.ascent() + fm.descent()
+            cy = oy + line_c
+            st = texts[country]
             painter.setPen(self._SHADOW)
-            painter.drawText(QPointF(ox + 1, cy + 1), country)
+            painter.drawStaticText(QPointF(ox + 1, cy + 1 - asc_c), st)
             painter.setPen(self._COUNTRY)
-            painter.drawText(QPointF(ox, cy), country)
+            painter.drawStaticText(QPointF(ox, cy - asc_c), st)
 
 
 # ── Achtergrond render thread (bewaard als referentie, niet meer gebruikt) ─────
@@ -943,7 +974,7 @@ class _HiresDownloadThread(QThread):
         self._dest          = dest
         self._also_save_std = also_save_std
 
-    _UA = f"HAMIOS/{_HAMIOS_VERSION} (HF Propagation Monitor)"
+    _UA = f"HAMIOS/{_HAMIOS_VERSION} (+https://hamios.space; HF propagation monitor)"
 
     def _fetch(self, url: str, dest: str) -> bool:
         """Download url naar dest. Probeert eerst normale SSL, dan zonder verificatie.
@@ -1298,7 +1329,36 @@ class MapView(QGraphicsView):
         vh = self.viewport().height() or 1
         return min(vw / MAP_W, vh / MAP_H)
 
+    # ── Vloeiend pannen/zoomen: snelle schaling tijdens de beweging ─────────────
+    def _begin_interaction(self):
+        """Tijdens pannen/zoomen de gecachete lagen snel schalen; ~0,2 s na de
+        laatste beweging weer glad (eindbeeld is hetzelfde als voorheen)."""
+        if not getattr(self, "_interacting", False):
+            self._interacting = True
+            self.setRenderHint(QPainter.SmoothPixmapTransform, False)
+            # De kaartfoto direct schalen i.p.v. bij elke stap de cache op de
+            # nieuwe schaal opnieuw op te bouwen (en daarna nog eens te tekenen)
+            self._base_map.setCacheMode(QGraphicsItem.NoCache)
+        t = getattr(self, "_interact_timer", None)
+        if t is None:
+            t = self._interact_timer = QTimer(self)
+            t.setSingleShot(True)
+            t.timeout.connect(self._end_interaction)
+        t.start(200)
+
+    def _end_interaction(self):
+        self._interacting = False
+        self.setRenderHint(QPainter.SmoothPixmapTransform, True)
+        self._base_map.setCacheMode(QGraphicsItem.DeviceCoordinateCache)
+        self.viewport().update()
+
+    def scrollContentsBy(self, dx: int, dy: int):
+        if dx or dy:
+            self._begin_interaction()
+        super().scrollContentsBy(dx, dy)
+
     def wheelEvent(self, event):
+        self._begin_interaction()
         factor = 1.15 if event.angleDelta().y() > 0 else 1 / 1.15
         self.scale(factor, factor)
         t  = self.transform()

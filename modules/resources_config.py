@@ -77,6 +77,9 @@ DEFAULT_RESOURCES = {
         "url": "https://pskreporter.info/cgi-bin/pskquery5.pl?encap=0&callback=_",
         "description": "Digital mode propagation reports",
         "method": "GET",
+        # Opstartcontrole op de homepage: de zoekopdracht valt onder de limiet van
+        # één per 5 minuten (anders HTTP 429 — ook voor de echte ophaalronde)
+        "probe_url": "https://pskreporter.info/",
     },
     # Lightning
     "web_blitzortung": {
@@ -101,6 +104,7 @@ DEFAULT_RESOURCES = {
         "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/8/8f/Whole_world_-_land_and_oceans_12000.jpg/1920px-Whole_world_-_land_and_oceans_12000.jpg",
         "description": "NASA Blue Marble world map",
         "method": "GET",
+        "probe_method": "HEAD",          # opstartcontrole: niet elke keer ~300 KB downloaden
     },
 }
 

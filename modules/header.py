@@ -13,6 +13,7 @@ class HeaderBar(QWidget):
     """Amber-geaccentueerde header — v4 stijl."""
 
     refresh_interval_changed = Signal(int)   # minuten (0 = uit)
+    _tz_ready = Signal(str, float, float)     # tijdzonenaam (achtergrond) voor (lat, lon)
 
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -89,7 +90,11 @@ class HeaderBar(QWidget):
         self._countdown_lbl.setToolTip(tr("hdr.countdown.tip"))
 
         self._next_refresh_at: float = 0.0
-        self._local_tz = _tz_from_latlon(52.0, 5.0)   # default NL; update via set_qth()
+        # Systeemtijdzone tot set_qth() de tijdzone van de QTH bepaalt (zonder
+        # wachten: TimezoneFinder laden kost ~2,5 s en gebeurt op de achtergrond)
+        self._local_tz = datetime.datetime.now().astimezone().tzinfo
+        self._tz_qth = None
+        self._tz_ready.connect(self._on_tz_ready)
 
         for b in [self._btn_sat, self._btn_spy, self._btn_eibi,
                   self._btn_ft8, self._btn_overlay, self._btn_panels, self._btn_tools]:
@@ -214,8 +219,33 @@ class HeaderBar(QWidget):
             f"UTC  {utc.strftime('%Y-%m-%d')}  {utc.strftime('%H:%M:%S')}")
 
     def set_qth(self, lat: float, lon: float):
-        """Update lokale tijdzone op basis van QTH-coördinaten."""
-        self._local_tz = _tz_from_latlon(lat, lon)
+        """Lokale tijdzone van de QTH: uit de cache meteen, anders op de achtergrond."""
+        key = (round(lat, 2), round(lon, 2))
+        if key == self._tz_qth:
+            return
+        self._tz_qth = key
+        name = tz_name_cached(lat, lon)
+        if name:
+            self._apply_tz(name)
+            return
+        import threading
+
+        def work():
+            n = tz_name_lookup(lat, lon)
+            if n:
+                self._tz_ready.emit(n, lat, lon)
+        threading.Thread(target=work, daemon=True, name="tz-lookup").start()
+
+    def _on_tz_ready(self, name: str, lat: float, lon: float):
+        if (round(lat, 2), round(lon, 2)) == self._tz_qth:
+            self._apply_tz(name)
+
+    def _apply_tz(self, name: str):
+        try:
+            import zoneinfo
+            self._local_tz = zoneinfo.ZoneInfo(name)
+        except Exception:
+            pass
 
     def set_update(self, new_version: str):
         """Toon het update-label als er een nieuwere HAMIOS-versie is."""
@@ -338,17 +368,72 @@ class HeaderBar(QWidget):
     def btn_fullscreen(self): return self._btn_fs
 
 
-def _tz_from_latlon(lat: float, lon: float):
-    """Bepaal tijdzone vanuit QTH-coördinaten.
+# ── Tijdzone van de QTH ───────────────────────────────────────────────────────
+# TimezoneFinder() laden kost ~2,5 s (polygonen van alle tijdzones); opzoeken
+# daarna < 1 ms. Eén gedeelde instantie, en per QTH de uitkomst bewaard in
+# config/hamios_tz_cache.json — bij een volgende start is er niets te laden.
 
-    Probeert timezonefinder; valt terug op de OS-systeemtijdzone.
-    """
+import json as _json
+import os as _os
+import threading as _threading
+
+_TF = None
+_TF_LOCK = _threading.Lock()
+
+
+def _tz_cache_file() -> str:
+    from ._appdir import APP_DIR
+    return _os.path.join(APP_DIR, "config", "hamios_tz_cache.json")
+
+
+def _tz_key(lat: float, lon: float) -> str:
+    return f"{lat:.2f},{lon:.2f}"
+
+
+def tz_name_cached(lat: float, lon: float) -> str | None:
     try:
-        from timezonefinder import TimezoneFinder
-        import zoneinfo
-        tz_name = TimezoneFinder().timezone_at(lat=lat, lng=lon)
-        if tz_name:
-            return zoneinfo.ZoneInfo(tz_name)
-    except ImportError:
-        pass
+        with open(_tz_cache_file(), encoding="utf-8") as f:
+            return _json.load(f).get(_tz_key(lat, lon))
+    except (OSError, ValueError, AttributeError):
+        return None
+
+
+def tz_name_lookup(lat: float, lon: float) -> str | None:
+    """Tijdzonenaam via TimezoneFinder (traag bij de eerste keer) en in de cache zetten."""
+    global _TF
+    try:
+        with _TF_LOCK:
+            if _TF is None:
+                from timezonefinder import TimezoneFinder
+                _TF = TimezoneFinder()
+            name = _TF.timezone_at(lat=lat, lng=lon)
+    except Exception:
+        return None
+    if name:
+        try:
+            path = _tz_cache_file()
+            try:
+                with open(path, encoding="utf-8") as f:
+                    data = _json.load(f)
+            except (OSError, ValueError):
+                data = {}
+            data[_tz_key(lat, lon)] = name
+            tmp = path + ".tmp"
+            with open(tmp, "w", encoding="utf-8") as f:
+                _json.dump(data, f)
+            _os.replace(tmp, path)
+        except OSError:
+            pass
+    return name
+
+
+def _tz_from_latlon(lat: float, lon: float):
+    """Tijdzone van (lat, lon) als tzinfo (blokkerend; terugval: systeemtijdzone)."""
+    import zoneinfo
+    name = tz_name_cached(lat, lon) or tz_name_lookup(lat, lon)
+    if name:
+        try:
+            return zoneinfo.ZoneInfo(name)
+        except Exception:
+            pass
     return datetime.datetime.now().astimezone().tzinfo

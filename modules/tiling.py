@@ -611,7 +611,9 @@ class TileArea(QWidget):
         sp = QSplitter(Qt.Horizontal if node["o"] == "h" else Qt.Vertical)
         sp.setHandleWidth(HANDLE_W)
         sp.setChildrenCollapsible(False)
-        sp.setStyleSheet(_SPLITTER_QSS)
+        # Meteen de juiste stijl (vóór de kinderen erin zitten): een stylesheet
+        # achteraf zetten herstijlt alle panelen eronder (~50 ms per splitter)
+        sp.setStyleSheet(_SPLITTER_QSS_LOCKED if self._locked else _SPLITTER_QSS)
         for child in node["c"]:
             sp.addWidget(self._make(child))
         # Verhoudingen: QSplitter schaalt relatieve getallen naar de werkelijke ruimte
@@ -688,7 +690,9 @@ class TileArea(QWidget):
     def _apply_lock(self):
         def walk(w):
             if isinstance(w, QSplitter):
-                w.setStyleSheet(_SPLITTER_QSS_LOCKED if self._locked else _SPLITTER_QSS)
+                qss = _SPLITTER_QSS_LOCKED if self._locked else _SPLITTER_QSS
+                if w.styleSheet() != qss:          # alleen bij een echte wissel
+                    w.setStyleSheet(qss)
                 for i in range(w.count()):
                     h = w.handle(i)
                     if h is not None:

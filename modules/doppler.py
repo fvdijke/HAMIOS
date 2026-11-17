@@ -140,7 +140,7 @@ def _widget_class():
     from PySide6.QtWidgets import (QCheckBox, QComboBox, QHBoxLayout, QLabel, QPushButton,
                                    QVBoxLayout, QWidget)
 
-    from .extra_panels import _item, _table
+    from .extra_panels import _set_text, _table, bulk_fill
     from .i18n import tr
     from .theme import TEXT_BODY, TEXT_DIM, TEXT_H1
 
@@ -262,20 +262,20 @@ def _widget_class():
                 return
             if not items:
                 self._status.setText(self._status.text() + "  ·  " + tr("dop.no_tx"))
-            sel = self._tbl.currentRow()
-            self._tbl.setRowCount(len(items))
-            for i, t in enumerate(items):
-                dn = downlink(t["down"], rr)
-                up = uplink(t["up"], rr) if t["up"] else None
-                col = TEXT_H1 if vis else TEXT_DIM
-                self._tbl.setItem(i, 0, _item(t["desc"], col))
-                self._tbl.setItem(i, 1, _item(t["mode"], TEXT_BODY))
-                self._tbl.setItem(i, 2, _item(f"{t['down'] / 1e6:.4f}", TEXT_DIM, align=Qt.AlignRight))
-                self._tbl.setItem(i, 3, _item(f"{dn / 1e6:.5f}", col, bold=vis, align=Qt.AlignRight))
-                self._tbl.setItem(i, 4, _item("—" if up is None else f"{up / 1e6:.5f}", col,
-                                              align=Qt.AlignRight))
-            if 0 <= sel < len(items):
-                self._tbl.selectRow(sel)
+            tb = self._tbl
+            with bulk_fill(tb):
+                if tb.rowCount() != len(items):
+                    tb.setRowCount(len(items))
+                for i, t in enumerate(items):
+                    dn = downlink(t["down"], rr)
+                    up = uplink(t["up"], rr) if t["up"] else None
+                    col = TEXT_H1 if vis else TEXT_DIM
+                    _set_text(tb, i, 0, t["desc"], col)
+                    _set_text(tb, i, 1, t["mode"], TEXT_BODY)
+                    _set_text(tb, i, 2, f"{t['down'] / 1e6:.4f}", TEXT_DIM, align=Qt.AlignRight)
+                    _set_text(tb, i, 3, f"{dn / 1e6:.5f}", col, bold=vis, align=Qt.AlignRight)
+                    _set_text(tb, i, 4, "—" if up is None else f"{up / 1e6:.5f}", col,
+                              align=Qt.AlignRight)
             if self._follow.isChecked() and vis and int(time.time()) % 2 == 0:
                 self._tune_selected(force=False)
 

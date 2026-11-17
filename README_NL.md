@@ -6,7 +6,7 @@
 
 **Real-time HF-voortplanting en DX-monitor voor radioamateurs — Windows 10/11**
 
-> v5.9 · November 2026 · Frank van Dijke · *Ontwikkeld met Claude AI (Anthropic)*
+> v5.9.1 · November 2026 · Frank van Dijke · *Ontwikkeld met Claude AI (Anthropic)*
 
 [![Website](https://img.shields.io/badge/website-hamios.space-orange)](https://hamios.space)
 [![Release](https://img.shields.io/github/v/release/fvdijke/HAMIOS?label=latest)](https://github.com/fvdijke/HAMIOS/releases/latest)
@@ -201,6 +201,12 @@ Alle verbindingen gebruiken standaard HTTPS/WebSocket. Geen persoonlijke gegeven
 ---
 
 ## 📋 Changelog
+
+### v5.9.1 — November 2026
+- **Veel lichter en sneller**: processor in rust van ~33 % naar ~3 % van één kern (tabellen worden in één keer gevuld en alleen gewijzigde cellen bijgewerkt); opstarten van ~10 s naar ~4 s (tijdzone van de QTH één keer op de achtergrond geladen en onthouden); een instelling toepassen van ~4,6 s naar ~0,1 s; EIBI-venster opent binnen een seconde; vloeiender pannen op de kaart
+- **Help volledig bijgewerkt**: hoe je panelen indeelt (splitsen, tabbladen, tabs verhuizen, wisselen, sluiten en terughalen), alle functies van v5.9, opstartscherm en updates, CAT-types en rotor, HAM Antenna Designer
+- EIBI: de kopregel van het planningsbestand staat niet meer als zender in de lijst
+- **Geen HTTP 429 meer van Wikimedia en PSK Reporter**: HAMIOS meldt zich nu met een contactadres (dat eist Wikimedia), en de opstartcontrole gebruikt een lichte aanvraag in plaats van een echte PSKReporter-zoekopdracht (die meetelde voor de limiet van één per 5 minuten) of een volledige kaartdownload
 
 ### v5.9 — November 2026
 - **Mijn signaal**: waar je eigen roepnaam het afgelopen uur gehoord is (PSKReporter en WSPR) — ontvangers, verste afstand en beste SNR per band

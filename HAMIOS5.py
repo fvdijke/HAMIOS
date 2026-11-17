@@ -262,22 +262,24 @@ class _OnlineResourceCheckThread(QThread):
         # Build resource dict from DEFAULT_RESOURCES for testing.
         # Satellite (TLE) sources are excluded: TLE is only fetched manually and
         # rate-limited (tle_sources.py), never as a startup connectivity probe.
+        # probe_url / probe_method: lichte controle i.p.v. de echte (zware of
+        # gelimiteerde) aanvraag — zie resources_config
         self._RESOURCES = {
-            key: (res["url"], {"User-Agent": USER_AGENT})
+            key: (res.get("probe_url", res["url"]), {"User-Agent": USER_AGENT},
+                  res.get("probe_method", "GET"))
             for key, res in DEFAULT_RESOURCES.items()
             if res.get("category") != "Satellites"
         }
 
     def run(self):
         import urllib.request as _urlreq
-        for key, (url, headers) in self._RESOURCES.items():
+        for key, (url, headers, method) in self._RESOURCES.items():
             # Check for interruption request
             if self.isInterruptionRequested():
                 return
 
             try:
-                # Use GET request with proper headers
-                req = _urlreq.Request(url, method="GET", headers=headers)
+                req = _urlreq.Request(url, method=method, headers=headers)
                 with _urlreq.urlopen(req, timeout=4) as r:
                     ok = r.status < 400
                     detail = f"HTTP {r.status}"

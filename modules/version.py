@@ -23,9 +23,11 @@ import json
 import os
 import re
 
-VERSION = "5.9"
+VERSION = "5.9.1"
 
-USER_AGENT = f"HAMIOS/{VERSION}"
+# Met contactadres: Wikimedia (en andere diensten) weigeren anders met HTTP 429/403
+# (User-Agent-beleid: https://meta.wikimedia.org/wiki/User-Agent_policy)
+USER_AGENT = f"HAMIOS/{VERSION} (+https://hamios.space; HF propagation monitor)"
 
 VERSION_URL  = "https://raw.githubusercontent.com/fvdijke/HAMIOS/main/version.json"
 RELEASES_URL = "https://github.com/fvdijke/HAMIOS/releases/latest"

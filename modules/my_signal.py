@@ -21,7 +21,7 @@ import urllib.request
 from PySide6.QtCore import Qt, QThread, QTimer, Signal
 from PySide6.QtWidgets import QLabel, QVBoxLayout, QWidget
 
-from .extra_panels import _item, _table
+from .extra_panels import _item, _table, bulk_fill
 from .i18n import tr
 from .theme import TEXT_BODY, TEXT_DIM, TEXT_H1
 from .version import USER_AGENT
@@ -198,23 +198,26 @@ class MySignalWidget(QWidget):
             self._status.setText(tr("mysig.status", call=call, n=len({r["rx"] for r in reports}),
                                     far=far["km"], rx=far["rx"], t=now))
         rows = summarize(reports)
-        self._sum.setRowCount(len(rows))
-        for i, (band, n, km, snr) in enumerate(rows):
-            self._sum.setItem(i, 0, _item(band, TEXT_H1, bold=True))
-            self._sum.setItem(i, 1, _item(str(n), align=Qt.AlignRight))
-            self._sum.setItem(i, 2, _item(f"{km:,} km".replace(",", "."), align=Qt.AlignRight))
-            self._sum.setItem(i, 3, _item("—" if snr is None else f"{snr:+d} dB", align=Qt.AlignRight))
+        with bulk_fill(self._sum):
+            self._sum.setRowCount(len(rows))
+            for i, (band, n, km, snr) in enumerate(rows):
+                self._sum.setItem(i, 0, _item(band, TEXT_H1, bold=True))
+                self._sum.setItem(i, 1, _item(str(n), align=Qt.AlignRight))
+                self._sum.setItem(i, 2, _item(f"{km:,} km".replace(",", "."), align=Qt.AlignRight))
+                self._sum.setItem(i, 3, _item("—" if snr is None else f"{snr:+d} dB",
+                                              align=Qt.AlignRight))
         shown = reports[:200]
-        self._tbl.setRowCount(len(shown))
-        for i, r in enumerate(shown):
-            t = _dt.datetime.fromtimestamp(r["t"]).strftime("%H:%M") if r["t"] else "—"
-            self._tbl.setItem(i, 0, _item(t, TEXT_DIM))
-            self._tbl.setItem(i, 1, _item(r["band"]))
-            self._tbl.setItem(i, 2, _item(r["rx"], TEXT_H1))
-            self._tbl.setItem(i, 3, _item(str(r["km"]), align=Qt.AlignRight))
-            self._tbl.setItem(i, 4, _item("—" if r["snr"] is None else f"{r['snr']:+d}",
-                                          align=Qt.AlignRight))
-            self._tbl.setItem(i, 5, _item(r["mode"], TEXT_BODY))
+        with bulk_fill(self._tbl):
+            self._tbl.setRowCount(len(shown))
+            for i, r in enumerate(shown):
+                t = _dt.datetime.fromtimestamp(r["t"]).strftime("%H:%M") if r["t"] else "—"
+                self._tbl.setItem(i, 0, _item(t, TEXT_DIM))
+                self._tbl.setItem(i, 1, _item(r["band"]))
+                self._tbl.setItem(i, 2, _item(r["rx"], TEXT_H1))
+                self._tbl.setItem(i, 3, _item(str(r["km"]), align=Qt.AlignRight))
+                self._tbl.setItem(i, 4, _item("—" if r["snr"] is None else f"{r['snr']:+d}",
+                                              align=Qt.AlignRight))
+                self._tbl.setItem(i, 5, _item(r["mode"], TEXT_BODY))
 
     def _on_row(self, row: int, _col: int):
         if 0 <= row < len(self._reports):

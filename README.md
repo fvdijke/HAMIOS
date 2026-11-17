@@ -7,7 +7,7 @@
 
 **Real-time HF propagation and DX monitor for amateur radio operators — Windows 10/11**
 
-> v5.9 · November 2026 · Frank van Dijke · *Developed with Claude AI (Anthropic)*
+> v5.9.1 · November 2026 · Frank van Dijke · *Developed with Claude AI (Anthropic)*
 
 [![Website](https://img.shields.io/badge/website-hamios.space-orange)](https://hamios.space)
 [![Release](https://img.shields.io/github/v/release/fvdijke/HAMIOS?label=latest)](https://github.com/fvdijke/HAMIOS/releases/latest)
@@ -202,6 +202,12 @@ All connections use standard HTTPS/WebSocket. No personal data is transmitted.
 ---
 
 ## 📋 Changelog
+
+### v5.9.1 — November 2026
+- **Much lighter and faster**: idle CPU from ~33 % to ~3 % of one core (tables are filled in one go and only changed cells are updated); start-up from ~10 s to ~4 s (time zone of the QTH loaded once in the background and remembered); applying a setting from ~4.6 s to ~0.1 s; EIBI window opens in under a second; smoother panning of the map
+- **Help fully updated**: how to arrange panels (splitting, tabs, moving tabs, swapping, closing and restoring), all v5.9 features, start screen and updates, CAT types and rotator, HAM Antenna Designer
+- EIBI: the header line of the schedule file is no longer listed as a station
+- **No more HTTP 429 from Wikimedia and PSK Reporter**: HAMIOS now identifies itself with a contact address (Wikimedia requires this), and the start-up check uses a light request instead of a real PSKReporter query (which counted against its 5-minute limit) or a full map download
 
 ### v5.9 — November 2026
 - **My signal**: where your own callsign was heard in the last hour (PSKReporter and WSPR) — receivers, farthest distance and best SNR per band

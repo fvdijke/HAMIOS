@@ -15,8 +15,8 @@ import json
 import os
 import urllib.request
 
-from PySide6.QtCore import Qt, QThread, Signal, QSortFilterProxyModel, QTimer, QModelIndex
-from PySide6.QtGui import QFont, QColor, QStandardItemModel, QStandardItem
+from PySide6.QtCore import Qt, QThread, Signal, QSortFilterProxyModel, QTimer
+from PySide6.QtGui import QFont, QStandardItemModel, QStandardItem
 from PySide6.QtWidgets import (
     QDialog, QVBoxLayout, QHBoxLayout, QLabel, QLineEdit,
     QPushButton, QTableView, QHeaderView, QProgressBar,
@@ -105,14 +105,16 @@ class _EibiDownloadThread(QThread):
 
 # ── Numerieke proxy (sorteert kHz-kolom als float) ───────────────────────────
 
+_SORT_ROLE = Qt.UserRole + 1
+
+
 class _EibiSortProxy(QSortFilterProxyModel):
-    def lessThan(self, left: QModelIndex, right: QModelIndex) -> bool:
-        if left.column() == 0:
-            try:
-                return float(left.data() or 0) < float(right.data() or 0)
-            except (ValueError, TypeError):
-                pass
-        return super().lessThan(left, right)
+    """Sorteert op _SORT_ROLE: de kHz-kolom als getal, de rest als tekst —
+    vergelijken gebeurt in Qt zelf (geen Python-aanroep per vergelijking)."""
+
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.setSortRole(_SORT_ROLE)
 
 
 def _fmt_int(n: int) -> str:
@@ -180,7 +182,8 @@ class EibiDialog(QDialog):
         self.setStyleSheet(_QSS)
         self._build_ui()
         restore_geom(self, "EibiDialog")
-        self._load_from_cache()
+        # Eerst het venster tonen, dan de ~9000 zenders laden (status: "laden…")
+        QTimer.singleShot(0, self._load_from_cache)
 
     # ── UI bouw ───────────────────────────────────────────────────────────────
     def _build_ui(self):
@@ -254,6 +257,7 @@ class EibiDialog(QDialog):
         self._table.verticalHeader().setVisible(False)
         self._table.verticalHeader().setDefaultSectionSize(18)
         self._table.setShowGrid(False)
+        self._table.setFont(QFont("Segoe UI", 8))      # standaardletter voor alle cellen
         self._table.clicked.connect(self._on_row_clicked)
 
         hdr = self._table.horizontalHeader()
@@ -319,6 +323,7 @@ class EibiDialog(QDialog):
     def _resize_columns(self):
         """Pas kolombreedtes aan op inhoud (max 300px per kolom)."""
         hdr = self._table.horizontalHeader()
+        hdr.setResizeContentsPrecision(400)     # breedte uit een steekproef, niet alle 9000+ rijen
         for i in range(self._model.columnCount() - 1):  # niet laatste (stretch)
             hdr.setSectionResizeMode(i, QHeaderView.ResizeToContents)
         self._table.resizeColumnsToContents()
@@ -341,9 +346,12 @@ class EibiDialog(QDialog):
         now       = self._now_cb.isChecked()
         translate = self._translate_cb.isChecked()
 
-        self._model.removeRows(0, self._model.rowCount())
+        # Nieuw model vullen en pas daarna koppelen: rij-voor-rij toevoegen aan een
+        # gekoppeld, gesorteerd model liet de proxy na elke rij opnieuw sorteren
+        model = QStandardItemModel(0, self._model.columnCount())
+        model.setHorizontalHeaderLabels([self._model.headerData(i, Qt.Horizontal)
+                                         for i in range(self._model.columnCount())])
         f_mono = QFont("Consolas", 8)
-        f8     = QFont("Segoe UI", 8)
 
         now_utc = datetime.datetime.now(datetime.timezone.utc)
         now_min = now_utc.hour * 100 + now_utc.minute
@@ -368,6 +376,10 @@ class EibiDialog(QDialog):
             fields = (row + [""] * 8)[:8]
             kHz_str = fields[0].strip()
             time_str = fields[1].strip()    # "0600-0800"
+            try:
+                khz_val = float(kHz_str)
+            except ValueError:
+                continue                    # kopregel van het bestand ("kHz:75") e.d.
 
             # Band-filter
             if freq_range:
@@ -418,9 +430,12 @@ class EibiDialog(QDialog):
                 else:
                     display = raw_val
 
-                item = QStandardItem(display)
-                item.setFont(f_mono if csv_j == 0 else f8)
-                item.setForeground(QColor(TEXT_BODY))
+                item = QStandardItem(display)       # kleur: uit de tabel-stylesheet
+                if csv_j == 0:
+                    item.setFont(f_mono)
+                    item.setData(khz_val, _SORT_ROLE)
+                else:
+                    item.setData(display.lower(), _SORT_ROLE)
 
                 # Tooltip: altijd de volledige naam, ook als niet vertaald
                 if csv_j == 3 and itu_full:
@@ -431,8 +446,12 @@ class EibiDialog(QDialog):
                     item.setToolTip(target_full)
 
                 items.append(item)
-            self._model.appendRow(items)
+            model.appendRow(items)
 
+        old = self._model
+        self._model = model
+        self._proxy.setSourceModel(model)
+        old.deleteLater()
         n = self._model.rowCount()
         self._status_lbl.setText(tr("eibi.status.filtered", n=_fmt_int(n),
                                     total=_fmt_int(len(self._all_rows))))

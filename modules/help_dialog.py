@@ -24,37 +24,97 @@ _HELP = [
     ("🚀 Aan de slag", "Welkom", """
 <h3>Welkom bij HF Propagation &amp; Atmosphere Monitor</h3>
 <p>Een realtime HF-propagatie- en atmosfeermonitor voor radioamateurs: gemeten
-ionosfeer, propagatie-advies, zonnedata, live DX-, WSPR- en PSKReporter-spots,
-satellieten, bliksem en meer — alles op één scherm.</p>
+ionosfeer, propagatie-advies en -voorspelling, zonnedata, live DX-, WSPR- en PSKReporter-spots,
+waar uw eigen signaal gehoord wordt, satellieten met Doppler, bliksem en meer — alles op één scherm.</p>
 <h4>Eerste stappen</h4>
 <ol>
 <li>Stel uw <b>roepletters, QTH, mode, vermogen en antenne</b> in via <b>⚙ Instellingen → Station</b>
-  — het propagatiemodel rekent met uw station.</li>
-<li>Voer uw <b>Maidenhead-locator</b> in (bijv. JO22NC) of gebruik lat/lon.</li>
-<li>Kies een indeling via <b>🪟 Panelen</b> (Kaart centraal, Operating, Analyse of Standaard).</li>
+  — het propagatiemodel rekent met uw station, en met uw roepletters ziet u in
+  <i>Mijn signaal</i> waar u gehoord wordt.</li>
+<li>Voer uw <b>Maidenhead-locator</b> in (bijv. JO21DN) of gebruik lat/lon.</li>
+<li>Kies een indeling via <b>🪟 Panelen</b> (Kaart centraal, Operating, Analyse of Standaard) en
+  richt hem naar wens in (zie <i>Panelen en indeling</i>).</li>
 <li>Zet kaartlagen aan via <b>🗺 Overlays</b> — bij een nieuwe installatie staan ze allemaal uit.</li>
+<li>Optioneel: verbind uw radio via <b>⚙ Instellingen → CAT</b> om met één klik af te stemmen.</li>
 </ol>
+<h4>Snel de weg vinden</h4>
+<ul>
+<li><b>Wanneer kan ik … werken?</b> — klik op de kaart: <i>Padvoorspelling</i> toont de komende 24 uur.</li>
+<li><b>Wat is er nu open?</b> — <i>Banden nu</i>, <i>Propagatie Advies</i> en <i>Propagatie-overzicht</i>.</li>
+<li><b>Waar word ik gehoord?</b> — <i>Mijn signaal</i>.</li>
+<li><b>Een gezocht land in de lucht?</b> — <i>Watchlist</i>.</li>
+</ul>
+<p>Gebruik het zoekveld hierboven om in alle helpteksten te zoeken.</p>
 """),
 
     ("🚀 Aan de slag", "Panelen en indeling", """
 <h3>Panelen en indeling</h3>
-<p>De panelen vormen een <b>getegelde indeling</b>: ze sluiten altijd op elkaar aan, zonder
-gaten of overlap, en schalen mee met het venster.</p>
+<p>Alle panelen samen vormen een <b>getegelde indeling</b>: ze sluiten altijd op elkaar aan,
+zonder gaten of overlap, en schalen mee met het venster. U kunt de indeling volledig naar
+eigen smaak inrichten.</p>
+
+<h4>Grootte aanpassen</h4>
+<p>Sleep de dunne <b>scheidingslijn</b> tussen twee panelen: beide buren passen zich tegelijk aan.</p>
+
+<h4>Panelen verslepen, splitsen en samenvoegen</h4>
+<p>Pak een paneel aan de <b>titelbalk</b> — of, in een groep met tabbladen, aan zijn
+<b>tab</b> — en sleep het naar een ander paneel. Tijdens het slepen ziet u een kleine afbeelding
+van het paneel en een <b>gekleurd vlak</b> dat laat zien waar het terechtkomt:</p>
 <ul>
-<li><b>Verslepen</b>: pak een paneel aan de titel (of tab) en laat het los op een ander paneel —
-  rand = ernaast, midden = als tabblad, Ctrl + midden = van plaats wisselen.</li>
-<li><b>Grootte</b>: sleep de scheidingslijnen tussen panelen.</li>
-<li><b>Tabbladen</b>: passen zich aan de breedte aan; is het krap, dan tonen de niet-actieve tabs
-  alleen hun icoon (naam in de tooltip). Sluiten via ✕ op de actieve tab.</li>
+<li><b>Rand</b> van een paneel (links, rechts, boven of onder) → het paneel wordt <b>ernaast
+  geplaatst</b>: de plek wordt <b>gesplitst</b> in twee helften.</li>
+<li><b>Midden</b> van een paneel → het paneel komt er <b>als tabblad</b> bij; zo ontstaat
+  een <b>tabgroep</b>.</li>
+<li><b>Ctrl ingedrukt + midden</b> → de twee panelen <b>wisselen van plek</b>.</li>
+<li>Een <b>tab uit een tabgroep</b> slepen naar de rand van diezelfde groep maakt hem
+  <b>los</b>: de groep wordt gesplitst in het losse paneel en de rest.</li>
 </ul>
+
+<h4>Tabgroepen</h4>
+<ul>
+<li>Klik op een tab om dat paneel te tonen.</li>
+<li>Is het krap, dan tonen de niet-actieve tabs <b>alleen hun icoon</b>; de volledige naam
+  staat in de tooltip.</li>
+<li>Blijft er in een groep maar één zichtbaar paneel over, dan ziet u gewoon een paneel met
+  titelbalk; de tabs komen terug zodra er weer een tweede bij komt.</li>
+</ul>
+
+<h4>Panelen sluiten en terughalen</h4>
+<ul>
+<li>Sluit een paneel met <b>✕</b> in de titelbalk (of op de actieve tab). De buren vullen de
+  vrijgekomen ruimte.</li>
+<li>Haal het terug via <b>🪟 Panelen</b> (vinkje aan): het komt op <b>dezelfde plek en in dezelfde
+  grootte</b> terug.</li>
+<li>Nieuwe panelen na een update verschijnen als tabblad naast een verwant paneel, zonder uw
+  indeling te verschuiven of het tabblad dat u open had te vervangen.</li>
+</ul>
+
 <h4>🪟 Panelen-menu</h4>
 <ul>
-<li>Vier indelingen: <b>Kaart centraal</b>, <b>Operating</b>, <b>Analyse</b> en
-  <b>Standaard</b> (de klassieke HAMIOS-indeling).</li>
-<li><b>Indeling vastzetten</b> voorkomt per ongeluk verslepen.</li>
+<li>Vier kant-en-klare indelingen: <b>Kaart centraal</b> (dagelijks gebruik), <b>Operating</b>
+  (kaart zo groot mogelijk), <b>Analyse</b> (grafieken groot) en <b>Standaard</b> (de klassieke
+  HAMIOS-indeling). Op kleine schermen krijgt elke indeling een compacte variant met meer tabbladen.</li>
+<li><b>Indeling vergrendelen</b>: geen slepen meer en vaste scheidingslijnen — handig als alles
+  goed staat.</li>
 <li>Panelen tonen of verbergen met de vinkjes.</li>
 </ul>
-<p>Het menu (en het Overlays-menu) sluit vanzelf als u ergens anders klikt.</p>
+<p>Het menu (en het Overlays-menu) sluit vanzelf als u ergens anders klikt. Uw indeling wordt bij
+afsluiten bewaard; meerdere indelingen bewaart u als <i>Layout-profiel</i>.</p>
+"""),
+
+    ("🚀 Aan de slag", "Opstartscherm en updates", """
+<h3>Opstartscherm en updates</h3>
+<p>Bij het opstarten controleert HAMIOS maprechten, bestanden, afhankelijkheden en de online
+bronnen, en kijkt het op GitHub of er een <b>nieuwere versie</b> is.</p>
+<ul>
+<li>Is er een update, dan verschijnt <b>UPDATE BESCHIKBAAR</b> — op het opstartscherm én als
+  label in de header. Klik erop om de downloadpagina te openen; de muis erop toont het
+  nieuwe versienummer.</li>
+<li>Tijdens het gebruik wordt elke 12 uur opnieuw gekeken.</li>
+<li><b>Instellingen → Over</b> toont uw versie en of er een nieuwere is.</li>
+<li>Zonder internet blijft alles stil: er volgt geen foutmelding.</li>
+</ul>
+<p>Het opstartscherm kunt u uitzetten in <b>Instellingen → Over</b>.</p>
 """),
 
     # ── Kaart ─────────────────────────────────────────────────────────────────
@@ -86,7 +146,30 @@ gaten of overlap, en schalen mee met het venster.</p>
 <p>Uw QTH is het blauwe kruis op de kaart (instellen via Instellingen → Station).
 De cirkels geven de waarschuwingsstralen voor onweer aan.</p>
 <p><b>Klik op de kaart</b> of op een <b>aanbeveling</b> in het propagatie-advies om het
-grootcirkelpad (kortste pad) vanaf uw QTH te tekenen, met de afstand.</p>
+grootcirkelpad (kortste pad) vanaf uw QTH te tekenen, met de afstand. Hetzelfde punt wordt het doel
+van de <b>Padvoorspelling</b> en verschijnt op de <b>Azimutale kaart</b>.
+<b>Rechtsklik</b> zet de kaart terug op het hele wereldbeeld.</p>
+<h4>Zoomen en pannen</h4>
+<p>Scrollwiel = zoomen, slepen = pannen. Klik op een <b>DX-spot</b> of <b>PSKReporter</b>-stip voor
+details (roepnaam, frequentie, band, spotter).</p>
+"""),
+
+    ("🌍 Kaart", "Azimutale kaart en rotor", """
+<h3>Azimutale kaart</h3>
+<p>Een wereldkaart <b>gecentreerd op uw QTH</b> (azimutaal-equidistant): elke rechte lijn vanuit het
+midden is een grootcirkel. De <b>richting</b> op de kaart is dus precies de richting waarin u uw
+antenne draait, de <b>afstand</b> tot het midden de echte afstand. Ringen per 5000 km; de rand is
+het antipode van uw QTH (20 000 km).</p>
+<ul>
+<li><b>Muis</b> op de kaart: richting (kort en lang pad), afstand en positie.</li>
+<li><b>Klik</b>: pad en padvoorspelling naar dat punt.</li>
+<li>Blauwe stippen = actuele DX-spots.</li>
+</ul>
+<h4>Rotor</h4>
+<p>Met een rotor ingesteld (<b>Instellingen → CAT → Rotor</b>) draait de antenne mee als u
+klikt. Ondersteund: <b>Yaesu GS-232</b> (en compatibele interfaces, via een COM-poort) en
+<b>Hamlib rotctld</b> (netwerk, standaard 127.0.0.1:4533). Het groene streepje toont de laatst
+gevraagde richting.</p>
 """),
 
     # ── Solar / propagatie ────────────────────────────────────────────────────
@@ -124,7 +207,7 @@ Elke rij heeft <b>vijf kolommen</b>:</p>
 <p>Bovenaan staan de actuele <b>MUF</b> en <b>LUF</b> op uw QTH, de marge van uw station (dB)
 en of het dag of nacht is. Het percentage komt uit het propagatiemodel (zie
 <i>Propagatiemodel</i>) en houdt rekening met uw mode, vermogen en antenne.</p>
-<p>Klik op een band om de frequentie via CAT naar de radio te sturen.</p>
+<p>Klik op een band om een frequentie te kiezen en via CAT naar de radio te sturen.</p>
 """),
 
     ("☀ Solar & Propagatie", "Komende 24 uur", """
@@ -151,6 +234,70 @@ bruikbaar. Hover voor details.</p>
 <p><b>Muis op een aanbeveling</b>: uitleg waarom de band open is (positie t.o.v. MUF en LUF,
 controlepunten in daglicht of donker, waarnemingen per bron). <b>Klik</b>: pad op de kaart en,
 als de radio verbonden is, afstemmen via CAT. Zie ook <b>ⓘ Hoe lees ik dit</b> in het paneel.</p>
+"""),
+
+    ("☀ Solar & Propagatie", "Propagatie-overzicht", """
+<h3>Propagatie-overzicht</h3>
+<p>Elf vaste kaartjes met een samenvatting van dit moment: beste banden, geomagnetische toestand,
+zonactiviteit, zonnewind en Bz, zonnevlammen, dagdeel, mode/vermogen, absorptie op hoge breedte,
+sporadic-E (seizoen volgt uw halfrond), <b>DX-routes vanaf uw QTH</b> (uit het propagatiemodel) en
+een algeheel oordeel.</p>
+<p>Een kaartje waarvan de inhoud verandert krijgt <b>5 minuten een knipperende stip</b>.
+Het aantal kolommen past zich aan de paneelbreedte aan (1–3); in een laag paneel kunt u scrollen.</p>
+"""),
+
+    ("☀ Solar & Propagatie", "Padvoorspelling", """
+<h3>Padvoorspelling — wanneer kan ik daar werken?</h3>
+<p>De <b>kans per band voor de komende 24 uur</b> op het pad van uw QTH naar één plek, met
+hetzelfde padmodel als de aanbevelingen.</p>
+<ul>
+<li><b>Doel kiezen</b>: klik op de kaart of de azimutale kaart, klik een aanbeveling of een
+  melding in <i>Mijn signaal</i> — of typ een <b>locator</b> (JO21DN) of <b>roepnaam</b> (het land
+  wordt via cty.dat gevonden) en klik <b>Voorspel</b>.</li>
+<li>Bovenaan: afstand, richting (kort en lang pad).</li>
+<li>Raster: banden × uren (lokale tijd, eerste kolom = dit uur); groen = goede kans, oranje = matig,
+  rood = slecht, donker = dicht. Muis op een vak voor het percentage.</li>
+<li>Onderaan de <b>beste vensters</b>: aaneengesloten uren met ≥ 50 % kans, hoogste kans eerst.</li>
+</ul>
+<p>Het model houdt rekening met de absorptie overdag bij zender én ontvanger: lage banden naar de
+andere kant van de wereld gaan open als het aan beide kanten donker (of schemerig) is.</p>
+"""),
+
+    ("☀ Solar & Propagatie", "Model vs werkelijkheid", """
+<h3>Model vs werkelijkheid</h3>
+<p>Hoe vaak klopt het propagatiemodel met wat er écht gehoord wordt? Elke WSPR-spot rond uw QTH en
+elk PSKReporter-pad met één kant binnen 500 km is een pad dat op dat moment open wás.</p>
+<ul>
+<li><b>Gehoord</b> — aantal waarnemingen (paden ≥ 1000 km).</li>
+<li><b>Model eens</b> — deel daarvan waarvoor het model ≥ 50 % kans gaf (groen ≥ 70 %).</li>
+<li><b>Gem. kans</b> — gemiddelde modelkans op de gehoorde paden.</li>
+<li><b>Open, stil</b> — uren waarin het model de band open gaf terwijl er niets gehoord werd
+  (alleen uren waarin op andere banden wél iets gehoord werd).</li>
+</ul>
+<p>Kies 1, 7 of 30 dagen. De cijfers lopen door over herstarts heen (30 dagen bewaard).
+Let op: stilte kan ook betekenen dat er niemand actief was.</p>
+"""),
+
+    ("☀ Solar & Propagatie", "Stormprognose en 27 dagen", """
+<h3>Stormprognose en 27-dagen-vooruitzicht</h3>
+<p>De <b>3-daagse NOAA-prognose</b>: kans op <b>Actief</b> (Kp 4), <b>G1</b> (Kp 5), <b>G2</b> (Kp 6)
+en <b>G3+</b> (Kp ≥ 7) per dag. NOAA geeft G3 t/m G5 als één kans; in de rij G4+ staat daarom "—".
+Kleur: geel ≥ 10 %, oranje ≥ 25 %, rood ≥ 50 %.</p>
+<p>Daaronder het <b>27-dagen-vooruitzicht</b>: per dag de verwachte maximale Kp (kleur) en de
+zonneflux (balkje); vandaag is omkaderd. De tooltip noemt de rustigste dagen met de hoogste
+flux — handig voor het plannen van contests en DX.</p>
+"""),
+
+    ("☀ Solar & Propagatie", "Kp, Bz en röntgen", """
+<h3>Kp-, Bz- en röntgengrafieken</h3>
+<ul>
+<li><b>Kp 48u</b> — officiële planetaire K-index per 3 uur; de oranje lijn is de stormdrempel (Kp 5).
+  Rechtsboven de actuele waarde.</li>
+<li><b>Bz 24u</b> — de noord-zuidcomponent van het interplanetaire magneetveld. Langdurig
+  <b>negatief (rood)</b> = verhoogde kans op geomagnetische storm.</li>
+<li><b>Röntgen 24u</b> — GOES-zonneflux op logaritmische schaal (A–X). Rechtsboven de actuele
+  klasse; M en X = zonnevlam (kans op radio-blackout aan de dagzijde).</li>
+</ul>
 """),
     ("☀ Solar & Propagatie", "Propagatiemodel", """
 <h3>Propagatiemodel</h3>
@@ -197,18 +344,15 @@ het verlichte percentage en de hoogte boven of onder de horizon.</p>
     # ── Geschiedenis ──────────────────────────────────────────────────────────
     ("📈 Geschiedenis", "Band Verloop en Solar Verloop", """
 <h3>Band Verloop (historiek)</h3>
-<p>Toont de berekende band-betrouwbaarheid voor alle 11 HF-banden over de afgelopen
-24u (instelbaar). Data wordt elke refresh opgeslagen in <b>HAMIOS_history.csv</b>
-(90 dagen bewaard).</p>
-<p><b>Klik op een band in de legenda</b> om die band aan/uit te zetten.</p>
-
+<p>De berekende kans per HF-band in de tijd. Bij elke verversing wordt een punt opgeslagen in
+<b>config/HAMIOS_history.csv</b> (90 dagen bewaard).</p>
+<ul>
+<li>Kies het tijdbereik rechtsboven: <b>24h, 7d, 30d of 1j</b>.</li>
+<li><b>Klik op een band in de legenda</b> om die band aan of uit te zetten.</li>
+<li>Gaten (HAMIOS stond uit) worden niet met een rechte lijn overbrugd.</li>
+</ul>
 <h3>Solar Verloop</h3>
-<p>Toont het SFI-verloop in de tijd. Rode verticale strepen duiden momenten aan
-met verhoogde K-index (geomagnetische storm).</p>
-
-<h4>Tijdbereik</h4>
-<p>Het tijdbereik is via de <code>set_hours()</code>-methode aanpasbaar in de
-toekomst (v5.1). Momenteel: 24u.</p>
+<p>Het verloop van SFI en K-index in de tijd, met hetzelfde tijdbereik.</p>
 """),
 
     # ── DX ────────────────────────────────────────────────────────────────────
@@ -224,27 +368,65 @@ De spots voeden ook het propagatie-advies. Lettergrootte: <b>Instellingen → Ka
 """),
     ("📡 DX Spots", "Live DX Spots", """
 <h3>Live DX Spots</h3>
-<p>Real-time DX-clusterdata van <b>DXWatch.com</b>. De tabel wordt bijgewerkt bij elke
-solar-refresh (standaard 5 minuten).</p>
-
+<p>Real-time DX-clusterdata van <b>DXWatch.com</b>, elke 2 minuten ververst. De spots staan ook op
+de kaart (lijn van spotter naar DX, gekleurd per band); het land van elke roepnaam komt uit de
+DXCC-database (cty.dat).</p>
 <h4>Kolommen</h4>
 <ul>
 <li><b>UTC</b> — tijdstip van de spot</li>
 <li><b>Band</b> — HF-band (kleurgecodeerd)</li>
 <li><b>MHz</b> — exacte frequentie</li>
-<li><b>DX</b> — DX-roepletters (gekleurde bandkleur)</li>
+<li><b>DX</b> — DX-roepletters</li>
 <li><b>Spotter</b> — wie de spot maakte</li>
 <li><b>Comment</b> — eventuele opmerking</li>
 </ul>
-
 <h4>Filteren</h4>
 <ul>
-<li><b>Eigen continent</b> — toon alleen spots door spotters op uw continent.</li>
-<li><b>Heatmap</b> — schakel naar een bandactiviteitsgrafiek over 24u.</li>
+<li><b>Eigen continent</b> — alleen spots van spotters op uw continent (geldt ook voor de kaart).</li>
+<li><b>Heatmap</b> — bandactiviteit per uur over 24 uur.</li>
 </ul>
-
 <h4>CAT-afstemming</h4>
-<p>Klik op een rij om uw radio direct op de spotfrequentie af te stemmen (SSB).</p>
+<p>Klik op een rij om uw radio op de spotfrequentie af te stemmen (SSB).</p>
+"""),
+
+    ("📡 DX Spots", "Mijn signaal", """
+<h3>Mijn signaal — waar word ik gehoord?</h3>
+<p>Waar uw eigen roepnaam het <b>afgelopen uur</b> ontvangen is, via <b>PSKReporter</b>
+(FT8, FT4, CW-skimmers e.d.) en <b>WSPR</b> (uw WSPR-baken).</p>
+<ul>
+<li>Bovenaan per band: aantal ontvangers, <b>verste afstand</b> en <b>beste SNR</b>.</li>
+<li>Daaronder elke melding: tijd, band, ontvanger, afstand, SNR en mode.</li>
+<li><b>Klik</b> op een melding: het pad op de kaart (en in de padvoorspelling).</li>
+</ul>
+<p>Vereist uw roepletters in <b>Instellingen → Station</b>. Ververst elke 5 minuten (de afspraak
+met PSKReporter). Dit is de directe controle of uw antenne en het advies kloppen.</p>
+"""),
+
+    ("📡 DX Spots", "Watchlist", """
+<h3>Watchlist — gezochte stations en landen</h3>
+<p>Zet stations of landen die u zoekt op de lijst; HAMIOS let op het DX-cluster.</p>
+<ul>
+<li><b>Roepnaam</b> (bijv. 3Y0J) — precies die roepnaam, ook als /P of /MM.</li>
+<li><b>Prefix</b> (tot 4 tekens, bijv. VK9) — alle roepnamen die zo beginnen.</li>
+<li><b>Land</b> (bijv. Bouvet) — deel van de DXCC-naam, minstens 4 letters.</li>
+</ul>
+<p>Typ een regel en klik <b>Toevoegen</b>; selecteer een regel en klik <b>Verwijderen</b>.</p>
+<h4>Meldingen</h4>
+<p>Wordt een gezocht station gespot, dan volgt een melding in het meldingen-paneel, een
+<b>Windows-melding</b> (ook als HAMIOS geminimaliseerd is) en een geluid. Standaard
+<b>alleen als de band op dat pad open is</b> (≥ 50 % volgens het model) — uitvinken voor alle spots.
+Per roepnaam en band hooguit één melding per 30 minuten.</p>
+<p>In de tabel: <b>klik</b> = pad op de kaart, <b>dubbelklik</b> = afstemmen via CAT.</p>
+"""),
+
+    ("📡 DX Spots", "DXCC-database (cty.dat)", """
+<h3>DXCC-database (cty.dat)</h3>
+<p>HAMIOS gebruikt de volledige DXCC-lijst van <b>country-files.com</b> (AD1C) om van elke
+roepnaam het land, het continent, de CQ/ITU-zone en de positie te bepalen — ook bij lastige
+gevallen als <i>EA8/DL1ABC</i> (Canarische Eilanden) of <i>R9…</i> (Aziatisch Rusland).</p>
+<p>Gebruikt voor de DX-spots op de kaart, het eigen-continentfilter, de watchlist en de
+padvoorspelling op roepnaam. Het bestand staat in <code>config/cty.dat</code> en wordt maandelijks
+automatisch ververst; zonder internet blijft de bewaarde versie gelden.</p>
 """),
 
     # ── Satelliet ─────────────────────────────────────────────────────────────
@@ -273,6 +455,21 @@ aftelling, duur, maximale elevatie en richting (opkomst → ondergang).</p>
 <li><b>Melding</b> (met geluid) vijf minuten vóór een overkomst — aan/uit en minimale elevatie in
   <b>Instellingen → Meldingen</b> (standaard 10°).</li>
 </ul>
+"""),
+
+    ("🛰 Satellieten", "Doppler", """
+<h3>Doppler</h3>
+<p>Voor uw gevolgde satellieten de <b>zenders uit de SatNOGS-database</b> met de
+<b>Doppler-gecorrigeerde frequenties van dit moment</b>:</p>
+<ul>
+<li><b>Downlink nu</b> — waar u moet luisteren (nadert de satelliet, dan hoger; verwijdert hij, lager).</li>
+<li><b>Uplink nu</b> — waarop u moet zenden zodat de satelliet de nominale frequentie ontvangt.</li>
+</ul>
+<p>Kies de satelliet bovenaan; de regel toont elevatie, azimut en naderingssnelheid.
+Selecteer een zender en klik <b>Afstemmen</b> om de downlink via CAT op de radio te zetten; met
+<b>Volgen</b> blijft de radio tijdens de overkomst bijgestemd (elke 2 s, alleen bij &gt; 50 Hz
+verschil).</p>
+<p>Satellieten volgt u via <b>🛰 Satellite</b> (vinkje <b>Positie</b>).</p>
 """),
 
     # ── Bliksem ───────────────────────────────────────────────────────────────
@@ -378,37 +575,58 @@ op alle banden (2200m t/m 23cm).</p>
 <p>Standaard ingeschakeld: de modus wordt automatisch op USB gezet bij klikken.</p>
 """),
 
+    ("📐 Antenne", "HAM Antenna Designer", """
+<h3>HAM Antenna Designer</h3>
+<p>Via de knop <b>📡 Antenna</b> in de header opent u de meegeleverde <b>HAM Antenna Designer</b>
+(apart venster, volgt de taal van HAMIOS).</p>
+<ul>
+<li><b>20+ gedocumenteerde ontwerpen</b>: verticals, dipolen, EFHW, loops, Yagi, Moxon, quad,
+  J-pole en SWL-ontvangstantennes — met onderbouwde formules en bouwadvies.</li>
+<li><b>Draadlengtes</b> met de juiste correctie voor geïsoleerde draad; bandplan van IARU-regio 1 of 2.</li>
+<li><b>SWR</b> (uit de complexe impedantie, achter de balun/unun), <b>SWR-sweep</b>, Smith-diagram en
+  <b>stralingspatronen</b> boven echte bodem.</li>
+<li><b>Aanpasnetwerken</b> met E12-waarden en <b>kabelverlies</b> voor 44 kabeltypes (inclusief extra
+  verlies door SWR).</li>
+<li>Antennetekeningen in 2D/3D, dag/nacht-thema, printbare SVG-export.</li>
+</ul>
+"""),
+
     # ── CAT ───────────────────────────────────────────────────────────────────
     ("📟 CAT", "CAT radio-interface", """
 <h3>CAT Radio-interface</h3>
-<p>CAT (Computer Aided Transceiver) maakt directe besturing van uw radio mogelijk
-via de seriële poort. HAMIOS ondersteunt:</p>
+<p>CAT (Computer Aided Transceiver) laat HAMIOS uw radio afstemmen en de frequentie uitlezen.
+Ondersteunde radiotypes:</p>
 <ul>
 <li><b>Yaesu FT-950/2000/DX/3000/5000</b> — FA-commando (8 cijfers), standaard 38400 baud</li>
-<li><b>Yaesu FT-817/857/897</b> — FA-commando</li>
-<li><b>Kenwood / Elecraft</b> — FA-commando (11 cijfers)</li>
-<li><b>Icom CI-V</b> — binair BCD-protocol</li>
+<li><b>Yaesu FT-991/710/DX10/DX101</b> — FA-commando (9 cijfers)</li>
+<li><b>Yaesu FT-817/857/897</b> — binair 5-byte-protocol (8N2)</li>
+<li><b>Kenwood / Elecraft</b> — FA-commando (11 cijfers), modus via MD</li>
+<li><b>Icom CI-V</b> — binair BCD-protocol, frequentie én modus (adres instelbaar)</li>
+<li><b>Hamlib rigctld</b> — via het netwerk: vrijwel elke radio die Hamlib kent (200+)</li>
+<li><b>flrig</b> — via het netwerk (XML-RPC)</li>
 </ul>
 
 <h4>Instellen (Instellingen → CAT)</h4>
 <ol>
-<li>Klik op <b>⚙ Instellingen → CAT</b>.</li>
-<li>Selecteer de seriële poort (wordt automatisch gescand).</li>
 <li>Kies uw radiotype of gebruik een <b>Preset</b> (FT-950, FT-817, TS-590, K3/KX3).</li>
-<li>Stel baudrate, databits, pariteit en stopbits in (of gebruik de preset-standaarden).</li>
-<li>Schakel <b>CAT inschakelen</b> in.</li>
-<li>Test de verbinding met de <b>Verbinding testen</b>-knop.</li>
+<li>Seriële radio: kies de poort (wordt gescand) en stel baudrate, databits, pariteit en
+  stopbits in. <b>rigctld/flrig</b>: typ het adres in het poortveld, bijv.
+  <code>127.0.0.1:4532</code> (rigctld) of <code>127.0.0.1:12345</code> (flrig).</li>
+<li>Kies bij <b>Data-modus</b> welke radiomodus FT8/FT4/WSPR krijgt (USB of PKT-U/DATA-U).</li>
+<li>Schakel <b>CAT inschakelen</b> in en test met <b>Verbinding testen</b>.</li>
 </ol>
 
 <h4>Seriële terminal</h4>
-<p>Open de seriële terminal via <b>⚙ Instellingen → CAT → Seriële terminal openen</b>.
-Het terminal-venster toont de verbindingsstatus en laat u handmatig CAT-commando's
-typen en de raw radio-respons bekijken. Alle seriële parameters worden uitsluitend
-in Instellingen → CAT ingesteld.</p>
+<p>Via <b>⚙ Instellingen → CAT → Seriële terminal openen</b> ziet u het verkeer met de radio en kunt
+u zelf opdrachten typen (bij rigctld: rigctld-opdrachten zoals <code>f</code>).</p>
 
 <h4>Frequentie in header</h4>
-<p>Zodra CAT verbonden is, verschijnt de actuele VFO-A-frequentie van uw radio
-rechts van de CAT-knop in de header. De radio wordt elke 2 seconden gepeild.</p>
+<p>Zodra CAT verbonden is, verschijnt de actuele frequentie van uw radio in de header
+(elke 2 seconden gepeild).</p>
+
+<h4>Rotor</h4>
+<p>In hetzelfde tabblad stelt u een rotor in (Yaesu GS-232 via COM-poort, of Hamlib rotctld via
+het netwerk) — zie <i>Azimutale kaart en rotor</i>.</p>
 """),
 
     ("🌐 Resources", "Online resources beheren", """
@@ -471,14 +689,13 @@ endpoints (bijv. spiegelservers, backup-API's).</p>
 <li><b>Onweer nabij</b> — bij bliksem binnen de ingestelde straal</li>
 <li><b>Satelliet boven QTH</b> — als een geselecteerde satelliet in uw footprint zit</li>
 <li><b>Satellietovergang</b> — vijf minuten vóór een overkomst (drempel instelbaar)</li>
+<li><b>Watchlist</b> — een gezocht station of land is gespot (ook als Windows-melding)</li>
 <li><b>Gebeurtenissen</b> uit het advies — straling, schokgolf, zuidwaartse Bz, sporadic-E</li>
 <li><b>Propagatie-advies</b> — bij wijzigingen in de bandanalyse</li>
 </ul>
-
 <h4>FIFO-limiet</h4>
 <p>Stel in Instellingen → Meldingen het maximale aantal te bewaren meldingen in.
 Oudste meldingen worden automatisch verwijderd (standaard 50).</p>
-
 <h4>Wis alles</h4>
 <p>Klik op <b>Wis alles</b> om alle actieve meldingen te verwijderen.</p>
 """),
@@ -486,26 +703,24 @@ Oudste meldingen worden automatisch verwijderd (standaard 50).</p>
     # ── Instellingen ──────────────────────────────────────────────────────────
     ("⚙ Instellingen", "Instellingen overzicht", """
 <h3>Instellingen</h3>
-<p>Alle configuratie via <b>⚙ Instellingen</b> in de header. Alle wijzigingen
-zijn <b>live</b> — u ziet het resultaat direct zonder opnieuw opstarten.</p>
-
+<p>Alle configuratie via <b>⚙ Instellingen</b> in de header. Wijzigingen worden
+<b>direct toegepast</b> — u ziet het resultaat zonder opnieuw op te starten (behalve een nieuw thema).</p>
 <h4>Tabbladen</h4>
 <ul>
-<li><b>📡 Station</b> — roepletters, QTH, modus, vermogen, antenne</li>
-<li><b>🪟 Panelen</b> — panelen tonen/verbergen</li>
-<li><b>🗺 Kaart</b> — lettergroottes overlays, grootte zon- en maanicoon</li>
-<li><b>⚡ Bliksem</b> — fade-duur, nabijheidsmelding, geluid, prestaties</li>
-<li><b>🔔 Meldingen</b> — K-drempel, X-flare, band-drempel, FIFO-limiet</li>
-<li><b>📟 CAT</b> — seriële poort, radiotype, presets, terminal</li>
+<li><b>📡 Station</b> — roepletters, QTH/locator, mode, vermogen, antenne, dag/nacht</li>
+<li><b>🗺 Kaart</b> — rasterstap, lettergroottes van de kaartlagen, grootte zon- en maanicoon</li>
+<li><b>⚡ Bliksem</b> — aan/uit, fade-duur, nabijheidsmelding, geluid, prestaties</li>
+<li><b>🔔 Meldingen</b> — K-drempel, X-flare, band-drempel, satellietovergangen, FIFO-limiet</li>
+<li><b>📟 CAT</b> — radiotype (ook rigctld/flrig), poort of adres, presets, data-modus, rotor, terminal</li>
 <li><b>🌐 Resources</b> — online resources URL's, test en onderzoek endpoints</li>
-<li><b>📐 Layout</b> — thema (Nacht, Dag, Goed leesbaar, eigen thema via de thema-designer; actief na herstart), standaard layout opslaan/herstellen, profielen</li>
-<li><b>📦 Over</b> — versie-info, afhankelijkheden, bestandsstatus</li>
+<li><b>📐 Layout</b> — thema (Nacht, Dag, Goed leesbaar, eigen thema via de thema-designer; actief na
+  herstart), standaard layout opslaan/herstellen, profielen</li>
+<li><b>📦 Over</b> — versie en update-status, afhankelijkheden, bestandsstatus, opstartscherm aan/uit</li>
 </ul>
-
+<p>Panelen tonen/verbergen en de indeling kiezen doet u via <b>🪟 Panelen</b> in de header.</p>
 <h4>Instellingen worden bewaard in</h4>
-<p><code>hamios_config.json</code> in de programmamap. Alle instellingen — inclusief
-vensterposities, CAT-configuratie, blikseminstellingen en satellietdata — staan
-in dit één bestand.</p>
+<p><code>config/hamios_config.json</code> in de programmamap — inclusief vensterposities,
+CAT- en rotorinstellingen, watchlist en blikseminstellingen.</p>
 """),
 
     ("⚙ Instellingen", "Layout-profielen", """
@@ -527,27 +742,27 @@ in dit één bestand.</p>
     ("🔧 Technisch", "Vereisten en bestanden", """
 <h3>Technische vereisten</h3>
 <ul>
-<li><b>Windows 10/11</b> (64-bit)</li>
-<li><b>PySide6</b> ≥ 6.4 (vereist)</li>
-<li><b>pyserial</b> (optioneel, voor CAT)</li>
-<li><b>websocket-client</b> (optioneel, voor bliksemdetectie)</li>
-<li><b>timezonefinder</b> (optioneel, voor lokale tijdzone op basis van QTH)</li>
+<li><b>Windows 10/11</b> (64-bit) — de EXE bevat alles wat nodig is</li>
+<li>Vanuit de broncode: <b>Python 3.10+</b> met <b>PySide6</b> (vereist), en optioneel
+  <b>pyserial</b> (CAT, GS-232-rotor), <b>websocket-client</b> (bliksem),
+  <b>timezonefinder</b> (lokale tijdzone van de QTH) en <b>numpy</b> (snellere azimutale kaart)</li>
 </ul>
-
-<h4>Bestanden</h4>
+<h4>Bestanden (map config/)</h4>
 <ul>
-<li><code>HAMIOS5.exe</code> — uitvoerbaar programma</li>
-<li><code>worldmap_eq.jpg</code> — wereldkaart (vereist naast de EXE)</li>
 <li><code>hamios_config.json</code> — alle instellingen en vensterposities</li>
-<li><code>hamios_layouts.json</code> — paneelposities (legacy kopie)</li>
-<li><code>hamios_spy_stations.json</code> — SpyStations database</li>
-<li><code>hamios_tle.json</code> — satelliet TLE (wordt gedownload)</li>
-<li><code>hamios_eibi.csv</code> — EIBI-planning (wordt gedownload)</li>
+<li><code>hamios_profiles.json</code> — layout-profielen</li>
 <li><code>HAMIOS_history.csv</code> — band-historiek (90 dagen)</li>
+<li><code>hamios_tle.json</code> — satelliet-TLE (handmatig vernieuwd)</li>
+<li><code>hamios_transmitters.json</code> — satellietzenders voor Doppler (SatNOGS, 30 dagen)</li>
+<li><code>cty.dat</code> — DXCC-database (maandelijks ververst)</li>
+<li><code>hamios_verify.json</code> — model vs werkelijkheid (30 dagen)</li>
+<li><code>hamios_eibi.csv</code> — EIBI-planning</li>
+<li><code>hamios_spy_stations.json</code> — SpyStations-database</li>
+<li><code>hamios_tz_cache.json</code> — tijdzone per QTH (sneller opstarten)</li>
 </ul>
-
+<p>Naast de EXE: <code>worldmap_eq.jpg</code> (wereldkaart; wordt zo nodig gedownload).</p>
 <h4>Bestandsstatus</h4>
-<p>Zie <b>Instellingen → Over → Bestanden</b> voor een live overzicht van alle bestanden.</p>
+<p>Zie <b>Instellingen → Over → Bestanden</b> voor een live overzicht.</p>
 """),
 
     ("🔧 Technisch", "Databronnen", """
@@ -555,17 +770,21 @@ in dit één bestand.</p>
 <ul>
 <li><b>NOAA SWPC</b> — zonnedata, K-index, realtime zonnewind (Bz), X-straling, stormprognose,
   R/S/G-schalen, OVATION-aurora, D-RAP-absorptie, 27-daagse vooruitblik</li>
+<li><b>HamQSL</b> — SFI en zonnevlekgetal</li>
 <li><b>prop.kc2g.com</b> — ionosondemetingen van het GIRO-netwerk (foF2, MUF, foEs)</li>
-<li><b>wspr.live</b> — WSPR-spots (ClickHouse-database van alle WSPRnet-spots)</li>
-<li><b>PSKReporter.info</b> — ontvangstrapporten van digitale modes</li>
+<li><b>wspr.live</b> — WSPR-spots (alle WSPRnet-spots), ook voor <i>Mijn signaal</i></li>
+<li><b>PSKReporter.info</b> — ontvangstrapporten van digitale modes, ook voor <i>Mijn signaal</i></li>
 <li><b>DXWatch.com</b> — live DX-clusterdata</li>
+<li><b>country-files.com</b> — DXCC-database cty.dat (AD1C)</li>
 <li><b>Blitzortung.org</b> — wereldwijd bliksemdetectienetwerk (WebSocket)</li>
 <li><b>eibispace.de</b> — EIBI kortegolf-omroepplanning (Eike Bierwirth)</li>
-<li><b>SatNOGS DB</b> en <b>AMSAT</b> — satelliet-TLE-data</li>
-<li><b>NASA Blue Marble</b> — equirectangulaire wereldkaart</li>
+<li><b>SatNOGS DB</b> en <b>AMSAT</b> — satelliet-TLE's en satellietzenders (Doppler)</li>
+<li><b>NASA Blue Marble</b> (Wikimedia) — equirectangulaire wereldkaart</li>
+<li><b>GitHub</b> — versiecontrole (version.json)</li>
 </ul>
-<p>Alle externe verbindingen verlopen via standaard HTTPS/WebSocket.
-Het programma verstuurt geen persoonlijke gegevens.</p>
+<p>Alle externe verbindingen verlopen via standaard HTTPS/WebSocket. Het programma verstuurt geen
+persoonlijke gegevens; alleen voor <i>Mijn signaal</i> wordt uw roepnaam als zoekterm naar
+PSKReporter en wspr.live gestuurd.</p>
 """),
 ]
 
@@ -575,36 +794,90 @@ _HELP_EN = [
     ("🚀 Getting started", "Welcome", """
 <h3>Welcome to HF Propagation &amp; Atmosphere Monitor</h3>
 <p>A real-time HF propagation and atmosphere monitor for radio amateurs: measured ionosphere,
-propagation advice, solar data, live DX, WSPR and PSKReporter spots, satellites, lightning and
-more — all on one screen.</p>
+propagation advice and forecasts, solar data, live DX, WSPR and PSKReporter spots, where your own
+signal is heard, satellites with Doppler, lightning and more — all on one screen.</p>
 <h4>First steps</h4>
 <ol>
 <li>Set your <b>callsign, QTH, mode, power and antenna</b> in <b>⚙ Settings → Station</b>
-  — the propagation model uses your station.</li>
-<li>Enter your <b>Maidenhead locator</b> (e.g. JO22NC) or use lat/lon.</li>
-<li>Pick a layout via <b>🪟 Panels</b> (Map centre, Operating, Analysis or Default).</li>
-<li>Switch on map layers via <b>🗺 Overlays</b> — on a new installation they are all off.</li>
+  — the propagation model uses your station, and with your callsign <i>My signal</i> shows where
+  you are heard.</li>
+<li>Enter your <b>Maidenhead locator</b> (e.g. JO21DN) or use lat/lon.</li>
+<li>Pick a layout via <b>🪟 Panels</b> (Map centre, Operating, Analysis or Default) and arrange it
+  to your liking (see <i>Panels and layout</i>).</li>
+<li>Turn map layers on via <b>🗺 Overlays</b> — on a new installation they are all off.</li>
+<li>Optional: connect your radio in <b>⚙ Settings → CAT</b> to tune with one click.</li>
 </ol>
+<h4>Finding your way</h4>
+<ul>
+<li><b>When can I work …?</b> — click the map: <i>Path forecast</i> shows the next 24 hours.</li>
+<li><b>What is open now?</b> — <i>Bands now</i>, <i>Propagation Advice</i> and <i>Propagation overview</i>.</li>
+<li><b>Where am I heard?</b> — <i>My signal</i>.</li>
+<li><b>A wanted country on the air?</b> — <i>Watchlist</i>.</li>
+</ul>
+<p>Use the search field above to search all help topics.</p>
 """),
     ("🚀 Getting started", "Panels and layout", """
 <h3>Panels and layout</h3>
-<p>The panels form a <b>tiled layout</b>: they always fit together, without gaps or overlap, and
-scale with the window.</p>
+<p>All panels together form a <b>tiled layout</b>: they always fit together, without gaps or
+overlap, and scale with the window. You can arrange the layout entirely to your own taste.</p>
+
+<h4>Resizing</h4>
+<p>Drag the thin <b>divider</b> between two panels: both neighbours adjust at the same time.</p>
+
+<h4>Moving, splitting and merging panels</h4>
+<p>Grab a panel by its <b>title bar</b> — or, in a tab group, by its <b>tab</b> — and drag it onto
+another panel. While dragging you see a small image of the panel and a <b>coloured area</b> showing
+where it will go:</p>
 <ul>
-<li><b>Drag</b>: grab a panel by its title (or tab) and drop it onto another panel —
-  edge = beside it, centre = as a tab, Ctrl + centre = swap places.</li>
-<li><b>Size</b>: drag the dividers between panels.</li>
-<li><b>Tabs</b> adapt to the available width; when it gets tight, inactive tabs show only their
-  icon (name in the tooltip). Close via ✕ on the active tab.</li>
+<li><b>Edge</b> of a panel (left, right, top or bottom) → the panel is placed <b>next to it</b>:
+  that spot is <b>split</b> into two halves.</li>
+<li><b>Centre</b> of a panel → the panel is added <b>as a tab</b>, forming a <b>tab group</b>.</li>
+<li><b>Ctrl held + centre</b> → the two panels <b>swap places</b>.</li>
+<li>Dragging a <b>tab out of a tab group</b> to the edge of that same group <b>detaches</b> it:
+  the group is split into the loose panel and the rest.</li>
 </ul>
+
+<h4>Tab groups</h4>
+<ul>
+<li>Click a tab to show that panel.</li>
+<li>When space is tight, inactive tabs show <b>only their icon</b>; the full name is in the tooltip.</li>
+<li>If only one visible panel remains in a group, you simply see a panel with a title bar; the tabs
+  return as soon as a second one is shown again.</li>
+</ul>
+
+<h4>Closing and restoring panels</h4>
+<ul>
+<li>Close a panel with <b>✕</b> in its title bar (or on the active tab). Its neighbours fill the
+  space.</li>
+<li>Bring it back via <b>🪟 Panels</b> (tick it): it returns to <b>the same place and size</b>.</li>
+<li>New panels after an update appear as a tab next to a related panel, without shifting your layout
+  or replacing the tab you had open.</li>
+</ul>
+
 <h4>🪟 Panels menu</h4>
 <ul>
-<li>Four layouts: <b>Map centre</b>, <b>Operating</b>, <b>Analysis</b> and <b>Default</b>
-  (the classic HAMIOS layout).</li>
-<li><b>Lock layout</b> prevents accidental dragging.</li>
-<li>Show or hide panels with the checkboxes.</li>
+<li>Four ready-made layouts: <b>Map centre</b> (everyday use), <b>Operating</b> (map as large as
+  possible), <b>Analysis</b> (charts large) and <b>Default</b> (the classic HAMIOS layout). On small
+  screens each layout gets a compact variant with more tabs.</li>
+<li><b>Lock layout</b>: no more dragging and fixed dividers — handy once everything is in place.</li>
+<li>Show or hide panels with the check boxes.</li>
 </ul>
-<p>The menu (and the Overlays menu) closes when you click anywhere else.</p>
+<p>The menu (and the Overlays menu) closes when you click elsewhere. Your layout is saved on exit;
+keep several layouts as <i>Layout profiles</i>.</p>
+"""),
+
+    ("🚀 Getting started", "Start screen and updates", """
+<h3>Start screen and updates</h3>
+<p>At start-up HAMIOS checks folder access, files, dependencies and the online sources, and looks on
+GitHub for a <b>newer version</b>.</p>
+<ul>
+<li>When there is an update, <b>UPDATE AVAILABLE</b> appears — on the start screen and as a badge
+  in the header. Click it to open the download page; hovering shows the new version number.</li>
+<li>While running, HAMIOS checks again every 12 hours.</li>
+<li><b>Settings → About</b> shows your version and whether a newer one exists.</li>
+<li>Without internet everything stays silent: no error message.</li>
+</ul>
+<p>The start screen can be turned off in <b>Settings → About</b>.</p>
 """),
     ("🌍 Map", "World map and overlays", """
 <h3>World map and overlays</h3>
@@ -631,10 +904,32 @@ scale with the window.</p>
 """),
     ("🌍 Map", "QTH and great-circle path", """
 <h3>QTH and great-circle path</h3>
-<p>Your QTH is the blue cross on the map (set it in Settings → Station). The circles show the
-lightning warning radii.</p>
-<p><b>Click the map</b> or a <b>recommendation</b> in the propagation advice to draw the
-great-circle (short) path from your QTH, with the distance.</p>
+<p>Your QTH is the blue cross on the map (set in Settings → Station). The circles show the
+thunderstorm warning radii.</p>
+<p><b>Click the map</b> or a <b>recommendation</b> in the propagation advice to draw the great-circle
+path (short path) from your QTH, with the distance. The same point becomes the target of the
+<b>Path forecast</b> and appears on the <b>Azimuthal map</b>. <b>Right-click</b> resets the map to
+the whole world.</p>
+<h4>Zooming and panning</h4>
+<p>Scroll wheel = zoom, drag = pan. Click a <b>DX spot</b> or <b>PSKReporter</b> dot for details
+(callsign, frequency, band, spotter).</p>
+"""),
+
+    ("🌍 Map", "Azimuthal map and rotator", """
+<h3>Azimuthal map</h3>
+<p>A world map <b>centred on your QTH</b> (azimuthal equidistant): every straight line from the
+centre is a great circle. So the <b>direction</b> on the map is exactly the heading to turn your
+antenna to, and the <b>distance</b> from the centre is the true distance. Rings every 5000 km; the
+edge is the antipode of your QTH (20,000 km).</p>
+<ul>
+<li><b>Hover</b>: bearing (short and long path), distance and position.</li>
+<li><b>Click</b>: path and path forecast to that point.</li>
+<li>Blue dots = current DX spots.</li>
+</ul>
+<h4>Rotator</h4>
+<p>With a rotator configured (<b>Settings → CAT → Rotator</b>) the antenna turns when you click.
+Supported: <b>Yaesu GS-232</b> (and compatible interfaces, via a COM port) and <b>Hamlib rotctld</b>
+(network, default 127.0.0.1:4533). The green stroke shows the last requested heading.</p>
 """),
     ("☀ Solar &amp; Propagation", "Solar / Ionosphere panel", """
 <h3>Solar / Ionosphere</h3>
@@ -662,12 +957,12 @@ Each row has <b>five columns</b>:</p>
 """),
     ("☀ Solar &amp; Propagation", "Bands now", """
 <h3>Bands now</h3>
-<p>For each band (160m–6m) the <b>probability that the band is open now</b>, plus a rating for
-<b>day</b> and <b>night</b> and the <b>trend</b> (▲ opening, ▼ closing).</p>
-<p>At the top: the current <b>MUF</b> and <b>LUF</b> at your QTH, your station margin (dB) and whether
-it is day or night. The percentage comes from the propagation model (see <i>Propagation model</i>)
-and takes your mode, power and antenna into account.</p>
-<p>Click a band to send the frequency to the radio via CAT.</p>
+<p>For each band (160m–6m) the <b>chance that the band is open now</b>, plus a rating for
+<b>daytime</b> and <b>night</b> and the <b>trend</b> (▲ opening, ▼ closing).</p>
+<p>At the top: the current <b>MUF</b> and <b>LUF</b> at your QTH, your station margin (dB) and
+whether it is day or night. The percentage comes from the propagation model (see
+<i>Propagation model</i>) and takes your mode, power and antenna into account.</p>
+<p>Click a band to pick a frequency and send it to the radio via CAT.</p>
 """),
     ("☀ Solar &amp; Propagation", "Next 24 hours", """
 <h3>Next 24 hours</h3>
@@ -692,6 +987,70 @@ it is usable. Hover for details.</p>
 <p><b>Hover a recommendation</b>: why the band is open (position relative to MUF and LUF, control
 points in daylight or darkness, observations per source). <b>Click</b>: path on the map and, if the
 radio is connected, CAT tuning. See also <b>ⓘ How to read this</b> in the panel.</p>
+"""),
+
+    ("☀ Solar &amp; Propagation", "Propagation overview", """
+<h3>Propagation overview</h3>
+<p>Eleven fixed cards summarising the moment: best bands, geomagnetic conditions, solar activity,
+solar wind and Bz, flares, time of day, mode/power, high-latitude absorption, Sporadic-E (the season
+follows your hemisphere), <b>DX routes from your QTH</b> (from the propagation model) and an overall
+rating.</p>
+<p>A card whose content changes shows a <b>blinking dot for 5 minutes</b>. The number of columns
+follows the panel width (1–3); in a low panel you can scroll.</p>
+"""),
+
+    ("☀ Solar &amp; Propagation", "Path forecast", """
+<h3>Path forecast — when can I work it?</h3>
+<p>The <b>chance per band for the next 24 hours</b> on the path from your QTH to one place, with the
+same path model as the recommendations.</p>
+<ul>
+<li><b>Choosing a target</b>: click the map or the azimuthal map, click a recommendation or a report
+  in <i>My signal</i> — or type a <b>locator</b> (JO21DN) or <b>callsign</b> (its country is found via
+  cty.dat) and click <b>Forecast</b>.</li>
+<li>At the top: distance and bearing (short and long path).</li>
+<li>Grid: bands × hours (local time, first column = this hour); green = good chance, orange = fair,
+  red = poor, dark = closed. Hover a cell for the percentage.</li>
+<li>At the bottom the <b>best windows</b>: consecutive hours with ≥ 50 % chance, highest first.</li>
+</ul>
+<p>The model accounts for daytime absorption at both the transmitter and the receiver: low bands to
+the other side of the world open when it is dark (or twilight) at both ends.</p>
+"""),
+
+    ("☀ Solar &amp; Propagation", "Model vs reality", """
+<h3>Model vs reality</h3>
+<p>How often does the propagation model agree with what is really heard? Every WSPR spot around your
+QTH and every PSKReporter path with one end within 500 km is a path that was open at that moment.</p>
+<ul>
+<li><b>Heard</b> — number of observations (paths ≥ 1000 km).</li>
+<li><b>Model agrees</b> — share of them for which the model gave ≥ 50 % (green ≥ 70 %).</li>
+<li><b>Avg. chance</b> — average model chance on the paths heard.</li>
+<li><b>Open, silent</b> — hours in which the model rated the band open while nothing was heard
+  (only hours in which other bands did have observations).</li>
+</ul>
+<p>Choose 1, 7 or 30 days. The figures continue across restarts (kept for 30 days). Note: silence can
+also mean nobody was active.</p>
+"""),
+
+    ("☀ Solar &amp; Propagation", "Storm forecast and 27 days", """
+<h3>Storm forecast and 27-day outlook</h3>
+<p>The <b>3-day NOAA forecast</b>: chance of <b>Active</b> (Kp 4), <b>G1</b> (Kp 5), <b>G2</b> (Kp 6)
+and <b>G3+</b> (Kp ≥ 7) per day. NOAA gives G3 to G5 as one probability, so the G4+ row shows "—".
+Colour: yellow ≥ 10 %, orange ≥ 25 %, red ≥ 50 %.</p>
+<p>Below it the <b>27-day outlook</b>: per day the expected maximum Kp (colour) and the solar flux
+(bar); today is framed. The tooltip names the calmest days with the highest flux — handy for planning
+contests and DX.</p>
+"""),
+
+    ("☀ Solar &amp; Propagation", "Kp, Bz and X-ray", """
+<h3>Kp, Bz and X-ray charts</h3>
+<ul>
+<li><b>Kp 48h</b> — official planetary K-index per 3 hours; the orange line is the storm threshold
+  (Kp 5). Current value top right.</li>
+<li><b>Bz 24h</b> — the north-south component of the interplanetary magnetic field. Long periods of
+  <b>negative (red)</b> = higher chance of a geomagnetic storm.</li>
+<li><b>X-ray 24h</b> — GOES solar flux on a log scale (A–X). Current class top right; M and X = flare
+  (risk of radio blackout on the day side).</li>
+</ul>
 """),
     ("☀ Solar &amp; Propagation", "Propagation model", """
 <h3>Propagation model</h3>
@@ -735,13 +1094,15 @@ percentage and the elevation above or below the horizon.</p>
 """),
     ("📈 History", "Band History and Solar History", """
 <h3>Band History</h3>
-<p>Shows calculated band reliability for all 11 HF bands over the past 24h (configurable).
-Data is saved on each refresh in <b>HAMIOS_history.csv</b> (90 days retained).</p>
-<p><b>Click a band in the legend</b> to toggle it on/off.</p>
-<p>Use the <b>range selector</b> (top right) to switch between 24h / 7d / 30d / 1y.</p>
+<p>The calculated chance per HF band over time. A point is stored at every refresh in
+<b>config/HAMIOS_history.csv</b> (kept for 90 days).</p>
+<ul>
+<li>Pick the time range top right: <b>24h, 7d, 30d or 1y</b>.</li>
+<li><b>Click a band in the legend</b> to toggle it.</li>
+<li>Gaps (HAMIOS was not running) are not bridged with a straight line.</li>
+</ul>
 <h3>Solar History</h3>
-<p>Shows SFI trend over time. K-index shown as a red line on the right axis.
-Red background shading indicates elevated K-index periods.</p>
+<p>SFI and K-index over time, with the same time range.</p>
 """),
     ("📡 WSPR Live", "WSPR Live Panel", """
 <h3>WSPR Live</h3>
@@ -755,24 +1116,65 @@ The spots also feed the propagation advice. Font size: <b>Settings → Map</b>.<
 """),
     ("📡 DX Spots", "Live DX Spots", """
 <h3>Live DX Spots</h3>
-<p>Real-time DX cluster data from <b>DXWatch.com</b>.
-Table is updated on each solar refresh (default 5 minutes).</p>
+<p>Real-time DX cluster data from <b>DXWatch.com</b>, refreshed every 2 minutes. The spots are also on
+the map (line from spotter to DX, coloured by band); the country of every callsign comes from the
+DXCC database (cty.dat).</p>
 <h4>Columns</h4>
 <ul>
-<li><b>UTC</b> — spot time</li>
+<li><b>UTC</b> — time of the spot</li>
 <li><b>Band</b> — HF band (colour coded)</li>
 <li><b>MHz</b> — exact frequency</li>
 <li><b>DX</b> — DX callsign</li>
-<li><b>Spotter</b> — who spotted it</li>
-<li><b>Comment</b> — optional remark</li>
+<li><b>Spotter</b> — who made the spot</li>
+<li><b>Comment</b> — any remark</li>
 </ul>
-<h4>Filters</h4>
+<h4>Filtering</h4>
 <ul>
-<li><b>Own continent</b> — show only spots by spotters on your continent.</li>
-<li><b>Heatmap</b> — switch to a band activity chart over 24h.</li>
+<li><b>Own continent</b> — only spots from spotters on your continent (also on the map).</li>
+<li><b>Heatmap</b> — band activity per hour over 24 hours.</li>
 </ul>
 <h4>CAT tuning</h4>
-<p>Click any row to tune your radio directly to the spot frequency (SSB mode).</p>
+<p>Click a row to tune your radio to the spot frequency (SSB).</p>
+"""),
+
+    ("📡 DX Spots", "My signal", """
+<h3>My signal — where am I heard?</h3>
+<p>Where your own callsign was received in the <b>last hour</b>, from <b>PSKReporter</b>
+(FT8, FT4, CW skimmers etc.) and <b>WSPR</b> (your WSPR beacon).</p>
+<ul>
+<li>At the top per band: number of receivers, <b>farthest distance</b> and <b>best SNR</b>.</li>
+<li>Below: every report with time, band, receiver, distance, SNR and mode.</li>
+<li><b>Click</b> a report: the path on the map (and in the path forecast).</li>
+</ul>
+<p>Requires your callsign in <b>Settings → Station</b>. Refreshes every 5 minutes (as agreed with
+PSKReporter). This is the direct check whether your antenna and the advice are right.</p>
+"""),
+
+    ("📡 DX Spots", "Watchlist", """
+<h3>Watchlist — wanted stations and countries</h3>
+<p>Put stations or countries you are looking for on the list; HAMIOS watches the DX cluster.</p>
+<ul>
+<li><b>Callsign</b> (e.g. 3Y0J) — exactly that callsign, also as /P or /MM.</li>
+<li><b>Prefix</b> (up to 4 characters, e.g. VK9) — all callsigns starting with it.</li>
+<li><b>Country</b> (e.g. Bouvet) — part of the DXCC name, at least 4 letters.</li>
+</ul>
+<p>Type an entry and click <b>Add</b>; select an entry and click <b>Remove</b>.</p>
+<h4>Alerts</h4>
+<p>When a wanted station is spotted you get an alert in the Alerts panel, a <b>Windows
+notification</b> (also when HAMIOS is minimised) and a sound. By default <b>only when the band is
+open on that path</b> (≥ 50 % according to the model) — untick for all spots. At most one alert per
+callsign and band per 30 minutes.</p>
+<p>In the table: <b>click</b> = path on the map, <b>double-click</b> = tune via CAT.</p>
+"""),
+
+    ("📡 DX Spots", "DXCC database (cty.dat)", """
+<h3>DXCC database (cty.dat)</h3>
+<p>HAMIOS uses the full DXCC list from <b>country-files.com</b> (AD1C) to determine the country,
+continent, CQ/ITU zone and position of every callsign — including tricky cases such as
+<i>EA8/DL1ABC</i> (Canary Islands) or <i>R9…</i> (Asiatic Russia).</p>
+<p>Used for the DX spots on the map, the own-continent filter, the watchlist and the path forecast by
+callsign. The file is <code>config/cty.dat</code> and is refreshed automatically every month; without
+internet the stored version stays in use.</p>
 """),
     ("🛰 Satellites", "Satellite Tracking", """
 <h3>Satellite tracking</h3>
@@ -799,6 +1201,20 @@ duration, maximum elevation and direction (rise → set).</p>
 <li><b>Alert</b> (with sound) five minutes before a pass — on/off and minimum elevation in
   <b>Settings → Alerts</b> (default 10°).</li>
 </ul>
+"""),
+
+    ("🛰 Satellites", "Doppler", """
+<h3>Doppler</h3>
+<p>For your tracked satellites the <b>transmitters from the SatNOGS database</b> with the
+<b>Doppler-corrected frequencies right now</b>:</p>
+<ul>
+<li><b>Downlink now</b> — where to listen (approaching satellite: higher; receding: lower).</li>
+<li><b>Uplink now</b> — where to transmit so the satellite receives its nominal frequency.</li>
+</ul>
+<p>Choose the satellite at the top; the line shows elevation, azimuth and range rate. Select a
+transmitter and click <b>Tune</b> to set the downlink on the radio via CAT; with <b>Follow</b> the
+radio stays tuned during the pass (every 2 s, only when the change is &gt; 50 Hz).</p>
+<p>Track satellites via <b>🛰 Satellite</b> (tick <b>Position</b>).</p>
 """),
     ("⚡ Lightning", "Lightning detection and QRN", """
 <h3>Lightning detection with dual zones</h3>
@@ -884,31 +1300,52 @@ on all bands (2200m through 23cm).</p>
 <h4>"Set USB mode" checkbox</h4>
 <p>Enabled by default: mode is automatically set to USB when clicking.</p>
 """),
+
+    ("📐 Antenna", "HAM Antenna Designer", """
+<h3>HAM Antenna Designer</h3>
+<p>The <b>📡 Antenna</b> button in the header opens the bundled <b>HAM Antenna Designer</b>
+(separate window, follows the HAMIOS language).</p>
+<ul>
+<li><b>20+ documented designs</b>: verticals, dipoles, EFHW, loops, Yagi, Moxon, quad, J-pole and SWL
+  receiving antennas — with sound formulas and building advice.</li>
+<li><b>Wire lengths</b> with the correct correction for insulated wire; band plan of IARU region 1 or 2.</li>
+<li><b>SWR</b> (from the complex impedance, behind the balun/unun), <b>SWR sweep</b>, Smith chart and
+  <b>radiation patterns</b> over real ground.</li>
+<li><b>Matching networks</b> with E12 values and <b>cable loss</b> for 44 cable types (including the
+  extra loss due to SWR).</li>
+<li>Antenna drawings in 2D/3D, day/night theme, printable SVG export.</li>
+</ul>
+"""),
     ("📟 CAT", "CAT radio interface", """
-<h3>CAT Radio Interface</h3>
-<p>CAT (Computer Aided Transceiver) enables direct control of your radio
-via the serial port. Supported radios:</p>
+<h3>CAT radio interface</h3>
+<p>CAT (Computer Aided Transceiver) lets HAMIOS tune your radio and read its frequency.
+Supported radio types:</p>
 <ul>
 <li><b>Yaesu FT-950/2000/DX/3000/5000</b> — FA command (8 digits), default 38400 baud</li>
-<li><b>Yaesu FT-817/857/897</b> — FA command</li>
-<li><b>Kenwood / Elecraft</b> — FA command (11 digits)</li>
-<li><b>Icom CI-V</b> — binary BCD protocol</li>
+<li><b>Yaesu FT-991/710/DX10/DX101</b> — FA command (9 digits)</li>
+<li><b>Yaesu FT-817/857/897</b> — binary 5-byte protocol (8N2)</li>
+<li><b>Kenwood / Elecraft</b> — FA command (11 digits), mode via MD</li>
+<li><b>Icom CI-V</b> — binary BCD protocol, frequency and mode (address configurable)</li>
+<li><b>Hamlib rigctld</b> — over the network: practically every radio Hamlib knows (200+)</li>
+<li><b>flrig</b> — over the network (XML-RPC)</li>
 </ul>
-<h4>Configuration (Settings → CAT)</h4>
+<h4>Setup (Settings → CAT)</h4>
 <ol>
-<li>Click <b>⚙ Settings → CAT</b>.</li>
-<li>Select the serial port (auto-scanned).</li>
 <li>Choose your radio type or use a <b>Preset</b> (FT-950, FT-817, TS-590, K3/KX3).</li>
-<li>Set baud rate, data bits, parity and stop bits (or use preset defaults).</li>
-<li>Enable <b>CAT</b> and test with <b>Test connection</b>.</li>
+<li>Serial radio: pick the port (scanned automatically) and set baud rate, data bits, parity and stop
+  bits. <b>rigctld/flrig</b>: type the address in the port field, e.g. <code>127.0.0.1:4532</code>
+  (rigctld) or <code>127.0.0.1:12345</code> (flrig).</li>
+<li>Under <b>Data mode</b> choose the radio mode for FT8/FT4/WSPR (USB or PKT-U/DATA-U).</li>
+<li>Tick <b>Enable CAT</b> and test with <b>Test connection</b>.</li>
 </ol>
 <h4>Serial terminal</h4>
-<p>Open via <b>Settings → CAT → Open serial terminal</b>.
-Shows connection status and lets you type CAT commands manually.
-All serial parameters are configured exclusively in Settings → CAT.</p>
-<h4>Frequency in header</h4>
-<p>Once CAT is connected, the current VFO-A frequency appears in the header bar.
-The radio is polled every 2 seconds.</p>
+<p>Via <b>⚙ Settings → CAT → Open serial terminal</b> you see the traffic with the radio and can type
+commands yourself (with rigctld: rigctld commands such as <code>f</code>).</p>
+<h4>Frequency in the header</h4>
+<p>Once CAT is connected, the current radio frequency appears in the header (polled every 2 seconds).</p>
+<h4>Rotator</h4>
+<p>The same tab sets up a rotator (Yaesu GS-232 via COM port, or Hamlib rotctld over the network) —
+see <i>Azimuthal map and rotator</i>.</p>
 """),
     ("🌐 Resources", "Manage online resources", """
 <h3>Online Resources Manager</h3>
@@ -950,52 +1387,45 @@ satellite tracking, weather information and more.</p>
 """),
     ("🔔 Alerts", "Alerts panel", """
 <h3>Alerts panel</h3>
-<p>Collects all alerts in one place:</p>
+<p>Collects all warnings in one place:</p>
 <ul>
-<li><b>K-storm</b> — when K-index ≥ threshold (configurable)</li>
-<li><b>X-flare</b> — on M- or X-class solar flare</li>
-<li><b>QRN level</b> — when local QRN level rises</li>
-<li><b>Lightning nearby</b> — when lightning is within set radius</li>
-<li><b>Satellite above QTH</b> — when a selected satellite enters your footprint</li>
-<li><b>Satellite pass</b> — five minutes before a pass (threshold adjustable)</li>
-<li><b>Events</b> from the advice — radiation, shock, southward Bz, sporadic-E</li>
-<li><b>Propagation advice</b> — when band analysis changes</li>
+<li><b>K storm</b> — when the K-index ≥ threshold (configurable)</li>
+<li><b>X flare</b> — on an M- or X-class flare</li>
+<li><b>QRN level</b> — when the local QRN level rises</li>
+<li><b>Thunderstorm nearby</b> — lightning within the configured radius</li>
+<li><b>Satellite over QTH</b> — a selected satellite has your QTH in its footprint</li>
+<li><b>Satellite pass</b> — five minutes before a pass (threshold configurable)</li>
+<li><b>Watchlist</b> — a wanted station or country was spotted (also as a Windows notification)</li>
+<li><b>Events</b> from the advice — radiation, shock, southward Bz, Sporadic-E</li>
+<li><b>Propagation advice</b> — when the band analysis changes</li>
 </ul>
 <h4>FIFO limit</h4>
-<p>Set the maximum number of alerts to retain in Settings → Alerts (default 50).
-Oldest alerts are automatically removed.</p>
+<p>Set the maximum number of stored alerts in Settings → Alerts. The oldest are removed
+automatically (default 50).</p>
+<h4>Clear all</h4>
+<p>Click <b>Clear all</b> to remove all active alerts.</p>
 """),
     ("⚙ Settings", "Settings overview", """
 <h3>Settings</h3>
-<p>All configuration via <b>⚙ Settings</b> in the header.
-All changes are <b>live</b> — visible immediately without restarting.</p>
-
-<h4>Settings tabs</h4>
+<p>All configuration via <b>⚙ Settings</b> in the header. Changes are <b>applied immediately</b> —
+you see the result without restarting (except a new theme).</p>
+<h4>Tabs</h4>
 <ul>
-<li><b>📡 Station</b> — callsign, QTH, mode, power, antenna</li>
-<li><b>🪟 Panels</b> — show/hide panels</li>
-<li><b>🗺 Map</b> — overlay font sizes, sun and moon icon sizes</li>
-<li><b>⚡ Lightning</b> — dual zones (Alert &amp; Warning), radius, pitch, duration, fade time</li>
-<li><b>📡 WSPR Live</b> — panel font size (7–72 pt)</li>
-<li><b>🔔 Alerts</b> — K-threshold, X-flare, band threshold, FIFO limit</li>
-<li><b>📟 CAT</b> — serial port, radio type, presets, terminal</li>
-<li><b>🌐 Resources</b> — online resource URLs, editable</li>
-<li><b>📐 Layout</b> — theme (Night, Day, High readability, custom theme via the theme designer; applied after a restart), save/restore default, profiles</li>
-<li><b>📦 About</b> — version, dependencies, file status, language</li>
+<li><b>📡 Station</b> — callsign, QTH/locator, mode, power, antenna, day/night</li>
+<li><b>🗺 Map</b> — grid step, font sizes of the map layers, size of the sun and moon icons</li>
+<li><b>⚡ Lightning</b> — on/off, fade time, proximity alert, sound, performance</li>
+<li><b>🔔 Alerts</b> — K threshold, X flare, band threshold, satellite passes, FIFO limit</li>
+<li><b>📟 CAT</b> — radio type (also rigctld/flrig), port or address, presets, data mode, rotator,
+  terminal</li>
+<li><b>🌐 Resources</b> — online resource URLs, test and research endpoints</li>
+<li><b>📐 Layout</b> — theme (Night, Day, High readability, your own via the theme designer; applied
+  after a restart), save/restore default layout, profiles</li>
+<li><b>📦 About</b> — version and update status, dependencies, file status, start screen on/off</li>
 </ul>
-
-<h4>v5.4 — New Settings</h4>
-<ul>
-<li><b>Lightning Alert Zone</b> — inner circle with high-priority sound</li>
-<li><b>Lightning Warning Zone</b> — outer circle with lower-priority sound</li>
-<li><b>Configurable pitch &amp; duration</b> — customize alert and warning sounds</li>
-<li><b>WSPR panel font size</b> — scale the WSPR Live data table dynamically</li>
-</ul>
-
-<h4>Settings stored in</h4>
-<p><code>hamios_config.json</code> in the application folder. All settings —
-panel positions, CAT configuration, lightning settings, WSPR font size and satellite data — are
-in this single file.</p>
+<p>Showing/hiding panels and choosing a layout is done via <b>🪟 Panels</b> in the header.</p>
+<h4>Settings are stored in</h4>
+<p><code>config/hamios_config.json</code> in the program folder — including window positions, CAT and
+rotator settings, watchlist and lightning settings.</p>
 """),
     ("⚙ Settings", "Layout profiles", """
 <h3>Layout profiles</h3>
@@ -1010,40 +1440,47 @@ in this single file.</p>
     ("🔧 Technical", "Requirements and files", """
 <h3>Technical requirements</h3>
 <ul>
-<li><b>Windows 10/11</b> (64-bit)</li>
-<li><b>PySide6</b> ≥ 6.4 (required)</li>
-<li><b>pyserial</b> (optional, for CAT)</li>
-<li><b>websocket-client</b> (optional, for lightning detection)</li>
-<li><b>timezonefinder</b> (optional, for local timezone based on QTH)</li>
+<li><b>Windows 10/11</b> (64-bit) — the EXE contains everything needed</li>
+<li>From source: <b>Python 3.10+</b> with <b>PySide6</b> (required), and optionally <b>pyserial</b>
+  (CAT, GS-232 rotator), <b>websocket-client</b> (lightning), <b>timezonefinder</b> (local time zone of
+  the QTH) and <b>numpy</b> (faster azimuthal map)</li>
 </ul>
-<h4>Auto-created files</h4>
+<h4>Files (config/ folder)</h4>
 <ul>
-<li><code>HAMIOS5.exe</code> — executable</li>
-<li><code>worldmap_eq.jpg</code> — world map (auto-downloaded)</li>
-<li><code>worldmap_eq_hires.jpg</code> — 4K world map (auto-downloaded)</li>
 <li><code>hamios_config.json</code> — all settings and window positions</li>
-<li><code>hamios_spy_stations.json</code> — SpyStations database</li>
-<li><code>hamios_tle.json</code> — satellite TLE (downloaded)</li>
-<li><code>hamios_eibi.csv</code> — EIBI schedule (downloaded)</li>
+<li><code>hamios_profiles.json</code> — layout profiles</li>
 <li><code>HAMIOS_history.csv</code> — band history (90 days)</li>
+<li><code>hamios_tle.json</code> — satellite TLEs (refreshed manually)</li>
+<li><code>hamios_transmitters.json</code> — satellite transmitters for Doppler (SatNOGS, 30 days)</li>
+<li><code>cty.dat</code> — DXCC database (refreshed monthly)</li>
+<li><code>hamios_verify.json</code> — model vs reality (30 days)</li>
+<li><code>hamios_eibi.csv</code> — EIBI schedule</li>
+<li><code>hamios_spy_stations.json</code> — SpyStations database</li>
+<li><code>hamios_tz_cache.json</code> — time zone per QTH (faster start-up)</li>
 </ul>
+<p>Next to the EXE: <code>worldmap_eq.jpg</code> (world map; downloaded if needed).</p>
+<h4>File status</h4>
+<p>See <b>Settings → About → Files</b> for a live overview.</p>
 """),
     ("🔧 Technical", "Data sources", """
 <h3>Data sources</h3>
 <ul>
-<li><b>NOAA SWPC</b> — solar data, K index, real-time solar wind (Bz), X-ray, storm forecast,
+<li><b>NOAA SWPC</b> — solar data, K-index, real-time solar wind (Bz), X-rays, storm forecast,
   R/S/G scales, OVATION aurora, D-RAP absorption, 27-day outlook</li>
+<li><b>HamQSL</b> — SFI and sunspot number</li>
 <li><b>prop.kc2g.com</b> — ionosonde measurements from the GIRO network (foF2, MUF, foEs)</li>
-<li><b>wspr.live</b> — WSPR spots (ClickHouse database of all WSPRnet spots)</li>
-<li><b>PSKReporter.info</b> — digital-mode reception reports</li>
+<li><b>wspr.live</b> — WSPR spots (all WSPRnet spots), also for <i>My signal</i></li>
+<li><b>PSKReporter.info</b> — digital-mode reception reports, also for <i>My signal</i></li>
 <li><b>DXWatch.com</b> — live DX cluster data</li>
+<li><b>country-files.com</b> — DXCC database cty.dat (AD1C)</li>
 <li><b>Blitzortung.org</b> — worldwide lightning detection network (WebSocket)</li>
-<li><b>eibispace.de</b> — EIBI shortwave schedule (Eike Bierwirth)</li>
-<li><b>SatNOGS DB</b> and <b>AMSAT</b> — satellite TLE data</li>
-<li><b>Wikimedia Commons</b> — NASA Blue Marble world map</li>
+<li><b>eibispace.de</b> — EIBI shortwave broadcast schedule (Eike Bierwirth)</li>
+<li><b>SatNOGS DB</b> and <b>AMSAT</b> — satellite TLEs and satellite transmitters (Doppler)</li>
+<li><b>NASA Blue Marble</b> (Wikimedia) — equirectangular world map</li>
+<li><b>GitHub</b> — version check (version.json)</li>
 </ul>
-<p>All external connections use standard HTTPS/WebSocket.
-No personal data is transmitted.</p>
+<p>All external connections use standard HTTPS/WebSocket. The program sends no personal data; only
+for <i>My signal</i> is your callsign sent as a search term to PSKReporter and wspr.live.</p>
 """),
 ]
 

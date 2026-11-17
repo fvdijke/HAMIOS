@@ -48,6 +48,57 @@ def _table(headers: list[str], stretch: int = 0) -> QTableWidget:
     return t
 
 
+class bulk_fill:
+    """Tabel in één keer vullen: zonder dit past QHeaderView (ResizeToContents)
+    na élke cel alle kolombreedtes opnieuw aan (~1 ms per cel). Tijdens het
+    vullen staan de kolommen vast en wordt er niet getekend; daarna wordt de
+    breedte één keer berekend.
+
+        with bulk_fill(table):
+            table.setRowCount(n)
+            ...setItem...
+    """
+
+    def __init__(self, table: QTableWidget):
+        self._t = table
+
+    def __enter__(self):
+        t = self._t
+        h = t.horizontalHeader()
+        self._modes = [h.sectionResizeMode(i) for i in range(t.columnCount())]
+        self._sort = t.isSortingEnabled()
+        t.setSortingEnabled(False)
+        t.setUpdatesEnabled(False)
+        h.setSectionResizeMode(QHeaderView.Fixed)
+        return t
+
+    def __exit__(self, *exc):
+        t = self._t
+        h = t.horizontalHeader()
+        for i, m in enumerate(self._modes):
+            h.setSectionResizeMode(i, m)
+        t.setSortingEnabled(self._sort)
+        t.setUpdatesEnabled(True)
+        return False
+
+
+def _set_text(table: QTableWidget, row: int, col: int, text: str,
+              color: str | None = None, bold: bool = False, align=Qt.AlignLeft):
+    """Cel bijwerken: bestaand item hergebruiken (alleen wat verandert), anders nieuw."""
+    it = table.item(row, col)
+    if it is None:
+        table.setItem(row, col, _item(text, color, bold, align))
+        return
+    if it.text() != text:
+        it.setText(text)
+    if color is not None and it.foreground().color() != QColor(color):
+        it.setForeground(QColor(color))
+    if it.font().bold() != bold:
+        f = it.font()
+        f.setBold(bold)
+        it.setFont(f)
+
+
 def _item(text: str, color: str | None = None, bold: bool = False,
           align=Qt.AlignLeft) -> QTableWidgetItem:
     it = QTableWidgetItem(text)
@@ -128,22 +179,23 @@ class IonosondeWidget(QWidget):
         self._summary.setText(self._summary_html(used, lat, lon, now))
 
         t = self._table
-        t.setRowCount(len(rows))
-        for r, (km, s) in enumerate(rows):
-            age_min = s.age_s(now) / 60
-            stale = s.age_s(now) > IONO_MAX_AGE_S
-            dim = TEXT_DIM if stale else None
-            star = s is used
-            t.setItem(r, 0, _item(("★ " if star else "") + s.name.split(",")[0],
-                                  ACCENT if star else (dim or TEXT_H1), bold=star))
-            t.setItem(r, 1, _item(f"{km:.0f}", dim, align=Qt.AlignRight))
-            t.setItem(r, 2, _item(f"{s.fof2:.1f}", dim, align=Qt.AlignRight))
-            t.setItem(r, 3, _item(f"{s.mufd:.1f}" if s.mufd else "—", dim, align=Qt.AlignRight))
-            es_col = (_AMBER if s.foes and s.foes >= 5 else None) if not stale else dim
-            t.setItem(r, 4, _item(f"{s.foes:.1f}" if s.foes else "—", es_col, align=Qt.AlignRight))
-            age_txt = tr("iono.age_min", n=int(age_min)) if age_min < 120 else \
-                tr("iono.age_h", n=int(age_min / 60))
-            t.setItem(r, 5, _item(age_txt, _RED if stale else TEXT_DIM))
+        with bulk_fill(t):
+            t.setRowCount(len(rows))
+            for r, (km, s) in enumerate(rows):
+                age_min = s.age_s(now) / 60
+                stale = s.age_s(now) > IONO_MAX_AGE_S
+                dim = TEXT_DIM if stale else None
+                star = s is used
+                t.setItem(r, 0, _item(("★ " if star else "") + s.name.split(",")[0],
+                                      ACCENT if star else (dim or TEXT_H1), bold=star))
+                t.setItem(r, 1, _item(f"{km:.0f}", dim, align=Qt.AlignRight))
+                t.setItem(r, 2, _item(f"{s.fof2:.1f}", dim, align=Qt.AlignRight))
+                t.setItem(r, 3, _item(f"{s.mufd:.1f}" if s.mufd else "—", dim, align=Qt.AlignRight))
+                es_col = (_AMBER if s.foes and s.foes >= 5 else None) if not stale else dim
+                t.setItem(r, 4, _item(f"{s.foes:.1f}" if s.foes else "—", es_col, align=Qt.AlignRight))
+                age_txt = tr("iono.age_min", n=int(age_min)) if age_min < 120 else \
+                    tr("iono.age_h", n=int(age_min / 60))
+                t.setItem(r, 5, _item(age_txt, _RED if stale else TEXT_DIM))
 
     def _summary_html(self, s, lat, lon, now) -> str:
         if s is None:
@@ -285,31 +337,40 @@ class SatPassesWidget(QWidget):
             self._status.setText(tr("pass.calculating"))
             return
         self._status.setText(tr("pass.status", n=n_sats, count=len(passes)))
+        if not self.isVisible():
+            return                      # verborgen tabblad: tabel pas bijwerken bij tonen
         t = self._table
-        t.setRowCount(len(passes))
         min_el = self._min_el()
-        for r, p in enumerate(passes):
-            live = p.aos <= now < p.los
-            low = p.max_el < min_el
-            base = TEXT_DIM if low and not live else None
-            name = p.name.split("(")[0].strip()[:18]
-            t.setItem(r, 0, _item(name, _GREEN if live else (base or TEXT_H1), bold=live))
-            t.setItem(r, 1, _item(p.aos.astimezone().strftime("%H:%M"), base))
-            if live:
-                left = int((p.los - now).total_seconds())
-                when = tr("pass.live", t=f"{left // 60}:{left % 60:02d}")
-                col = _GREEN
-            else:
-                mins = int((p.aos - now).total_seconds() // 60)
-                when = tr("pass.in_min", n=mins) if mins < 60 else \
-                    tr("pass.in_h", h=mins // 60, m=f"{mins % 60:02d}")
-                col = _AMBER if mins < self.ALERT_MIN and not low else base
-            t.setItem(r, 2, _item(when, col, bold=live))
-            d = int(p.duration_s)
-            t.setItem(r, 3, _item(f"{d // 60}:{d % 60:02d}", base, align=Qt.AlignRight))
-            el_col = _GREEN if p.max_el >= 45 else _AMBER if p.max_el >= 20 else TEXT_DIM
-            t.setItem(r, 4, _item(f"{p.max_el:.0f}°", el_col, align=Qt.AlignRight))
-            t.setItem(r, 5, _item(f"{compass(p.az_aos)} → {compass(p.az_los)}", base))
+        # Elke 5 s: bestaande cellen hergebruiken, alleen gewijzigde tekst zetten
+        with bulk_fill(t):
+            if t.rowCount() != len(passes):
+                t.setRowCount(len(passes))
+            for r, p in enumerate(passes):
+                live = p.aos <= now < p.los
+                low = p.max_el < min_el
+                base = TEXT_DIM if low and not live else TEXT_BODY
+                name = p.name.split("(")[0].strip()[:18]
+                _set_text(t, r, 0, name, _GREEN if live else (TEXT_DIM if low else TEXT_H1), bold=live)
+                _set_text(t, r, 1, p.aos.astimezone().strftime("%H:%M"), base)
+                if live:
+                    left = int((p.los - now).total_seconds())
+                    when = tr("pass.live", t=f"{left // 60}:{left % 60:02d}")
+                    col = _GREEN
+                else:
+                    mins = int((p.aos - now).total_seconds() // 60)
+                    when = tr("pass.in_min", n=mins) if mins < 60 else \
+                        tr("pass.in_h", h=mins // 60, m=f"{mins % 60:02d}")
+                    col = _AMBER if mins < self.ALERT_MIN and not low else base
+                _set_text(t, r, 2, when, col, bold=live)
+                d = int(p.duration_s)
+                _set_text(t, r, 3, f"{d // 60}:{d % 60:02d}", base, align=Qt.AlignRight)
+                el_col = _GREEN if p.max_el >= 45 else _AMBER if p.max_el >= 20 else TEXT_DIM
+                _set_text(t, r, 4, f"{p.max_el:.0f}°", el_col, align=Qt.AlignRight)
+                _set_text(t, r, 5, f"{compass(p.az_aos)} → {compass(p.az_los)}", base)
+
+    def showEvent(self, event):
+        super().showEvent(event)
+        self._render(_dt.datetime.now(_dt.timezone.utc))
 
     def _check_alerts(self, now: _dt.datetime):
         if not getattr(self._cfg, "sat_pass_alert", True):

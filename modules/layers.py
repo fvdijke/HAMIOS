@@ -866,7 +866,35 @@ def _qth_in_footprint(sat_lat: float, sat_lon: float,
     return math.degrees(math.acos(max(-1.0, min(1.0, cos_d)))) < rho_deg
 
 
+_ICON_CACHE: dict = {}
+_ICON_SCALE = 4            # pixmap op 4× resolutie: scherp tot ver ingezoomd
+_ICON_BOX = QRectF(-20, -16, 40, 24)     # omvat panelen, romp en antenne
+
+
 def _draw_sat_icon(painter: QPainter, pt: QPointF, color: QColor):
+    """Satelliet-icoon: één keer per kleur getekend (zie _render_sat_icon),
+    daarna als pixmap geplaatst — tekenen kostte ~14 ms per icoon."""
+    from PySide6.QtGui import QPixmap
+    key = color.rgba()
+    pm = _ICON_CACHE.get(key)
+    if pm is None:
+        b = _ICON_BOX
+        pm = QPixmap(int(b.width() * _ICON_SCALE), int(b.height() * _ICON_SCALE))
+        pm.fill(Qt.transparent)
+        p = QPainter(pm)
+        p.setRenderHint(QPainter.Antialiasing)
+        p.scale(_ICON_SCALE, _ICON_SCALE)
+        p.translate(-b.x(), -b.y())
+        _render_sat_icon(p, QPointF(0, 0), color)
+        p.end()
+        _ICON_CACHE[key] = pm
+    painter.save()
+    painter.setRenderHint(QPainter.SmoothPixmapTransform)
+    painter.drawPixmap(_ICON_BOX.translated(pt), pm, QRectF(pm.rect()))
+    painter.restore()
+
+
+def _render_sat_icon(painter: QPainter, pt: QPointF, color: QColor):
     """Teken een satelliet-icoon: romp + zonnepanelen + antenne."""
     px, py = pt.x(), pt.y()
 
@@ -920,11 +948,35 @@ def _draw_footprint(painter: QPainter, sat_lat: float, sat_lon: float,
     Bij poolpassage: geen rand op polygoon (zoals v4).
     Geel = QTH buiten bereik, Groen = QTH zichtbaar.
     """
-    from PySide6.QtGui import QPolygonF
-
     in_range = _qth_in_footprint(sat_lat, sat_lon, rho_deg, qth_lat, qth_lon)
     c_fill = QColor(50, 220, 50,  80) if in_range else QColor(255, 220, 0,  60)
     c_line = QColor(50, 220, 50, 200) if in_range else QColor(255, 200, 0, 180)
+
+    # Geometrie hangt alleen van de satellietpositie af: gecachet per 0,05°
+    kind, geom = _footprint_geom(round(sat_lat, 2), round(sat_lon, 2), round(rho_deg, 2))
+    painter.setBrush(QBrush(c_fill))
+    if kind == "pole":
+        painter.setPen(QPen(c_line, 1.0))
+        painter.drawPath(geom)
+        painter.setPen(Qt.NoPen)
+    else:
+        painter.setPen(QPen(c_line, 1.5))
+        for poly in geom:
+            painter.drawPolygon(poly)
+
+
+_FP_CACHE: dict = {}
+
+
+def _footprint_geom(sat_lat: float, sat_lon: float, rho_deg: float):
+    """('pole', QPainterPath) of ('normal', [QPolygonF × 3]) — zie _draw_footprint."""
+    key = (sat_lat, sat_lon, rho_deg)
+    hit = _FP_CACHE.get(key)
+    if hit is not None:
+        return hit
+    if len(_FP_CACHE) > 256:
+        _FP_CACHE.clear()
+    from PySide6.QtGui import QPolygonF
 
     # ── v4.0.2-formules voor polaire kap ──────────────────────────────────────
     dist_north = 90.0 - sat_lat   # hoekafstand naar noordpool
@@ -953,9 +1005,6 @@ def _draw_footprint(painter: QPainter, sat_lat: float, sat_lon: float,
                             (90 - glat) / 180 * MAP_H))
 
     from PySide6.QtGui import QPainterPath as _QPP
-
-    painter.setPen(Qt.NoPen)
-    painter.setBrush(QBrush(c_fill))
 
     if dist_north < rho_deg or dist_south < rho_deg:
         # ── Poolgeval: azimuth-polygoon + poolkap via QPainterPath.united() ───
@@ -990,16 +1039,13 @@ def _draw_footprint(painter: QPainter, sat_lat: float, sat_lon: float,
             sub.closeSubpath()
             combined = combined.united(sub)
 
-        painter.setPen(QPen(c_line, 1.0))
-        painter.drawPath(combined)
-        painter.setPen(Qt.NoPen)
-
+        result = ("pole", combined)
     else:
-        # Normaal geval: alleen polygoon met rand
-        painter.setPen(QPen(c_line, 1.5))
-        for dx in (-MAP_W, 0, MAP_W):
-            painter.drawPolygon(
-                QPolygonF([QPointF(p.x() + dx, p.y()) for p in pts]))
+        # Normaal geval: polygoon (3× voor de datumgrens)
+        result = ("normal", [QPolygonF([QPointF(p.x() + dx, p.y()) for p in pts])
+                             for dx in (-MAP_W, 0, MAP_W)])
+    _FP_CACHE[key] = result
+    return result
 
 
 

@@ -20,7 +20,7 @@ from PySide6.QtCore import Qt, Signal
 from PySide6.QtWidgets import (QCheckBox, QHBoxLayout, QLabel, QLineEdit, QListWidget,
                                QPushButton, QVBoxLayout, QWidget)
 
-from .extra_panels import _item, _table
+from .extra_panels import _item, _table, bulk_fill
 from .i18n import tr
 from .theme import BG_SURFACE, TEXT_BODY, TEXT_DIM, TEXT_H1
 
@@ -209,6 +209,10 @@ class WatchlistWidget(QWidget):
     def _render(self):
         n = len(self._hits)
         self._status.setText(tr("watch.status", n=n, m=self._list.count()))
+        with bulk_fill(self._tbl):
+            self._fill(n)
+
+    def _fill(self, n: int):
         self._tbl.setRowCount(n)
         for i, h in enumerate(self._hits):
             pct = h["pct"]

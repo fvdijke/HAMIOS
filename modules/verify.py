@@ -175,7 +175,7 @@ def _make_widget_class():
     from PySide6.QtCore import Qt, QTimer
     from PySide6.QtWidgets import QComboBox, QHBoxLayout, QLabel, QVBoxLayout, QWidget
 
-    from .extra_panels import _item, _table
+    from .extra_panels import _item, _table, bulk_fill
     from .i18n import tr
     from .theme import TEXT_DIM, TEXT_H1
 
@@ -232,6 +232,10 @@ def _make_widget_class():
                 self._sum.setText(tr("verify.summary", n=tot["n"], h=tot["hours"],
                                      pct=f"<b style='color:{_col(a, 70, 40)}'>{a}%</b>"))
             rows = [(b, d) for b, d in st.items() if d["n"] or d["open_hours"]]
+            with bulk_fill(self._tbl):
+                self._fill(rows)
+
+        def _fill(self, rows):
             self._tbl.setRowCount(len(rows))
             for i, (band, d) in enumerate(rows):
                 fmt = lambda v: "—" if v is None else f"{v}%"   # noqa: E731

@@ -385,7 +385,9 @@ class PropagationEngine(QObject):
         return cf, cm, w, s
 
     def conditions(self, lat: float, lon: float, t: _dt.datetime | None = None,
-                   snr_db: float = 0.0, now: _dt.datetime | None = None) -> Conditions:
+                   snr_db: float = 0.0, now: _dt.datetime | None = None,
+                   bands: list | None = None) -> Conditions:
+        """bands: [(naam, MHz)] om alleen die banden te berekenen (standaard alle)."""
         now = _utc(now)
         t = _utc(t) if t is not None else now
         cf, cm, w, s = self._calibration(lat, lon, t, now)
@@ -396,7 +398,7 @@ class PropagationEngine(QObject):
         # Gemeten absorptie (D-RAP): daaronder komt HF niet door, ongeacht het model
         haf = self.drap_haf(lat, lon, t)
         luf = max(luf, haf)
-        pct = {name: int(round(100 * band_probability(f, muf, luf))) for name, f in BANDS}
+        pct = {name: int(round(100 * band_probability(f, muf, luf))) for name, f in bands or BANDS}
         return Conditions(time=t, fof2=round(fof2, 2), muf=round(muf, 1),
                           luf=round(luf, 1), is_day=is_day(lat, lon, t),
                           band_pct=pct, measured=s, cal_weight=w, absorption=round(haf, 1))
@@ -410,7 +412,7 @@ class PropagationEngine(QObject):
                 for h in range(hours)]
 
     def path_detail(self, lat1, lon1, lat2, lon2, t: _dt.datetime | None = None,
-                    snr_db: float = 0.0) -> dict:
+                    snr_db: float = 0.0, bands: list | None = None) -> dict:
         """Pad QTH → doel. Paden ≤ 4000 km: één controlepunt (midden); langer:
         twee (¼ en ¾, elke sprong ~3000 km) — het zwakste punt bepaalt het pad.
         {'pct': {band: %}, 'muf': laagste MUF, 'luf': hoogste LUF,
@@ -433,11 +435,11 @@ class PropagationEngine(QObject):
         points, result = [], None
         for fr in fracs:
             plat, plon = gc_point(lat1, lon1, lat2, lon2, fr)
-            c = self.conditions(plat, plon, t, snr_db)
+            c = self.conditions(plat, plon, t, snr_db, bands=bands)
             if luf_end > c.luf:
                 c.luf = round(luf_end, 1)
                 c.band_pct = {name: int(round(100 * band_probability(f, c.muf, luf_end)))
-                              for name, f in BANDS}
+                              for name, f in bands or BANDS}
             if d < 3000:
                 # Korte sprong: steilere invalshoek → lagere MUF (dode zone).
                 # MUF(d) ≈ foF2 · √(1 + (d / 2h)²), h ≈ 300 km, begrensd op MUF(3000)
@@ -445,7 +447,7 @@ class PropagationEngine(QObject):
                 if muf_d < c.muf:
                     c.muf = round(muf_d, 1)
                     c.band_pct = {name: int(round(100 * band_probability(f, muf_d, c.luf)))
-                                  for name, f in BANDS}
+                                  for name, f in bands or BANDS}
             points.append(c)
             pct = c.band_pct
             result = pct if result is None else {b: min(v, pct[b]) for b, v in result.items()}
@@ -465,13 +467,15 @@ class PropagationEngine(QObject):
         celmiddens). Zelfde padmodel als de aanbevelingen (path_detail); licht
         vervaagd (1-2-1) zodat de overgangen na het opschalen vloeiend zijn."""
         t = _utc(t)                       # één tijdstip voor de hele kaart
+        only = [(band, dict(BANDS).get(band, 14.0))]   # alleen deze band berekenen (~3× sneller)
         w, h = 360 // step, 180 // step
         g = [0.0] * (w * h)
         for y in range(h):
             clat = 90 - (y + 0.5) * step
             for x in range(w):
                 clon = -180 + (x + 0.5) * step
-                g[y * w + x] = self.path_band_pct(lat, lon, clat, clon, t, snr_db).get(band, 0)
+                g[y * w + x] = self.path_detail(lat, lon, clat, clon, t, snr_db,
+                                                bands=only)["pct"].get(band, 0)
         tmp = [0.0] * (w * h)
         for y in range(h):
             b = y * w
